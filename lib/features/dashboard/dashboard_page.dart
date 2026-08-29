@@ -431,7 +431,8 @@ class _DashboardPageState extends State<DashboardPage> {
                       columns: const ['Kabupaten', 'Total', 'OSS', 'Non OSS'],
                       rows: dashboard.districtRecap.map((row) {
                         return [
-                          row['kabupaten_id']?.toString() ?? '-',
+                          row['nama_kabupaten']?.toString() ??
+                              '-', // <-- perbaikan masalah 1
                           row['total']?.toString() ?? '0',
                           row['oss']?.toString() ?? '0',
                           row['non_oss']?.toString() ?? '0',
@@ -448,22 +449,18 @@ class _DashboardPageState extends State<DashboardPage> {
                       title: 'Legalitas NIB Usaha Akomodasi',
                       subtitle: 'Kepemilikan NIB berdasarkan Kabupaten/Kota.',
                       data: ChartSeriesData.fromDynamic(
-                        dashboard.charts.legalitasNib,
+                        dashboard
+                            .charts
+                            .district, // <-- sebelumnya: dashboard.charts.legalitasNib
                         seriesConfig: const [
-                          MapEntry('memiliki', Color(0xFF16A66A)), // hijau
-                          MapEntry(
-                            'tidak_memiliki',
-                            Color(0xFFE05C6E),
-                          ), // pink/merah
-                          MapEntry(
-                            'tidak_tahu',
-                            Color(0xFFF2A93B),
-                          ), // kuning/oranye
+                          MapEntry('nib_ya', Color(0xFF16A66A)),
+                          MapEntry('nib_tidak', Color(0xFFE05C6E)),
+                          MapEntry('nib_tidak_tahu', Color(0xFFF2A93B)),
                         ],
                         seriesLabelOverride: const {
-                          'memiliki': 'Memiliki NIB',
-                          'tidak_memiliki': 'Tidak Memiliki',
-                          'tidak_tahu': 'Tidak Tahu',
+                          'nib_ya': 'Memiliki NIB',
+                          'nib_tidak': 'Tidak Memiliki',
+                          'nib_tidak_tahu': 'Tidak Tahu',
                         },
                       ),
                     ),
@@ -482,12 +479,13 @@ class _DashboardPageState extends State<DashboardPage> {
                         'Tidak Tahu',
                         'Total',
                       ],
-                      rows: dashboard.legalitasNibRecap.map((row) {
+                      rows: dashboard.districtRecap.map((row) {
+                        // <-- sebelumnya: dashboard.legalitasNibRecap
                         return [
-                          'Kabupaten ${row['kabupaten_id']?.toString() ?? '-'}',
-                          row['memiliki']?.toString() ?? '0',
-                          row['tidak_memiliki']?.toString() ?? '0',
-                          row['tidak_tahu']?.toString() ?? '0',
+                          row['nama_kabupaten']?.toString() ?? '-',
+                          row['nib_ya']?.toString() ?? '0',
+                          row['nib_tidak']?.toString() ?? '0',
+                          row['nib_tidak_tahu']?.toString() ?? '0',
                           row['total']?.toString() ?? '0',
                         ];
                       }).toList(),
@@ -503,17 +501,16 @@ class _DashboardPageState extends State<DashboardPage> {
                       subtitle:
                           'Perbandingan usaha terdaftar dan tidak terdaftar OTA.',
                       data: ChartSeriesData.fromDynamic(
-                        dashboard.charts.statusOta,
+                        dashboard
+                            .charts
+                            .district, // <-- sebelumnya: dashboard.charts.statusOta
                         seriesConfig: const [
-                          MapEntry('terdaftar', Color(0xFF2F86EB)), // biru
-                          MapEntry(
-                            'tidak_terdaftar',
-                            Color(0xFFB6BEC9),
-                          ), // abu-abu
+                          MapEntry('ota_ya', Color(0xFF2F86EB)),
+                          MapEntry('ota_tidak', Color(0xFFB6BEC9)),
                         ],
                         seriesLabelOverride: const {
-                          'terdaftar': 'Terdaftar OTA',
-                          'tidak_terdaftar': 'Tidak Terdaftar',
+                          'ota_ya': 'Terdaftar OTA',
+                          'ota_tidak': 'Tidak Terdaftar',
                         },
                       ),
                     ),
@@ -533,7 +530,8 @@ class _DashboardPageState extends State<DashboardPage> {
                       ],
                       rows: dashboard.districtRecap.map((row) {
                         return [
-                          'Kabupaten ${row['kabupaten_id']?.toString() ?? '-'}',
+                          row['nama_kabupaten']?.toString() ??
+                              '-', // <-- perbaikan masalah 1
                           row['ota_ya']?.toString() ?? '0',
                           row['ota_tidak']?.toString() ?? '0',
                           row['total']?.toString() ?? '0',
@@ -562,52 +560,42 @@ class _DashboardPageState extends State<DashboardPage> {
                     //   ),
                     // ),
                     // const SizedBox(height: 16),
-                    // DashboardDataTable(
-                    //   title: 'Tabel Jenis Produk Akomodasi',
-                    //   columns: const [
-                    //     'Jenis Produk',
-                    //     'OSS',
-                    //     'Non OSS',
-                    //     'Total',
-                    //   ],
-                    //   rows: dashboard.productTypeRecap.map((row) {
-                    //     return [
-                    //       row['jenis_produk']?.toString() ?? '-',
-                    //       row['oss']?.toString() ?? '0',
-                    //       row['non_oss']?.toString() ?? '0',
-                    //       row['total']?.toString() ?? '0',
-                    //     ];
-                    //   }).toList(),
-                    // ),
+                    const SizedBox(height: 16),
 
-                    // const SizedBox(height: 24),
+                    DashboardBarChart(
+                      title: 'Jenis Produk Akomodasi',
+                      subtitle:
+                          'Komposisi jenis produk berdasarkan sumber data.',
+                      data: ChartSeriesData.fromDynamic(
+                        dashboard.charts.productType,
+                        seriesConfig: const [
+                          MapEntry('total', Color(0xFF0878F9)),
+                          MapEntry('oss', Color(0xFF16A66A)),
+                          MapEntry('non_oss', Color(0xFF7857E6)),
+                        ],
+                      ),
+                    ),
 
-                    // DashboardBarChart(
-                    //   title: 'Jenis Produk Akomodasi',
-                    //   subtitle:
-                    //       'Komposisi jenis produk berdasarkan sumber data.',
-                    //   data: ChartSeriesData.fromDynamic(
-                    //     dashboard.charts.productType,
-                    //     seriesConfig: const [
-                    //       MapEntry('total', Color(0xFF0878F9)),
-                    //       MapEntry('oss', Color(0xFF16A66A)),
-                    //       MapEntry('non_oss', Color(0xFF7857E6)),
-                    //     ],
-                    //   ),
-                    // ),
+                    const SizedBox(height: 16),
 
-                    // DashboardDataTable(
-                    //   title: 'Rekap Kabupaten/Kota',
-                    //   columns: const ['Kabupaten', 'Total', 'OSS', 'Non OSS'],
-                    //   rows: dashboard.districtRecap.map((row) {
-                    //     return [
-                    //       row['kabupaten_id']?.toString() ?? '-',
-                    //       row['total']?.toString() ?? '0',
-                    //       row['oss']?.toString() ?? '0',
-                    //       row['non_oss']?.toString() ?? '0',
-                    //     ];
-                    //   }).toList(),
-                    // ),
+                    DashboardDataTable(
+                      title: 'Tabel Jenis Produk Akomodasi',
+                      columns: const [
+                        'Jenis Produk',
+                        'OSS',
+                        'Non OSS',
+                        'Total',
+                      ],
+                      rows: dashboard.productTypeRecap.map((row) {
+                        return [
+                          row['jenis_produk']?.toString() ?? '-',
+                          row['oss']?.toString() ?? '0',
+                          row['non_oss']?.toString() ?? '0',
+                          row['total']?.toString() ?? '0',
+                        ];
+                      }).toList(),
+                    ),
+
                     if (_errorMessage != null) ...[
                       const SizedBox(height: 18),
                       _buildRefreshWarning(),
@@ -1091,21 +1079,27 @@ class _DashboardPageState extends State<DashboardPage> {
           _RecapTile(
             icon: Icons.location_city_rounded,
             title: 'Kabupaten/Kota',
-            value: dashboard.totalDistrict,
+            value: dashboard
+                .districtRecap
+                .length, // sebelumnya: dashboard.totalDistrict
             color: const Color(0xFF1565C0),
           ),
           const Divider(height: 25),
           _RecapTile(
             icon: Icons.travel_explore_rounded,
             title: 'Platform OTA',
-            value: dashboard.totalPlatform,
+            value: dashboard
+                .platformRecap
+                .length, // sebelumnya: dashboard.totalPlatform
             color: const Color(0xFFD84315),
           ),
           const Divider(height: 25),
           _RecapTile(
             icon: Icons.hotel_rounded,
             title: 'Jenis Produk',
-            value: dashboard.totalProductType,
+            value: dashboard
+                .productTypeRecap
+                .length, // sebelumnya: dashboard.totalProductType
             color: const Color(0xFF7B1FA2),
           ),
         ],
