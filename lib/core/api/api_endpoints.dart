@@ -2,7 +2,9 @@ class ApiEndpoints {
   ApiEndpoints._();
 
   // Base URL utama API Laravel.
-  static const String baseUrl = 'https://dasbor.kemenpar.online/api';
+  // static const String baseUrl = 'https://dasbor.kemenpar.online/api';
+  // static const String baseUrl = 'http://localhost:3000';
+  static const String baseUrl = 'http://localhost:8000/api';
 
   // Health check tanpa prefix mobile.
   // Hasil: https://dasbor.kemenpar.online/api/health
@@ -12,6 +14,11 @@ class ApiEndpoints {
   static const String login = '/mobile/login';
   static const String logout = '/mobile/logout';
   static const String me = '/mobile/me';
+
+  // PLACEHOLDER — ganti path ini setelah cek Network tab di web.
+  // Kemungkinan pola umum Laravel: '/mobile/profile/change-password'
+  // atau '/mobile/change-password'.
+  static const String changePassword = '/mobile/change-password';
 
   // Pengawasan Non-OSS
   static const String pengawasanNonOss = '/mobile/non-oss';

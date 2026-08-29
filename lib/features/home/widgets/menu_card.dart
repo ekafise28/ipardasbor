@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../app/app_theme.dart';
 import '../models/menu_data.dart';
 
 class MenuCard extends StatelessWidget {
@@ -10,68 +11,72 @@ class MenuCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: Colors.white,
-      borderRadius: BorderRadius.circular(16),
-      clipBehavior: Clip.antiAlias,
-      child: InkWell(
-        onTap: onTap,
-        splashColor: menu.color.withValues(alpha: 0.10),
-        highlightColor: menu.color.withValues(alpha: 0.05),
-        child: Ink(
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: const Color(0xFFE4EAF2)),
-            boxShadow: [
-              BoxShadow(
-                color: const Color(0xFF253858).withValues(alpha: 0.05),
-                blurRadius: 10,
-                offset: const Offset(0, 4),
-              ),
-            ],
-          ),
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(5, 10, 5, 8),
-            child: Column(
-              children: [
-                Container(
-                  width: 39,
-                  height: 39,
-                  decoration: BoxDecoration(
-                    color: menu.backgroundColor,
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Icon(menu.icon, color: menu.color, size: 22),
+    return Tooltip(
+      message: menu.description,
+      triggerMode: TooltipTriggerMode.longPress,
+      showDuration: const Duration(seconds: 3),
+      preferBelow: true,
+      textStyle: const TextStyle(
+        color: Colors.white,
+        fontSize: 11.5,
+        fontWeight: FontWeight.w600,
+        height: 1.3,
+      ),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: AppTheme.textColor.withValues(alpha: 0.95),
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Material(
+        color: AppTheme.surface,
+        borderRadius: BorderRadius.circular(16),
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: onTap,
+          splashColor: menu.color.withValues(alpha: 0.10),
+          highlightColor: menu.color.withValues(alpha: 0.05),
+          child: Ink(
+            decoration: BoxDecoration(
+              color: AppTheme.surface,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: AppTheme.border),
+              boxShadow: [
+                BoxShadow(
+                  color: AppTheme.textColor.withValues(alpha: 0.05),
+                  blurRadius: 10,
+                  offset: const Offset(0, 4),
                 ),
-                const SizedBox(height: 8),
-                Text(
-                  menu.title,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(
-                    color: Color(0xFF1B2940),
-                    fontSize: 10.5,
-                    height: 1.1,
-                    fontWeight: FontWeight.w800,
+              ],
+            ),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 6),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Container(
+                    width: 44,
+                    height: 44,
+                    decoration: BoxDecoration(
+                      color: menu.backgroundColor,
+                      borderRadius: BorderRadius.circular(13),
+                    ),
+                    child: Icon(menu.icon, color: menu.color, size: 24),
                   ),
-                ),
-                const SizedBox(height: 4),
-                Expanded(
-                  child: Text(
-                    menu.description,
+                  const SizedBox(height: 9),
+                  Text(
+                    menu.title,
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                     textAlign: TextAlign.center,
                     style: const TextStyle(
-                      color: Color(0xFF8A94A6),
-                      fontSize: 8,
+                      color: AppTheme.textColor,
+                      fontSize: 11,
                       height: 1.15,
+                      fontWeight: FontWeight.w700,
                     ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ),

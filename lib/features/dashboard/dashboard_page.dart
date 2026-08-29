@@ -3,11 +3,23 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import '../../core/api/api_client.dart';
 import '../../core/api/api_exception.dart';
+
 import '../non_oss/offline/non_oss_local_data.dart';
 import '../non_oss/offline/offline_database.dart';
 import '../non_oss/offline/sync_service.dart';
 import '../non_oss/services/non_oss_service.dart';
+
 import 'models/dashboard_data.dart';
+
+import 'models/chart_series.dart';
+import 'models/dashboard_map_model.dart';
+
+import 'widget/dashboard_bar_chart.dart';
+import 'widget/dashboard_data_table.dart';
+import 'widget/dashboard_map_section.dart';
+import 'widget/dashboard_horizontal_bar_chart.dart';
+import 'widget/dashboard_filter_panel.dart';
+
 import 'services/dashboard_service.dart';
 
 class DashboardPage extends StatefulWidget {
@@ -32,6 +44,8 @@ class _DashboardPageState extends State<DashboardPage> {
   bool _isSyncingAll = false;
 
   String _selectedProvince = 'jawa-timur';
+
+  DashboardFilterValues _filterValues = DashboardFilterValues.empty;
 
   @override
   void initState() {
@@ -61,7 +75,14 @@ class _DashboardPageState extends State<DashboardPage> {
 
     try {
       final DashboardData result = await _dashboardService
-          .getDashboard(province: _selectedProvince, includeMap: false)
+          .getDashboard(
+            province: _selectedProvince,
+            includeMap: true,
+            startDate: _filterValues.startDateApiFormat,
+            endDate: _filterValues.endDateApiFormat,
+            districtId: _filterValues.districtId,
+            dataSource: _filterValues.dataSource,
+          )
           .timeout(
             const Duration(seconds: 10),
             onTimeout: () {
@@ -312,6 +333,9 @@ class _DashboardPageState extends State<DashboardPage> {
       );
     }
 
+    final points = parseMapPoints(dashboard.map.points);
+    final config = MapConfigData.fromJson(dashboard.map.configuration);
+
     return RefreshIndicator(
       color: const Color(0xFF1565C0),
       onRefresh: _refreshDashboard,
@@ -332,6 +356,32 @@ class _DashboardPageState extends State<DashboardPage> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     _buildDashboardHeader(dashboard),
+
+                    const SizedBox(height: 18),
+
+                    // Filter Dashboard
+                    // =================================================
+                    DashboardFilterPanel(
+                      districtOptions: dashboard.filterOptions.districts,
+                      dataSourceOptions: dashboard.filterOptions.dataSources,
+                      initialValues: _filterValues,
+                      isLoading: _isLoading,
+                      onApply: (values) {
+                        setState(() => _filterValues = values);
+                        _loadDashboard(showLoading: false);
+                      },
+                      onReset: () {
+                        setState(
+                          () => _filterValues = DashboardFilterValues.empty,
+                        );
+                        _loadDashboard(showLoading: false);
+                      },
+                    ),
+                    // Filter Dashboard
+                    // =================================================
+
+                    // if (dashboard.map.displayed && points.isNotEmpty)
+                    //   DashboardMapSection(points: points, config: config),
                     const SizedBox(height: 18),
                     _buildOfflineQueueSection(),
                     const SizedBox(height: 22),
@@ -348,10 +398,223 @@ class _DashboardPageState extends State<DashboardPage> {
                     _buildDataCompositionSection(dashboard.summary),
                     const SizedBox(height: 24),
                     _buildRecapSection(dashboard),
+
+                    // Start SEBARAN PENGAWASAN PER KABUPATEN/KOTA
+                    // ============================================================
+                    const SizedBox(height: 24),
+                    DashboardBarChart(
+                      title: 'Sebaran Pengawasan per Kabupaten/Kota',
+                      subtitle:
+                          'Perbandingan data OSS, Non OSS, dan total pengawasan.',
+                      data: ChartSeriesData.fromDynamic(
+                        dashboard.charts.district,
+                        seriesConfig: const [
+                          MapEntry('total', Color(0xFF0878F9)),
+                          MapEntry('oss', Color(0xFF16A66A)),
+                          MapEntry('non_oss', Color(0xFF7857E6)),
+                        ],
+                        seriesLabelOverride: const {
+                          'total': 'Total Pengawasan',
+                          'oss': 'OSS',
+                          'non_oss': 'Non OSS',
+                        },
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    // End SEBARAN PENGAWASAN PER KABUPATEN/KOTA
+                    // ============================================================
+
+                    // Start Tabel SEBARAN PENGAWASAN PER KABUPATEN/KOTA
+                    // ============================================================
+                    DashboardDataTable(
+                      title: 'Rekap Kabupaten/Kota',
+                      columns: const ['Kabupaten', 'Total', 'OSS', 'Non OSS'],
+                      rows: dashboard.districtRecap.map((row) {
+                        return [
+                          row['kabupaten_id']?.toString() ?? '-',
+                          row['total']?.toString() ?? '0',
+                          row['oss']?.toString() ?? '0',
+                          row['non_oss']?.toString() ?? '0',
+                        ];
+                      }).toList(),
+                    ),
+                    // End Tabel SEBARAN PENGAWASAN PER KABUPATEN/KOTA
+                    // ============================================================
+
+                    // Start LEGALITAS NIB USAHA AKOMODASI
+                    // ============================================================
+                    const SizedBox(height: 48),
+                    DashboardBarChart(
+                      title: 'Legalitas NIB Usaha Akomodasi',
+                      subtitle: 'Kepemilikan NIB berdasarkan Kabupaten/Kota.',
+                      data: ChartSeriesData.fromDynamic(
+                        dashboard.charts.legalitasNib,
+                        seriesConfig: const [
+                          MapEntry('memiliki', Color(0xFF16A66A)), // hijau
+                          MapEntry(
+                            'tidak_memiliki',
+                            Color(0xFFE05C6E),
+                          ), // pink/merah
+                          MapEntry(
+                            'tidak_tahu',
+                            Color(0xFFF2A93B),
+                          ), // kuning/oranye
+                        ],
+                        seriesLabelOverride: const {
+                          'memiliki': 'Memiliki NIB',
+                          'tidak_memiliki': 'Tidak Memiliki',
+                          'tidak_tahu': 'Tidak Tahu',
+                        },
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    // End LEGALITAS NIB USAHA AKOMODASI
+                    // ============================================================
+
+                    // Start Tabel LEGALITAS NIB USAHA AKOMODASI
+                    // ============================================================
+                    DashboardDataTable(
+                      title: 'Tabel Legalitas NIB',
+                      columns: const [
+                        'Kabupaten',
+                        'Memiliki NIB',
+                        'Tidak Memiliki',
+                        'Tidak Tahu',
+                        'Total',
+                      ],
+                      rows: dashboard.legalitasNibRecap.map((row) {
+                        return [
+                          'Kabupaten ${row['kabupaten_id']?.toString() ?? '-'}',
+                          row['memiliki']?.toString() ?? '0',
+                          row['tidak_memiliki']?.toString() ?? '0',
+                          row['tidak_tahu']?.toString() ?? '0',
+                          row['total']?.toString() ?? '0',
+                        ];
+                      }).toList(),
+                    ),
+                    // End Tabel LEGALITAS NIB USAHA AKOMODASI
+                    // ============================================================
+
+                    // Start STATUS PENDAFTARAN PLATFORM OTA
+                    // ============================================================
+                    const SizedBox(height: 48),
+                    DashboardBarChart(
+                      title: 'Status Pendaftaran Platform OTA',
+                      subtitle:
+                          'Perbandingan usaha terdaftar dan tidak terdaftar OTA.',
+                      data: ChartSeriesData.fromDynamic(
+                        dashboard.charts.statusOta,
+                        seriesConfig: const [
+                          MapEntry('terdaftar', Color(0xFF2F86EB)), // biru
+                          MapEntry(
+                            'tidak_terdaftar',
+                            Color(0xFFB6BEC9),
+                          ), // abu-abu
+                        ],
+                        seriesLabelOverride: const {
+                          'terdaftar': 'Terdaftar OTA',
+                          'tidak_terdaftar': 'Tidak Terdaftar',
+                        },
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    // End STATUS PENDAFTARAN PLATFORM OTA
+                    // ============================================================
+
+                    // Start Tabel STATUS PENDAFTARAN PLATFORM OTA
+                    // ============================================================
+                    DashboardDataTable(
+                      title: 'Tabel Status Pendaftaran OTA',
+                      columns: const [
+                        'Kabupaten',
+                        'Terdaftar OTA',
+                        'Tidak Terdaftar',
+                        'Total',
+                      ],
+                      rows: dashboard.districtRecap.map((row) {
+                        return [
+                          'Kabupaten ${row['kabupaten_id']?.toString() ?? '-'}',
+                          row['ota_ya']?.toString() ?? '0',
+                          row['ota_tidak']?.toString() ?? '0',
+                          row['total']?.toString() ?? '0',
+                        ];
+                      }).toList(),
+                    ),
+
+                    // End Tabel STATUS PENDAFTARAN PLATFORM OTA
+                    // ============================================================
+
+                    // ============================================================
+                    // Start JENIS PRODUK AKOMODASI (versi horizontal + tabel)
+                    // ============================================================
+                    // const SizedBox(height: 24),
+                    // DashboardHorizontalBarChart(
+                    //   title: 'Jenis Produk Akomodasi',
+                    //   subtitle:
+                    //       'Komposisi jenis produk berdasarkan sumber data.',
+                    //   data: ChartSeriesData.fromDynamic(
+                    //     dashboard.charts.productType,
+                    //     seriesConfig: const [
+                    //       MapEntry('total', Color(0xFF0878F9)),
+                    //       MapEntry('oss', Color(0xFF16A66A)),
+                    //       MapEntry('non_oss', Color(0xFF7857E6)),
+                    //     ],
+                    //   ),
+                    // ),
+                    // const SizedBox(height: 16),
+                    // DashboardDataTable(
+                    //   title: 'Tabel Jenis Produk Akomodasi',
+                    //   columns: const [
+                    //     'Jenis Produk',
+                    //     'OSS',
+                    //     'Non OSS',
+                    //     'Total',
+                    //   ],
+                    //   rows: dashboard.productTypeRecap.map((row) {
+                    //     return [
+                    //       row['jenis_produk']?.toString() ?? '-',
+                    //       row['oss']?.toString() ?? '0',
+                    //       row['non_oss']?.toString() ?? '0',
+                    //       row['total']?.toString() ?? '0',
+                    //     ];
+                    //   }).toList(),
+                    // ),
+
+                    // const SizedBox(height: 24),
+
+                    // DashboardBarChart(
+                    //   title: 'Jenis Produk Akomodasi',
+                    //   subtitle:
+                    //       'Komposisi jenis produk berdasarkan sumber data.',
+                    //   data: ChartSeriesData.fromDynamic(
+                    //     dashboard.charts.productType,
+                    //     seriesConfig: const [
+                    //       MapEntry('total', Color(0xFF0878F9)),
+                    //       MapEntry('oss', Color(0xFF16A66A)),
+                    //       MapEntry('non_oss', Color(0xFF7857E6)),
+                    //     ],
+                    //   ),
+                    // ),
+
+                    // DashboardDataTable(
+                    //   title: 'Rekap Kabupaten/Kota',
+                    //   columns: const ['Kabupaten', 'Total', 'OSS', 'Non OSS'],
+                    //   rows: dashboard.districtRecap.map((row) {
+                    //     return [
+                    //       row['kabupaten_id']?.toString() ?? '-',
+                    //       row['total']?.toString() ?? '0',
+                    //       row['oss']?.toString() ?? '0',
+                    //       row['non_oss']?.toString() ?? '0',
+                    //     ];
+                    //   }).toList(),
+                    // ),
                     if (_errorMessage != null) ...[
                       const SizedBox(height: 18),
                       _buildRefreshWarning(),
                     ],
+                    if (dashboard.map.displayed && points.isNotEmpty)
+                      const SizedBox(height: 48),
+                    DashboardMapSection(points: points, config: config),
                   ],
                 ),
               ),

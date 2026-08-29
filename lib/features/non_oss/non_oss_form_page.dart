@@ -1,11 +1,16 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
+
 import '../../core/api/api_client.dart';
+
 import 'models/non_oss_form_data.dart';
 import 'models/region_option.dart';
+
 import 'services/location_service.dart';
 import 'services/non_oss_service.dart';
 import 'services/region_service.dart';
+
 import 'widgets/form_section.dart';
 import 'widgets/location_picker.dart';
 import 'widgets/ota_selector.dart';
@@ -31,6 +36,28 @@ class _NonOssFormPageState extends State<NonOssFormPage> {
       _districts = [],
       _villages = [];
   bool _loadingRegions = true, _gpsLoading = false, _saving = false;
+  Set<_Section> _sectionErrors = {};
+
+  // ---------------------------------------------------------------------
+  // TextEditingController untuk setiap field teks.
+  //
+  // Sebelumnya TextFormField hanya memakai `initialValue`, sehingga saat
+  // widget melakukan rebuild (misalnya saat tombol "Simpan Perubahan"
+  // ditekan lalu validasi gagal karena ada data wajib yang belum diisi),
+  // isian yang sudah diketik pengguna bisa hilang. Dengan controller,
+  // nilai teks tersimpan secara independen dari proses build/rebuild
+  // sehingga tidak akan terhapus.
+  // ---------------------------------------------------------------------
+  late final TextEditingController _namaPemilikCtrl;
+  late final TextEditingController _namaBrandCtrl;
+  late final TextEditingController _alamatCtrl;
+  late final TextEditingController _npwpdCtrl;
+  late final TextEditingController _websiteCtrl;
+  late final TextEditingController _noHpCtrl;
+  late final TextEditingController _emailCtrl;
+  late final TextEditingController _keteranganCtrl;
+  late final TextEditingController _catatanPetugasCtrl;
+  late final TextEditingController _otaLainnyaCtrl;
 
   static const products = [
     'Hotel',
@@ -58,12 +85,36 @@ class _NonOssFormPageState extends State<NonOssFormPage> {
     _api = ApiClient();
     _regions = RegionService();
     _service = NonOssService(_api);
+
+    // Inisialisasi controller dengan nilai awal dari _data, satu kali saja.
+    _namaPemilikCtrl = TextEditingController(text: _data.namaPemilik);
+    _namaBrandCtrl = TextEditingController(text: _data.namaBrand);
+    _alamatCtrl = TextEditingController(text: _data.alamat);
+    _npwpdCtrl = TextEditingController(text: _data.npwpd);
+    _websiteCtrl = TextEditingController(text: _data.website);
+    _noHpCtrl = TextEditingController(text: _data.noHp);
+    _emailCtrl = TextEditingController(text: _data.email);
+    _keteranganCtrl = TextEditingController(text: _data.keterangan);
+    _catatanPetugasCtrl = TextEditingController(text: _data.catatanPetugas);
+    _otaLainnyaCtrl = TextEditingController(text: _data.otaLainnyaNama);
+
     _loadProvinces();
   }
 
   @override
   void dispose() {
     _api.close();
+    // Buang semua controller agar tidak membebani memori.
+    _namaPemilikCtrl.dispose();
+    _namaBrandCtrl.dispose();
+    _alamatCtrl.dispose();
+    _npwpdCtrl.dispose();
+    _websiteCtrl.dispose();
+    _noHpCtrl.dispose();
+    _emailCtrl.dispose();
+    _keteranganCtrl.dispose();
+    _catatanPetugasCtrl.dispose();
+    _otaLainnyaCtrl.dispose();
     super.dispose();
   }
 
@@ -173,6 +224,65 @@ class _NonOssFormPageState extends State<NonOssFormPage> {
 
   String? _required(String? v) =>
       v == null || v.trim().isEmpty ? 'Wajib diisi.' : null;
+
+  // ---------------------------------------------------------------------
+  // Validator format nomor telepon.
+  // Pengecekan "wajib diisi" SENGAJA tidak dilakukan di sini karena sudah
+  // ditangani oleh _buildChecks (lihat _RequiredCheck) — supaya field ini
+  // tidak menampilkan dua peringatan sekaligus untuk kondisi kosong.
+  // Validator ini hanya memeriksa format saat field sudah terisi (panjang
+  // 9-15 digit; karakter non-angka sudah dicegah lewat inputFormatters
+  // sehingga tidak perlu dicek ulang di sini).
+  // ---------------------------------------------------------------------
+  String? _phoneValidator(String? v) {
+    final value = v?.trim() ?? '';
+    if (value.isEmpty) return null;
+    if (value.length < 9 || value.length > 15) {
+      return 'Nomor telepon harus 9-15 digit.';
+    }
+    return null;
+  }
+
+  // Validator URL. Field Website bersifat opsional, jadi hanya divalidasi
+  // formatnya ketika diisi.
+  String? _urlValidator(String? v) {
+    final value = v?.trim() ?? '';
+    if (value.isEmpty) return null;
+    final uri = Uri.tryParse(value);
+    final valid =
+        uri != null &&
+        uri.hasScheme &&
+        (uri.scheme == 'http' || uri.scheme == 'https') &&
+        uri.host.isNotEmpty;
+    return valid ? null : 'Masukkan URL yang valid, contoh: https://contoh.com';
+  }
+
+  // Validator email. Field Email bersifat opsional, jadi hanya divalidasi
+  // formatnya ketika diisi.
+  static final RegExp _emailPattern = RegExp(
+    r'^[\w\.\-\+]+@[\w\-]+\.[\w\-\.]+$',
+  );
+  String? _emailValidator(String? v) {
+    final value = v?.trim() ?? '';
+    if (value.isEmpty) return null;
+    return _emailPattern.hasMatch(value)
+        ? null
+        : 'Masukkan alamat email yang valid.';
+  }
+
+  bool _hasInvalidOtaUrl() {
+    if (_data.terdaftarOta != 'YA') return false;
+
+    for (final urls in _data.otaUrls.values) {
+      for (final url in urls) {
+        final trimmed = url.trim();
+        if (trimmed.isEmpty) continue;
+        if (_urlValidator(trimmed) != null) return true;
+      }
+    }
+    return false;
+  }
+
   void _error(Object e) {
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
@@ -183,39 +293,60 @@ class _NonOssFormPageState extends State<NonOssFormPage> {
     );
   }
 
+  // Setiap check dipetakan ke section key tempat field itu berada.
+  List<_RequiredCheck> _buildChecks() => [
+    _RequiredCheck(_Section.identitas, _data.namaPemilik.trim().isEmpty),
+    _RequiredCheck(_Section.identitas, _data.namaBrand.trim().isEmpty),
+    _RequiredCheck(_Section.identitas, _data.jenisProduk.isEmpty),
+    _RequiredCheck(_Section.wilayah, _data.provinsiId == null),
+    _RequiredCheck(_Section.wilayah, _data.kabupatenId == null),
+    _RequiredCheck(_Section.wilayah, _data.kecamatanId == null),
+    _RequiredCheck(_Section.wilayah, _data.kelurahanId == null),
+    _RequiredCheck(_Section.wilayah, _data.alamat.trim().isEmpty),
+    _RequiredCheck(
+      _Section.lokasi,
+      _data.latitude.isEmpty || _data.longitude.isEmpty,
+    ),
+    _RequiredCheck(_Section.kontak, _data.noHp.trim().isEmpty),
+    // --- Tambahan: validasi format di section Kontak ---
+    _RequiredCheck(_Section.kontak, _phoneValidator(_data.noHp) != null),
+    _RequiredCheck(_Section.kontak, _urlValidator(_data.website) != null),
+    _RequiredCheck(_Section.kontak, _emailValidator(_data.email) != null),
+    _RequiredCheck(
+      _Section.ota,
+      _data.terdaftarOta == 'YA' &&
+          (_data.otaUrls.isEmpty ||
+              _data.otaUrls.values.any(
+                (v) => v.every((x) => x.trim().isEmpty),
+              )),
+    ),
+    // --- Tambahan: validasi format URL OTA di section OTA ---
+    _RequiredCheck(_Section.ota, _hasInvalidOtaUrl()),
+    _RequiredCheck(
+      _Section.hasil,
+      [3, 8].contains(_data.statusPengawasan) &&
+          _data.keterangan.trim().isEmpty,
+    ),
+    _RequiredCheck(_Section.foto, _data.photos.isEmpty),
+  ];
+
   Future<void> _submit() async {
-    if (!_key.currentState!.validate()) return;
+    _key.currentState!.validate();
     _key.currentState!.save();
-    if ([
-      _data.provinsiId,
-      _data.kabupatenId,
-      _data.kecamatanId,
-      _data.kelurahanId,
-    ].contains(null)) {
-      _error(Exception('Wilayah harus dipilih lengkap.'));
+
+    await WidgetsBinding.instance.endOfFrame;
+    if (!mounted) return;
+
+    final failedChecks = _buildChecks().where((c) => c.hasError).toList();
+    final failedSections = failedChecks.map((c) => c.section).toSet();
+
+    setState(() => _sectionErrors = failedSections);
+
+    if (failedSections.isNotEmpty) {
+      _error(Exception('Ada data yang belum diisi dengan benar.'));
       return;
     }
-    if (_data.latitude.isEmpty || _data.longitude.isEmpty) {
-      _error(Exception('Ambil lokasi GPS terlebih dahulu.'));
-      return;
-    }
-    if (_data.photos.isEmpty) {
-      _error(Exception('Minimal satu foto dokumentasi.'));
-      return;
-    }
-    if (_data.terdaftarOta == 'YA' &&
-        (_data.otaUrls.isEmpty ||
-            _data.otaUrls.values.any(
-              (v) => v.every((x) => x.trim().isEmpty),
-            ))) {
-      _error(Exception('Pilih OTA dan isi URL listing.'));
-      return;
-    }
-    if ([3, 8].contains(_data.statusPengawasan) &&
-        _data.keterangan.trim().isEmpty) {
-      _error(Exception('Keterangan wajib untuk status lainnya.'));
-      return;
-    }
+
     setState(() => _saving = true);
     try {
       await _service.submit(_data);
@@ -242,26 +373,42 @@ class _NonOssFormPageState extends State<NonOssFormPage> {
     }
   }
 
+  // ---------------------------------------------------------------------
+  // Field teks umum.
+  // - [controller] menyimpan nilai teks secara stabil (lihat penjelasan di
+  //   bagian deklarasi controller di atas) sehingga isian tidak hilang
+  //   saat terjadi rebuild.
+  // - [inputFormatters] opsional untuk membatasi karakter yang bisa
+  //   diketik (mis. hanya angka untuk nomor telepon).
+  // - [validator] opsional untuk pemeriksaan format khusus (mis. email,
+  //   URL, atau nomor telepon). Jika tidak diisi, dipakai pemeriksaan
+  //   "wajib diisi" standar (hanya jika [required] true).
+  // ---------------------------------------------------------------------
   Widget _text(
     String label,
-    String value,
+    TextEditingController controller,
     ValueChanged<String> changed, {
     bool required = true,
+    String? hintText,
     TextInputType? type,
     int lines = 1,
+    List<TextInputFormatter>? inputFormatters,
+    String? Function(String?)? validator,
   }) => Padding(
     padding: const EdgeInsets.only(bottom: 12),
     child: TextFormField(
-      initialValue: value,
+      controller: controller,
       decoration: InputDecoration(
         labelText: '$label${required ? ' *' : ''}',
+        hintText: hintText,
         filled: true,
         fillColor: const Color(0xFFF8FAFC),
         prefixIcon: Icon(_fieldIcon(label), size: 20),
       ),
       keyboardType: type,
       maxLines: lines,
-      validator: required ? _required : null,
+      inputFormatters: inputFormatters,
+      validator: validator ?? (required ? _required : null),
       onChanged: changed,
     ),
   );
@@ -514,8 +661,10 @@ class _NonOssFormPageState extends State<NonOssFormPage> {
                     title: 'Identitas Usaha',
                     subtitle: 'Informasi dasar pemilik dan jenis usaha.',
                     icon: Icons.store,
+                    hasError: _sectionErrors.contains(_Section.identitas),
                     child: Column(
                       children: [
+                        // NIB
                         _choice<String>(
                           label: 'Apakah usaha memiliki NIB? *',
                           value: _data.memilikiNib,
@@ -526,17 +675,23 @@ class _NonOssFormPageState extends State<NonOssFormPage> {
                           onChanged: (v) =>
                               setState(() => _data.memilikiNib = v),
                         ),
+
                         const SizedBox(height: 12),
+
+                        // Nama Pemilik
                         _text(
                           'Nama Pemilik',
-                          _data.namaPemilik,
+                          _namaPemilikCtrl,
                           (v) => _data.namaPemilik = v,
                         ),
+
+                        // Nama Brand
                         _text(
                           'Nama Brand',
-                          _data.namaBrand,
+                          _namaBrandCtrl,
                           (v) => _data.namaBrand = v,
                         ),
+
                         DropdownButtonFormField<String>(
                           initialValue: _data.jenisProduk.isEmpty
                               ? null
@@ -551,7 +706,13 @@ class _NonOssFormPageState extends State<NonOssFormPage> {
                                     DropdownMenuItem(value: v, child: Text(v)),
                               )
                               .toList(),
-                          onChanged: (v) => _data.jenisProduk = v ?? '',
+                          // Perbaikan: sebelumnya tidak ada setState di sini,
+                          // sehingga _data.jenisProduk berubah tanpa Flutter
+                          // "tahu", dan saat Form.validate() memicu rebuild
+                          // (mis. saat tombol Simpan ditekan), dropdown ini
+                          // balik ke initialValue lama seolah terhapus.
+                          onChanged: (v) =>
+                              setState(() => _data.jenisProduk = v ?? ''),
                           validator: (v) => v == null ? 'Wajib dipilih.' : null,
                         ),
                       ],
@@ -563,6 +724,7 @@ class _NonOssFormPageState extends State<NonOssFormPage> {
                     subtitle:
                         'Pilih wilayah secara berurutan hingga kelurahan.',
                     icon: Icons.location_city,
+                    hasError: _sectionErrors.contains(_Section.wilayah),
                     child: Column(
                       children: [
                         _region(
@@ -591,7 +753,7 @@ class _NonOssFormPageState extends State<NonOssFormPage> {
                         ),
                         _text(
                           'Alamat Lengkap',
-                          _data.alamat,
+                          _alamatCtrl,
                           (v) => _data.alamat = v,
                           lines: 3,
                         ),
@@ -604,6 +766,7 @@ class _NonOssFormPageState extends State<NonOssFormPage> {
                     subtitle:
                         'Ambil koordinat langsung dari perangkat petugas.',
                     icon: Icons.gps_fixed,
+                    hasError: _sectionErrors.contains(_Section.lokasi),
                     child: LocationPicker(
                       latitude: _data.latitude,
                       longitude: _data.longitude,
@@ -616,33 +779,48 @@ class _NonOssFormPageState extends State<NonOssFormPage> {
                     title: 'Kontak dan Legalitas',
                     subtitle: 'Data kontak aktif memudahkan proses verifikasi.',
                     icon: Icons.contact_phone,
+                    hasError: _sectionErrors.contains(_Section.kontak),
                     child: Column(
                       children: [
                         _text(
                           'NPWPD',
-                          _data.npwpd,
+                          _npwpdCtrl,
                           (v) => _data.npwpd = v,
                           required: false,
                         ),
                         _text(
                           'Website',
-                          _data.website,
+                          _websiteCtrl,
                           (v) => _data.website = v,
                           required: false,
                           type: TextInputType.url,
+                          hintText: 'https://www.example.com',
+                          // Format URL diperiksa hanya jika field diisi.
+                          validator: _urlValidator,
                         ),
                         _text(
                           'Telepon/WhatsApp',
-                          _data.noHp,
+                          _noHpCtrl,
                           (v) => _data.noHp = v,
                           type: TextInputType.phone,
+                          hintText: '081234567890',
+                          inputFormatters: [
+                            // Hanya menerima karakter angka.
+                            FilteringTextInputFormatter.digitsOnly,
+                            // Batasi maksimal 15 digit.
+                            LengthLimitingTextInputFormatter(15),
+                          ],
+                          validator: _phoneValidator,
                         ),
                         _text(
                           'Email',
-                          _data.email,
+                          _emailCtrl,
                           (v) => _data.email = v,
                           required: false,
                           type: TextInputType.emailAddress,
+                          hintText: 'example@example.com',
+                          // Format email diperiksa hanya jika field diisi.
+                          validator: _emailValidator,
                         ),
                       ],
                     ),
@@ -652,6 +830,7 @@ class _NonOssFormPageState extends State<NonOssFormPage> {
                     title: 'Platform OTA',
                     subtitle: 'Catat platform dan URL listing usaha.',
                     icon: Icons.travel_explore,
+                    hasError: _sectionErrors.contains(_Section.ota),
                     child: Column(
                       children: [
                         _choice<String>(
@@ -674,7 +853,7 @@ class _NonOssFormPageState extends State<NonOssFormPage> {
                             _data.otaUrls.containsKey('lainnya'))
                           _text(
                             'Nama OTA lainnya',
-                            _data.otaLainnyaNama,
+                            _otaLainnyaCtrl,
                             (v) => _data.otaLainnyaNama = v,
                           ),
                       ],
@@ -684,6 +863,7 @@ class _NonOssFormPageState extends State<NonOssFormPage> {
                     number: 6,
                     title: 'Hasil Pengawasan',
                     icon: Icons.fact_check,
+                    hasError: _sectionErrors.contains(_Section.hasil),
                     child: Column(
                       children: [
                         DropdownButtonFormField<int>(
@@ -706,14 +886,14 @@ class _NonOssFormPageState extends State<NonOssFormPage> {
                         const SizedBox(height: 12),
                         _text(
                           'Keterangan',
-                          _data.keterangan,
+                          _keteranganCtrl,
                           (v) => _data.keterangan = v,
                           required: false,
                           lines: 3,
                         ),
                         _text(
                           'Catatan Petugas',
-                          _data.catatanPetugas,
+                          _catatanPetugasCtrl,
                           (v) => _data.catatanPetugas = v,
                           required: false,
                           lines: 3,
@@ -737,6 +917,7 @@ class _NonOssFormPageState extends State<NonOssFormPage> {
                     title: 'Foto Dokumentasi',
                     subtitle: 'Tambahkan 1–5 foto kondisi usaha di lapangan.',
                     icon: Icons.photo_camera,
+                    hasError: _sectionErrors.contains(_Section.foto),
                     child: PhotoPicker(
                       photos: _data.photos,
                       onChanged: (v) => setState(() {
@@ -781,4 +962,12 @@ class _NonOssFormPageState extends State<NonOssFormPage> {
             ),
     ),
   );
+}
+
+enum _Section { identitas, wilayah, lokasi, kontak, ota, hasil, foto }
+
+class _RequiredCheck {
+  final _Section section;
+  final bool hasError;
+  _RequiredCheck(this.section, this.hasError);
 }

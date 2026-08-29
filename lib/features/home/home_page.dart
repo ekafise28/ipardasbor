@@ -1,67 +1,82 @@
 import 'package:flutter/material.dart';
 
+import '../../app/app_theme.dart';
 import '../dashboard/dashboard_page.dart';
 import '../non_oss/non_oss_form_page.dart';
+
 import 'models/menu_data.dart';
 import 'pages/feature_placeholder_page.dart';
+
+import '../profile/profile_page.dart';
+import '../settings/pages/settings_page.dart';
+
 import 'widgets/menu_card.dart';
+import 'widgets/menu_list_tile.dart';
 import 'widgets/welcome_card.dart';
 
-class HomePage extends StatelessWidget {
+class HomePage extends StatefulWidget {
   const HomePage({super.key});
+
+  @override
+  State<HomePage> createState() => _HomePageState();
+}
+
+class _HomePageState extends State<HomePage> {
+  bool _isGridView = true;
 
   static const List<MenuData> menus = [
     MenuData(
       title: 'Dashboard',
       description: 'Ringkasan statistik pengawasan',
       icon: Icons.bar_chart_rounded,
-      color: Color(0xFF7B1FA2),
-      backgroundColor: Color(0xFFF3E5F5),
+      color: AppTheme.menuDashboard,
+      backgroundColor: AppTheme.menuDashboardBg,
     ),
     MenuData(
       title: 'Pengawasan OSS',
       description: 'Verifikasi proyek dan usaha OSS',
       icon: Icons.fact_check_outlined,
-      color: Color(0xFF1565C0),
-      backgroundColor: Color(0xFFE8F1FD),
+      color: AppTheme.menuOss,
+      backgroundColor: AppTheme.menuOssBg,
     ),
     MenuData(
       title: 'Pengawasan Non-OSS',
       description: 'Pencatatan usaha di luar OSS',
       icon: Icons.domain_add_outlined,
-      color: Color(0xFF00897B),
-      backgroundColor: Color(0xFFE2F5F1),
+      color: AppTheme.menuNonOss,
+      backgroundColor: AppTheme.menuNonOssBg,
     ),
     MenuData(
       title: 'Pengawasan OTA',
       description: 'Verifikasi usaha dari platform OTA',
       icon: Icons.travel_explore_rounded,
-      color: Color(0xFFD84315),
-      backgroundColor: Color(0xFFFBE9E7),
+      color: AppTheme.menuOta,
+      backgroundColor: AppTheme.menuOtaBg,
     ),
     MenuData(
       title: 'Riwayat',
       description: 'Data pengawasan yang telah dilakukan',
       icon: Icons.history_rounded,
-      color: Color(0xFFEF6C00),
-      backgroundColor: Color(0xFFFFF1E3),
+      color: AppTheme.menuRiwayat,
+      backgroundColor: AppTheme.menuRiwayatBg,
     ),
     MenuData(
       title: 'Sinkronisasi',
       description: 'Perbarui dan kirim data aplikasi',
       icon: Icons.sync_rounded,
-      color: Color(0xFF0277BD),
-      backgroundColor: Color(0xFFE1F5FE),
+      color: AppTheme.menuSinkronisasi,
+      backgroundColor: AppTheme.menuSinkronisasiBg,
     ),
     MenuData(
       title: 'Profil Petugas',
       description: 'Informasi akun dan profil petugas',
       icon: Icons.account_circle_outlined,
-      color: Color(0xFF455A64),
-      backgroundColor: Color(0xFFECEFF1),
+      color: AppTheme.menuProfil,
+      backgroundColor: AppTheme.menuProfilBg,
     ),
   ];
 
+  // Menu Fitur
   void _openMenu(BuildContext context, MenuData menu) {
     switch (menu.title) {
       case 'Dashboard':
@@ -76,6 +91,12 @@ class HomePage extends StatelessWidget {
         ).push(MaterialPageRoute<void>(builder: (_) => const NonOssFormPage()));
         return;
 
+      case 'Profil Petugas':
+        Navigator.of(
+          context,
+        ).push(MaterialPageRoute<void>(builder: (_) => const ProfilePage()));
+        return;
+
       default:
         Navigator.of(context).push(
           MaterialPageRoute<void>(
@@ -86,7 +107,73 @@ class HomePage extends StatelessWidget {
   }
 
   void _logout(BuildContext context) {
-    Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false);
+    showDialog<void>(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          backgroundColor: Colors.white,
+          surfaceTintColor: Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(18),
+          ),
+          title: const Text(
+            'Keluar dari akun?',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 17,
+              fontWeight: FontWeight.w800,
+              color: AppTheme.textColor,
+            ),
+          ),
+          content: const Text(
+            'Anda perlu masuk kembali untuk mengakses aplikasi.',
+            textAlign: TextAlign.center,
+            style: TextStyle(fontSize: 13.5, color: AppTheme.textSecondary),
+          ),
+          actionsPadding: const EdgeInsets.fromLTRB(20, 4, 20, 16),
+          actionsAlignment: MainAxisAlignment.center,
+          actions: [
+            Expanded(
+              child: OutlinedButton(
+                onPressed: () => Navigator.pop(dialogContext),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: AppTheme.textColor,
+                  side: const BorderSide(color: AppTheme.border),
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                child: const Text('Batal'),
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: ElevatedButton(
+                onPressed: () {
+                  Navigator.pop(dialogContext);
+                  Navigator.pushNamedAndRemoveUntil(
+                    context,
+                    '/login',
+                    (route) => false,
+                  );
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppTheme.danger,
+                  foregroundColor: Colors.white,
+                  elevation: 0,
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                child: const Text('Keluar'),
+              ),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   void _showNotification(BuildContext context) {
@@ -104,6 +191,12 @@ class HomePage extends StatelessWidget {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
       ),
     );
+  }
+
+  void _toggleView() {
+    setState(() {
+      _isGridView = !_isGridView;
+    });
   }
 
   @override
@@ -125,13 +218,13 @@ class HomePage extends StatelessWidget {
             }
 
             return RefreshIndicator(
-              color: const Color(0xFF1565C0),
+              color: AppTheme.primaryColor,
               onRefresh: () async {
                 await Future<void>.delayed(const Duration(milliseconds: 700));
               },
               child: SingleChildScrollView(
                 physics: const AlwaysScrollableScrollPhysics(
-                  parent: BouncingScrollPhysics(),
+                  parent: ClampingScrollPhysics(),
                 ),
                 padding: const EdgeInsets.fromLTRB(16, 16, 16, 28),
                 child: Column(
@@ -141,24 +234,46 @@ class HomePage extends StatelessWidget {
                     const SizedBox(height: 22),
                     _buildSectionHeader(),
                     const SizedBox(height: 14),
-                    GridView.builder(
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      itemCount: menus.length,
-                      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount: crossAxisCount,
-                        mainAxisExtent: 122,
-                        mainAxisSpacing: 10,
-                        crossAxisSpacing: 8,
-                      ),
-                      itemBuilder: (context, index) {
-                        final MenuData menu = menus[index];
+                    AnimatedSwitcher(
+                      duration: const Duration(milliseconds: 250),
+                      child: _isGridView
+                          ? GridView.builder(
+                              key: const ValueKey('grid'),
+                              shrinkWrap: true,
+                              physics: const NeverScrollableScrollPhysics(),
+                              itemCount: menus.length,
+                              gridDelegate:
+                                  SliverGridDelegateWithFixedCrossAxisCount(
+                                    crossAxisCount: crossAxisCount,
+                                    mainAxisExtent: 122,
+                                    mainAxisSpacing: 10,
+                                    crossAxisSpacing: 8,
+                                  ),
+                              itemBuilder: (context, index) {
+                                final MenuData menu = menus[index];
 
-                        return MenuCard(
-                          menu: menu,
-                          onTap: () => _openMenu(context, menu),
-                        );
-                      },
+                                return MenuCard(
+                                  menu: menu,
+                                  onTap: () => _openMenu(context, menu),
+                                );
+                              },
+                            )
+                          : ListView.separated(
+                              key: const ValueKey('list'),
+                              shrinkWrap: true,
+                              physics: const NeverScrollableScrollPhysics(),
+                              itemCount: menus.length,
+                              separatorBuilder: (context, index) =>
+                                  const SizedBox(height: 10),
+                              itemBuilder: (context, index) {
+                                final MenuData menu = menus[index];
+
+                                return MenuListTile(
+                                  menu: menu,
+                                  onTap: () => _openMenu(context, menu),
+                                );
+                              },
+                            ),
                     ),
                   ],
                 ),
@@ -188,7 +303,7 @@ class HomePage extends StatelessWidget {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
-                    color: Color(0xFF152238),
+                    color: AppTheme.textColor,
                     fontSize: 18,
                     fontWeight: FontWeight.w800,
                     letterSpacing: -0.2,
@@ -200,7 +315,7 @@ class HomePage extends StatelessWidget {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
-                    color: Color(0xFF7A879A),
+                    color: AppTheme.textSecondary,
                     fontSize: 10.5,
                     fontWeight: FontWeight.w500,
                   ),
@@ -216,74 +331,30 @@ class HomePage extends StatelessWidget {
           icon: Icons.notifications_none_rounded,
           onPressed: () => _showNotification(context),
         ),
-        PopupMenuButton<String>(
-          tooltip: 'Menu akun',
-          position: PopupMenuPosition.under,
-          color: Colors.white,
-          surfaceTintColor: Colors.white,
-          elevation: 8,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
-          icon: Container(
-            width: 38,
-            height: 38,
-            decoration: BoxDecoration(
-              color: const Color(0xFFF0F4F9),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: const Icon(
-              Icons.more_vert_rounded,
-              size: 21,
-              color: Color(0xFF334155),
-            ),
-          ),
-          onSelected: (value) {
-            if (value == 'logout') {
-              _logout(context);
-            }
-          },
-          itemBuilder: (context) {
-            return const [
-              PopupMenuItem<String>(
-                value: 'logout',
-                child: Row(
-                  children: [
-                    Icon(
-                      Icons.logout_rounded,
-                      color: Color(0xFFD32F2F),
-                      size: 21,
-                    ),
-                    SizedBox(width: 12),
-                    Text(
-                      'Keluar',
-                      style: TextStyle(
-                        color: Color(0xFFD32F2F),
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ];
-          },
+        _AppBarAction(
+          tooltip: 'Pengaturan',
+          icon: Icons.account_circle_outlined,
+          onPressed: () => Navigator.of(
+            context,
+          ).push(MaterialPageRoute<void>(builder: (_) => const SettingsPage())),
         ),
         const SizedBox(width: 10),
       ],
     );
   }
 
+  // Menu Utama Section
   Widget _buildSectionHeader() {
-    return const Row(
+    return Row(
       children: [
-        Expanded(
+        const Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
                 'Menu Utama',
                 style: TextStyle(
-                  color: Color(0xFF17243A),
+                  color: AppTheme.textColor,
                   fontSize: 19,
                   fontWeight: FontWeight.w800,
                   letterSpacing: -0.2,
@@ -292,12 +363,35 @@ class HomePage extends StatelessWidget {
               SizedBox(height: 3),
               Text(
                 'Pilih layanan yang ingin digunakan',
-                style: TextStyle(color: Color(0xFF748197), fontSize: 12),
+                style: TextStyle(color: AppTheme.textSecondary, fontSize: 12),
               ),
             ],
           ),
         ),
-        Icon(Icons.grid_view_rounded, color: Color(0xFFA1ACBC), size: 21),
+        Material(
+          color: Colors.transparent,
+          borderRadius: BorderRadius.circular(10),
+          child: InkWell(
+            onTap: _toggleView,
+            borderRadius: BorderRadius.circular(10),
+            child: Padding(
+              padding: const EdgeInsets.all(6),
+              child: AnimatedSwitcher(
+                duration: const Duration(milliseconds: 200),
+                transitionBuilder: (child, animation) =>
+                    ScaleTransition(scale: animation, child: child),
+                child: Icon(
+                  _isGridView
+                      ? Icons.view_list_rounded
+                      : Icons.grid_view_rounded,
+                  key: ValueKey(_isGridView),
+                  color: AppTheme.textMuted,
+                  size: 21,
+                ),
+              ),
+            ),
+          ),
+        ),
       ],
     );
   }
@@ -312,15 +406,11 @@ class _AppLogo extends StatelessWidget {
       width: 41,
       height: 41,
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [Color(0xFF0D47A1), Color(0xFF1976D2)],
-        ),
+        gradient: AppTheme.brandGradient,
         borderRadius: BorderRadius.circular(13),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF1565C0).withValues(alpha: 0.20),
+            color: AppTheme.primaryColor.withValues(alpha: 0.20),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -353,10 +443,10 @@ class _AppBarAction extends StatelessWidget {
           width: 38,
           height: 38,
           decoration: BoxDecoration(
-            color: const Color(0xFFF0F4F9),
+            color: AppTheme.surfaceMuted,
             borderRadius: BorderRadius.circular(12),
           ),
-          child: Icon(icon, size: 21, color: const Color(0xFF334155)),
+          child: Icon(icon, size: 21, color: AppTheme.textColor),
         ),
       ),
     );

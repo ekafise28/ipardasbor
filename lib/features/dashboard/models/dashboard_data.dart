@@ -8,6 +8,7 @@ class DashboardData {
   final List<Map<String, dynamic>> districtRecap;
   final List<Map<String, dynamic>> platformRecap;
   final List<Map<String, dynamic>> productTypeRecap;
+  final List<Map<String, dynamic>> legalitasNibRecap;
 
   final int totalDistrict;
   final int totalPlatform;
@@ -25,6 +26,7 @@ class DashboardData {
     required this.districtRecap,
     required this.platformRecap,
     required this.productTypeRecap,
+    required this.legalitasNibRecap,
     required this.totalDistrict,
     required this.totalPlatform,
     required this.totalProductType,
@@ -46,6 +48,7 @@ class DashboardData {
       districtRecap: _asMapList(json['rekap_kabupaten']),
       platformRecap: _asMapList(json['rekap_platform']),
       productTypeRecap: _asMapList(json['rekap_jenis_produk']),
+      legalitasNibRecap: _asMapList(json['rekap_legalitas_nib']),
       totalDistrict: _asInt(json['total_kabupaten']),
       totalPlatform: _asInt(json['total_platform']),
       totalProductType: _asInt(json['total_jenis_produk']),
@@ -219,11 +222,15 @@ class DashboardCharts {
   final dynamic district;
   final dynamic platform;
   final dynamic productType;
+  final dynamic statusOta;
+  final dynamic legalitasNib;
 
   const DashboardCharts({
     required this.district,
     required this.platform,
     required this.productType,
+    required this.statusOta,
+    required this.legalitasNib,
   });
 
   factory DashboardCharts.fromJson(Map<String, dynamic> json) {
@@ -231,6 +238,8 @@ class DashboardCharts {
       district: json['kabupaten'],
       platform: json['platform'],
       productType: json['jenis_produk'],
+      statusOta: json['status_ota'],
+      legalitasNib: json['legalitas_nib'],
     );
   }
 }

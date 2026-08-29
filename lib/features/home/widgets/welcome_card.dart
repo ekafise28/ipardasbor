@@ -1,9 +1,22 @@
 import 'package:flutter/material.dart';
 
 import '../../../core/storage/secure_storage.dart';
+import '../../../app/app_theme.dart';
+
+/// UI-only for now — swap this for a real value once sync data
+/// is wired up (e.g. from a SyncService or local DB query).
+enum SyncStatus { synced, pending }
 
 class WelcomeCard extends StatefulWidget {
-  const WelcomeCard({super.key});
+  const WelcomeCard({
+    super.key,
+    this.syncStatus = SyncStatus.synced,
+    this.pendingCount = 0,
+  });
+
+  /// Placeholder inputs — replace with real backend-driven state later.
+  final SyncStatus syncStatus;
+  final int pendingCount;
 
   @override
   State<WelcomeCard> createState() => _WelcomeCardState();
@@ -82,14 +95,10 @@ class _WelcomeCardState extends State<WelcomeCard> {
       clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(22),
-        gradient: const LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [Color(0xFF0D47A1), Color(0xFF1565C0), Color(0xFF2384DA)],
-        ),
+        gradient: AppTheme.brandGradient,
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF1565C0).withValues(alpha: 0.25),
+            color: AppTheme.primaryColor.withValues(alpha: 0.25),
             blurRadius: 22,
             offset: const Offset(0, 10),
           ),
@@ -111,7 +120,7 @@ class _WelcomeCardState extends State<WelcomeCard> {
             right: 15,
             bottom: -12,
             child: Icon(
-              Icons.location_city_rounded,
+              Icons.fact_check_rounded,
               size: 82,
               color: Colors.white.withValues(alpha: 0.07),
             ),
@@ -119,6 +128,7 @@ class _WelcomeCardState extends State<WelcomeCard> {
           Padding(
             padding: const EdgeInsets.fromLTRB(18, 18, 16, 18),
             child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Container(
                   width: 57,
@@ -138,9 +148,9 @@ class _WelcomeCardState extends State<WelcomeCard> {
                       ),
                     ],
                   ),
-                  child: const Icon(
+                  child: Icon(
                     Icons.person_rounded,
-                    color: Color(0xFF1565C0),
+                    color: AppTheme.primaryColor,
                     size: 32,
                   ),
                 ),
@@ -149,13 +159,23 @@ class _WelcomeCardState extends State<WelcomeCard> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        '$_greeting,',
-                        style: const TextStyle(
-                          color: Color(0xFFDCEBFF),
-                          fontSize: 12,
-                          fontWeight: FontWeight.w500,
-                        ),
+                      Row(
+                        children: [
+                          Text(
+                            '$_greeting,',
+                            style: const TextStyle(
+                              color: Color(0xFFDCEBFF),
+                              fontSize: 12,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                          const SizedBox(width: 4),
+                          const Icon(
+                            Icons.waving_hand_rounded,
+                            color: Color(0xFFFFD166),
+                            size: 14,
+                          ),
+                        ],
                       ),
                       const SizedBox(height: 2),
                       Text(
@@ -210,24 +230,74 @@ class _WelcomeCardState extends State<WelcomeCard> {
                   ),
                 ),
                 const SizedBox(width: 8),
-                Container(
-                  width: 34,
-                  height: 34,
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.14),
-                    borderRadius: BorderRadius.circular(11),
-                  ),
-                  child: const Icon(
-                    Icons.waving_hand_rounded,
-                    color: Color(0xFFFFD166),
-                    size: 19,
-                  ),
+                _SyncStatusChip(
+                  status: widget.syncStatus,
+                  pendingCount: widget.pendingCount,
                 ),
               ],
             ),
           ),
         ],
       ),
+    );
+  }
+}
+
+// ikon terhubung dengan internet
+class _SyncStatusChip extends StatelessWidget {
+  const _SyncStatusChip({required this.status, required this.pendingCount});
+
+  final SyncStatus status;
+  final int pendingCount;
+
+  bool get _isSynced => status == SyncStatus.synced;
+
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        Container(
+          width: 40,
+          height: 40,
+          decoration: BoxDecoration(
+            color: Colors.white.withValues(alpha: 0.14),
+            borderRadius: BorderRadius.circular(13),
+            border: Border.all(
+              color: Colors.white.withValues(alpha: 0.18),
+            ),
+          ),
+          child: Icon(
+            _isSynced ? Icons.cloud_done_rounded : Icons.cloud_upload_rounded,
+            color: _isSynced ? const Color(0xFFB9F6CA) : const Color(0xFFFFD166),
+            size: 21,
+          ),
+        ),
+        if (!_isSynced && pendingCount > 0)
+          Positioned(
+            top: -5,
+            right: -5,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+              constraints: const BoxConstraints(minWidth: 18),
+              decoration: BoxDecoration(
+                color: AppTheme.danger,
+                borderRadius: BorderRadius.circular(9),
+                border: Border.all(color: AppTheme.primaryColor, width: 1.5),
+              ),
+              child: Text(
+                pendingCount > 99 ? '99+' : '$pendingCount',
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 9,
+                  fontWeight: FontWeight.w800,
+                  height: 1.2,
+                ),
+              ),
+            ),
+          ),
+      ],
     );
   }
 }

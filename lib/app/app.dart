@@ -21,6 +21,7 @@ class IparApp extends StatelessWidget {
         '/': (context) => const SplashPage(),
         '/login': (context) => const LoginPage(),
         '/home': (context) => const HomePage(),
+        
       },
     );
   }

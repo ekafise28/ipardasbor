@@ -8,6 +8,7 @@ class FormSection extends StatelessWidget {
     required this.icon,
     required this.child,
     this.subtitle,
+    this.hasError = false,
   });
 
   final int number;
@@ -15,6 +16,9 @@ class FormSection extends StatelessWidget {
   final String? subtitle;
   final IconData icon;
   final Widget child;
+  final bool hasError;
+
+  static const _normalBorder = Color(0xFFDDE7F1);
 
   @override
   Widget build(BuildContext context) {
@@ -23,9 +27,12 @@ class FormSection extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.only(bottom: 14),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: hasError ? Colors.red.withOpacity(0.05) : Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFDDE7F1)),
+        border: Border.all(
+          color: hasError ? Colors.red : _normalBorder,
+          width: hasError ? 1.5 : 1,
+        ),
         boxShadow: const [
           BoxShadow(
             color: Color(0x0A152238),
@@ -51,7 +58,7 @@ class FormSection extends StatelessWidget {
                   height: 32,
                   alignment: Alignment.center,
                   decoration: BoxDecoration(
-                    color: primary,
+                    color: hasError ? Colors.red : primary,
                     borderRadius: BorderRadius.circular(9),
                   ),
                   child: Text(
@@ -66,24 +73,40 @@ class FormSection extends StatelessWidget {
                 Container(
                   width: 32,
                   height: 32,
-                  decoration: BoxDecoration(
+                  decoration: const BoxDecoration(
                     color: Colors.white,
-                    borderRadius: BorderRadius.circular(9),
+                    borderRadius: BorderRadius.all(Radius.circular(9)),
                   ),
-                  child: Icon(icon, color: primary, size: 19),
+                  child: Icon(
+                    icon,
+                    color: hasError ? Colors.red : primary,
+                    size: 19,
+                  ),
                 ),
                 const SizedBox(width: 10),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        title,
-                        style: const TextStyle(
-                          color: Color(0xFF172B3A),
-                          fontSize: 14.5,
-                          fontWeight: FontWeight.w800,
-                        ),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              title,
+                              style: const TextStyle(
+                                color: Color(0xFF172B3A),
+                                fontSize: 14.5,
+                                fontWeight: FontWeight.w800,
+                              ),
+                            ),
+                          ),
+                          if (hasError)
+                            const Icon(
+                              Icons.error_rounded,
+                              color: Colors.red,
+                              size: 17,
+                            ),
+                        ],
                       ),
                       if (subtitle != null) ...[
                         const SizedBox(height: 2),
