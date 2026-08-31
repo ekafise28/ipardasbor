@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class AppTheme {
   AppTheme._();
@@ -55,9 +56,6 @@ class AppTheme {
   static const Color menuTentangBg = Color(0xFFECEFF1);
 
   // ---- Menu category accents ----
-  // Core monitoring flows share the brand family; records share the warm
-  // family; Non-OSS reuses secondaryColor (teal) since it's a distinct
-  // workflow; Profil stays neutral/grey so it doesn't compete visually.
   static const Color menuDashboard = primaryColor;
   static const Color menuDashboardBg = Color(0xFFE8F1FD);
 
@@ -116,5 +114,72 @@ class AppTheme {
         ),
       ),
     );
+  }
+
+  static ThemeData get darkTheme {
+    return ThemeData(
+      useMaterial3: true,
+      brightness: Brightness.dark,
+      scaffoldBackgroundColor: const Color(0xFF121212),
+      fontFamily: 'Roboto',
+      colorScheme: ColorScheme.fromSeed(
+        seedColor: primaryColor,
+        brightness: Brightness.dark,
+        primary: primaryLight,
+        secondary: secondaryColor,
+      ),
+      appBarTheme: const AppBarTheme(
+        backgroundColor: Color(0xFF1E1E1E),
+        surfaceTintColor: Color(0xFF1E1E1E),
+        foregroundColor: Colors.white,
+        elevation: 0,
+      ),
+      inputDecorationTheme: InputDecorationTheme(
+        filled: true,
+        fillColor: const Color(0xFF1E1E1E),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 18,
+          vertical: 17,
+        ),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(14),
+          borderSide: const BorderSide(color: Color(0xFF3A3F4B)),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(14),
+          borderSide: const BorderSide(color: Color(0xFF3A3F4B)),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(14),
+          borderSide: const BorderSide(color: primaryLight, width: 1.5),
+        ),
+      ),
+    );
+  }
+}
+
+/// Mengelola status mode gelap aplikasi dan menyimpannya secara lokal
+/// agar pilihan pengguna tetap tersimpan setelah aplikasi ditutup.
+class ThemeController extends ValueNotifier<ThemeMode> {
+  ThemeController._() : super(ThemeMode.light);
+
+  static final ThemeController instance = ThemeController._();
+
+  static const String _prefsKey = 'is_dark_mode';
+
+  bool get isDarkMode => value == ThemeMode.dark;
+
+  /// Dipanggil sekali saat aplikasi pertama kali dijalankan untuk memuat
+  /// preferensi tema yang tersimpan.
+  Future<void> loadSavedTheme() async {
+    final prefs = await SharedPreferences.getInstance();
+    final bool isDark = prefs.getBool(_prefsKey) ?? false;
+    value = isDark ? ThemeMode.dark : ThemeMode.light;
+  }
+
+  Future<void> setDarkMode(bool isDark) async {
+    value = isDark ? ThemeMode.dark : ThemeMode.light;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_prefsKey, isDark);
   }
 }

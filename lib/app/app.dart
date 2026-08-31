@@ -11,17 +11,23 @@ class IparApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      navigatorKey: AppNavigator.navigatorKey,
-      title: 'I-PAR Mobile',
-      debugShowCheckedModeBanner: false,
-      theme: AppTheme.lightTheme,
-      initialRoute: '/',
-      routes: {
-        '/': (context) => const SplashPage(),
-        '/login': (context) => const LoginPage(),
-        '/home': (context) => const HomePage(),
-        
+    return ValueListenableBuilder<ThemeMode>(
+      valueListenable: ThemeController.instance,
+      builder: (context, themeMode, _) {
+        return MaterialApp(
+          navigatorKey: AppNavigator.navigatorKey,
+          title: 'I-PAR Mobile',
+          debugShowCheckedModeBanner: false,
+          theme: AppTheme.lightTheme,
+          darkTheme: AppTheme.darkTheme,
+          themeMode: themeMode,
+          initialRoute: '/',
+          routes: {
+            '/': (context) => const SplashPage(),
+            '/login': (context) => const LoginPage(),
+            '/home': (context) => const HomePage(),
+          },
+        );
       },
     );
   }

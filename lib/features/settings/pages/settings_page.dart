@@ -26,13 +26,6 @@ class _SettingsPageState extends State<SettingsPage> {
   // List Menu preferensi yang ditampilkan di halaman pengaturan.
   static const List<MenuData> _preferenceMenus = [
     MenuData(
-      title: 'Mode Tampilan',
-      description: 'Atur mode terang, gelap, atau ikuti sistem',
-      icon: Icons.dark_mode_outlined,
-      color: AppTheme.menuTampilan,
-      backgroundColor: AppTheme.menuTampilanBg,
-    ),
-    MenuData(
       title: 'Notifikasi',
       description: 'Atur preferensi notifikasi aplikasi',
       icon: Icons.notifications_none_rounded,
@@ -47,6 +40,71 @@ class _SettingsPageState extends State<SettingsPage> {
       backgroundColor: AppTheme.menuKeamananBg,
     ),
   ];
+
+  Widget _buildDarkModeTile() {
+    return ValueListenableBuilder<ThemeMode>(
+      valueListenable: ThemeController.instance,
+      builder: (context, themeMode, _) {
+        final bool isDark = themeMode == ThemeMode.dark;
+
+        return Container(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: AppTheme.border),
+          ),
+          child: Row(
+            children: [
+              Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                  color: AppTheme.menuTampilanBg,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(
+                  isDark ? Icons.dark_mode_rounded : Icons.dark_mode_outlined,
+                  color: AppTheme.menuTampilan,
+                ),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Mode Tampilan (Alpha)',
+                      style: TextStyle(
+                        color: AppTheme.textColor,
+                        fontSize: 14.5,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      isDark ? 'Mode gelap aktif' : 'Mode terang aktif',
+                      style: const TextStyle(
+                        color: AppTheme.textSecondary,
+                        fontSize: 12,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Switch(
+                value: isDark,
+                activeTrackColor: AppTheme.menuTampilan,
+                onChanged: (value) {
+                  ThemeController.instance.setDarkMode(value);
+                },
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
 
   // Menu "Tentang Aplikasi" yang ditampilkan di halaman pengaturan.
   static const MenuData _aboutMenu = MenuData(
@@ -190,6 +248,8 @@ class _SettingsPageState extends State<SettingsPage> {
                 ),
                 const SizedBox(height: 22),
                 const _SectionLabel('Preferensi'),
+                const SizedBox(height: 10),
+                _buildDarkModeTile(),
                 const SizedBox(height: 10),
                 for (final menu in _preferenceMenus) ...[
                   MenuListTile(menu: menu, onTap: () => _openMenu(menu)),
