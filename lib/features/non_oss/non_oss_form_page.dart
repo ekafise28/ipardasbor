@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
+import 'package:ipardasbor/app/app_theme.dart';
 
 import '../../core/api/api_client.dart';
 
@@ -16,6 +17,8 @@ import 'widgets/location_picker.dart';
 import 'widgets/ota_selector.dart';
 import 'widgets/photo_picker.dart';
 
+import 'offline/offline_queue_service.dart';
+
 class NonOssFormPage extends StatefulWidget {
   const NonOssFormPage({super.key});
   @override
@@ -23,14 +26,17 @@ class NonOssFormPage extends StatefulWidget {
 }
 
 class _NonOssFormPageState extends State<NonOssFormPage> {
-  static const _primary = Color(0xFF0D67C2);
+  static const _primary = AppTheme.primaryColor;
   static const _navy = Color(0xFF0B3F78);
   final _key = GlobalKey<FormState>();
   final _data = NonOssFormData();
+
   late final ApiClient _api;
   late final RegionService _regions;
   late final NonOssService _service;
+  late final OfflineQueueService _offlineQueue;
   final _location = LocationService();
+
   List<RegionOption> _provinces = [],
       _regencies = [],
       _districts = [],
@@ -85,7 +91,7 @@ class _NonOssFormPageState extends State<NonOssFormPage> {
     _api = ApiClient();
     _regions = RegionService();
     _service = NonOssService(_api);
-
+    _offlineQueue = OfflineQueueService();
     // Inisialisasi controller dengan nilai awal dari _data, satu kali saja.
     _namaPemilikCtrl = TextEditingController(text: _data.namaPemilik);
     _namaBrandCtrl = TextEditingController(text: _data.namaBrand);
@@ -349,7 +355,7 @@ class _NonOssFormPageState extends State<NonOssFormPage> {
 
     setState(() => _saving = true);
     try {
-      await _service.submit(_data);
+      await _submitOnlineOrQueue();
       if (!mounted) return;
       await showDialog<void>(
         context: context,
@@ -370,6 +376,38 @@ class _NonOssFormPageState extends State<NonOssFormPage> {
       _error(e);
     } finally {
       if (mounted) setState(() => _saving = false);
+    }
+  }
+
+  /// Opsi C: cek ketersediaan server dulu; kalau offline, langsung simpan
+  /// lokal. Kalau online tapi gagal karena masalah koneksi di tengah proses
+  /// (misalnya putus saat upload foto), fallback ke penyimpanan lokal juga.
+  /// Kegagalan karena sebab lain (validasi server, dsb) tetap dilempar apa
+  /// adanya ke pemanggil.
+  Future<void> _submitOnlineOrQueue() async {
+    final bool online = await _service.isServerAvailable();
+
+    if (!online) {
+      await _saveOffline();
+      return;
+    }
+
+    try {
+      await _service.submit(_data);
+    } catch (e) {
+      if (_service.isConnectionFailure(e)) {
+        await _saveOffline();
+      } else {
+        rethrow;
+      }
+    }
+  }
+
+  Future<void> _saveOffline() async {
+    try {
+      await _offlineQueue.save(_data);
+    } catch (_) {
+      throw Exception('Gagal menyimpan data secara lokal. Silakan coba lagi.');
     }
   }
 
@@ -402,7 +440,7 @@ class _NonOssFormPageState extends State<NonOssFormPage> {
         labelText: '$label${required ? ' *' : ''}',
         hintText: hintText,
         filled: true,
-        fillColor: const Color(0xFFF8FAFC),
+        fillColor: AppTheme.scaffoldColorDynamic(context),
         prefixIcon: Icon(_fieldIcon(label), size: 20),
       ),
       keyboardType: type,
@@ -455,7 +493,7 @@ class _NonOssFormPageState extends State<NonOssFormPage> {
         decoration: InputDecoration(
           labelText: '$label *',
           filled: true,
-          fillColor: const Color(0xFFF8FAFC),
+          fillColor: AppTheme.scaffoldColorDynamic(context),
           prefixIcon: const Icon(Icons.location_on_outlined, size: 20),
         ),
         items: values
@@ -483,8 +521,8 @@ class _NonOssFormPageState extends State<NonOssFormPage> {
       children: [
         Text(
           label,
-          style: const TextStyle(
-            color: Color(0xFF334E68),
+          style: TextStyle(
+            color: AppTheme.textColor(context),
             fontSize: 12.5,
             fontWeight: FontWeight.w700,
           ),
@@ -509,11 +547,11 @@ class _NonOssFormPageState extends State<NonOssFormPage> {
                     ),
                     decoration: BoxDecoration(
                       color: selected
-                          ? const Color(0xFFEAF4FF)
-                          : const Color(0xFFF8FAFC),
+                          ? AppTheme.textOnBrandBadge
+                          : AppTheme.scaffoldColorDynamic(context),
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(
-                        color: selected ? _primary : const Color(0xFFDCE4EA),
+                        color: selected ? _primary : AppTheme.border(context),
                         width: selected ? 1.5 : 1,
                       ),
                     ),
@@ -525,7 +563,7 @@ class _NonOssFormPageState extends State<NonOssFormPage> {
                               ? Icons.radio_button_checked
                               : Icons.radio_button_off,
                           size: 18,
-                          color: selected ? _primary : const Color(0xFF8A98A8),
+                          color: selected ? _primary : AppTheme.textMuted,
                         ),
                         const SizedBox(width: 7),
                         Flexible(
@@ -535,7 +573,7 @@ class _NonOssFormPageState extends State<NonOssFormPage> {
                             style: TextStyle(
                               color: selected
                                   ? _primary
-                                  : const Color(0xFF405366),
+                                  : AppTheme.textSecondary(context),
                               fontSize: 12,
                               fontWeight: FontWeight.w700,
                             ),
@@ -559,21 +597,22 @@ class _NonOssFormPageState extends State<NonOssFormPage> {
       colorScheme: ColorScheme.fromSeed(
         seedColor: _primary,
         primary: _primary,
-        surface: Colors.white,
+        brightness: Theme.of(context).brightness, // langsung dari context
+        surface: AppTheme.surface(context),
       ),
       inputDecorationTheme: InputDecorationTheme(
         contentPadding: const EdgeInsets.symmetric(
           horizontal: 14,
           vertical: 16,
         ),
-        labelStyle: const TextStyle(color: Color(0xFF607286)),
+        labelStyle: TextStyle(color: AppTheme.textSecondary(context)),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(13),
-          borderSide: const BorderSide(color: Color(0xFFDCE4EA)),
+          borderSide: BorderSide(color: AppTheme.border(context)),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(13),
-          borderSide: const BorderSide(color: Color(0xFFDCE4EA)),
+          borderSide: BorderSide(color: AppTheme.border(context)),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(13),
@@ -582,7 +621,7 @@ class _NonOssFormPageState extends State<NonOssFormPage> {
       ),
     ),
     child: Scaffold(
-      backgroundColor: const Color(0xFFF3F6F9),
+      backgroundColor: AppTheme.scaffoldColorDynamic(context),
       appBar: AppBar(
         elevation: 0,
         backgroundColor: _navy,
@@ -618,7 +657,7 @@ class _NonOssFormPageState extends State<NonOssFormPage> {
                       gradient: const LinearGradient(
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
-                        colors: [Color(0xFF0B4E91), Color(0xFF1976D2)],
+                        colors: [Color(0xFF0B4E91), AppTheme.primaryColor],
                       ),
                       borderRadius: BorderRadius.circular(20),
                     ),
@@ -949,9 +988,10 @@ class _NonOssFormPageState extends State<NonOssFormPage> {
                           : const Icon(Icons.cloud_upload_rounded),
                       label: Text(
                         _saving ? 'Menyimpan data...' : 'Simpan Pengawasan',
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontWeight: FontWeight.w800,
                           fontSize: 15,
+                          color: AppTheme.textColor(context),
                         ),
                       ),
                     ),
