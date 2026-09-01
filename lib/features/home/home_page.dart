@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../app/app_theme.dart';
 import '../dashboard/dashboard_page.dart';
 import '../non_oss/non_oss_form_page.dart';
+import '../sinkronisasi/sync_page.dart';
 
 import 'models/menu_data.dart';
 import 'pages/feature_placeholder_page.dart';
@@ -97,6 +98,13 @@ class _HomePageState extends State<HomePage> {
         ).push(MaterialPageRoute<void>(builder: (_) => const ProfilePage()));
         return;
 
+      // tambahkan case baru di dalam method _openMenu, sebelum default:
+      case 'Sinkronisasi':
+        Navigator.of(
+          context,
+        ).push(MaterialPageRoute<void>(builder: (_) => const SyncPage()));
+        return;
+
       default:
         Navigator.of(context).push(
           MaterialPageRoute<void>(
@@ -128,7 +136,10 @@ class _HomePageState extends State<HomePage> {
           content: Text(
             'Anda perlu masuk kembali untuk mengakses aplikasi.',
             textAlign: TextAlign.center,
-            style: TextStyle(fontSize: 13.5, color: AppTheme.textSecondary(context)),
+            style: TextStyle(
+              fontSize: 13.5,
+              color: AppTheme.textSecondary(context),
+            ),
           ),
           actionsPadding: const EdgeInsets.fromLTRB(20, 4, 20, 16),
           actionsAlignment: MainAxisAlignment.center,
@@ -181,7 +192,10 @@ class _HomePageState extends State<HomePage> {
       SnackBar(
         content: Row(
           children: [
-            Icon(Icons.notifications_none_rounded, color: AppTheme.surfaceMuted(context)),
+            Icon(
+              Icons.notifications_none_rounded,
+              color: AppTheme.surfaceMuted(context),
+            ),
             SizedBox(width: 12),
             Text('Belum ada notifikasi baru.'),
           ],
@@ -363,7 +377,10 @@ class _HomePageState extends State<HomePage> {
               SizedBox(height: 3),
               Text(
                 'Pilih layanan yang ingin digunakan',
-                style: TextStyle(color: AppTheme.textSecondary(context), fontSize: 12),
+                style: TextStyle(
+                  color: AppTheme.textSecondary(context),
+                  fontSize: 12,
+                ),
               ),
             ],
           ),

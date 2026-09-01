@@ -60,6 +60,22 @@ class OfflineDatabase {
     return rows.map(NonOssLocalData.fromDatabase).toList(growable: false);
   }
 
+  Future<NonOssLocalData?> getByClientUuid(String clientUuid) async {
+    final Database db = await database;
+    final List<Map<String, Object?>> rows = await db.query(
+      table,
+      where: 'client_uuid = ?',
+      whereArgs: <Object?>[clientUuid],
+      limit: 1,
+    );
+
+    if (rows.isEmpty) {
+      return null;
+    }
+
+    return NonOssLocalData.fromDatabase(rows.first);
+  }
+
   Future<List<NonOssLocalData>> getWaiting({int limit = 20}) async {
     final Database db = await database;
     final List<Map<String, Object?>> rows = await db.query(
@@ -114,6 +130,15 @@ class OfflineDatabase {
       },
       where: 'sync_status = ?',
       whereArgs: <Object?>[SyncStatus.syncing.value],
+    );
+  }
+
+  Future<int> deleteByClientUuid(String clientUuid) async {
+    final Database db = await database;
+    return db.delete(
+      table,
+      where: 'client_uuid = ?',
+      whereArgs: <Object?>[clientUuid],
     );
   }
 

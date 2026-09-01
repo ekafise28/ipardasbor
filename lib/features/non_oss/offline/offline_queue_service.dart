@@ -19,6 +19,11 @@ class OfflineQueueService {
   final PermanentPhotoStorage _photoStorage;
   final Uuid _uuid;
 
+  Future<void> delete(NonOssLocalData data) async {
+    await _database.deleteByClientUuid(data.clientUuid);
+    await _photoStorage.removeFor(data.clientUuid);
+  }
+
   Future<NonOssLocalData> save(NonOssFormData form) async {
     final String clientUuid = _uuid.v4();
     final List<String> photoPaths = await _photoStorage.persistAll(

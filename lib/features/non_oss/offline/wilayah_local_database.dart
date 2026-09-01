@@ -115,4 +115,34 @@ class WilayahLocalDatabase {
         )
         .toList(growable: false);
   }
+
+  Future<String?> provinceName(int id) =>
+      _regionName(table: 'tbl_provinsi', nameColumn: 'nama_provinsi', id: id);
+
+  Future<String?> regencyName(int id) =>
+      _regionName(table: 'tbl_kabupaten', nameColumn: 'nama_kabupaten', id: id);
+
+  Future<String?> districtName(int id) =>
+      _regionName(table: 'tbl_kecamatan', nameColumn: 'nama_kecamatan', id: id);
+
+  Future<String?> villageName(int id) =>
+      _regionName(table: 'tbl_kelurahan', nameColumn: 'nama_kelurahan', id: id);
+
+  Future<String?> _regionName({
+    required String table,
+    required String nameColumn,
+    required int id,
+  }) async {
+    final Database db = await database;
+    final List<Map<String, Object?>> rows = await db.query(
+      table,
+      columns: <String>[nameColumn],
+      where: 'id = ?',
+      whereArgs: <Object>[id],
+      limit: 1,
+    );
+
+    if (rows.isEmpty) return null;
+    return rows.first[nameColumn]?.toString();
+  }
 }
