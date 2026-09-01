@@ -111,24 +111,24 @@ class _HomePageState extends State<HomePage> {
       context: context,
       builder: (dialogContext) {
         return AlertDialog(
-          backgroundColor: Colors.white,
-          surfaceTintColor: Colors.white,
+          backgroundColor: AppTheme.surface(context),
+          surfaceTintColor: AppTheme.surface(context),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(18),
           ),
-          title: const Text(
+          title: Text(
             'Keluar dari akun?',
             textAlign: TextAlign.center,
             style: TextStyle(
               fontSize: 17,
               fontWeight: FontWeight.w800,
-              color: AppTheme.textColor,
+              color: AppTheme.textColor(context),
             ),
           ),
-          content: const Text(
+          content: Text(
             'Anda perlu masuk kembali untuk mengakses aplikasi.',
             textAlign: TextAlign.center,
-            style: TextStyle(fontSize: 13.5, color: AppTheme.textSecondary),
+            style: TextStyle(fontSize: 13.5, color: AppTheme.textSecondary(context)),
           ),
           actionsPadding: const EdgeInsets.fromLTRB(20, 4, 20, 16),
           actionsAlignment: MainAxisAlignment.center,
@@ -137,8 +137,8 @@ class _HomePageState extends State<HomePage> {
               child: OutlinedButton(
                 onPressed: () => Navigator.pop(dialogContext),
                 style: OutlinedButton.styleFrom(
-                  foregroundColor: AppTheme.textColor,
-                  side: const BorderSide(color: AppTheme.border),
+                  foregroundColor: AppTheme.textColor(context),
+                  side: BorderSide(color: AppTheme.border(context)),
                   padding: const EdgeInsets.symmetric(vertical: 12),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
@@ -179,9 +179,9 @@ class _HomePageState extends State<HomePage> {
   void _showNotification(BuildContext context) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: const Row(
+        content: Row(
           children: [
-            Icon(Icons.notifications_none_rounded, color: Colors.white),
+            Icon(Icons.notifications_none_rounded, color: AppTheme.surfaceMuted(context)),
             SizedBox(width: 12),
             Text('Belum ada notifikasi baru.'),
           ],
@@ -290,7 +290,7 @@ class _HomePageState extends State<HomePage> {
       automaticallyImplyLeading: false,
       toolbarHeight: 68,
       titleSpacing: 16,
-      title: const Row(
+      title: Row(
         children: [
           _AppLogo(),
           SizedBox(width: 11),
@@ -303,7 +303,7 @@ class _HomePageState extends State<HomePage> {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
-                    color: AppTheme.textColor,
+                    color: AppTheme.textColor(context),
                     fontSize: 18,
                     fontWeight: FontWeight.w800,
                     letterSpacing: -0.2,
@@ -315,7 +315,7 @@ class _HomePageState extends State<HomePage> {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
-                    color: AppTheme.textSecondary,
+                    color: AppTheme.textSecondary(context),
                     fontSize: 10.5,
                     fontWeight: FontWeight.w500,
                   ),
@@ -347,14 +347,14 @@ class _HomePageState extends State<HomePage> {
   Widget _buildSectionHeader() {
     return Row(
       children: [
-        const Expanded(
+        Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
                 'Menu Utama',
                 style: TextStyle(
-                  color: AppTheme.textColor,
+                  color: AppTheme.textColor(context),
                   fontSize: 19,
                   fontWeight: FontWeight.w800,
                   letterSpacing: -0.2,
@@ -363,7 +363,7 @@ class _HomePageState extends State<HomePage> {
               SizedBox(height: 3),
               Text(
                 'Pilih layanan yang ingin digunakan',
-                style: TextStyle(color: AppTheme.textSecondary, fontSize: 12),
+                style: TextStyle(color: AppTheme.textSecondary(context), fontSize: 12),
               ),
             ],
           ),
@@ -443,10 +443,10 @@ class _AppBarAction extends StatelessWidget {
           width: 38,
           height: 38,
           decoration: BoxDecoration(
-            color: AppTheme.surfaceMuted,
+            color: AppTheme.surfaceMuted(context),
             borderRadius: BorderRadius.circular(12),
           ),
-          child: Icon(icon, size: 21, color: AppTheme.textColor),
+          child: Icon(icon, size: 21, color: AppTheme.textColor(context)),
         ),
       ),
     );

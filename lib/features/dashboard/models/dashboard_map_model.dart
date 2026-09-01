@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:ipardasbor/app/app_theme.dart';
 
 /// Kategori titik pada peta sebaran pengawasan.
 enum MapPointType { oss, nonOss, ota }
@@ -8,7 +9,7 @@ extension MapPointTypeX on MapPointType {
   Color get color {
     switch (this) {
       case MapPointType.oss:
-        return const Color(0xFF1565C0);
+        return AppTheme.primaryColor;
       case MapPointType.nonOss:
         return const Color(0xFFE53935);
       case MapPointType.ota:

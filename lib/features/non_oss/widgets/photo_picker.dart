@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:ipardasbor/app/app_theme.dart';
 
 class PhotoPicker extends StatefulWidget {
   const PhotoPicker({super.key, required this.photos, required this.onChanged});
@@ -63,11 +64,11 @@ class _PhotoPickerState extends State<PhotoPicker> {
         const SizedBox(height: 12),
         Row(
           children: [
-            const Icon(Icons.info_outline, size: 16, color: Color(0xFF718096)),
+            Icon(Icons.info_outline, size: 16, color: AppTheme.textSecondary(context)),
             const SizedBox(width: 6),
             Text(
               '${widget.photos.length}/5 foto dipilih · minimal 1 foto',
-              style: const TextStyle(color: Color(0xFF718096), fontSize: 12),
+              style: TextStyle(color: AppTheme.textSecondary(context), fontSize: 12),
             ),
           ],
         ),

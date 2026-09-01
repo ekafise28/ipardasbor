@@ -67,24 +67,24 @@ class _ProfilePageState extends State<ProfilePage> {
       context: context,
       builder: (dialogContext) {
         return AlertDialog(
-          backgroundColor: Colors.white,
-          surfaceTintColor: Colors.white,
+          backgroundColor: AppTheme.surface(context),
+          surfaceTintColor: AppTheme.surface(context),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(18),
           ),
-          title: const Text(
+          title: Text(
             'Keluar dari akun?',
             textAlign: TextAlign.center,
             style: TextStyle(
               fontSize: 17,
               fontWeight: FontWeight.w800,
-              color: AppTheme.textColor,
+              color: AppTheme.textColor(context),
             ),
           ),
-          content: const Text(
+          content: Text(
             'Anda perlu masuk kembali untuk mengakses aplikasi.',
             textAlign: TextAlign.center,
-            style: TextStyle(fontSize: 13.5, color: AppTheme.textSecondary),
+            style: TextStyle(fontSize: 13.5, color: AppTheme.textSecondary(context)),
           ),
           actionsPadding: const EdgeInsets.fromLTRB(20, 4, 20, 16),
           actionsAlignment: MainAxisAlignment.center,
@@ -93,8 +93,8 @@ class _ProfilePageState extends State<ProfilePage> {
               child: OutlinedButton(
                 onPressed: () => Navigator.pop(dialogContext),
                 style: OutlinedButton.styleFrom(
-                  foregroundColor: AppTheme.textColor,
-                  side: const BorderSide(color: AppTheme.border),
+                  foregroundColor: AppTheme.textColor(context),
+                  side: BorderSide(color: AppTheme.border(context)),
                   padding: const EdgeInsets.symmetric(vertical: 12),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
@@ -139,10 +139,10 @@ class _ProfilePageState extends State<ProfilePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text(
+        title: Text(
           'Profil Petugas',
           style: TextStyle(
-            color: AppTheme.textColor,
+            color: AppTheme.textColor(context),
             fontSize: 17,
             fontWeight: FontWeight.w800,
           ),
@@ -180,7 +180,7 @@ class _ProfilePageState extends State<ProfilePage> {
                     Text(
                       message,
                       textAlign: TextAlign.center,
-                      style: const TextStyle(color: AppTheme.textSecondary),
+                      style: TextStyle(color: AppTheme.textSecondary(context)),
                     ),
                     const SizedBox(height: 18),
                     OutlinedButton(
@@ -393,17 +393,17 @@ class _InfoSection extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppTheme.surface(context),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppTheme.border),
+        border: Border.all(color: AppTheme.border(context)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
             title,
-            style: const TextStyle(
-              color: AppTheme.textColor,
+            style: TextStyle(
+              color: AppTheme.textColor(context),
               fontSize: 13.5,
               fontWeight: FontWeight.w800,
             ),
@@ -446,16 +446,16 @@ class _InfoItem extends StatelessWidget {
               children: [
                 Text(
                   label,
-                  style: const TextStyle(
-                    color: AppTheme.textSecondary,
+                  style: TextStyle(
+                    color: AppTheme.textSecondary(context),
                     fontSize: 11.5,
                   ),
                 ),
                 const SizedBox(height: 2),
                 Text(
                   displayValue,
-                  style: const TextStyle(
-                    color: AppTheme.textColor,
+                  style: TextStyle(
+                    color: AppTheme.textColor(context),
                     fontSize: 13.5,
                     fontWeight: FontWeight.w600,
                   ),

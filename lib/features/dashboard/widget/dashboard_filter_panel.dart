@@ -1,5 +1,6 @@
 // dashboard_filter_panel.dart
 import 'package:flutter/material.dart';
+import 'package:ipardasbor/app/app_theme.dart';
 
 import '../models/dashboard_data.dart';
 
@@ -77,8 +78,11 @@ class DashboardFilterPanel extends StatefulWidget {
   State<DashboardFilterPanel> createState() => _DashboardFilterPanelState();
 }
 
+enum _ActiveAction { none, apply, reset }
+
 class _DashboardFilterPanelState extends State<DashboardFilterPanel> {
   late DashboardFilterValues _draft;
+  _ActiveAction _activeAction = _ActiveAction.none;
 
   @override
   void initState() {
@@ -93,6 +97,10 @@ class _DashboardFilterPanelState extends State<DashboardFilterPanel> {
     // tombol "Coba Lagi" atau navigasi ulang).
     if (oldWidget.initialValues != widget.initialValues) {
       _draft = widget.initialValues;
+    }
+    // Kalau parent sudah selesai loading, matikan indikator lokal.
+    if (oldWidget.isLoading && !widget.isLoading) {
+      setState(() => _activeAction = _ActiveAction.none);
     }
   }
 
@@ -115,11 +123,15 @@ class _DashboardFilterPanelState extends State<DashboardFilterPanel> {
   }
 
   void _handleReset() {
-    setState(() => _draft = DashboardFilterValues.empty);
+    setState(() {
+      _draft = DashboardFilterValues.empty;
+      _activeAction = _ActiveAction.reset;
+    });
     widget.onReset();
   }
 
   void _handleApply() {
+    setState(() => _activeAction = _ActiveAction.apply);
     widget.onApply(_draft);
   }
 
@@ -129,9 +141,9 @@ class _DashboardFilterPanelState extends State<DashboardFilterPanel> {
       width: double.infinity,
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppTheme.surface(context),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: const Color(0xFFE7EBF2)),
+        border: Border.all(color: AppTheme.border(context)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -142,24 +154,24 @@ class _DashboardFilterPanelState extends State<DashboardFilterPanel> {
                 width: 40,
                 height: 40,
                 decoration: BoxDecoration(
-                  color: const Color(0xFFE8F1FD),
+                  color: AppTheme.menuDashboardBg,
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: const Icon(
                   Icons.filter_alt_rounded,
-                  color: Color(0xFF1565C0),
+                  color: AppTheme.primaryColor,
                   size: 20,
                 ),
               ),
               const SizedBox(width: 12),
-              const Expanded(
+              Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
                       'Filter Dashboard',
                       style: TextStyle(
-                        color: Color(0xFF17243A),
+                        color: AppTheme.textColor(context),
                         fontSize: 16,
                         fontWeight: FontWeight.w800,
                       ),
@@ -168,7 +180,7 @@ class _DashboardFilterPanelState extends State<DashboardFilterPanel> {
                     Text(
                       'Sesuaikan data dashboard berdasarkan periode dan wilayah.',
                       style: TextStyle(
-                        color: Color(0xFF7A879A),
+                        color: AppTheme.textSecondary(context),
                         fontSize: 12,
                       ),
                     ),
@@ -178,7 +190,7 @@ class _DashboardFilterPanelState extends State<DashboardFilterPanel> {
             ],
           ),
           const SizedBox(height: 16),
-          const Divider(height: 1, color: Color(0xFFE7EBF2)),
+          Divider(height: 1, color: AppTheme.border(context)),
           const SizedBox(height: 16),
           LayoutBuilder(
             builder: (context, constraints) {
@@ -202,10 +214,12 @@ class _DashboardFilterPanelState extends State<DashboardFilterPanel> {
               if (!isWide) {
                 return Column(
                   children: fields
-                      .map((field) => Padding(
-                            padding: const EdgeInsets.only(bottom: 14),
-                            child: field,
-                          ))
+                      .map(
+                        (field) => Padding(
+                          padding: const EdgeInsets.only(bottom: 14),
+                          child: field,
+                        ),
+                      )
                       .toList(),
                 );
               }
@@ -213,12 +227,14 @@ class _DashboardFilterPanelState extends State<DashboardFilterPanel> {
               return Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: fields
-                    .map((field) => Expanded(
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 6),
-                            child: field,
-                          ),
-                        ))
+                    .map(
+                      (field) => Expanded(
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 6),
+                          child: field,
+                        ),
+                      ),
+                    )
                     .toList(),
               );
             },
@@ -230,8 +246,8 @@ class _DashboardFilterPanelState extends State<DashboardFilterPanel> {
               OutlinedButton.icon(
                 onPressed: widget.isLoading ? null : _handleReset,
                 style: OutlinedButton.styleFrom(
-                  foregroundColor: const Color(0xFF5E6B7E),
-                  side: const BorderSide(color: Color(0xFFE0E4EB)),
+                  foregroundColor: AppTheme.textSecondary(context),
+                  side: BorderSide(color: AppTheme.border(context)),
                   padding: const EdgeInsets.symmetric(
                     horizontal: 16,
                     vertical: 12,
@@ -240,14 +256,20 @@ class _DashboardFilterPanelState extends State<DashboardFilterPanel> {
                     borderRadius: BorderRadius.circular(12),
                   ),
                 ),
-                icon: const Icon(Icons.restart_alt_rounded, size: 18),
+                icon: (widget.isLoading && _activeAction == _ActiveAction.reset)
+                    ? const SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Icon(Icons.restart_alt_rounded, size: 18),
                 label: const Text('Reset'),
               ),
               const SizedBox(width: 10),
               FilledButton.icon(
                 onPressed: widget.isLoading ? null : _handleApply,
                 style: FilledButton.styleFrom(
-                  backgroundColor: const Color(0xFF1565C0),
+                  backgroundColor: AppTheme.primaryColor,
                   foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(
                     horizontal: 18,
@@ -257,7 +279,7 @@ class _DashboardFilterPanelState extends State<DashboardFilterPanel> {
                     borderRadius: BorderRadius.circular(12),
                   ),
                 ),
-                icon: widget.isLoading
+                icon: (widget.isLoading && _activeAction == _ActiveAction.apply)
                     ? const SizedBox(
                         width: 16,
                         height: 16,
@@ -284,15 +306,15 @@ class _DashboardFilterPanelState extends State<DashboardFilterPanel> {
     final String display = value == null
         ? 'mm/dd/yyyy'
         : '${value.month.toString().padLeft(2, '0')}/'
-            '${value.day.toString().padLeft(2, '0')}/${value.year}';
+              '${value.day.toString().padLeft(2, '0')}/${value.year}';
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           label,
-          style: const TextStyle(
-            color: Color(0xFF344156),
+          style: TextStyle(
+            color: AppTheme.textColor(context),
             fontSize: 12.5,
             fontWeight: FontWeight.w700,
           ),
@@ -304,9 +326,9 @@ class _DashboardFilterPanelState extends State<DashboardFilterPanel> {
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
             decoration: BoxDecoration(
-              color: const Color(0xFFF8FAFC),
+              color: AppTheme.scaffoldColorDynamic(context),
               borderRadius: BorderRadius.circular(11),
-              border: Border.all(color: const Color(0xFFE0E4EB)),
+              border: Border.all(color: AppTheme.border(context)),
             ),
             child: Row(
               children: [
@@ -315,8 +337,8 @@ class _DashboardFilterPanelState extends State<DashboardFilterPanel> {
                     display,
                     style: TextStyle(
                       color: value == null
-                          ? const Color(0xFF9AA5B5)
-                          : const Color(0xFF17243A),
+                          ? AppTheme.textMuted
+                          : AppTheme.textColor(context),
                       fontSize: 13,
                     ),
                   ),
@@ -324,7 +346,7 @@ class _DashboardFilterPanelState extends State<DashboardFilterPanel> {
                 const Icon(
                   Icons.calendar_today_rounded,
                   size: 16,
-                  color: Color(0xFF9AA5B5),
+                  color: AppTheme.textMuted,
                 ),
               ],
             ),
@@ -338,10 +360,10 @@ class _DashboardFilterPanelState extends State<DashboardFilterPanel> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
+        Text(
           'Kabupaten/Kota',
           style: TextStyle(
-            color: Color(0xFF344156),
+            color: AppTheme.textColor(context),
             fontSize: 12.5,
             fontWeight: FontWeight.w700,
           ),
@@ -360,10 +382,7 @@ class _DashboardFilterPanelState extends State<DashboardFilterPanel> {
             ...widget.districtOptions.map(
               (district) => DropdownMenuItem<int?>(
                 value: district.id,
-                child: Text(
-                  district.name,
-                  overflow: TextOverflow.ellipsis,
-                ),
+                child: Text(district.name, overflow: TextOverflow.ellipsis),
               ),
             ),
           ],
@@ -383,10 +402,10 @@ class _DashboardFilterPanelState extends State<DashboardFilterPanel> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
+        Text(
           'Sumber Data',
           style: TextStyle(
-            color: Color(0xFF344156),
+            color: AppTheme.textColor(context),
             fontSize: 12.5,
             fontWeight: FontWeight.w700,
           ),
@@ -403,10 +422,8 @@ class _DashboardFilterPanelState extends State<DashboardFilterPanel> {
               child: Text('Semua Sumber'),
             ),
             ...widget.dataSourceOptions.map(
-              (source) => DropdownMenuItem<String?>(
-                value: source,
-                child: Text(source),
-              ),
+              (source) =>
+                  DropdownMenuItem<String?>(value: source, child: Text(source)),
             ),
           ],
           onChanged: (value) {
@@ -425,19 +442,17 @@ class _DashboardFilterPanelState extends State<DashboardFilterPanel> {
     return InputDecoration(
       isDense: true,
       filled: true,
-      fillColor: const Color(0xFFF8FAFC),
+      fillColor: AppTheme.scaffoldColorDynamic(context),
       contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(11),
-        borderSide: const BorderSide(color: Color(0xFFE0E4EB)),
+        borderSide: BorderSide(color: AppTheme.border(context)),
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(11),
-        borderSide: const BorderSide(color: Color(0xFF1565C0)),
+        borderSide: const BorderSide(color: AppTheme.primaryColor),
       ),
-      border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(11),
-      ),
+      border: OutlineInputBorder(borderRadius: BorderRadius.circular(11)),
     );
   }
 }

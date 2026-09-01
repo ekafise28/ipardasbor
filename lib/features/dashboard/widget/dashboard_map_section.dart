@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_map_marker_cluster/flutter_map_marker_cluster.dart';
+import 'package:ipardasbor/app/app_theme.dart';
 import 'package:latlong2/latlong.dart';
 
 import '../../dashboard/models/dashboard_map_model.dart';
@@ -44,9 +45,9 @@ class _DashboardMapSectionState extends State<DashboardMapSection> {
       width: double.infinity,
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppTheme.surface(context),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: const Color(0xFFE7EBF2)),
+        border: Border.all(color: AppTheme.border(context)),
         boxShadow: const [
           BoxShadow(
             color: Color(0x0D17243A),
@@ -118,13 +119,13 @@ class _DashboardMapSectionState extends State<DashboardMapSection> {
               Icon(
                 Icons.info_outline_rounded,
                 size: 15,
-                color: Color(0xFF9AA5B5),
+                color: AppTheme.textMuted,
               ),
               SizedBox(width: 6),
               Expanded(
                 child: Text(
                   'Klik titik untuk melihat informasi usaha. Gunakan checklist di kanan atas untuk menampilkan atau menyembunyikan kategori.',
-                  style: TextStyle(color: Color(0xFF9AA5B5), fontSize: 11.5),
+                  style: TextStyle(color: AppTheme.textMuted, fontSize: 11.5),
                 ),
               ),
             ],
@@ -145,12 +146,12 @@ class _DashboardMapSectionState extends State<DashboardMapSection> {
               width: 43,
               height: 43,
               decoration: BoxDecoration(
-                color: const Color(0xFF1565C0).withValues(alpha: 0.10),
+                color: AppTheme.primaryColor.withValues(alpha: 0.10),
                 borderRadius: BorderRadius.circular(13),
               ),
               child: const Icon(
                 Icons.map_rounded,
-                color: Color(0xFF1565C0),
+                color: AppTheme.primaryColor,
                 size: 22,
               ),
             ),
@@ -159,10 +160,10 @@ class _DashboardMapSectionState extends State<DashboardMapSection> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
+                  Text(
                     'Peta Sebaran Pengawasan',
                     style: TextStyle(
-                      color: Color(0xFF17243A),
+                      color: AppTheme.textColor(context),
                       fontSize: 16,
                       fontWeight: FontWeight.w800,
                     ),
@@ -170,8 +171,8 @@ class _DashboardMapSectionState extends State<DashboardMapSection> {
                   const SizedBox(height: 3),
                   Text(
                     'Lokasi OSS, Non-OSS, dan Baseline OTA Provinsi ${widget.config.provinceName}.',
-                    style: const TextStyle(
-                      color: Color(0xFF7A879A),
+                    style: TextStyle(
+                      color: AppTheme.textSecondary(context),
                       fontSize: 12,
                     ),
                   ),
@@ -186,7 +187,7 @@ class _DashboardMapSectionState extends State<DashboardMapSection> {
           runSpacing: 6,
           children: [
             _CountChip(
-              color: const Color(0xFF1565C0),
+              color: AppTheme.primaryColor,
               label: 'OSS: ${widget.config.totalOss}',
             ),
             _CountChip(
@@ -266,8 +267,8 @@ class _ClusterBubble extends StatelessWidget {
       alignment: Alignment.center,
       child: Text(
         '$count',
-        style: const TextStyle(
-          color: Color(0xFF17243A),
+        style: TextStyle(
+          color: AppTheme.textColor(context),
           fontWeight: FontWeight.w800,
           fontSize: 13,
         ),
@@ -323,9 +324,9 @@ class _MapLegend extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.95),
+        color: AppTheme.surface(context).withValues(alpha: 0.95),
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: const Color(0xFFE0E4EB)),
+        border: Border.all(color: AppTheme.border(context)),
         boxShadow: const [
           BoxShadow(
             color: Color(0x1A000000),
@@ -355,9 +356,9 @@ class _MapLegend extends StatelessWidget {
                   ),
                   Text(
                     '${type.label} — ${_dotLabel(type)}',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 12,
-                      color: Color(0xFF344156),
+                      color: AppTheme.textColor(context),
                     ),
                   ),
                 ],
@@ -400,7 +401,7 @@ class _PointDetailSheet extends StatelessWidget {
                 height: 4,
                 margin: const EdgeInsets.only(bottom: 16),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFE0E4EB),
+                  color: AppTheme.border(context),
                   borderRadius: BorderRadius.circular(4),
                 ),
               ),
@@ -430,10 +431,10 @@ class _PointDetailSheet extends StatelessWidget {
             const SizedBox(height: 10),
             Text(
               point.title.isEmpty ? '(Tanpa nama)' : point.title,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 17,
                 fontWeight: FontWeight.w800,
-                color: Color(0xFF17243A),
+                color: AppTheme.textColor(context),
               ),
             ),
             const SizedBox(height: 12),
@@ -476,14 +477,14 @@ class _DetailRow extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, size: 17, color: const Color(0xFF7A879A)),
+          Icon(icon, size: 17, color: AppTheme.textSecondary(context)),
           const SizedBox(width: 9),
           Expanded(
             child: Text(
               label,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 13,
-                color: Color(0xFF344156),
+                color: AppTheme.textColor(context),
                 height: 1.4,
               ),
             ),

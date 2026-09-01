@@ -9,7 +9,10 @@ class AppTheme {
   static const Color primaryDark = Color(0xFF0D47A1);
   static const Color primaryLight = Color(0xFF2384DA);
   static const Color secondaryColor = Color(0xFF00A6A6);
-  static const Color scaffoldColor = Color(0xFFF4F7FC);
+  static Color scaffoldColorDynamic(BuildContext context) {
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
+    return isDark ? const Color(0xFF121212) : const Color(0xFFF4F7FC);
+  }
 
   static const LinearGradient brandGradient = LinearGradient(
     begin: Alignment.topLeft,
@@ -18,8 +21,16 @@ class AppTheme {
   );
 
   // ---- Text ----
-  static const Color textColor = Color(0xFF152238); // headings
-  static const Color textSecondary = Color(0xFF748197); // body/subtext
+  static Color textColor(BuildContext context) {
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
+    return isDark ? Colors.white : const Color(0xFF152238);
+  } // heading
+
+  static Color textSecondary(BuildContext context) {
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
+    return isDark ? const Color(0xFFB0B8C4) : const Color(0xFF748197);
+  } // body text, secondary icons
+
   static const Color textMuted = Color(0xFFA1ACBC); // captions, muted icons
   static const Color textOnBrand = Colors.white;
   static const Color textOnBrandMuted = Color(
@@ -30,11 +41,20 @@ class AppTheme {
   ); // badge text/icon on gradient
 
   // ---- Surfaces ----
-  static const Color surface = Colors.white;
-  static const Color surfaceMuted = Color(
-    0xFFF0F4F9,
-  ); // icon-button backgrounds
-  static const Color border = Color(0xFFDCE4EF); // matches your input border
+  static Color surface(BuildContext context) {
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
+    return isDark ? const Color(0xFF1E1E1E) : Colors.white;
+  } // cards, dialogs, bottom sheets, etc.
+
+  static Color surfaceMuted(BuildContext context) {
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
+    return isDark ? const Color(0xFF2A2A2A) : const Color(0xFFF0F4F9);
+  } // icon-button backgrounds
+
+  static Color border(BuildContext context) {
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
+    return isDark ? const Color(0xFF3A3F4B) : const Color(0xFFDCE4EF);
+  }
 
   // ---- Semantic ----
   static const Color danger = Color(0xFFD32F2F);
@@ -80,7 +100,7 @@ class AppTheme {
   static ThemeData get lightTheme {
     return ThemeData(
       useMaterial3: true,
-      scaffoldBackgroundColor: scaffoldColor,
+      scaffoldBackgroundColor: const Color(0xFFF4F7FC),
       fontFamily: 'Roboto',
       colorScheme: ColorScheme.fromSeed(
         seedColor: primaryColor,
@@ -90,7 +110,7 @@ class AppTheme {
       appBarTheme: const AppBarTheme(
         backgroundColor: Colors.white,
         surfaceTintColor: Colors.white,
-        foregroundColor: textColor,
+        foregroundColor: Color(0xFF152238),
         elevation: 0,
       ),
       inputDecorationTheme: InputDecorationTheme(
@@ -102,11 +122,11 @@ class AppTheme {
         ),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
-          borderSide: const BorderSide(color: Color(0xFFDCE4EF)),
+          borderSide: BorderSide(color: const Color(0xFFDCE4EF)),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
-          borderSide: const BorderSide(color: Color(0xFFDCE4EF)),
+          borderSide: BorderSide(color: const Color(0xFFDCE4EF)),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),

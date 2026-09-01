@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:ipardasbor/app/app_theme.dart';
 
 class OtaSelector extends StatelessWidget {
   const OtaSelector({
@@ -74,7 +75,7 @@ class OtaSelector extends StatelessWidget {
                       labelText: 'URL listing ${e.value} *',
                       hintText: 'https://...',
                       filled: true,
-                      fillColor: const Color(0xFFF8FAFC),
+                      fillColor: AppTheme.scaffoldColorDynamic(context),
                       prefixIcon: const Icon(Icons.link_rounded, size: 20),
                     ),
                     keyboardType: TextInputType.url,

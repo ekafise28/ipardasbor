@@ -12,7 +12,7 @@ class MenuListTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: AppTheme.surface,
+      color: AppTheme.surface(context),
       borderRadius: BorderRadius.circular(16),
       clipBehavior: Clip.antiAlias,
       child: InkWell(
@@ -21,12 +21,12 @@ class MenuListTile extends StatelessWidget {
         highlightColor: menu.color.withValues(alpha: 0.05),
         child: Ink(
           decoration: BoxDecoration(
-            color: AppTheme.surface,
+            color: AppTheme.surface(context),
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: AppTheme.border),
+            border: Border.all(color: AppTheme.border(context)),
             boxShadow: [
               BoxShadow(
-                color: AppTheme.textColor.withValues(alpha: 0.05),
+                color: AppTheme.textColor(context).withValues(alpha: 0.05),
                 blurRadius: 10,
                 offset: const Offset(0, 4),
               ),
@@ -54,8 +54,8 @@ class MenuListTile extends StatelessWidget {
                         menu.title,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          color: AppTheme.textColor,
+                        style: TextStyle(
+                          color: AppTheme.textColor(context),
                           fontSize: 14,
                           fontWeight: FontWeight.w800,
                           letterSpacing: -0.1,
@@ -66,8 +66,8 @@ class MenuListTile extends StatelessWidget {
                         menu.description,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          color: AppTheme.textSecondary,
+                        style: TextStyle(
+                          color: AppTheme.textSecondary(context),
                           fontSize: 12,
                           height: 1.2,
                         ),

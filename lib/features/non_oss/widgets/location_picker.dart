@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
+import 'package:ipardasbor/app/app_theme.dart';
 import 'package:latlong2/latlong.dart';
 
 class LocationPicker extends StatelessWidget {
@@ -44,7 +45,7 @@ class LocationPicker extends StatelessWidget {
                 hasLocation ? Icons.check_circle : Icons.location_searching,
                 color: hasLocation
                     ? const Color(0xFF1F9D68)
-                    : const Color(0xFF718096),
+                    : AppTheme.textSecondary(context),
               ),
               const SizedBox(width: 9),
               Expanded(
@@ -126,7 +127,7 @@ class LocationPicker extends StatelessWidget {
           child: FilledButton.icon(
             onPressed: loading ? null : onGetLocation,
             style: FilledButton.styleFrom(
-              backgroundColor: const Color(0xFF0D67C2),
+              backgroundColor: AppTheme.primaryColor,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
               ),
@@ -147,7 +148,7 @@ class LocationPicker extends StatelessWidget {
                   : hasLocation
                   ? 'Perbarui Lokasi GPS'
                   : 'Ambil Lokasi GPS',
-              style: const TextStyle(fontWeight: FontWeight.w700),
+              style: TextStyle(fontWeight: FontWeight.w700, color: AppTheme.textColor(context)),
             ),
           ),
         ),
@@ -175,7 +176,7 @@ class _Coordinate extends StatelessWidget {
         children: [
           Text(
             label,
-            style: const TextStyle(color: Color(0xFF718096), fontSize: 10),
+            style: TextStyle(color: AppTheme.textSecondary(context), fontSize: 10),
           ),
           const SizedBox(height: 3),
           Text(

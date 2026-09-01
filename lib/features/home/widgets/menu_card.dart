@@ -24,11 +24,11 @@ class MenuCard extends StatelessWidget {
       ),
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
-        color: AppTheme.textColor.withValues(alpha: 0.95),
+        color: AppTheme.textColor(context).withValues(alpha: 0.95),
         borderRadius: BorderRadius.circular(10),
       ),
       child: Material(
-        color: AppTheme.surface,
+        color: AppTheme.surface(context),
         borderRadius: BorderRadius.circular(16),
         clipBehavior: Clip.antiAlias,
         child: InkWell(
@@ -37,12 +37,12 @@ class MenuCard extends StatelessWidget {
           highlightColor: menu.color.withValues(alpha: 0.05),
           child: Ink(
             decoration: BoxDecoration(
-              color: AppTheme.surface,
+              color: AppTheme.surface(context),
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: AppTheme.border),
+              border: Border.all(color: AppTheme.border(context)),
               boxShadow: [
                 BoxShadow(
-                  color: AppTheme.textColor.withValues(alpha: 0.05),
+                  color: AppTheme.textColor(context).withValues(alpha: 0.05),
                   blurRadius: 10,
                   offset: const Offset(0, 4),
                 ),
@@ -68,8 +68,8 @@ class MenuCard extends StatelessWidget {
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                     textAlign: TextAlign.center,
-                    style: const TextStyle(
-                      color: AppTheme.textColor,
+                    style: TextStyle(
+                      color: AppTheme.textColor(context),
                       fontSize: 11,
                       height: 1.15,
                       fontWeight: FontWeight.w700,

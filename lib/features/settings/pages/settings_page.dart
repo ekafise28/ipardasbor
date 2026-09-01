@@ -50,9 +50,9 @@ class _SettingsPageState extends State<SettingsPage> {
         return Container(
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: AppTheme.surface(context),
             borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: AppTheme.border),
+            border: Border.all(color: AppTheme.border(context)),
           ),
           child: Row(
             children: [
@@ -73,10 +73,10 @@ class _SettingsPageState extends State<SettingsPage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
+                    Text(
                       'Mode Tampilan (Alpha)',
                       style: TextStyle(
-                        color: AppTheme.textColor,
+                        color: AppTheme.textColor(context),
                         fontSize: 14.5,
                         fontWeight: FontWeight.w700,
                       ),
@@ -84,8 +84,8 @@ class _SettingsPageState extends State<SettingsPage> {
                     const SizedBox(height: 2),
                     Text(
                       isDark ? 'Mode gelap aktif' : 'Mode terang aktif',
-                      style: const TextStyle(
-                        color: AppTheme.textSecondary,
+                      style: TextStyle(
+                        color: AppTheme.textSecondary(context),
                         fontSize: 12,
                       ),
                     ),
@@ -149,24 +149,24 @@ class _SettingsPageState extends State<SettingsPage> {
       context: context,
       builder: (dialogContext) {
         return AlertDialog(
-          backgroundColor: Colors.white,
-          surfaceTintColor: Colors.white,
+          backgroundColor: AppTheme.surface(context),
+          surfaceTintColor: AppTheme.surface(context),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(18),
           ),
-          title: const Text(
+          title: Text(
             'Keluar dari akun?',
             textAlign: TextAlign.center,
             style: TextStyle(
               fontSize: 17,
               fontWeight: FontWeight.w800,
-              color: AppTheme.textColor,
+              color: AppTheme.textColor(context),
             ),
           ),
-          content: const Text(
+          content: Text(
             'Anda perlu masuk kembali untuk mengakses aplikasi.',
             textAlign: TextAlign.center,
-            style: TextStyle(fontSize: 13.5, color: AppTheme.textSecondary),
+            style: TextStyle(fontSize: 13.5, color: AppTheme.textSecondary(context)),
           ),
           actionsPadding: const EdgeInsets.fromLTRB(20, 4, 20, 16),
           actionsAlignment: MainAxisAlignment.center,
@@ -175,8 +175,8 @@ class _SettingsPageState extends State<SettingsPage> {
               child: OutlinedButton(
                 onPressed: () => Navigator.pop(dialogContext),
                 style: OutlinedButton.styleFrom(
-                  foregroundColor: AppTheme.textColor,
-                  side: const BorderSide(color: AppTheme.border),
+                  foregroundColor: AppTheme.textColor(context),
+                  side: BorderSide(color: AppTheme.border(context)),
                   padding: const EdgeInsets.symmetric(vertical: 12),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
@@ -221,10 +221,10 @@ class _SettingsPageState extends State<SettingsPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text(
+        title: Text(
           'Pengaturan',
           style: TextStyle(
-            color: AppTheme.textColor,
+            color: AppTheme.textColor(context),
             fontSize: 17,
             fontWeight: FontWeight.w800,
           ),
@@ -298,8 +298,8 @@ class _SectionLabel extends StatelessWidget {
   Widget build(BuildContext context) {
     return Text(
       label,
-      style: const TextStyle(
-        color: AppTheme.textSecondary,
+      style: TextStyle(
+        color: AppTheme.textSecondary(context),
         fontSize: 12,
         fontWeight: FontWeight.w700,
         letterSpacing: 0.2,

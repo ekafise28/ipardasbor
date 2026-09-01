@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:ipardasbor/app/app_theme.dart';
 
 import '../models/menu_data.dart';
 
@@ -35,8 +36,8 @@ class FeaturePlaceholderPage extends StatelessWidget {
               Text(
                 menu.title,
                 textAlign: TextAlign.center,
-                style: const TextStyle(
-                  color: Color(0xFF17243A),
+                style: TextStyle(
+                  color: AppTheme.textColor(context),
                   fontSize: 24,
                   fontWeight: FontWeight.w800,
                 ),

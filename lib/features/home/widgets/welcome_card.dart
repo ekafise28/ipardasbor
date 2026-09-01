@@ -207,7 +207,7 @@ class _WelcomeCardState extends State<WelcomeCard> {
                           children: [
                             const Icon(
                               Icons.verified_user_outlined,
-                              color: Color(0xFFEAF4FF),
+                              color: AppTheme.textOnBrandBadge,
                               size: 13,
                             ),
                             const SizedBox(width: 5),
@@ -217,7 +217,7 @@ class _WelcomeCardState extends State<WelcomeCard> {
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                                 style: const TextStyle(
-                                  color: Color(0xFFEAF4FF),
+                                  color: AppTheme.textOnBrandBadge,
                                   fontSize: 10.5,
                                   fontWeight: FontWeight.w600,
                                 ),

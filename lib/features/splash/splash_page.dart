@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:ipardasbor/app/app_theme.dart';
 
 import '../../core/storage/secure_storage.dart';
 
@@ -150,14 +151,14 @@ class _SplashPageState extends State<SplashPage>
     return Scaffold(
       // Fallback so there's never a white frame if anything shows through
       // before the gradient paints.
-      backgroundColor: const Color(0xFF1976D2),
+      backgroundColor: AppTheme.primaryColor,
       body: Container(
         width: double.infinity,
         decoration: const BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
-            colors: [Color(0xFF0D47A1), Color(0xFF1976D2), Color(0xFF00A6A6)],
+            colors: [AppTheme.primaryDark, AppTheme.primaryColor, Color(0xFF00A6A6)],
           ),
         ),
         child: SafeArea(
@@ -195,7 +196,7 @@ class _SplashPageState extends State<SplashPage>
                             child: const Icon(
                               Icons.travel_explore_rounded,
                               size: 60,
-                              color: Color(0xFF1565C0),
+                              color: AppTheme.primaryColor,
                             ),
                           ),
                         ),

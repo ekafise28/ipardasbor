@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:ipardasbor/app/app_theme.dart';
 
 class FormSection extends StatelessWidget {
   const FormSection({
@@ -18,19 +19,20 @@ class FormSection extends StatelessWidget {
   final Widget child;
   final bool hasError;
 
-  static const _normalBorder = Color(0xFFDDE7F1);
-
   @override
   Widget build(BuildContext context) {
-    const primary = Color(0xFF0D67C2);
+    const primary = AppTheme.primaryColor;
+    final Color border = AppTheme.border(context);
+    final Color surface = AppTheme.surface(context);
+    final Color headerBg = AppTheme.surfaceMuted(context);
 
     return Container(
       margin: const EdgeInsets.only(bottom: 14),
       decoration: BoxDecoration(
-        color: hasError ? Colors.red.withOpacity(0.05) : Colors.white,
+        color: hasError ? Colors.red.withOpacity(0.05) : surface,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: hasError ? Colors.red : _normalBorder,
+          color: hasError ? Colors.red : border,
           width: hasError ? 1.5 : 1,
         ),
         boxShadow: const [
@@ -47,9 +49,11 @@ class FormSection extends StatelessWidget {
           Container(
             width: double.infinity,
             padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
-            decoration: const BoxDecoration(
-              color: Color(0xFFEAF4FF),
-              borderRadius: BorderRadius.vertical(top: Radius.circular(15)),
+            decoration: BoxDecoration(
+              color: headerBg,
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(15),
+              ),
             ),
             child: Row(
               children: [
@@ -73,9 +77,9 @@ class FormSection extends StatelessWidget {
                 Container(
                   width: 32,
                   height: 32,
-                  decoration: const BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.all(Radius.circular(9)),
+                  decoration: BoxDecoration(
+                    color: surface,
+                    borderRadius: const BorderRadius.all(Radius.circular(9)),
                   ),
                   child: Icon(
                     icon,
@@ -93,8 +97,8 @@ class FormSection extends StatelessWidget {
                           Expanded(
                             child: Text(
                               title,
-                              style: const TextStyle(
-                                color: Color(0xFF172B3A),
+                              style: TextStyle(
+                                color: AppTheme.textColor(context),
                                 fontSize: 14.5,
                                 fontWeight: FontWeight.w800,
                               ),
@@ -112,8 +116,8 @@ class FormSection extends StatelessWidget {
                         const SizedBox(height: 2),
                         Text(
                           subtitle!,
-                          style: const TextStyle(
-                            color: Color(0xFF718096),
+                          style: TextStyle(
+                            color: AppTheme.textSecondary(context),
                             fontSize: 11.5,
                             height: 1.3,
                           ),

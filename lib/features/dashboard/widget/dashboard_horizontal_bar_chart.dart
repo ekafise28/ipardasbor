@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:ipardasbor/app/app_theme.dart';
 
 import '../models/chart_series.dart';
 
@@ -35,26 +36,44 @@ class DashboardHorizontalBarChart extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(19),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppTheme.surface(context),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: const Color(0xFFE7EBF2)),
+        border: Border.all(color: AppTheme.border(context)),
         boxShadow: const [
-          BoxShadow(color: Color(0x0D17243A), blurRadius: 18, offset: Offset(0, 6)),
+          BoxShadow(
+            color: Color(0x0D17243A),
+            blurRadius: 18,
+            offset: Offset(0, 6),
+          ),
         ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(title, style: const TextStyle(color: Color(0xFF17243A), fontSize: 16, fontWeight: FontWeight.w800)),
+          Text(
+            title,
+            style: TextStyle(
+              color: AppTheme.textColor(context),
+              fontSize: 16,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
           const SizedBox(height: 3),
-          Text(subtitle, style: const TextStyle(color: Color(0xFF7A879A), fontSize: 12, height: 1.35)),
+          Text(
+            subtitle,
+            style: TextStyle(
+              color: AppTheme.textSecondary(context),
+              fontSize: 12,
+              height: 1.35,
+            ),
+          ),
           const SizedBox(height: 14),
-          _buildLegend(),
+          _buildLegend(context),
           const SizedBox(height: 18),
           ...List.generate(data.labels.length, (index) {
             return Padding(
               padding: const EdgeInsets.only(bottom: 14),
-              child: _buildCategoryRow(index, safeMax),
+              child: _buildCategoryRow(context, index, safeMax),
             );
           }),
         ],
@@ -62,7 +81,7 @@ class DashboardHorizontalBarChart extends StatelessWidget {
     );
   }
 
-  Widget _buildCategoryRow(int index, double safeMax) {
+  Widget _buildCategoryRow(BuildContext context, int index, double safeMax) {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
@@ -70,7 +89,11 @@ class DashboardHorizontalBarChart extends StatelessWidget {
           width: 56,
           child: Text(
             data.labels[index],
-            style: const TextStyle(color: Color(0xFF344156), fontSize: 11.5, fontWeight: FontWeight.w700),
+            style: TextStyle(
+              color: AppTheme.textColor(context),
+              fontSize: 11.5,
+              fontWeight: FontWeight.w700,
+            ),
           ),
         ),
         const SizedBox(width: 10),
@@ -78,7 +101,9 @@ class DashboardHorizontalBarChart extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: data.series.map((s) {
-              final double value = index < s.values.length ? s.values[index] : 0;
+              final double value = index < s.values.length
+                  ? s.values[index]
+                  : 0;
               final double ratio = (value / safeMax).clamp(0.0, 1.0);
 
               return Padding(
@@ -95,7 +120,7 @@ class DashboardHorizontalBarChart extends StatelessWidget {
                                 height: rowHeight,
                                 width: double.infinity,
                                 decoration: BoxDecoration(
-                                  color: const Color(0xFFF3F5F9),
+                                  color: AppTheme.surfaceMuted(context),
                                   borderRadius: BorderRadius.circular(6),
                                 ),
                               ),
@@ -117,7 +142,11 @@ class DashboardHorizontalBarChart extends StatelessWidget {
                       width: 28,
                       child: Text(
                         value.toInt().toString(),
-                        style: const TextStyle(color: Color(0xFF667085), fontSize: 11, fontWeight: FontWeight.w700),
+                        style: TextStyle(
+                          color: AppTheme.textSecondary(context),
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,
+                        ),
                       ),
                     ),
                   ],
@@ -130,7 +159,7 @@ class DashboardHorizontalBarChart extends StatelessWidget {
     );
   }
 
-  Widget _buildLegend() {
+  Widget _buildLegend(BuildContext context) {
     return Wrap(
       spacing: 14,
       runSpacing: 6,
@@ -138,9 +167,20 @@ class DashboardHorizontalBarChart extends StatelessWidget {
         return Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Container(width: 8, height: 8, decoration: BoxDecoration(color: s.color, shape: BoxShape.circle)),
+            Container(
+              width: 8,
+              height: 8,
+              decoration: BoxDecoration(color: s.color, shape: BoxShape.circle),
+            ),
             const SizedBox(width: 6),
-            Text(s.name, style: const TextStyle(color: Color(0xFF344156), fontSize: 11, fontWeight: FontWeight.w600)),
+            Text(
+              s.name,
+              style: TextStyle(
+                color: AppTheme.textColor(context),
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
           ],
         );
       }).toList(),
