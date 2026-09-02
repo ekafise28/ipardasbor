@@ -4,7 +4,7 @@ import '../../app/app_theme.dart';
 import '../dashboard/dashboard_page.dart';
 import '../non_oss/non_oss_form_page.dart';
 import '../sinkronisasi/sync_page.dart';
-import '../riwayat/pages/riwayat_page.dart';
+import '../riwayat/riwayat_page.dart';
 
 import 'models/menu_data.dart';
 import 'pages/feature_placeholder_page.dart';

@@ -2,13 +2,15 @@ import '../../../core/api/api_client.dart';
 import '../../../core/api/api_endpoints.dart';
 import '../models/riwayat_filter.dart';
 import '../models/riwayat_page_result.dart';
+import '../models/riwayat_detail.dart';
 
 /// Lapisan akses data untuk fitur Riwayat.
 ///
 /// Membungkus ApiClient supaya halaman/widget tidak perlu tahu detail
 /// endpoint atau bentuk mentah response JSON.
 class RiwayatService {
-  RiwayatService({ApiClient? apiClient}) : _apiClient = apiClient ?? ApiClient();
+  RiwayatService({ApiClient? apiClient})
+    : _apiClient = apiClient ?? ApiClient();
 
   final ApiClient _apiClient;
 
@@ -26,12 +28,32 @@ class RiwayatService {
       queryParameters: filter.toQueryParameters(page),
     );
 
-    final Map<String, dynamic> body =
-        response is Map<String, dynamic> ? response : <String, dynamic>{};
+    final Map<String, dynamic> body = response is Map<String, dynamic>
+        ? response
+        : <String, dynamic>{};
 
     final Map<String, dynamic> data =
         (body['data'] as Map<String, dynamic>?) ?? <String, dynamic>{};
 
     return RiwayatPageResult.fromJson(data);
+  }
+
+  /// Mengambil detail lengkap satu item riwayat berdasarkan [id].
+  ///
+  /// Melempar [ApiException] jika request gagal (termasuk 404 saat data
+  /// tidak ditemukan atau di luar akses wilayah user).
+  Future<RiwayatDetail> fetchDetail(int id) async {
+    final dynamic response = await _apiClient.get(
+      ApiEndpoints.riwayatOssDetail(id),
+    );
+
+    final Map<String, dynamic> body = response is Map<String, dynamic>
+        ? response
+        : <String, dynamic>{};
+
+    final Map<String, dynamic> data =
+        (body['data'] as Map<String, dynamic>?) ?? <String, dynamic>{};
+
+    return RiwayatDetail.fromJson(data);
   }
 }

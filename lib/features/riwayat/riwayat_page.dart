@@ -2,14 +2,19 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 
-import '../../../app/app_theme.dart';
-import '../../../core/api/api_exception.dart';
-import '../models/riwayat_filter.dart';
-import '../models/riwayat_item.dart';
-import '../models/riwayat_page_result.dart';
-import '../services/riwayat_service.dart';
-import '../widgets/riwayat_card.dart';
-import '../widgets/riwayat_filter_sheet.dart';
+import '../../app/app_theme.dart';
+
+import '../../core/api/api_exception.dart';
+
+import 'models/riwayat_filter.dart';
+import 'models/riwayat_item.dart';
+import 'models/riwayat_page_result.dart';
+
+import 'services/riwayat_service.dart';
+import 'pages/riwayat_detail_page.dart';
+
+import 'widgets/riwayat_card.dart';
+import 'widgets/riwayat_filter_sheet.dart';
 
 /// Halaman daftar riwayat pengawasan (OSS / Non-OSS / OTA).
 ///
@@ -145,9 +150,9 @@ class _RiwayatPageState extends State<RiwayatPage> {
       }
 
       setState(() => _loadingHalamanBerikutnya = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(e.message)),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(e.message)));
     } catch (_) {
       if (!mounted) {
         return;
@@ -181,11 +186,9 @@ class _RiwayatPageState extends State<RiwayatPage> {
   }
 
   void _bukaDetail(RiwayatItem item) {
-    showModalBottomSheet<void>(
-      context: context,
-      isScrollControlled: true,
-      builder: (_) => _RiwayatDetailSheet(item: item),
-    );
+    Navigator.of(
+      context,
+    ).push(MaterialPageRoute(builder: (_) => RiwayatDetailPage(id: item.id)));
   }
 
   @override
@@ -200,9 +203,7 @@ class _RiwayatPageState extends State<RiwayatPage> {
             onPressed: _bukaFilter,
             icon: Icon(
               Icons.filter_list_rounded,
-              color: _filter.hasActiveFilter
-                  ? AppTheme.menuDashboard
-                  : null,
+              color: _filter.hasActiveFilter ? AppTheme.menuDashboard : null,
             ),
           ),
         ],
@@ -315,89 +316,17 @@ class _ErrorState extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: <Widget>[
-            const Icon(Icons.error_outline_rounded, size: 48, color: Colors.red),
+            const Icon(
+              Icons.error_outline_rounded,
+              size: 48,
+              color: Colors.red,
+            ),
             const SizedBox(height: 12),
             Text(message, textAlign: TextAlign.center),
             const SizedBox(height: 16),
             FilledButton(onPressed: onRetry, child: const Text('Coba Lagi')),
           ],
         ),
-      ),
-    );
-  }
-}
-
-/// Detail sederhana yang ditampilkan dari data yang sudah ada di list.
-///
-/// Catatan: ini BUKAN memanggil endpoint detail terpisah (foto, OTA, dll)
-/// karena endpoint tersebut belum dirancang. Kalau nanti dibutuhkan detail
-/// lengkap, tinggal ganti isi sheet ini menjadi pemanggilan service baru
-/// (mis. RiwayatService.fetchDetail(id)).
-class _RiwayatDetailSheet extends StatelessWidget {
-  const _RiwayatDetailSheet({required this.item});
-
-  final RiwayatItem item;
-
-  @override
-  Widget build(BuildContext context) {
-    return SafeArea(
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: <Widget>[
-            Text(
-              item.namaUsaha,
-              style: TextStyle(
-                fontSize: 17,
-                fontWeight: FontWeight.w800,
-                color: AppTheme.textColor(context),
-              ),
-            ),
-            const SizedBox(height: 12),
-            _DetailRow(label: 'Jenis', value: item.jenis),
-            _DetailRow(label: 'Identitas', value: item.identitas.ringkasan),
-            _DetailRow(label: 'Lokasi', value: item.lokasi.gabungan),
-            _DetailRow(label: 'Petugas', value: item.petugas),
-            _DetailRow(label: 'Status', value: item.status),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _DetailRow extends StatelessWidget {
-  const _DetailRow({required this.label, required this.value});
-
-  final String label;
-  final String value;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 6),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: <Widget>[
-          SizedBox(
-            width: 90,
-            child: Text(
-              label,
-              style: TextStyle(color: AppTheme.textSecondary(context)),
-            ),
-          ),
-          Expanded(
-            child: Text(
-              value,
-              style: TextStyle(
-                fontWeight: FontWeight.w600,
-                color: AppTheme.textColor(context),
-              ),
-            ),
-          ),
-        ],
       ),
     );
   }
