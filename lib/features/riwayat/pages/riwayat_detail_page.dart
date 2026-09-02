@@ -58,10 +58,7 @@ class _RiwayatDetailPageState extends State<RiwayatDetailPage> {
         _loading = false;
         _pesanError = e.message;
       });
-    } catch (e, stack) {
-      debugPrint('RIWAYAT DETAIL ERROR: $e');
-      debugPrint('$stack');
-
+    } catch (_) {
       if (!mounted) {
         return;
       }
@@ -77,9 +74,7 @@ class _RiwayatDetailPageState extends State<RiwayatDetailPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppTheme.scaffoldColorDynamic(context),
-      appBar: AppBar(
-        title: const Text('Detail Riwayat'),
-      ),
+      appBar: AppBar(title: const Text('Detail Riwayat')),
       body: _buildBody(context),
     );
   }
@@ -96,7 +91,11 @@ class _RiwayatDetailPageState extends State<RiwayatDetailPage> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: <Widget>[
-              const Icon(Icons.error_outline_rounded, size: 48, color: Colors.red),
+              const Icon(
+                Icons.error_outline_rounded,
+                size: 48,
+                color: Colors.red,
+              ),
               const SizedBox(height: 12),
               Text(_pesanError!, textAlign: TextAlign.center),
               const SizedBox(height: 16),
@@ -166,7 +165,10 @@ class _RiwayatDetailPageState extends State<RiwayatDetailPage> {
               _Baris('Status Ketidaksesuaian', detail.statusKetidaksesuaian),
               _Baris('Keterangan', detail.keterangan),
               _Baris('Catatan Petugas', detail.catatanPetugas),
-              _Baris('Tanggal Pengawasan', _formatTanggal(detail.tanggalPengawasan)),
+              _Baris(
+                'Tanggal Pengawasan',
+                _formatTanggal(detail.tanggalPengawasan),
+              ),
               _Baris('Dibuat Pada', _formatTanggalJam(detail.createdAt)),
               _Baris('Diperbarui Pada', _formatTanggalJam(detail.updatedAt)),
             ],
@@ -190,8 +192,18 @@ class _RiwayatDetailPageState extends State<RiwayatDetailPage> {
     }
 
     const List<String> bulan = <String>[
-      'Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun',
-      'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des',
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'Mei',
+      'Jun',
+      'Jul',
+      'Agu',
+      'Sep',
+      'Okt',
+      'Nov',
+      'Des',
     ];
 
     return '${tanggal.day} ${bulan[tanggal.month - 1]} ${tanggal.year}';
@@ -286,7 +298,11 @@ class _Chip extends StatelessWidget {
       ),
       child: Text(
         text,
-        style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: color),
+        style: TextStyle(
+          fontSize: 11,
+          fontWeight: FontWeight.w700,
+          color: color,
+        ),
       ),
     );
   }

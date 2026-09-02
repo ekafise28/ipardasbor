@@ -18,7 +18,6 @@ import 'models/dashboard_map_model.dart';
 import 'widget/dashboard_bar_chart.dart';
 import 'widget/dashboard_data_table.dart';
 import 'widget/dashboard_map_section.dart';
-import 'widget/dashboard_horizontal_bar_chart.dart';
 import 'widget/dashboard_filter_panel.dart';
 
 import 'services/dashboard_service.dart';

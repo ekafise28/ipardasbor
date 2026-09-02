@@ -1,7 +1,7 @@
 import 'dart:async';
-import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:ipardasbor/features/sinkronisasi/widget/widget_submission/detail_field.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../../app/app_theme.dart';
@@ -9,8 +9,12 @@ import '../../non_oss/offline/non_oss_local_data.dart';
 import '../../non_oss/offline/offline_database.dart';
 import '../../non_oss/offline/offline_queue_service.dart';
 import '../../non_oss/offline/sync_service.dart';
-import '../../non_oss/offline/sync_status.dart';
 import '../../non_oss/offline/wilayah_local_database.dart';
+import '../widget/widget_submission/detail_header_card.dart';
+import '../widget/widget_submission/detail_ota_section.dart';
+import '../widget/widget_submission/detail_photo_section.dart';
+import '../widget/widget_submission/ota_tile.dart';
+import '../widget/widget_submission/photo_viewer.dart';
 
 /// Halaman detail satu ajuan Non-OSS yang berada di antrean lokal.
 ///
@@ -223,7 +227,7 @@ class _SubmissionDetailPageState extends State<SubmissionDetailPage> {
         pageBuilder: (context, animation, secondaryAnimation) {
           return FadeTransition(
             opacity: animation,
-            child: _PhotoViewerPage(
+            child: PhotoViewerPage(
               photoPaths: _data.photoPaths,
               initialIndex: initialIndex,
             ),
@@ -295,264 +299,31 @@ class _SubmissionDetailPageState extends State<SubmissionDetailPage> {
         child: ListView(
           padding: const EdgeInsets.fromLTRB(18, 18, 18, 32),
           children: [
-            _buildHeaderCard(context, statusColor, failed),
+            DetailHeaderCard(
+              displayName: _data.displayName,
+              createdAtText: _formatDateTime(_data.createdAt),
+              statusColor: statusColor,
+              failed: failed,
+              lastError: _data.lastError,
+            ),
             const SizedBox(height: 18),
             if (_data.photoPaths.isNotEmpty) ...[
-              _buildPhotoSection(context),
+              DetailPhotoSection(
+                photoPaths: _data.photoPaths,
+                onOpenPhoto: _openPhotoViewer,
+              ),
               const SizedBox(height: 18),
             ],
-            _buildFieldsCard(context),
+            DetailFieldsCard(fields: _buildDetailFields()),
             const SizedBox(height: 18),
-            _buildOtaSection(context),
+            DetailOtaSection(
+              entries: _parseOtaEntries(),
+              onTapUrl: _openUrl,
+            ),
             const SizedBox(height: 24),
             _buildActionButtons(context, failed),
           ],
         ),
-      ),
-    );
-  }
-
-  Widget _buildHeaderCard(
-    BuildContext context,
-    Color statusColor,
-    bool failed,
-  ) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(
-        color: AppTheme.surface(context),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AppTheme.border(context)),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x0D17243A),
-            blurRadius: 14,
-            offset: Offset(0, 5),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Container(
-                width: 46,
-                height: 46,
-                decoration: BoxDecoration(
-                  color: statusColor.withValues(alpha: 0.11),
-                  borderRadius: BorderRadius.circular(14),
-                ),
-                child: Icon(
-                  failed ? Icons.error_outline_rounded : Icons.schedule_rounded,
-                  color: statusColor,
-                  size: 24,
-                ),
-              ),
-              const SizedBox(width: 13),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      _data.displayName,
-                      style: TextStyle(
-                        color: AppTheme.textColor(context),
-                        fontSize: 17,
-                        fontWeight: FontWeight.w800,
-                      ),
-                    ),
-                    const SizedBox(height: 5),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 9,
-                        vertical: 3,
-                      ),
-                      decoration: BoxDecoration(
-                        color: statusColor.withValues(alpha: 0.10),
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: Text(
-                        failed ? 'GAGAL' : 'PENDING',
-                        style: TextStyle(
-                          color: statusColor,
-                          fontSize: 10.5,
-                          fontWeight: FontWeight.w900,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          const Divider(height: 28),
-          _MetaTile(label: 'Dibuat', value: _formatDateTime(_data.createdAt)),
-          if (failed && _data.lastError != null) ...[
-            const SizedBox(height: 14),
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: const Color(0xFFC2410C).withValues(alpha: 0.08),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(
-                  color: const Color(0xFFC2410C).withValues(alpha: 0.25),
-                ),
-              ),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Icon(
-                    Icons.warning_amber_rounded,
-                    color: Color(0xFFC2410C),
-                    size: 18,
-                  ),
-                  const SizedBox(width: 9),
-                  Expanded(
-                    child: Text(
-                      _data.lastError!,
-                      style: const TextStyle(
-                        color: Color(0xFFC2410C),
-                        fontSize: 12.5,
-                        height: 1.4,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ],
-      ),
-    );
-  }
-
-  Widget _buildPhotoSection(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: AppTheme.surface(context),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AppTheme.border(context)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Foto Dokumentasi (${_data.photoPaths.length})',
-            style: TextStyle(
-              color: AppTheme.textColor(context),
-              fontSize: 14,
-              fontWeight: FontWeight.w800,
-            ),
-          ),
-          const SizedBox(height: 12),
-          SizedBox(
-            height: 88,
-            child: ListView.separated(
-              scrollDirection: Axis.horizontal,
-              itemCount: _data.photoPaths.length,
-              separatorBuilder: (_, __) => const SizedBox(width: 10),
-              itemBuilder: (context, index) {
-                final String path = _data.photoPaths[index];
-                final File file = File(path);
-                final bool exists = file.existsSync();
-
-                return GestureDetector(
-                  onTap: exists ? () => _openPhotoViewer(index) : null,
-                  child: Hero(
-                    tag: 'submission_photo_$path',
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(14),
-                      child: exists
-                          ? Image.file(
-                              file,
-                              width: 88,
-                              height: 88,
-                              fit: BoxFit.cover,
-                            )
-                          : Container(
-                              width: 88,
-                              height: 88,
-                              color: AppTheme.surfaceMuted(context),
-                              child: const Icon(
-                                Icons.broken_image_outlined,
-                                color: AppTheme.textMuted,
-                              ),
-                            ),
-                    ),
-                  ),
-                );
-              },
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildOtaSection(BuildContext context) {
-    final List<_OtaEntry> entries = _parseOtaEntries();
-    if (entries.isEmpty) return const SizedBox.shrink();
-
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: AppTheme.surface(context),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AppTheme.border(context)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Platform OTA Terdaftar',
-            style: TextStyle(
-              color: AppTheme.textColor(context),
-              fontSize: 14,
-              fontWeight: FontWeight.w800,
-            ),
-          ),
-          const SizedBox(height: 14),
-          for (int i = 0; i < entries.length; i++) ...[
-            if (i > 0) const SizedBox(height: 14),
-            _OtaTile(entry: entries[i], onTapUrl: _openUrl),
-          ],
-        ],
-      ),
-    );
-  }
-
-  Widget _buildFieldsCard(BuildContext context) {
-    final List<MapEntry<String, String>> orderedFields =
-        _orderedPayloadEntries();
-
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(4),
-      decoration: BoxDecoration(
-        color: AppTheme.surface(context),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AppTheme.border(context)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          for (int i = 0; i < orderedFields.length; i++)
-            _FieldTile(
-              label: _fieldLabel(orderedFields[i].key),
-              value: _displayValue(
-                orderedFields[i].key,
-                orderedFields[i].value,
-              ),
-              isLast: i == orderedFields.length - 1,
-            ),
-        ],
       ),
     );
   }
@@ -615,10 +386,10 @@ class _SubmissionDetailPageState extends State<SubmissionDetailPage> {
     );
   }
 
-  /// Urutan tampilan field mengikuti urutan input pada form Non-OSS,
-  /// field yang tidak dikenal ditaruh di akhir. `client_uuid` disembunyikan
-  /// karena hanya identitas internal, bukan bagian dari isian pengguna.
-  List<MapEntry<String, String>> _orderedPayloadEntries() {
+  /// Membangun daftar [DetailField] yang siap ditampilkan oleh
+  /// [DetailFieldsCard], berdasarkan urutan field pada form Non-OSS.
+  /// `client_uuid` disembunyikan karena hanya identitas internal.
+  List<DetailField> _buildDetailFields() {
     const List<String> knownOrder = <String>[
       'memiliki_nib',
       'nama_pemilik',
@@ -666,7 +437,14 @@ class _SubmissionDetailPageState extends State<SubmissionDetailPage> {
       ordered.add(MapEntry<String, String>(key, payload[key]!));
     }
 
-    return ordered;
+    return ordered
+        .map(
+          (entry) => DetailField(
+            label: _fieldLabel(entry.key),
+            value: _displayValue(entry.key, entry.value),
+          ),
+        )
+        .toList();
   }
 
   static const Map<String, String> _labelMap = <String, String>{
@@ -741,7 +519,7 @@ class _SubmissionDetailPageState extends State<SubmissionDetailPage> {
     'reddoorz': 'RedDoorz',
   };
 
-  List<_OtaEntry> _parseOtaEntries() {
+  List<OtaEntry> _parseOtaEntries() {
     final Map<String, String> payload = _data.payload;
     final RegExp platformKeyRegex = RegExp(r'^platform_ota\[\d+\]$');
     final RegExp urlKeyRegex = RegExp(r'^ota_urls\[([^\]]+)\]\[\d+\]$');
@@ -770,281 +548,11 @@ class _SubmissionDetailPageState extends State<SubmissionDetailPage> {
                 : 'Lainnya')
           : (_otaPlatformLabels[platform] ?? platform);
 
-      return _OtaEntry(
+      return OtaEntry(
         name: displayName,
         urls: urlsByPlatform[platform] ?? const <String>[],
       );
     }).toList();
-  }
-}
-
-class _OtaEntry {
-  const _OtaEntry({required this.name, required this.urls});
-
-  final String name;
-  final List<String> urls;
-}
-
-class _OtaTile extends StatelessWidget {
-  const _OtaTile({required this.entry, required this.onTapUrl});
-
-  final _OtaEntry entry;
-  final ValueChanged<String> onTapUrl;
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            Container(
-              width: 7,
-              height: 7,
-              decoration: const BoxDecoration(
-                color: AppTheme.primaryColor,
-                shape: BoxShape.circle,
-              ),
-            ),
-            const SizedBox(width: 9),
-            Text(
-              entry.name,
-              style: TextStyle(
-                color: AppTheme.textColor(context),
-                fontSize: 13.5,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-          ],
-        ),
-        if (entry.urls.isNotEmpty)
-          Padding(
-            padding: const EdgeInsets.only(left: 16, top: 5),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: entry.urls.map((String url) {
-                return Padding(
-                  padding: const EdgeInsets.only(top: 3),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        '→ ',
-                        style: TextStyle(
-                          color: AppTheme.textSecondary(context),
-                          fontSize: 12.5,
-                        ),
-                      ),
-                      Expanded(
-                        child: InkWell(
-                          onTap: () => onTapUrl(url),
-                          child: Text(
-                            url,
-                            style: const TextStyle(
-                              color: AppTheme.primaryColor,
-                              fontSize: 12.5,
-                              decoration: TextDecoration.underline,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                );
-              }).toList(),
-            ),
-          ),
-      ],
-    );
-  }
-}
-
-class _MetaTile extends StatelessWidget {
-  const _MetaTile({required this.label, required this.value});
-
-  final String label;
-  final String value;
-
-  @override
-  Widget build(BuildContext context) {
-    return ConstrainedBox(
-      constraints: const BoxConstraints(minWidth: 120, maxWidth: 220),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(
-            label,
-            style: TextStyle(
-              color: AppTheme.textSecondary(context),
-              fontSize: 11,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            value,
-            style: TextStyle(
-              color: AppTheme.textColor(context),
-              fontSize: 13,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _FieldTile extends StatelessWidget {
-  const _FieldTile({
-    required this.label,
-    required this.value,
-    required this.isLast,
-  });
-
-  final String label;
-  final String value;
-  final bool isLast;
-
-  @override
-  Widget build(BuildContext context) {
-    final String displayValue = value.trim().isEmpty ? '-' : value;
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-      decoration: BoxDecoration(
-        border: isLast
-            ? null
-            : Border(bottom: BorderSide(color: AppTheme.border(context))),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            label,
-            style: TextStyle(
-              color: AppTheme.textSecondary(context),
-              fontSize: 11.5,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            displayValue,
-            style: TextStyle(
-              color: AppTheme.textColor(context),
-              fontSize: 13.5,
-              fontWeight: FontWeight.w600,
-              height: 1.3,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _PhotoViewerPage extends StatefulWidget {
-  const _PhotoViewerPage({
-    required this.photoPaths,
-    required this.initialIndex,
-  });
-
-  final List<String> photoPaths;
-  final int initialIndex;
-
-  @override
-  State<_PhotoViewerPage> createState() => _PhotoViewerPageState();
-}
-
-class _PhotoViewerPageState extends State<_PhotoViewerPage> {
-  late final PageController _pageController;
-  late int _currentIndex;
-
-  @override
-  void initState() {
-    super.initState();
-    _currentIndex = widget.initialIndex;
-    _pageController = PageController(initialPage: widget.initialIndex);
-  }
-
-  @override
-  void dispose() {
-    _pageController.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.black,
-      body: Stack(
-        children: [
-          PageView.builder(
-            controller: _pageController,
-            itemCount: widget.photoPaths.length,
-            onPageChanged: (index) => setState(() => _currentIndex = index),
-            itemBuilder: (context, index) {
-              final String path = widget.photoPaths[index];
-              return Center(
-                child: Hero(
-                  tag: 'submission_photo_$path',
-                  child: InteractiveViewer(
-                    minScale: 1,
-                    maxScale: 4,
-                    child: Image.file(File(path), fit: BoxFit.contain),
-                  ),
-                ),
-              );
-            },
-          ),
-          Positioned(
-            top: 8,
-            left: 4,
-            child: SafeArea(
-              child: IconButton(
-                icon: const Icon(
-                  Icons.close_rounded,
-                  color: Colors.white,
-                  size: 28,
-                ),
-                onPressed: () => Navigator.of(context).pop(),
-              ),
-            ),
-          ),
-          if (widget.photoPaths.length > 1)
-            Positioned(
-              bottom: 24,
-              left: 0,
-              right: 0,
-              child: SafeArea(
-                top: false,
-                child: Center(
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 6,
-                    ),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.15),
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Text(
-                      '${_currentIndex + 1} / ${widget.photoPaths.length}',
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 12.5,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ),
-        ],
-      ),
-    );
   }
 }
 

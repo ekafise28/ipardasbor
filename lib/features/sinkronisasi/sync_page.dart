@@ -12,6 +12,10 @@ import '../non_oss/offline/sync_service.dart';
 import '../non_oss/services/non_oss_service.dart';
 
 import 'pages/submission_detail_page.dart';
+import 'widget/widget_sync/empty_state.dart';
+import 'widget/widget_sync/sync_summary_card.dart';
+import 'widget/widget_sync/sync_table.dart';
+import 'widget/widget_sync/table_loading.dart';
 
 class SyncPage extends StatefulWidget {
   const SyncPage({super.key});
@@ -243,14 +247,26 @@ class _SyncPageState extends State<SyncPage> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        _buildSummaryCard(),
+                        SyncSummaryCard(
+                          isLoading: _isLoading,
+                          isSyncingAll: _isSyncingAll,
+                          waitingCount: _waitingData.length,
+                          onSyncAll: _syncAll,
+                        ),
                         const SizedBox(height: 20),
                         if (_isLoading)
-                          const _TableLoading()
+                          const TableLoading()
                         else if (_waitingData.isEmpty)
-                          const _EmptyState()
+                          const EmptyState()
                         else
-                          _buildTable(),
+                          SyncTable(
+                            waitingData: _waitingData,
+                            expandedUuid: _expandedUuid,
+                            syncingIds: _syncingIds,
+                            onToggleExpand: _toggleExpand,
+                            onOpenDetail: _openDetail,
+                            onSync: _syncOne,
+                          ),
                       ],
                     ),
                   ),
@@ -259,407 +275,6 @@ class _SyncPageState extends State<SyncPage> {
             },
           ),
         ),
-      ),
-    );
-  }
-
-  Widget _buildSummaryCard() {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(
-        color: AppTheme.surface(context).withValues(alpha: 0.96),
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: AppTheme.border(context)),
-        boxShadow: const <BoxShadow>[
-          BoxShadow(
-            color: Color(0x1218273D),
-            blurRadius: 24,
-            offset: Offset(0, 9),
-          ),
-        ],
-      ),
-      child: Row(
-        children: <Widget>[
-          Container(
-            width: 44,
-            height: 44,
-            decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                colors: <Color>[Color(0xFFFF9F0A), Color(0xFFFF6B00)],
-              ),
-              borderRadius: BorderRadius.circular(14),
-            ),
-            child: const Icon(
-              Icons.cloud_upload_rounded,
-              color: Colors.white,
-              size: 23,
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: <Widget>[
-                Text(
-                  'Menunggu Sinkronisasi',
-                  style: TextStyle(
-                    color: AppTheme.textColor(context),
-                    fontSize: 16,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-                const SizedBox(height: 3),
-                Text(
-                  _isLoading
-                      ? 'Memuat data...'
-                      : '${_waitingData.length} data tersimpan aman di perangkat',
-                  style: TextStyle(
-                    color: AppTheme.textSecondary(context),
-                    fontSize: 12,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          FilledButton.icon(
-            onPressed: _waitingData.isEmpty || _isSyncingAll || _isLoading
-                ? null
-                : _syncAll,
-            style: FilledButton.styleFrom(
-              backgroundColor: const Color(0xFF007AFF),
-              foregroundColor: Colors.white,
-              disabledBackgroundColor: AppTheme.surfaceMuted(context),
-              disabledForegroundColor: AppTheme.textMuted,
-              padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 11),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(13),
-              ),
-            ),
-            icon: _isSyncingAll
-                ? const SizedBox(
-                    width: 16,
-                    height: 16,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      color: Colors.white,
-                    ),
-                  )
-                : const Icon(Icons.sync_rounded, size: 18),
-            label: Text(_isSyncingAll ? 'Proses' : 'Sync Semua'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildTable() {
-    return Container(
-      width: double.infinity,
-      decoration: BoxDecoration(
-        color: AppTheme.surface(context),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AppTheme.border(context)),
-      ),
-      clipBehavior: Clip.antiAlias,
-      child: Column(
-        children: [
-          _buildTableHeader(),
-          for (final NonOssLocalData data in _waitingData)
-            _SubmissionRow(
-              key: ValueKey(data.clientUuid),
-              data: data,
-              expanded: _expandedUuid == data.clientUuid,
-              syncing: _syncingIds.contains(data.clientUuid),
-              onToggleExpand: () => _toggleExpand(data.clientUuid),
-              onOpenDetail: () => _openDetail(data),
-              onSync: () => _syncOne(data),
-            ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildTableHeader() {
-    final TextStyle style = TextStyle(
-      color: AppTheme.textSecondary(context),
-      fontSize: 11,
-      fontWeight: FontWeight.w700,
-    );
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-      decoration: BoxDecoration(
-        color: AppTheme.surfaceMuted(context),
-        border: Border(bottom: BorderSide(color: AppTheme.border(context))),
-      ),
-      child: Row(
-        children: [
-          Expanded(flex: 5, child: Text('NAMA USAHA', style: style)),
-          Expanded(flex: 2, child: Text('STATUS', style: style)),
-          Expanded(flex: 3, child: Text('TANGGAL', style: style)),
-          const SizedBox(width: 28),
-        ],
-      ),
-    );
-  }
-}
-
-class _SubmissionRow extends StatelessWidget {
-  const _SubmissionRow({
-    super.key,
-    required this.data,
-    required this.expanded,
-    required this.syncing,
-    required this.onToggleExpand,
-    required this.onOpenDetail,
-    required this.onSync,
-  });
-
-  final NonOssLocalData data;
-  final bool expanded;
-  final bool syncing;
-  final VoidCallback onToggleExpand;
-  final VoidCallback onOpenDetail;
-  final VoidCallback onSync;
-
-  @override
-  Widget build(BuildContext context) {
-    final bool failed = data.isFailed;
-    final Color statusColor = failed
-        ? const Color(0xFFFF3B30)
-        : const Color(0xFFFF9500);
-
-    return Column(
-      children: [
-        InkWell(
-          onTap: onToggleExpand,
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
-            decoration: BoxDecoration(
-              border: Border(
-                bottom: BorderSide(color: AppTheme.border(context)),
-              ),
-            ),
-            child: Row(
-              children: [
-                Expanded(
-                  flex: 5,
-                  child: Text(
-                    data.displayName,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      color: AppTheme.textColor(context),
-                      fontSize: 13,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ),
-                Expanded(
-                  flex: 2,
-                  child: Align(
-                    alignment: Alignment.centerLeft,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 3,
-                      ),
-                      decoration: BoxDecoration(
-                        color: statusColor.withValues(alpha: 0.10),
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: Text(
-                        failed ? 'GAGAL' : 'PENDING',
-                        style: TextStyle(
-                          color: statusColor,
-                          fontSize: 9.5,
-                          fontWeight: FontWeight.w900,
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-                Expanded(
-                  flex: 3,
-                  child: Text(
-                    _formatDate(data.createdAt),
-                    style: TextStyle(
-                      color: AppTheme.textSecondary(context),
-                      fontSize: 11.5,
-                    ),
-                  ),
-                ),
-                SizedBox(
-                  width: 28,
-                  child: AnimatedRotation(
-                    turns: expanded ? 0.5 : 0,
-                    duration: const Duration(milliseconds: 180),
-                    child: Icon(
-                      Icons.keyboard_arrow_down_rounded,
-                      color: AppTheme.textMuted,
-                      size: 22,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-        AnimatedCrossFade(
-          duration: const Duration(milliseconds: 180),
-          crossFadeState: expanded
-              ? CrossFadeState.showFirst
-              : CrossFadeState.showSecond,
-          firstChild: _buildExpandedContent(context, failed),
-          secondChild: const SizedBox(width: double.infinity, height: 0),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildExpandedContent(BuildContext context, bool failed) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(14, 4, 14, 14),
-      decoration: BoxDecoration(
-        color: AppTheme.scaffoldColorDynamic(context),
-        border: Border(
-          bottom: BorderSide(color: AppTheme.border(context)),
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          if (failed && data.lastError != null) ...[
-            Text(
-              data.lastError!,
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-              style: const TextStyle(
-                color: Color(0xFFB42318),
-                fontSize: 11.5,
-              ),
-            ),
-            const SizedBox(height: 10),
-          ],
-          Row(
-            children: [
-              Expanded(
-                child: OutlinedButton.icon(
-                  onPressed: onOpenDetail,
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: AppTheme.textColor(context),
-                    side: BorderSide(color: AppTheme.border(context)),
-                    padding: const EdgeInsets.symmetric(vertical: 10),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(11),
-                    ),
-                  ),
-                  icon: const Icon(Icons.visibility_outlined, size: 17),
-                  label: const Text('Lihat Detail'),
-                ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: FilledButton.icon(
-                  onPressed: syncing ? null : onSync,
-                  style: FilledButton.styleFrom(
-                    backgroundColor: const Color(0xFF007AFF),
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 10),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(11),
-                    ),
-                  ),
-                  icon: syncing
-                      ? const SizedBox(
-                          width: 14,
-                          height: 14,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            color: Colors.white,
-                          ),
-                        )
-                      : const Icon(Icons.sync_rounded, size: 17),
-                  label: const Text('Sync'),
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  String _formatDate(DateTime value) {
-    final DateTime local = value.toLocal();
-    String two(int number) => number.toString().padLeft(2, '0');
-    return '${two(local.day)}/${two(local.month)}/${local.year}';
-  }
-}
-
-class _TableLoading extends StatelessWidget {
-  const _TableLoading();
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 40),
-      child: Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const SizedBox(
-              width: 32,
-              height: 32,
-              child: CircularProgressIndicator(
-                strokeWidth: 3,
-                color: AppTheme.primaryColor,
-              ),
-            ),
-            const SizedBox(height: 14),
-            Text(
-              'Memuat data tertunda...',
-              style: TextStyle(
-                color: AppTheme.textSecondary(context),
-                fontSize: 13,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _EmptyState extends StatelessWidget {
-  const _EmptyState();
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 22),
-      decoration: BoxDecoration(
-        color: Colors.green.withValues(alpha: 0.10),
-        borderRadius: BorderRadius.circular(17),
-      ),
-      child: Row(
-        children: <Widget>[
-          const Icon(Icons.check_circle_rounded, color: Colors.green),
-          const SizedBox(width: 11),
-          Expanded(
-            child: Text(
-              'Semua data sudah tersinkronisasi.',
-              style: TextStyle(
-                color: Colors.green.shade700,
-                fontSize: 13,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-          ),
-        ],
       ),
     );
   }
