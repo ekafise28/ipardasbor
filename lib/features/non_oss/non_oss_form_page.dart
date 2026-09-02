@@ -985,13 +985,13 @@ class _NonOssFormPageState extends State<NonOssFormPage> {
                                 color: Colors.white,
                               ),
                             )
-                          : const Icon(Icons.cloud_upload_rounded),
+                          : const Icon(Icons.cloud_upload_rounded, color: Colors.white),
                       label: Text(
                         _saving ? 'Menyimpan data...' : 'Simpan Pengawasan',
                         style: TextStyle(
                           fontWeight: FontWeight.w800,
                           fontSize: 15,
-                          color: AppTheme.textColor(context),
+                          color: Colors.white,
                         ),
                       ),
                     ),

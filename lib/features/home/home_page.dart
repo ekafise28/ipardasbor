@@ -4,6 +4,7 @@ import '../../app/app_theme.dart';
 import '../dashboard/dashboard_page.dart';
 import '../non_oss/non_oss_form_page.dart';
 import '../sinkronisasi/sync_page.dart';
+import '../riwayat/pages/riwayat_page.dart';
 
 import 'models/menu_data.dart';
 import 'pages/feature_placeholder_page.dart';
@@ -98,7 +99,12 @@ class _HomePageState extends State<HomePage> {
         ).push(MaterialPageRoute<void>(builder: (_) => const ProfilePage()));
         return;
 
-      // tambahkan case baru di dalam method _openMenu, sebelum default:
+      case 'Riwayat':
+        Navigator.of(
+          context,
+        ).push(MaterialPageRoute<void>(builder: (_) => const RiwayatPage()));
+        return;
+
       case 'Sinkronisasi':
         Navigator.of(
           context,

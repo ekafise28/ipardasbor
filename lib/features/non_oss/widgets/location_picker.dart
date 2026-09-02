@@ -141,7 +141,7 @@ class LocationPicker extends StatelessWidget {
                       color: Colors.white,
                     ),
                   )
-                : const Icon(Icons.my_location_rounded),
+                : const Icon(Icons.my_location_rounded, color: Colors.white),
             label: Text(
               loading
                   ? 'Sedang mengambil lokasi...'
