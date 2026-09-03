@@ -1,10 +1,11 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:ipardasbor/features/sinkronisasi/widget/widget_submission/detail_field.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../../app/app_theme.dart';
+import '../../../shared/widgets/detail_section_card.dart';
+import '../../../shared/widgets/detail_status_header.dart';
 import '../../non_oss/offline/non_oss_local_data.dart';
 import '../../non_oss/offline/offline_database.dart';
 import '../../non_oss/offline/offline_queue_service.dart';
@@ -12,8 +13,6 @@ import '../../non_oss/offline/sync_service.dart';
 import '../../non_oss/offline/wilayah_local_database.dart';
 import '../../non_oss/non_oss_form_page.dart';
 
-import '../widget/widget_submission/detail_header_card.dart';
-import '../widget/widget_submission/detail_ota_section.dart';
 import '../widget/widget_submission/detail_photo_section.dart';
 import '../widget/widget_submission/ota_tile.dart';
 import '../widget/widget_submission/photo_viewer.dart';
@@ -84,6 +83,76 @@ class _SubmissionDetailPageState extends State<SubmissionDetailPage> {
     }
 
     if (mounted) setState(() => _regionNames = resolved);
+  }
+
+    List<Baris> _informasiUsahaRows() {
+    final Map<String, String> p = _data.payload;
+    return <Baris>[
+      Baris('Nama Pemilik', p['nama_pemilik']),
+      Baris('Nama Brand', p['nama_brand']),
+      Baris('Jenis Produk', p['jenis_produk']),
+      Baris('Website', p['website'], url: _normalisasiUrl(p['website'])),
+      Baris('No. HP', p['no_hp']),
+      Baris('Email', p['email']),
+    ];
+  }
+
+  List<Baris> _legalitasRows() {
+    final Map<String, String> p = _data.payload;
+    return <Baris>[
+      Baris('Memiliki NIB', p['memiliki_nib']),
+      Baris('NPWPD', p['npwpd']),
+      Baris('Terdaftar OTA', p['terdaftar_ota']),
+    ];
+  }
+
+  List<Baris> _lokasiRows() {
+    final Map<String, String> p = _data.payload;
+    final String? lat = p['latitude'];
+    final String? lng = p['longitude'];
+
+    return <Baris>[
+      Baris('Provinsi', _regionNames['provinsi_id']),
+      Baris('Kabupaten/Kota', _regionNames['kabupaten_id']),
+      Baris('Kecamatan', _regionNames['kecamatan_id']),
+      Baris('Kelurahan', _regionNames['kelurahan_id']),
+      Baris('Alamat', p['alamat']),
+      Baris(
+        'Koordinat',
+        (lat != null && lng != null && lat.isNotEmpty && lng.isNotEmpty)
+            ? '$lat, $lng'
+            : null,
+        url: _mapsUrlFromLatLng(lat, lng),
+      ),
+    ];
+  }
+
+  List<Baris> _hasilPengawasanRows() {
+    final Map<String, String> p = _data.payload;
+    return <Baris>[
+      Baris('Status Pengawasan', p['status_pengawasan']),
+      Baris('Keterangan', p['keterangan']),
+      Baris('Catatan Petugas', p['catatan_petugas']),
+      Baris('Tanggal Pengawasan', p['tanggal_pengawasan']),
+    ];
+  }
+
+  String? _normalisasiUrl(String? website) {
+    if (website == null || website.trim().isEmpty) {
+      return null;
+    }
+    final String bersih = website.trim();
+    if (bersih.startsWith('http://') || bersih.startsWith('https://')) {
+      return bersih;
+    }
+    return 'https://$bersih';
+  }
+
+  String? _mapsUrlFromLatLng(String? lat, String? lng) {
+    if (lat == null || lng == null || lat.trim().isEmpty || lng.trim().isEmpty) {
+      return null;
+    }
+    return 'https://www.google.com/maps?q=$lat,$lng';
   }
 
   Future<void> _sync() async {
@@ -285,6 +354,7 @@ class _SubmissionDetailPageState extends State<SubmissionDetailPage> {
   }
 
   @override
+    @override
   Widget build(BuildContext context) {
     final bool failed = _data.isFailed;
     final Color statusColor = failed
@@ -293,7 +363,7 @@ class _SubmissionDetailPageState extends State<SubmissionDetailPage> {
 
     return Scaffold(
       backgroundColor: AppTheme.scaffoldColorDynamic(context),
-            appBar: AppBar(
+      appBar: AppBar(
         backgroundColor: AppTheme.surface(context),
         surfaceTintColor: AppTheme.surface(context),
         elevation: 0,
@@ -311,10 +381,7 @@ class _SubmissionDetailPageState extends State<SubmissionDetailPage> {
           IconButton(
             tooltip: 'Edit',
             onPressed: _isSyncing || _isDeleting ? null : _openEdit,
-            icon: Icon(
-              Icons.edit_outlined,
-              color: AppTheme.textColor(context),
-            ),
+            icon: Icon(Icons.edit_outlined, color: AppTheme.textColor(context)),
           ),
           const SizedBox(width: 4),
         ],
@@ -323,24 +390,51 @@ class _SubmissionDetailPageState extends State<SubmissionDetailPage> {
         child: ListView(
           padding: const EdgeInsets.fromLTRB(18, 18, 18, 32),
           children: [
-            DetailHeaderCard(
-              displayName: _data.displayName,
-              createdAtText: _formatDateTime(_data.createdAt),
-              statusColor: statusColor,
-              failed: failed,
-              lastError: _data.lastError,
+            StatusHeaderCard(
+              title: _data.displayName,
+              subtitle: _formatDateTime(_data.createdAt),
+              errorMessage: failed ? _data.lastError : null,
+              badges: <StatusBadge>[
+                StatusBadge(text: 'NON OSS', color: AppTheme.menuNonOss),
+                StatusBadge(
+                  text: failed ? 'Gagal Sync' : 'Menunggu Sync',
+                  color: statusColor,
+                ),
+              ],
             ),
-            const SizedBox(height: 18),
+            const SizedBox(height: 16),
             if (_data.photoPaths.isNotEmpty) ...[
               DetailPhotoSection(
                 photoPaths: _data.photoPaths,
                 onOpenPhoto: _openPhotoViewer,
               ),
-              const SizedBox(height: 18),
+              const SizedBox(height: 12),
             ],
-            DetailFieldsCard(fields: _buildDetailFields()),
-            const SizedBox(height: 18),
-            DetailOtaSection(
+            SectionCard(
+              icon: Icons.storefront_outlined,
+              title: 'Informasi Usaha',
+              rows: _informasiUsahaRows(),
+            ),
+            const SizedBox(height: 12),
+            SectionCard(
+              icon: Icons.verified_outlined,
+              title: 'Legalitas',
+              rows: _legalitasRows(),
+            ),
+            const SizedBox(height: 12),
+            SectionCard(
+              icon: Icons.place_outlined,
+              title: 'Lokasi',
+              rows: _lokasiRows(),
+            ),
+            const SizedBox(height: 12),
+            SectionCard(
+              icon: Icons.fact_check_outlined,
+              title: 'Hasil Pengawasan',
+              rows: _hasilPengawasanRows(),
+            ),
+            const SizedBox(height: 12),
+            _SubmissionOtaSection(
               entries: _parseOtaEntries(),
               onTapUrl: _openUrl,
             ),
@@ -410,128 +504,6 @@ class _SubmissionDetailPageState extends State<SubmissionDetailPage> {
     );
   }
 
-  /// Membangun daftar [DetailField] yang siap ditampilkan oleh
-  /// [DetailFieldsCard], berdasarkan urutan field pada form Non-OSS.
-  /// `client_uuid` disembunyikan karena hanya identitas internal.
-  List<DetailField> _buildDetailFields() {
-    const List<String> knownOrder = <String>[
-      'memiliki_nib',
-      'nama_pemilik',
-      'nama_brand',
-      'jenis_produk',
-      'alamat',
-      'provinsi_id',
-      'kabupaten_id',
-      'kecamatan_id',
-      'kelurahan_id',
-      'latitude',
-      'longitude',
-      'npwpd',
-      'website',
-      'no_hp',
-      'email',
-      'terdaftar_ota',
-      'ota_lainnya_nama',
-      'status_pengawasan',
-      'tanggal_pengawasan',
-      'keterangan',
-      'catatan_petugas',
-    ];
-
-    final Map<String, String> payload = Map<String, String>.from(_data.payload)
-      ..remove('client_uuid')
-      ..removeWhere(
-        (key, _) =>
-            key.startsWith('platform_ota[') ||
-            key.startsWith('ota_urls[') ||
-            key == 'ota_lainnya_nama',
-      );
-
-    final List<MapEntry<String, String>> ordered = <MapEntry<String, String>>[];
-
-    for (final String key in knownOrder) {
-      if (payload.containsKey(key)) {
-        ordered.add(MapEntry<String, String>(key, payload[key]!));
-        payload.remove(key);
-      }
-    }
-
-    final List<String> remainingKeys = payload.keys.toList()..sort();
-    for (final String key in remainingKeys) {
-      ordered.add(MapEntry<String, String>(key, payload[key]!));
-    }
-
-    return ordered
-        .map(
-          (entry) => DetailField(
-            label: _fieldLabel(entry.key),
-            value: _displayValue(entry.key, entry.value),
-          ),
-        )
-        .toList();
-  }
-
-  static const Map<String, String> _labelMap = <String, String>{
-    'memiliki_nib': 'Memiliki NIB',
-    'nama_pemilik': 'Nama Pemilik',
-    'nama_brand': 'Nama Brand/Usaha',
-    'jenis_produk': 'Jenis Produk',
-    'alamat': 'Alamat',
-    'provinsi_id': 'Provinsi',
-    'kabupaten_id': 'Kabupaten/Kota',
-    'kecamatan_id': 'Kecamatan',
-    'kelurahan_id': 'Kelurahan',
-    'latitude': 'Latitude',
-    'longitude': 'Longitude',
-    'npwpd': 'NPWPD',
-    'website': 'Website',
-    'no_hp': 'No. HP',
-    'email': 'Email',
-    'terdaftar_ota': 'Terdaftar OTA',
-    'ota_lainnya_nama': 'Nama OTA Lainnya',
-    'status_pengawasan': 'Status Pengawasan',
-    'tanggal_pengawasan': 'Tanggal Pengawasan',
-    'keterangan': 'Keterangan',
-    'catatan_petugas': 'Catatan Petugas',
-  };
-
-  static const Set<String> _wilayahIdKeys = <String>{
-    'provinsi_id',
-    'kabupaten_id',
-    'kecamatan_id',
-    'kelurahan_id',
-  };
-
-  String _displayValue(String key, String rawValue) {
-    if (_wilayahIdKeys.contains(key)) {
-      return _regionNames[key] ?? rawValue;
-    }
-    return rawValue;
-  }
-
-  String _fieldLabel(String key) {
-    if (_labelMap.containsKey(key)) {
-      return _labelMap[key]!;
-    }
-
-    // Menangani key dinamis seperti platform_ota[0] atau ota_urls[booking_com][0]
-    final String base = key.split('[').first;
-    final String baseLabel =
-        _labelMap[base] ??
-        base
-            .split('_')
-            .map(
-              (part) => part.isEmpty
-                  ? part
-                  : '${part[0].toUpperCase()}${part.substring(1)}',
-            )
-            .join(' ');
-
-    return key.contains('[')
-        ? '$baseLabel ${key.substring(base.length)}'
-        : baseLabel;
-  }
-
   static const Map<String, String> _otaPlatformLabels = <String, String>{
     'booking_com': 'Booking.com',
     'tiket_com': 'Tiket.com',
@@ -585,4 +557,141 @@ String _formatDateTime(DateTime value) {
   String two(int number) => number.toString().padLeft(2, '0');
   return '${two(local.day)}/${two(local.month)}/${local.year} '
       '${two(local.hour)}:${two(local.minute)}';
+}
+
+/// Kartu section OTA bergaya sama dengan halaman detail Riwayat, tapi
+/// data submission cuma punya nama platform + daftar URL (tanpa status,
+/// harga, rating — karena itu semua diisi lewat proses verifikasi OSS
+/// yang belum berlaku untuk ajuan yang masih di antrean lokal).
+class _SubmissionOtaSection extends StatelessWidget {
+  const _SubmissionOtaSection({required this.entries, required this.onTapUrl});
+
+  final List<OtaEntry> entries;
+  final ValueChanged<String> onTapUrl;
+
+  @override
+  Widget build(BuildContext context) {
+    if (entries.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    return Card(
+      elevation: 0,
+      color: AppTheme.surface(context),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(14),
+        side: BorderSide(color: Colors.black.withOpacity(0.06)),
+      ),
+      margin: EdgeInsets.zero,
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            Row(
+              children: <Widget>[
+                Icon(
+                  Icons.travel_explore_outlined,
+                  size: 18,
+                  color: AppTheme.menuDashboard,
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  'Platform OTA',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w800,
+                    color: AppTheme.textColor(context),
+                  ),
+                ),
+                const SizedBox(width: 6),
+                Text(
+                  '(${entries.length})',
+                  style: TextStyle(
+                    fontSize: 12.5,
+                    color: AppTheme.textSecondary(context),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            for (int i = 0; i < entries.length; i++) ...<Widget>[
+              if (i > 0) const Divider(height: 20),
+              _SubmissionOtaTile(entry: entries[i], onTapUrl: onTapUrl),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _SubmissionOtaTile extends StatelessWidget {
+  const _SubmissionOtaTile({required this.entry, required this.onTapUrl});
+
+  final OtaEntry entry;
+  final ValueChanged<String> onTapUrl;
+
+  @override
+  Widget build(BuildContext context) {
+    final List<String> urls =
+        entry.urls.where((String u) => u.trim().isNotEmpty).toList();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        Text(
+          entry.name,
+          style: TextStyle(
+            fontSize: 13.5,
+            fontWeight: FontWeight.w700,
+            color: AppTheme.textColor(context),
+          ),
+        ),
+        if (urls.isNotEmpty) ...<Widget>[
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 8,
+            runSpacing: 6,
+            children: <Widget>[
+              for (int i = 0; i < urls.length; i++)
+                _LinkButtonSubmission(
+                  icon: Icons.open_in_new_rounded,
+                  label: urls.length > 1 ? 'Buka Link ${i + 1}' : 'Buka Listing',
+                  onTap: () => onTapUrl(urls[i]),
+                ),
+            ],
+          ),
+        ],
+      ],
+    );
+  }
+}
+
+class _LinkButtonSubmission extends StatelessWidget {
+  const _LinkButtonSubmission({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return OutlinedButton.icon(
+      onPressed: onTap,
+      icon: Icon(icon, size: 15),
+      label: Text(label, style: const TextStyle(fontSize: 12)),
+      style: OutlinedButton.styleFrom(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+        minimumSize: Size.zero,
+        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+        foregroundColor: AppTheme.menuDashboard,
+        side: BorderSide(color: AppTheme.menuDashboard.withOpacity(0.4)),
+      ),
+    );
+  }
 }

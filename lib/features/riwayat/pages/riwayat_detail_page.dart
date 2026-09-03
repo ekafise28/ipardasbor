@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../../app/app_theme.dart';
 import '../../../core/api/api_exception.dart';
 import '../models/riwayat_detail.dart';
 import '../services/riwayat_service.dart';
-import 'package:url_launcher/url_launcher.dart';
+
+import '../../../shared/widgets/detail_section_card.dart';
+import '../../../shared/widgets/detail_status_header.dart';
 
 /// Halaman detail penuh untuk satu item riwayat pengawasan.
 ///
@@ -122,50 +125,64 @@ class _RiwayatDetailPageState extends State<RiwayatDetailPage> {
       child: ListView(
         padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
         children: <Widget>[
-          _HeaderCard(detail: detail),
+          StatusHeaderCard(
+            title: detail.namaUsaha,
+            badges: <StatusBadge>[
+              StatusBadge(
+                text: detail.sumberData,
+                color: _warnaJenisRiwayat(detail.sumberData),
+              ),
+              StatusBadge(
+                text: detail.statusVerifikasi,
+                color: detail.statusVerifikasi.toUpperCase() == 'SELESAI'
+                    ? Colors.green
+                    : Colors.orange,
+              ),
+            ],
+          ),
           const SizedBox(height: 16),
-          _SectionCard(
+          SectionCard(
             icon: Icons.storefront_outlined,
             title: 'Informasi Usaha',
-            rows: <_Baris>[
-              _Baris('Sumber Data', detail.sumberData),
-              _Baris('Nama Brand', detail.namaBrand),
-              _Baris('Nama Pemilik', detail.namaPemilik),
-              _Baris('Jenis Produk', detail.jenisProduk),
-              _Baris('KBLI', detail.kbli),
-              _Baris('Deskripsi KBLI', detail.kbliDesc),
-              _Baris(
+            rows: <Baris>[
+              Baris('Sumber Data', detail.sumberData),
+              Baris('Nama Brand', detail.namaBrand),
+              Baris('Nama Pemilik', detail.namaPemilik),
+              Baris('Jenis Produk', detail.jenisProduk),
+              Baris('KBLI', detail.kbli),
+              Baris('Deskripsi KBLI', detail.kbliDesc),
+              Baris(
                 'Website',
                 detail.website,
                 url: _normalisasiUrl(detail.website),
               ),
-              _Baris('No. HP', detail.noHp),
-              _Baris('Email', detail.email),
+              Baris('No. HP', detail.noHp),
+              Baris('Email', detail.email),
             ],
           ),
           const SizedBox(height: 12),
-          _SectionCard(
+          SectionCard(
             icon: Icons.verified_outlined,
             title: 'Legalitas',
-            rows: <_Baris>[
-              _Baris('Status Verifikasi', detail.statusVerifikasi),
-              _Baris('Memiliki NIB', detail.memilikiNib),
-              _Baris('Nomor NIB', detail.nib),
-              _Baris('NPWPD', detail.npwpd),
-              _Baris('Terdaftar OTA', detail.terdaftarOta),
+            rows: <Baris>[
+              Baris('Status Verifikasi', detail.statusVerifikasi),
+              Baris('Memiliki NIB', detail.memilikiNib),
+              Baris('Nomor NIB', detail.nib),
+              Baris('NPWPD', detail.npwpd),
+              Baris('Terdaftar OTA', detail.terdaftarOta),
             ],
           ),
           const SizedBox(height: 12),
-          _SectionCard(
+          SectionCard(
             icon: Icons.place_outlined,
             title: 'Lokasi',
-            rows: <_Baris>[
-              _Baris('Provinsi', detail.wilayah.provinsi),
-              _Baris('Kabupaten/Kota', detail.wilayah.kabupaten),
-              _Baris('Kecamatan', detail.wilayah.kecamatan),
-              _Baris('Kelurahan', detail.wilayah.kelurahan),
-              _Baris('Alamat', detail.alamat),
-              _Baris(
+            rows: <Baris>[
+              Baris('Provinsi', detail.wilayah.provinsi),
+              Baris('Kabupaten/Kota', detail.wilayah.kabupaten),
+              Baris('Kecamatan', detail.wilayah.kecamatan),
+              Baris('Kelurahan', detail.wilayah.kelurahan),
+              Baris('Alamat', detail.alamat),
+              Baris(
                 'Koordinat',
                 _formatKoordinat(detail),
                 url: _mapsUrl(detail),
@@ -173,21 +190,21 @@ class _RiwayatDetailPageState extends State<RiwayatDetailPage> {
             ],
           ),
           const SizedBox(height: 12),
-          _SectionCard(
+          SectionCard(
             icon: Icons.fact_check_outlined,
             title: 'Hasil Pengawasan',
-            rows: <_Baris>[
-              _Baris('Petugas', detail.petugas),
-              _Baris('Status Pengawasan', detail.statusPengawasan),
-              _Baris('Status Ketidaksesuaian', detail.statusKetidaksesuaian),
-              _Baris('Keterangan', detail.keterangan),
-              _Baris('Catatan Petugas', detail.catatanPetugas),
-              _Baris(
+            rows: <Baris>[
+              Baris('Petugas', detail.petugas),
+              Baris('Status Pengawasan', detail.statusPengawasan),
+              Baris('Status Ketidaksesuaian', detail.statusKetidaksesuaian),
+              Baris('Keterangan', detail.keterangan),
+              Baris('Catatan Petugas', detail.catatanPetugas),
+              Baris(
                 'Tanggal Pengawasan',
                 _formatTanggal(detail.tanggalPengawasan),
               ),
-              _Baris('Dibuat Pada', _formatTanggalJam(detail.createdAt)),
-              _Baris('Diperbarui Pada', _formatTanggalJam(detail.updatedAt)),
+              Baris('Dibuat Pada', _formatTanggalJam(detail.createdAt)),
+              Baris('Diperbarui Pada', _formatTanggalJam(detail.updatedAt)),
             ],
           ),
           const SizedBox(height: 12),
@@ -243,219 +260,6 @@ class _RiwayatDetailPageState extends State<RiwayatDetailPage> {
     return '$tanggalLabel, $jam:$menit';
   }
 }
-
-/// Kartu ringkasan di paling atas: nama usaha + badge jenis & status.
-class _HeaderCard extends StatelessWidget {
-  const _HeaderCard({required this.detail});
-
-  final RiwayatDetail detail;
-
-  Color _warnaJenis() {
-    switch (detail.sumberData.toUpperCase()) {
-      case 'OSS':
-        return AppTheme.menuOss;
-      case 'OTA':
-        return AppTheme.menuOta;
-      case 'NON OSS':
-      default:
-        return AppTheme.menuNonOss;
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final bool selesai = detail.statusVerifikasi.toUpperCase() == 'SELESAI';
-    final Color warnaStatus = selesai ? Colors.green : Colors.orange;
-
-    return Card(
-      elevation: 0,
-      color: AppTheme.surface(context),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(14),
-        side: BorderSide(color: Colors.black.withOpacity(0.06)),
-      ),
-      margin: EdgeInsets.zero,
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: <Widget>[
-            Row(
-              children: <Widget>[
-                _Chip(text: detail.sumberData, color: _warnaJenis()),
-                const SizedBox(width: 8),
-                _Chip(text: detail.statusVerifikasi, color: warnaStatus),
-              ],
-            ),
-            const SizedBox(height: 10),
-            Text(
-              detail.namaUsaha,
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w800,
-                color: AppTheme.textColor(context),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _Chip extends StatelessWidget {
-  const _Chip({required this.text, required this.color});
-
-  final String text;
-  final Color color;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration: BoxDecoration(
-        color: color.withOpacity(0.12),
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Text(
-        text,
-        style: TextStyle(
-          fontSize: 11,
-          fontWeight: FontWeight.w700,
-          color: color,
-        ),
-      ),
-    );
-  }
-}
-
-/// Satu pasangan label-nilai yang akan dirender oleh [_SectionCard].
-///
-/// Baris dengan nilai null/kosong otomatis disembunyikan supaya section
-/// tidak penuh tanda "-" untuk field yang memang tidak diisi.
-class _Baris {
-  const _Baris(this.label, this.value, {this.url});
-
-  final String label;
-  final String? value;
-
-  /// Kalau diisi, baris ini dirender sebagai tautan yang bisa ditekan
-  /// untuk membuka [url] (bukan sekadar teks biasa).
-  final String? url;
-
-  bool get adaIsi => value != null && value!.trim().isNotEmpty;
-  bool get bisaDibuka => url != null && url!.trim().isNotEmpty;
-}
-
-/// Kartu section untuk satu kategori field, dengan header ikon + judul.
-class _SectionCard extends StatelessWidget {
-  const _SectionCard({
-    required this.icon,
-    required this.title,
-    required this.rows,
-  });
-
-  final IconData icon;
-  final String title;
-  final List<_Baris> rows;
-
-  @override
-  Widget build(BuildContext context) {
-    final List<_Baris> rowsTerisi = rows.where((_Baris r) => r.adaIsi).toList();
-
-    if (rowsTerisi.isEmpty) {
-      return const SizedBox.shrink();
-    }
-
-    return Card(
-      elevation: 0,
-      color: AppTheme.surface(context),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(14),
-        side: BorderSide(color: Colors.black.withOpacity(0.06)),
-      ),
-      margin: EdgeInsets.zero,
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: <Widget>[
-            Row(
-              children: <Widget>[
-                Icon(icon, size: 18, color: AppTheme.menuDashboard),
-                const SizedBox(width: 8),
-                Text(
-                  title,
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w800,
-                    color: AppTheme.textColor(context),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            for (final _Baris baris in rowsTerisi)
-              Padding(
-                padding: const EdgeInsets.symmetric(vertical: 6),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: <Widget>[
-                    SizedBox(
-                      width: 130,
-                      child: Text(
-                        baris.label,
-                        style: TextStyle(
-                          fontSize: 12.5,
-                          color: AppTheme.textSecondary(context),
-                        ),
-                      ),
-                    ),
-                    Expanded(
-                      child: baris.bisaDibuka
-                          ? InkWell(
-                              onTap: () => _bukaTautan(context, baris.url!),
-                              child: Row(
-                                children: <Widget>[
-                                  Flexible(
-                                    child: Text(
-                                      baris.value!,
-                                      style: const TextStyle(
-                                        fontSize: 13,
-                                        fontWeight: FontWeight.w600,
-                                        color: Colors.blue,
-                                        decoration: TextDecoration.underline,
-                                      ),
-                                    ),
-                                  ),
-                                  const SizedBox(width: 4),
-                                  const Icon(
-                                    Icons.open_in_new_rounded,
-                                    size: 13,
-                                    color: Colors.blue,
-                                  ),
-                                ],
-                              ),
-                            )
-                          : Text(
-                              baris.value!,
-                              style: TextStyle(
-                                fontSize: 13,
-                                fontWeight: FontWeight.w600,
-                                color: AppTheme.textColor(context),
-                              ),
-                            ),
-                    ),
-                  ],
-                ),
-              ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
 /// Kartu section khusus foto dokumentasi, tampil grid 3 kolom.
 /// Tap foto membuka full-screen viewer dengan zoom.
 class _FotoSection extends StatelessWidget {
@@ -927,30 +731,6 @@ class _LinkButton extends StatelessWidget {
   }
 }
 
-Future<void> _bukaTautan(BuildContext context, String url) async {
-  final Uri? uri = Uri.tryParse(url);
-
-  if (uri == null) {
-    if (context.mounted) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Tautan tidak valid.')));
-    }
-    return;
-  }
-
-  final bool berhasil = await launchUrl(
-    uri,
-    mode: LaunchMode.externalApplication,
-  );
-
-  if (!berhasil && context.mounted) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Tidak dapat membuka tautan.')),
-    );
-  }
-}
-
 String? _normalisasiUrl(String? website) {
   if (website == null || website.trim().isEmpty) {
     return null;
@@ -963,4 +743,16 @@ String? _normalisasiUrl(String? website) {
   }
 
   return 'https://$bersih';
+}
+
+Color _warnaJenisRiwayat(String jenis) {
+  switch (jenis.toUpperCase()) {
+    case 'OSS':
+      return AppTheme.menuOss;
+    case 'OTA':
+      return AppTheme.menuOta;
+    case 'NON OSS':
+    default:
+      return AppTheme.menuNonOss;
+  }
 }
