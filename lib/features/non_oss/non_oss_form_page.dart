@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import 'package:ipardasbor/app/app_theme.dart';
 import 'package:ipardasbor/features/non_oss/models/location_fetch_status.dart';
+import 'package:ipardasbor/features/non_oss/offline/non_oss_local_data.dart';
 
 import '../../core/api/api_client.dart';
 
@@ -21,7 +22,10 @@ import 'widgets/photo_picker.dart';
 import 'offline/offline_queue_service.dart';
 
 class NonOssFormPage extends StatefulWidget {
-  const NonOssFormPage({super.key});
+  const NonOssFormPage({super.key, this.editingData});
+
+  final NonOssLocalData? editingData;
+
   @override
   State<NonOssFormPage> createState() => _NonOssFormPageState();
 }
@@ -30,7 +34,7 @@ class _NonOssFormPageState extends State<NonOssFormPage> {
   static const _primary = AppTheme.primaryColor;
   static const _navy = Color(0xFF0B3F78);
   final _key = GlobalKey<FormState>();
-  final _data = NonOssFormData();
+  late final NonOssFormData _data;
 
   late final ApiClient _api;
   late final RegionService _regions;
@@ -47,6 +51,7 @@ class _NonOssFormPageState extends State<NonOssFormPage> {
   int? _gpsCountdown;
   LocationSource? _gpsSource;
   Set<_Section> _sectionErrors = {};
+  bool get _isEditing => widget.editingData != null;
 
   // ---------------------------------------------------------------------
   // TextEditingController untuk setiap field teks.
@@ -92,6 +97,10 @@ class _NonOssFormPageState extends State<NonOssFormPage> {
   @override
   void initState() {
     super.initState();
+    _data = widget.editingData != null
+        ? NonOssFormData.fromLocalData(widget.editingData!)
+        : NonOssFormData();
+
     _api = ApiClient();
     _regions = RegionService();
     _service = NonOssService(_api);
@@ -131,10 +140,37 @@ class _NonOssFormPageState extends State<NonOssFormPage> {
   Future<void> _loadProvinces() async {
     try {
       _provinces = await _regions.provinces();
+
+      if (_isEditing) {
+        await _preloadRegionsForEditing();
+      }
     } catch (e) {
       _error(e);
     } finally {
       if (mounted) setState(() => _loadingRegions = false);
+    }
+  }
+
+  /// Memuat daftar kabupaten/kecamatan/kelurahan sesuai ID yang sudah
+  /// tersimpan, supaya dropdown wilayah langsung terisi benar saat form
+  /// dibuka dalam mode edit (bukan cuma menunggu user memilih ulang).
+  Future<void> _preloadRegionsForEditing() async {
+    if (_data.provinsiId != null) {
+      try {
+        _regencies = await _regions.regencies(_data.provinsiId!);
+      } catch (_) {
+        // Biarkan kosong kalau gagal — user tetap bisa pilih ulang manual.
+      }
+    }
+    if (_data.kabupatenId != null) {
+      try {
+        _districts = await _regions.districts(_data.kabupatenId!);
+      } catch (_) {}
+    }
+    if (_data.kecamatanId != null) {
+      try {
+        _villages = await _regions.villages(_data.kecamatanId!);
+      } catch (_) {}
     }
   }
 
@@ -374,14 +410,23 @@ class _NonOssFormPageState extends State<NonOssFormPage> {
 
     setState(() => _saving = true);
     try {
-      await _submitOnlineOrQueue();
+      if (_isEditing) {
+        await _offlineQueue.update(widget.editingData!, _data);
+      } else {
+        await _submitOnlineOrQueue();
+      }
+
       if (!mounted) return;
       await showDialog<void>(
         context: context,
         builder: (c) => AlertDialog(
           icon: const Icon(Icons.check_circle, color: Colors.green, size: 52),
           title: const Text('Berhasil'),
-          content: const Text('Data pengawasan Non-OSS berhasil disimpan.'),
+          content: Text(
+            _isEditing
+                ? 'Perubahan data berhasil disimpan.'
+                : 'Data pengawasan Non-OSS berhasil disimpan.',
+          ),
           actions: [
             FilledButton(
               onPressed: () => Navigator.pop(c),
@@ -646,16 +691,21 @@ class _NonOssFormPageState extends State<NonOssFormPage> {
         backgroundColor: _navy,
         foregroundColor: Colors.white,
         titleSpacing: 4,
-        title: const Column(
+        title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Pengawasan Non-OSS',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
+              _isEditing ? 'Edit Pengawasan Non-OSS' : 'Pengawasan Non-OSS',
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
             ),
             Text(
-              'Pendataan usaha pariwisata',
-              style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w400),
+              _isEditing
+                  ? 'Perbarui data yang tersimpan'
+                  : 'Pendataan usaha pariwisata',
+              style: const TextStyle(
+                fontSize: 11.5,
+                fontWeight: FontWeight.w400,
+              ),
             ),
           ],
         ),
@@ -1012,7 +1062,13 @@ class _NonOssFormPageState extends State<NonOssFormPage> {
                               color: Colors.white,
                             ),
                       label: Text(
-                        _saving ? 'Menyimpan data...' : 'Simpan Pengawasan',
+                        _saving
+                            ? (_isEditing
+                                  ? 'Menyimpan perubahan...'
+                                  : 'Menyimpan data...')
+                            : (_isEditing
+                                  ? 'Simpan Perubahan'
+                                  : 'Simpan Pengawasan'),
                         style: TextStyle(
                           fontWeight: FontWeight.w800,
                           fontSize: 15,

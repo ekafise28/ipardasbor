@@ -57,4 +57,43 @@ class OfflineQueueService {
       rethrow;
     }
   }
+
+    /// Memperbarui ajuan yang sudah ada di antrean lokal (mode edit).
+  ///
+  /// Status SENGAJA di-reset ke [SyncStatus.pending] supaya ajuan yang
+  /// tadinya gagal (FAILED) bisa dicoba sync lagi setelah dikoreksi.
+  /// id, clientUuid, createdAt, dan retryCount tetap dipertahankan dari
+  /// data [original] — ini bukan ajuan baru, cuma versi terbaru dari
+  /// ajuan yang sama.
+  Future<NonOssLocalData> update(
+    NonOssLocalData original,
+    NonOssFormData form,
+  ) async {
+    final List<String> photoPaths = await _photoStorage.replaceAll(
+      original.clientUuid,
+      form.photos,
+    );
+    final DateTime now = DateTime.now();
+
+    final NonOssLocalData updated = NonOssLocalData(
+      id: original.id,
+      clientUuid: original.clientUuid,
+      payload: <String, String>{
+        ...form.toFields(),
+        'client_uuid': original.clientUuid,
+      },
+      photoPaths: photoPaths,
+      status: SyncStatus.pending,
+      createdAt: original.createdAt,
+      updatedAt: now,
+      serverId: original.serverId,
+      lastError: null,
+      lastAttemptAt: original.lastAttemptAt,
+      syncedAt: original.syncedAt,
+      retryCount: original.retryCount,
+    );
+
+    await _database.updateSubmission(updated);
+    return updated;
+  }
 }

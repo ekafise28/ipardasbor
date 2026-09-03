@@ -10,6 +10,8 @@ import '../../non_oss/offline/offline_database.dart';
 import '../../non_oss/offline/offline_queue_service.dart';
 import '../../non_oss/offline/sync_service.dart';
 import '../../non_oss/offline/wilayah_local_database.dart';
+import '../../non_oss/non_oss_form_page.dart';
+
 import '../widget/widget_submission/detail_header_card.dart';
 import '../widget/widget_submission/detail_ota_section.dart';
 import '../widget/widget_submission/detail_photo_section.dart';
@@ -123,6 +125,17 @@ class _SubmissionDetailPageState extends State<SubmissionDetailPage> {
         'Sinkronisasi gagal. Periksa internet atau server lalu coba lagi.',
         success: false,
       );
+    }
+  }
+    Future<void> _openEdit() async {
+    final Object? result = await Navigator.of(context).push<Object?>(
+      MaterialPageRoute<Object?>(
+        builder: (_) => NonOssFormPage(editingData: _data),
+      ),
+    );
+
+    if (result == true && mounted) {
+      Navigator.of(context).pop('edited');
     }
   }
 
@@ -280,7 +293,7 @@ class _SubmissionDetailPageState extends State<SubmissionDetailPage> {
 
     return Scaffold(
       backgroundColor: AppTheme.scaffoldColorDynamic(context),
-      appBar: AppBar(
+            appBar: AppBar(
         backgroundColor: AppTheme.surface(context),
         surfaceTintColor: AppTheme.surface(context),
         elevation: 0,
@@ -294,6 +307,17 @@ class _SubmissionDetailPageState extends State<SubmissionDetailPage> {
             fontWeight: FontWeight.w800,
           ),
         ),
+        actions: [
+          IconButton(
+            tooltip: 'Edit',
+            onPressed: _isSyncing || _isDeleting ? null : _openEdit,
+            icon: Icon(
+              Icons.edit_outlined,
+              color: AppTheme.textColor(context),
+            ),
+          ),
+          const SizedBox(width: 4),
+        ],
       ),
       body: SafeArea(
         child: ListView(

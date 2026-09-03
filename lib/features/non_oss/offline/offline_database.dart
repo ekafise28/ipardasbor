@@ -159,4 +159,14 @@ class OfflineDatabase {
       whereArgs: <Object?>[clientUuid],
     );
   }
+
+  Future<void> updateSubmission(NonOssLocalData data) async {
+    final Database db = await database;
+    await db.update(
+      table,
+      data.toDatabase(),
+      where: 'client_uuid = ?',
+      whereArgs: <Object?>[data.clientUuid],
+    );
+  }
 }

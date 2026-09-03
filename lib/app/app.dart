@@ -9,6 +9,8 @@ import '../features/home/home_page.dart';
 import '../features/non_oss/offline/sync_service.dart';
 import '../features/non_oss/services/non_oss_service.dart';
 import '../features/splash/splash_page.dart';
+import '../features/non_oss/offline/auto_sync_controller.dart';
+
 import 'app_navigator.dart';
 import 'app_theme.dart';
 
@@ -19,7 +21,7 @@ class IparApp extends StatefulWidget {
   State<IparApp> createState() => _IparAppState();
 }
 
-class _IparAppState extends State<IparApp> {
+class _IparAppState extends State<IparApp> with WidgetsBindingObserver {
   late final NonOssSyncService _nonOssSync;
   StreamSubscription<List<ConnectivityResult>>? _connectivitySubscription;
 
@@ -29,16 +31,20 @@ class _IparAppState extends State<IparApp> {
 
     _nonOssSync = NonOssSyncService(remote: NonOssService(ApiClient()));
 
-    // Opsi 1: coba sinkron sekali saat aplikasi baru dibuka.
-    _runSyncSilently();
+    // Sinkronisasi otomatis (saat app dibuka & saat koneksi berubah) HANYA
+    // berjalan kalau user mengaktifkannya lewat toggle di halaman Settings
+    // (AutoSyncController). Default-nya manual.
+    if (AutoSyncController.instance.isEnabled) {
+      _runSyncSilently();
+    }
 
-    // Opsi 2: coba sinkron setiap kali status jaringan berubah ke kondisi
-    // tersambung. isServerAvailable() di dalam syncWaiting() akan
-    // memverifikasi lebih lanjut apakah server benar-benar bisa dijangkau,
-    // jadi di sini cukup deteksi perubahan status jaringan perangkat saja.
     _connectivitySubscription = Connectivity().onConnectivityChanged.listen((
       List<ConnectivityResult> results,
     ) {
+      if (!AutoSyncController.instance.isEnabled) {
+        return;
+      }
+
       final bool hasConnection = results.any(
         (ConnectivityResult r) => r != ConnectivityResult.none,
       );
@@ -47,6 +53,16 @@ class _IparAppState extends State<IparApp> {
         _runSyncSilently();
       }
     });
+
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed &&
+        AutoSyncController.instance.isEnabled) {
+      _runSyncSilently();
+    }
   }
 
   void _runSyncSilently() {
@@ -64,6 +80,7 @@ class _IparAppState extends State<IparApp> {
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _connectivitySubscription?.cancel();
     super.dispose();
   }

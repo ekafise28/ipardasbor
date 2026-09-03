@@ -10,12 +10,14 @@ import '../non_oss/offline/offline_database.dart';
 import '../non_oss/offline/offline_queue_service.dart';
 import '../non_oss/offline/sync_service.dart';
 import '../non_oss/services/non_oss_service.dart';
+import '../non_oss/offline/auto_sync_controller.dart';
 
 import 'pages/submission_detail_page.dart';
 import 'widget/widget_sync/empty_state.dart';
 import 'widget/widget_sync/sync_summary_card.dart';
 import 'widget/widget_sync/sync_table.dart';
 import 'widget/widget_sync/table_loading.dart';
+
 
 class SyncPage extends StatefulWidget {
   const SyncPage({super.key});
@@ -52,6 +54,19 @@ class _SyncPageState extends State<SyncPage> {
     super.dispose();
   }
 
+    Future<void> _onRefresh() async {
+    // Kalau mode otomatis aktif, pull-to-refresh juga jadi kesempatan
+    // untuk mencoba kirim data PENDING — bukan cuma memuat ulang daftar.
+    // Ini menutup celah "harus keluar-masuk app" yang terjadi karena
+    // onConnectivityChanged hanya terpicu saat status koneksi BERUBAH,
+    // bukan saat koneksi memang sudah menyala sejak awal.
+    if (AutoSyncController.instance.isEnabled) {
+      await _syncService.syncWaiting().catchError((_) {});
+    }
+
+    await _loadWaitingData(showLoading: false);
+  }
+
   Future<void> _loadWaitingData({bool showLoading = true}) async {
     if (!mounted) return;
 
@@ -84,9 +99,9 @@ class _SyncPageState extends State<SyncPage> {
     int synced = 0;
 
     try {
-      await _syncService.syncWaiting(limit: 500).timeout(
-        const Duration(seconds: 60),
-      );
+      await _syncService
+          .syncWaiting(limit: 500)
+          .timeout(const Duration(seconds: 60));
       await _loadWaitingData(showLoading: false);
       synced = before - _waitingData.length;
     } on TimeoutException {
@@ -149,7 +164,7 @@ class _SyncPageState extends State<SyncPage> {
       ),
     );
 
-    if (result == 'synced' || result == 'deleted') {
+    if (result == 'synced' || result == 'deleted' || result == 'edited') {
       await _loadWaitingData(showLoading: false);
     }
   }
@@ -215,22 +230,11 @@ class _SyncPageState extends State<SyncPage> {
             ),
           ],
         ),
-        actions: [
-          IconButton(
-            tooltip: 'Muat ulang',
-            onPressed: _isLoading ? null : () => _loadWaitingData(),
-            icon: Icon(
-              Icons.refresh_rounded,
-              color: AppTheme.textSecondary(context),
-            ),
-          ),
-          const SizedBox(width: 8),
-        ],
       ),
       body: SafeArea(
-        child: RefreshIndicator(
+                child: RefreshIndicator(
           color: AppTheme.primaryColor,
-          onRefresh: () => _loadWaitingData(showLoading: false),
+          onRefresh: _onRefresh,
           child: LayoutBuilder(
             builder: (context, constraints) {
               final double contentWidth = constraints.maxWidth >= 1100

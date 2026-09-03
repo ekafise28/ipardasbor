@@ -1,8 +1,11 @@
 import 'dart:convert';
 
 import 'package:image_picker/image_picker.dart';
+import '../offline/non_oss_local_data.dart';
 
 class NonOssFormData {
+  NonOssFormData();
+  
   String memilikiNib = 'TIDAK';
 
   String namaPemilik = '';
@@ -38,6 +41,87 @@ class NonOssFormData {
   DateTime tanggalPengawasan = DateTime.now();
 
   final List<XFile> photos = <XFile>[];
+
+  /// Membangun ulang [NonOssFormData] dari data yang tersimpan di antrean
+  /// lokal, untuk keperluan mode edit. Kebalikan dari [toFields].
+  factory NonOssFormData.fromLocalData(NonOssLocalData data) {
+    final NonOssFormData form = NonOssFormData();
+    final Map<String, String> payload = data.payload;
+
+    form.memilikiNib = payload['memiliki_nib'] ?? 'TIDAK';
+    form.namaPemilik = payload['nama_pemilik'] ?? '';
+    form.namaBrand = payload['nama_brand'] ?? '';
+    form.jenisProduk = payload['jenis_produk'] ?? '';
+
+    form.provinsiId = int.tryParse(payload['provinsi_id'] ?? '');
+    form.kabupatenId = int.tryParse(payload['kabupaten_id'] ?? '');
+    form.kecamatanId = int.tryParse(payload['kecamatan_id'] ?? '');
+    form.kelurahanId = int.tryParse(payload['kelurahan_id'] ?? '');
+
+    form.alamat = payload['alamat'] ?? '';
+    form.latitude = payload['latitude'] ?? '';
+    form.longitude = payload['longitude'] ?? '';
+
+    form.npwpd = payload['npwpd'] ?? '';
+    form.website = payload['website'] ?? '';
+    form.noHp = payload['no_hp'] ?? '';
+    form.email = payload['email'] ?? '';
+
+    form.terdaftarOta = payload['terdaftar_ota'] ?? 'TIDAK';
+    form.otaLainnyaNama = payload['ota_lainnya_nama'] ?? '';
+
+    form.statusPengawasan =
+        int.tryParse(payload['status_pengawasan'] ?? '') ?? 1;
+
+    form.keterangan = payload['keterangan'] ?? '';
+    form.catatanPetugas = payload['catatan_petugas'] ?? '';
+
+    final String? tanggalMentah = payload['tanggal_pengawasan'];
+    if (tanggalMentah != null && tanggalMentah.isNotEmpty) {
+      form.tanggalPengawasan =
+          DateTime.tryParse(tanggalMentah) ?? DateTime.now();
+    }
+
+    // Susun ulang platform_ota[i] & ota_urls[platform][j] menjadi
+    // Map<String, List<String>> seperti bentuk asalnya di form.
+    final RegExp platformPattern = RegExp(r'^platform_ota\[(\d+)\]$');
+    final RegExp urlPattern = RegExp(r'^ota_urls\[([^\]]+)\]\[(\d+)\]$');
+
+    final Map<int, String> platformByIndex = <int, String>{};
+    for (final MapEntry<String, String> entry in payload.entries) {
+      final Match? match = platformPattern.firstMatch(entry.key);
+      if (match != null) {
+        platformByIndex[int.parse(match.group(1)!)] = entry.value;
+      }
+    }
+
+    final Map<String, Map<int, String>> urlByPlatform =
+        <String, Map<int, String>>{};
+    for (final MapEntry<String, String> entry in payload.entries) {
+      final Match? match = urlPattern.firstMatch(entry.key);
+      if (match != null) {
+        final String platform = match.group(1)!;
+        final int urlIndex = int.parse(match.group(2)!);
+        urlByPlatform.putIfAbsent(platform, () => <int, String>{})[urlIndex] =
+            entry.value;
+      }
+    }
+
+    for (final String platform in platformByIndex.values) {
+      final Map<int, String> urlMap =
+          urlByPlatform[platform] ?? <int, String>{};
+      final List<int> sortedKeys = urlMap.keys.toList()..sort();
+      form.otaUrls[platform] = sortedKeys
+          .map((int key) => urlMap[key]!)
+          .toList();
+    }
+
+    // Bungkus path foto permanen sebagai XFile supaya PhotoPicker bisa
+    // menampilkan foto lama seolah baru saja dipilih.
+    form.photos.addAll(data.photoPaths.map((String path) => XFile(path)));
+
+    return form;
+  }
 
   /// Menghasilkan field multipart yang dapat langsung dikirim ke Laravel
   /// atau disimpan sebagai payload JSON di antrean SQLite.

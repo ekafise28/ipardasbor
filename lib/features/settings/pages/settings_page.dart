@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import '../../../app/app_theme.dart';
@@ -11,6 +13,11 @@ import '../../home/pages/feature_placeholder_page.dart';
 import '../../home/widgets/menu_list_tile.dart';
 
 import '../widgets/profile_preview_card.dart';
+
+import '../../non_oss/offline/auto_sync_controller.dart';
+import '../../non_oss/offline/sync_service.dart';
+import '../../non_oss/services/non_oss_service.dart';
+import '../../../core/api/api_client.dart';
 
 class SettingsPage extends StatefulWidget {
   const SettingsPage({super.key});
@@ -166,7 +173,10 @@ class _SettingsPageState extends State<SettingsPage> {
           content: Text(
             'Anda perlu masuk kembali untuk mengakses aplikasi.',
             textAlign: TextAlign.center,
-            style: TextStyle(fontSize: 13.5, color: AppTheme.textSecondary(context)),
+            style: TextStyle(
+              fontSize: 13.5,
+              color: AppTheme.textSecondary(context),
+            ),
           ),
           actionsPadding: const EdgeInsets.fromLTRB(20, 4, 20, 16),
           actionsAlignment: MainAxisAlignment.center,
@@ -216,6 +226,80 @@ class _SettingsPageState extends State<SettingsPage> {
       },
     );
   }
+  Widget _buildAutoSyncTile() {
+    return ValueListenableBuilder<bool>(
+      valueListenable: AutoSyncController.instance,
+      builder: (context, isAuto, _) {
+        return Container(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+          decoration: BoxDecoration(
+            color: AppTheme.surface(context),
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: AppTheme.border(context)),
+          ),
+          child: Row(
+            children: [
+              Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                  color: AppTheme.menuSinkronisasiBg,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(
+                  isAuto ? Icons.sync_rounded : Icons.sync_disabled_rounded,
+                  color: AppTheme.menuSinkronisasi,
+                ),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Sinkronisasi Otomatis',
+                      style: TextStyle(
+                        color: AppTheme.textColor(context),
+                        fontSize: 14.5,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      isAuto
+                          ? 'Data terkirim otomatis saat ada internet'
+                          : 'Data hanya terkirim saat Anda menekan Sync',
+                      style: TextStyle(
+                        color: AppTheme.textSecondary(context),
+                        fontSize: 12,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Switch(
+                value: isAuto,
+                activeTrackColor: AppTheme.menuTampilan,
+                onChanged: (value) async {
+                  await AutoSyncController.instance.setEnabled(value);
+
+                  // Kalau baru saja dinyalakan, coba sync sekali di tempat
+                  // supaya data PENDING yang sudah menumpuk tidak perlu
+                  // menunggu app dibuka ulang / koneksi berubah dulu.
+                  if (value) {
+                    final NonOssSyncService syncService = NonOssSyncService(
+                      remote: NonOssService(ApiClient()),
+                    );
+                    unawaited(syncService.syncWaiting().catchError((_) {}));
+                  }
+                },
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -250,6 +334,8 @@ class _SettingsPageState extends State<SettingsPage> {
                 const _SectionLabel('Preferensi'),
                 const SizedBox(height: 10),
                 _buildDarkModeTile(),
+                const SizedBox(height: 10),
+                _buildAutoSyncTile(),
                 const SizedBox(height: 10),
                 for (final menu in _preferenceMenus) ...[
                   MenuListTile(menu: menu, onTap: () => _openMenu(menu)),

@@ -113,6 +113,12 @@ class LocationPicker extends StatelessWidget {
                     urlTemplate:
                         'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
                     userAgentPackageName: 'id.go.kemenpar.ipardasbor',
+                    errorTileCallback: (tile, error, stackTrace) {
+                      // Sengaja diabaikan: kegagalan memuat tile peta saat
+                      // offline adalah kondisi normal, bukan bug. Tanpa
+                      // callback ini, exception-nya "lolos" sebagai
+                      // unhandled error dan bikin debugger pause di VS Code.
+                    },
                   ),
                   MarkerLayer(
                     markers: [
@@ -284,8 +290,7 @@ class _SumberBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final bool tanpaInternet =
-        source == LocationSource.tersimpanTanpaInternet;
+    final bool tanpaInternet = source == LocationSource.tersimpanTanpaInternet;
 
     final Color warna = tanpaInternet
         ? const Color(0xFFD97706) // oranye — perlu perhatian lebih
