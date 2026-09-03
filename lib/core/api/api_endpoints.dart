@@ -2,9 +2,9 @@ class ApiEndpoints {
   ApiEndpoints._();
 
   // Base URL utama API Laravel.
-  static const String baseUrl = 'https://dasbor.kemenpar.online/api';
+  // static const String baseUrl = 'https://dasbor.kemenpar.online/api';
   // static const String baseUrl = 'http://localhost:3000';
-  // static const String baseUrl = 'http://localhost:8000/api';
+  static const String baseUrl = 'http://localhost:8000/api';
 
   // Health check tanpa prefix mobile.
   // Hasil: https://dasbor.kemenpar.online/api/health
@@ -33,6 +33,7 @@ class ApiEndpoints {
   static const String proyekOss = '/mobile/oss/proyek';
   static const String pengawasanOss = '/mobile/oss/pengawasan';
   static const String riwayatOss = '/mobile/oss/riwayat';
+  static String riwayatOssDetail(int id) => '$riwayatOss/$id';
 
   // Dashboard
   static const String dashboard = '/mobile/dashboard';

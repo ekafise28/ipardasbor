@@ -80,6 +80,8 @@ class RiwayatDetail {
     required this.tanggalPengawasan,
     required this.createdAt,
     required this.updatedAt,
+    required this.foto,
+    required this.ota,
   });
 
   final int id;
@@ -116,6 +118,8 @@ class RiwayatDetail {
   final DateTime? tanggalPengawasan;
   final DateTime? createdAt;
   final DateTime? updatedAt;
+  final List<RiwayatDetailFoto> foto;
+  final List<RiwayatDetailOta> ota;
 
   /// Nama usaha yang enak ditampilkan sebagai judul halaman.
   /// (Tidak menarik dari tabel proyek karena scope endpoint ini sengaja
@@ -160,41 +164,53 @@ class RiwayatDetail {
       updatedAt: json['updated_at'] != null
           ? DateTime.tryParse(json['updated_at'] as String)
           : null,
+      foto: ((json['foto'] as List<dynamic>?) ?? const <dynamic>[])
+          .map(
+            (dynamic item) =>
+                RiwayatDetailFoto.fromJson(item as Map<String, dynamic>),
+          )
+          .toList(),
+      ota: ((json['ota'] as List<dynamic>?) ?? const <dynamic>[])
+          .map(
+            (dynamic item) =>
+                RiwayatDetailOta.fromJson(item as Map<String, dynamic>),
+          )
+          .toList(),
     );
   }
 }
 
 int? _toInt(dynamic value) {
-    if (value == null) {
-      return null;
-    }
-
-    if (value is num) {
-      return value.toInt();
-    }
-
-    if (value is String) {
-      return int.tryParse(value);
-    }
-
+  if (value == null) {
     return null;
   }
 
-  double? _toDouble(dynamic value) {
-    if (value == null) {
-      return null;
-    }
+  if (value is num) {
+    return value.toInt();
+  }
 
-    if (value is num) {
-      return value.toDouble();
-    }
+  if (value is String) {
+    return int.tryParse(value);
+  }
 
-    if (value is String) {
-      return double.tryParse(value);
-    }
+  return null;
+}
 
+double? _toDouble(dynamic value) {
+  if (value == null) {
     return null;
   }
+
+  if (value is num) {
+    return value.toDouble();
+  }
+
+  if (value is String) {
+    return double.tryParse(value);
+  }
+
+  return null;
+}
 
 String? _toStringSafe(dynamic value) {
   if (value == null) {
@@ -206,4 +222,103 @@ String? _toStringSafe(dynamic value) {
   // Backend kadang ngirim status/kode sebagai number atau bool,
   // bukan string — convert aja daripada crash.
   return value.toString();
+}
+
+/// Satu foto dokumentasi hasil pengawasan.
+class RiwayatDetailFoto {
+  const RiwayatDetailFoto({
+    required this.id,
+    required this.namaFile,
+    required this.url,
+    required this.mimeType,
+    required this.keterangan,
+  });
+
+  final int id;
+  final String namaFile;
+  final String url;
+  final String? mimeType;
+  final String? keterangan;
+
+  factory RiwayatDetailFoto.fromJson(Map<String, dynamic> json) {
+    return RiwayatDetailFoto(
+      id: (json['id'] as num).toInt(),
+      namaFile: (json['nama_file'] as String?) ?? '-',
+      url: (json['url'] as String?) ?? '',
+      mimeType: json['mime_type'] as String?,
+      keterangan: json['keterangan'] as String?,
+    );
+  }
+}
+
+/// Satu listing OTA (Online Travel Agent) terkait hasil pengawasan.
+class RiwayatDetailOta {
+  const RiwayatDetailOta({
+    required this.id,
+    required this.namaPlatform,
+    required this.namaListing,
+    required this.urlListing,
+    required this.statusListing,
+    required this.tanggalDitemukan,
+    required this.tanggalDiperiksa,
+    required this.hargaTerendah,
+    required this.rating,
+    required this.jumlahUlasan,
+    required this.latitude,
+    required this.longitude,
+    required this.catatan,
+    required this.mapsUrl,
+  });
+
+  final int id;
+  final String? namaPlatform;
+  final String? namaListing;
+  final String? urlListing;
+  final String? statusListing;
+  final DateTime? tanggalDitemukan;
+  final DateTime? tanggalDiperiksa;
+  final double? hargaTerendah;
+  final double? rating;
+  final int? jumlahUlasan;
+  final double? latitude;
+  final double? longitude;
+  final String? catatan;
+  final String? mapsUrl;
+
+  factory RiwayatDetailOta.fromJson(Map<String, dynamic> json) {
+    return RiwayatDetailOta(
+      id: (json['id'] as num).toInt(),
+      namaPlatform: json['nama_platform'] as String?,
+      namaListing: json['nama_listing'] as String?,
+      urlListing: json['url_listing'] as String?,
+      statusListing: json['status_listing'] as String?,
+      tanggalDitemukan: json['tanggal_ditemukan'] != null
+          ? DateTime.tryParse(json['tanggal_ditemukan'] as String)
+          : null,
+      tanggalDiperiksa: json['tanggal_diperiksa'] != null
+          ? DateTime.tryParse(json['tanggal_diperiksa'] as String)
+          : null,
+      hargaTerendah: _toDouble(json['harga_terendah']),
+      rating: _toDouble(json['rating']),
+      jumlahUlasan: _toIntOta(json['jumlah_ulasan']),
+      latitude: _toDouble(json['latitude']),
+      longitude: _toDouble(json['longitude']),
+      catatan: json['catatan'] as String?,
+       mapsUrl: json['maps_url'] as String?,
+    );
+  }
+
+  static double? _toDouble(dynamic value) {
+    if (value == null) return null;
+    if (value is num) return value.toDouble();
+    if (value is String) return double.tryParse(value);
+    return null;
+  }
+
+  static int? _toIntOta(dynamic value) {
+    if (value == null) return null;
+    if (value is num) return value.toInt();
+    if (value is String) return int.tryParse(value);
+    return null;
+  }
 }
