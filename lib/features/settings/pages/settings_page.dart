@@ -353,10 +353,10 @@ class _SettingsPageState extends State<SettingsPage> {
                   width: double.infinity,
                   child: OutlinedButton.icon(
                     onPressed: () => _logout(context),
-                    icon: const Icon(Icons.logout_rounded, size: 19),
-                    label: const Text('Keluar'),
+                    icon: const Icon(Icons.logout_rounded, size: 19, color: Colors.white),
+                    label: const Text('Keluar', style: TextStyle(color: Colors.white)),
                     style: OutlinedButton.styleFrom(
-                      foregroundColor: AppTheme.danger,
+                      backgroundColor: AppTheme.danger,
                       side: const BorderSide(color: AppTheme.danger),
                       padding: const EdgeInsets.symmetric(vertical: 13),
                       shape: RoundedRectangleBorder(

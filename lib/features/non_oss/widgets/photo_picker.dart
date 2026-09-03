@@ -47,6 +47,7 @@ class _PhotoPickerState extends State<PhotoPicker> {
               child: _PhotoButton(
                 icon: Icons.camera_alt_rounded,
                 label: 'Kamera',
+                textColor: Colors.white,
                 filled: true,
                 onPressed: () => _pick(ImageSource.camera),
               ),
@@ -64,11 +65,18 @@ class _PhotoPickerState extends State<PhotoPicker> {
         const SizedBox(height: 12),
         Row(
           children: [
-            Icon(Icons.info_outline, size: 16, color: AppTheme.textSecondary(context)),
+            Icon(
+              Icons.info_outline,
+              size: 16,
+              color: AppTheme.textSecondary(context),
+            ),
             const SizedBox(width: 6),
             Text(
               '${widget.photos.length}/5 foto dipilih · minimal 1 foto',
-              style: TextStyle(color: AppTheme.textSecondary(context), fontSize: 12),
+              style: TextStyle(
+                color: AppTheme.textSecondary(context),
+                fontSize: 12,
+              ),
             ),
           ],
         ),
@@ -134,21 +142,29 @@ class _PhotoButton extends StatelessWidget {
     required this.label,
     required this.onPressed,
     this.filled = false,
+    this.textColor,
   });
 
   final IconData icon;
   final String label;
   final VoidCallback onPressed;
   final bool filled;
+  final Color? textColor;
 
   @override
   Widget build(BuildContext context) {
+    final Color warnaEfektif =
+        textColor ?? (filled ? Colors.white : const Color(0xFF087F8C));
+
     final child = Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        Icon(icon, size: 20),
+        Icon(icon, size: 20, color: warnaEfektif),
         const SizedBox(width: 8),
-        Text(label, style: const TextStyle(fontWeight: FontWeight.w700)),
+        Text(
+          label,
+          style: TextStyle(fontWeight: FontWeight.w700, color: warnaEfektif),
+        ),
       ],
     );
 

@@ -32,35 +32,35 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
   Future<void> _refresh() async {
-  final Future<AuthUser> future = _profileService.getProfile();
-  setState(() {
-    _profileFuture = future;
-  });
-  try {
-    await future;
-  } catch (_) {
-    // Sengaja tidak dilempar ulang. FutureBuilder tetap mendengarkan
-    // `future` yang sama, jadi dia akan mendeteksi snapshot.hasError
-    // dan menampilkan halaman "Tidak dapat terhubung ke server..."
-    // seperti biasa. Kalau error ini dilempar ulang ke RefreshIndicator,
-    // exception-nya jadi unhandled dan UI terasa "not responding".
+    final Future<AuthUser> future = _profileService.getProfile();
+    setState(() {
+      _profileFuture = future;
+    });
+    try {
+      await future;
+    } catch (_) {
+      // Sengaja tidak dilempar ulang. FutureBuilder tetap mendengarkan
+      // `future` yang sama, jadi dia akan mendeteksi snapshot.hasError
+      // dan menampilkan halaman "Tidak dapat terhubung ke server..."
+      // seperti biasa. Kalau error ini dilempar ulang ke RefreshIndicator,
+      // exception-nya jadi unhandled dan UI terasa "not responding".
+    }
   }
-}
 
   Future<void> _openChangePassword(BuildContext context, AuthUser user) async {
-  final bool? success = await Navigator.push<bool>(
-    context,
-    MaterialPageRoute(builder: (_) => ChangePasswordPage(user: user)),
-  );
+    final bool? success = await Navigator.push<bool>(
+      context,
+      MaterialPageRoute(builder: (_) => ChangePasswordPage(user: user)),
+    );
 
-  // Opsional: kalau berhasil ganti password, tidak wajib refresh profil
-  // karena data profil (nama, dll) tidak berubah. Tapi kalau suatu saat
-  // mau tampilkan notifikasi tambahan di ProfilePage, bisa manfaatkan
-  // nilai `success` di sini.
-  if (success == true && context.mounted) {
-    // contoh: ScaffoldMessenger.of(context).showSnackBar(...);
+    // Opsional: kalau berhasil ganti password, tidak wajib refresh profil
+    // karena data profil (nama, dll) tidak berubah. Tapi kalau suatu saat
+    // mau tampilkan notifikasi tambahan di ProfilePage, bisa manfaatkan
+    // nilai `success` di sini.
+    if (success == true && context.mounted) {
+      // contoh: ScaffoldMessenger.of(context).showSnackBar(...);
+    }
   }
-}
 
   void _logout(BuildContext context) {
     showDialog<void>(
@@ -84,7 +84,10 @@ class _ProfilePageState extends State<ProfilePage> {
           content: Text(
             'Anda perlu masuk kembali untuk mengakses aplikasi.',
             textAlign: TextAlign.center,
-            style: TextStyle(fontSize: 13.5, color: AppTheme.textSecondary(context)),
+            style: TextStyle(
+              fontSize: 13.5,
+              color: AppTheme.textSecondary(context),
+            ),
           ),
           actionsPadding: const EdgeInsets.fromLTRB(20, 4, 20, 16),
           actionsAlignment: MainAxisAlignment.center,
@@ -253,10 +256,17 @@ class _ProfilePageState extends State<ProfilePage> {
                     width: double.infinity,
                     child: OutlinedButton.icon(
                       onPressed: () => _openChangePassword(context, user),
-                      icon: const Icon(Icons.lock_outline_rounded, size: 19),
-                      label: const Text('Ubah Password'),
+                      icon: const Icon(
+                        Icons.lock_outline_rounded,
+                        size: 19,
+                        color: Colors.white,
+                      ),
+                      label: Text(
+                        'Ubah Password',
+                        style: TextStyle(color: AppTheme.textColor(context)),
+                      ),
                       style: OutlinedButton.styleFrom(
-                        foregroundColor: AppTheme.primaryColor,
+                        backgroundColor: AppTheme.primaryColor,
                         side: const BorderSide(color: AppTheme.primaryColor),
                         padding: const EdgeInsets.symmetric(vertical: 13),
                         shape: RoundedRectangleBorder(
@@ -271,10 +281,10 @@ class _ProfilePageState extends State<ProfilePage> {
                     width: double.infinity,
                     child: OutlinedButton.icon(
                       onPressed: () => _logout(context),
-                      icon: const Icon(Icons.logout_rounded, size: 19),
-                      label: const Text('Keluar'),
+                      icon: const Icon(Icons.logout_rounded, size: 19, color: Colors.white),
+                      label: const Text('Keluar', style: TextStyle(color: Colors.white)),
                       style: OutlinedButton.styleFrom(
-                        foregroundColor: AppTheme.danger,
+                        backgroundColor: AppTheme.danger,
                         side: const BorderSide(color: AppTheme.danger),
                         padding: const EdgeInsets.symmetric(vertical: 13),
                         shape: RoundedRectangleBorder(
