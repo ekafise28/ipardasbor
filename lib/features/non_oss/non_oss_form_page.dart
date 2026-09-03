@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import 'package:ipardasbor/app/app_theme.dart';
+import 'package:ipardasbor/features/non_oss/models/location_fetch_status.dart';
 
 import '../../core/api/api_client.dart';
 
@@ -42,6 +43,9 @@ class _NonOssFormPageState extends State<NonOssFormPage> {
       _districts = [],
       _villages = [];
   bool _loadingRegions = true, _gpsLoading = false, _saving = false;
+  LocationFetchStatus? _gpsStatus;
+  int? _gpsCountdown;
+  LocationSource? _gpsSource;
   Set<_Section> _sectionErrors = {};
 
   // ---------------------------------------------------------------------
@@ -192,18 +196,33 @@ class _NonOssFormPageState extends State<NonOssFormPage> {
 
     setState(() {
       _gpsLoading = true;
+      _gpsStatus = null;
+      _gpsCountdown = null;
+      // _gpsSource SENGAJA tidak direset di sini, supaya kalau proses gagal
+      // di tengah jalan, keterangan sumber lokasi sebelumnya (jika ada)
+      // tidak hilang begitu saja.
     });
 
     try {
-      final p = await _location.current();
+      final LocationResult hasil = await _location.current(
+        onStatus: (LocationFetchStatus status) {
+          if (!mounted) return;
+          setState(() => _gpsStatus = status);
+        },
+        onCountdown: (int sisaDetik) {
+          if (!mounted) return;
+          setState(() => _gpsCountdown = sisaDetik);
+        },
+      );
 
       if (!mounted) {
         return;
       }
 
       setState(() {
-        _data.latitude = p.latitude.toStringAsFixed(8);
-        _data.longitude = p.longitude.toStringAsFixed(8);
+        _data.latitude = hasil.position.latitude.toStringAsFixed(8);
+        _data.longitude = hasil.position.longitude.toStringAsFixed(8);
+        _gpsSource = hasil.source;
       });
     } catch (e) {
       if (mounted) {
@@ -810,6 +829,9 @@ class _NonOssFormPageState extends State<NonOssFormPage> {
                       latitude: _data.latitude,
                       longitude: _data.longitude,
                       loading: _gpsLoading,
+                      status: _gpsStatus,
+                      sisaDetik: _gpsCountdown,
+                      source: _gpsSource,
                       onGetLocation: _gps,
                     ),
                   ),
@@ -985,7 +1007,10 @@ class _NonOssFormPageState extends State<NonOssFormPage> {
                                 color: Colors.white,
                               ),
                             )
-                          : const Icon(Icons.cloud_upload_rounded, color: Colors.white),
+                          : const Icon(
+                              Icons.cloud_upload_rounded,
+                              color: Colors.white,
+                            ),
                       label: Text(
                         _saving ? 'Menyimpan data...' : 'Simpan Pengawasan',
                         style: TextStyle(
