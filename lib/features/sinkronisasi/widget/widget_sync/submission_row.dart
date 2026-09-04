@@ -4,7 +4,8 @@ import '../../../../app/app_theme.dart';
 import '../../../non_oss/offline/non_oss_local_data.dart';
 
 /// Satu baris tabel di [SyncPage]. Bisa di-tap untuk expand/collapse
-/// menampilkan tombol "Lihat Detail" dan "Sync".
+/// menampilkan tombol "Lihat Detail" dan "Sync" (atau "Lanjutkan Isi"
+/// untuk data berstatus draft).
 class SubmissionRow extends StatelessWidget {
   const SubmissionRow({
     super.key,
@@ -21,14 +22,25 @@ class SubmissionRow extends StatelessWidget {
   final bool syncing;
   final VoidCallback onToggleExpand;
   final VoidCallback onOpenDetail;
+
+  /// Untuk data biasa: memicu proses sync ke server.
+  /// Untuk data draft: memicu buka form untuk melanjutkan pengisian.
+  /// Perbedaan perilaku ditentukan oleh pemanggil ([SyncPage]) berdasarkan
+  /// [NonOssLocalData.isDraft], bukan oleh widget ini.
   final VoidCallback onSync;
 
   @override
   Widget build(BuildContext context) {
+    final bool isDraft = data.isDraft;
     final bool failed = data.isFailed;
-    final Color statusColor = failed
-        ? const Color(0xFFFF3B30)
-        : const Color(0xFFFF9500);
+
+    final Color statusColor = isDraft
+        ? const Color(0xFF6B7280)
+        : (failed ? const Color(0xFFFF3B30) : const Color(0xFFFF9500));
+
+    final String statusLabel = isDraft
+        ? 'DRAFT'
+        : (failed ? 'GAGAL' : 'PENDING');
 
     return Column(
       children: [
@@ -70,7 +82,7 @@ class SubmissionRow extends StatelessWidget {
                         borderRadius: BorderRadius.circular(20),
                       ),
                       child: Text(
-                        failed ? 'GAGAL' : 'PENDING',
+                        statusLabel,
                         style: TextStyle(
                           color: statusColor,
                           fontSize: 9.5,
@@ -111,14 +123,14 @@ class SubmissionRow extends StatelessWidget {
           crossFadeState: expanded
               ? CrossFadeState.showFirst
               : CrossFadeState.showSecond,
-          firstChild: _buildExpandedContent(context, failed),
+          firstChild: _buildExpandedContent(context, isDraft, failed),
           secondChild: const SizedBox(width: double.infinity, height: 0),
         ),
       ],
     );
   }
 
-  Widget _buildExpandedContent(BuildContext context, bool failed) {
+  Widget _buildExpandedContent(BuildContext context, bool isDraft, bool failed) {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.fromLTRB(14, 4, 14, 14),
@@ -131,13 +143,23 @@ class SubmissionRow extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          if (failed && data.lastError != null) ...[
+          if (!isDraft && failed && data.lastError != null) ...[
             Text(
               data.lastError!,
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
               style: const TextStyle(
                 color: Color(0xFFB42318),
+                fontSize: 11.5,
+              ),
+            ),
+            const SizedBox(height: 10),
+          ],
+          if (isDraft) ...[
+            Text(
+              'Data ini belum lengkap dan belum ikut proses sinkronisasi.',
+              style: TextStyle(
+                color: AppTheme.textSecondary(context),
                 fontSize: 11.5,
               ),
             ),
@@ -165,7 +187,9 @@ class SubmissionRow extends StatelessWidget {
                 child: FilledButton.icon(
                   onPressed: syncing ? null : onSync,
                   style: FilledButton.styleFrom(
-                    backgroundColor: const Color(0xFF007AFF),
+                    backgroundColor: isDraft
+                        ? const Color(0xFF6B7280)
+                        : const Color(0xFF007AFF),
                     foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(vertical: 10),
                     shape: RoundedRectangleBorder(
@@ -181,8 +205,11 @@ class SubmissionRow extends StatelessWidget {
                             color: Colors.white,
                           ),
                         )
-                      : const Icon(Icons.sync_rounded, size: 17),
-                  label: const Text('Sync'),
+                      : Icon(
+                          isDraft ? Icons.edit_note_rounded : Icons.sync_rounded,
+                          size: 17,
+                        ),
+                  label: Text(isDraft ? 'Lanjutkan Isi' : 'Sync'),
                 ),
               ),
             ],

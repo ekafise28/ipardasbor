@@ -88,6 +88,21 @@ class OfflineDatabase {
     return rows.map(NonOssLocalData.fromDatabase).toList(growable: false);
   }
 
+  /// Draft SENGAJA dipisah dari getWaiting() — draft tidak boleh pernah
+  /// ikut ke-fetch untuk proses sync otomatis, karena isinya belum tentu
+  /// valid/lengkap.
+  Future<List<NonOssLocalData>> getDrafts({int limit = 100}) async {
+    final Database db = await database;
+    final List<Map<String, Object?>> rows = await db.query(
+      table,
+      where: 'sync_status = ?',
+      whereArgs: <Object?>[SyncStatus.draft.value],
+      orderBy: 'updated_at DESC',
+      limit: limit,
+    );
+    return rows.map(NonOssLocalData.fromDatabase).toList(growable: false);
+  }
+
   Future<void> markSyncing(String clientUuid) async {
     await _updateStatus(clientUuid, SyncStatus.syncing, <String, Object?>{
       'last_attempt_at': DateTime.now().toIso8601String(),

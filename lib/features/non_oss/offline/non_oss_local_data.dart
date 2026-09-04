@@ -36,6 +36,7 @@ class NonOssLocalData {
   bool get isSyncing => status == SyncStatus.syncing;
   bool get isSynced => status == SyncStatus.synced;
   bool get isFailed => status == SyncStatus.failed;
+  bool get isDraft => status == SyncStatus.draft;
 
   String get displayName {
     final String brand = payload['nama_brand']?.trim() ?? '';

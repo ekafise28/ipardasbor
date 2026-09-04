@@ -262,14 +262,13 @@ class _SubmissionDetailPageState extends State<SubmissionDetailPage> {
                 onPressed: () => Navigator.pop(dialogContext, true),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppTheme.danger,
-                  foregroundColor: Colors.white,
                   elevation: 0,
                   padding: const EdgeInsets.symmetric(vertical: 12),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),
                 ),
-                child: const Text('Hapus'),
+                child: const Text('Hapus', style: TextStyle(color: Colors.white)),
               ),
             ),
           ],
@@ -453,7 +452,7 @@ class _SubmissionDetailPageState extends State<SubmissionDetailPage> {
           child: OutlinedButton.icon(
             onPressed: _isDeleting || _isSyncing ? null : _confirmDelete,
             style: OutlinedButton.styleFrom(
-              foregroundColor: AppTheme.danger,
+              backgroundColor: AppTheme.danger,
               side: BorderSide(color: AppTheme.danger.withValues(alpha: 0.4)),
               padding: const EdgeInsets.symmetric(vertical: 14),
               shape: RoundedRectangleBorder(
@@ -466,8 +465,12 @@ class _SubmissionDetailPageState extends State<SubmissionDetailPage> {
                     height: 16,
                     child: CircularProgressIndicator(strokeWidth: 2),
                   )
-                : const Icon(Icons.delete_outline_rounded, size: 19),
-            label: Text(_isDeleting ? 'Menghapus...' : 'Hapus'),
+                : const Icon(Icons.delete_outline_rounded, size: 19, color: Colors.white),
+            label: Text(_isDeleting ? 'Menghapus...' : 'Hapus', 
+              style: TextStyle(
+                color: Colors.white,
+              ),
+            ),
           ),
         ),
         const SizedBox(width: 12),

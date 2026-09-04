@@ -1,4 +1,5 @@
 enum SyncStatus {
+  draft,
   pending,
   syncing,
   synced,

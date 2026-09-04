@@ -10,14 +10,13 @@ import '../non_oss/offline/offline_database.dart';
 import '../non_oss/offline/offline_queue_service.dart';
 import '../non_oss/offline/sync_service.dart';
 import '../non_oss/services/non_oss_service.dart';
-import '../non_oss/offline/auto_sync_controller.dart';
+import '../non_oss/non_oss_form_page.dart';
 
 import 'pages/submission_detail_page.dart';
 import 'widget/widget_sync/empty_state.dart';
 import 'widget/widget_sync/sync_summary_card.dart';
 import 'widget/widget_sync/sync_table.dart';
 import 'widget/widget_sync/table_loading.dart';
-
 
 class SyncPage extends StatefulWidget {
   const SyncPage({super.key});
@@ -33,6 +32,7 @@ class _SyncPageState extends State<SyncPage> {
   final OfflineDatabase _database = OfflineDatabase.instance;
 
   List<NonOssLocalData> _waitingData = <NonOssLocalData>[];
+  List<NonOssLocalData> _draftData = <NonOssLocalData>[];
   final Set<String> _syncingIds = <String>{};
   String? _expandedUuid;
 
@@ -45,7 +45,7 @@ class _SyncPageState extends State<SyncPage> {
     _api = ApiClient();
     _syncService = NonOssSyncService(remote: NonOssService(_api));
     _queueService = OfflineQueueService(database: _database);
-    _loadWaitingData();
+    _loadAllData();
   }
 
   @override
@@ -54,20 +54,7 @@ class _SyncPageState extends State<SyncPage> {
     super.dispose();
   }
 
-    Future<void> _onRefresh() async {
-    // Kalau mode otomatis aktif, pull-to-refresh juga jadi kesempatan
-    // untuk mencoba kirim data PENDING — bukan cuma memuat ulang daftar.
-    // Ini menutup celah "harus keluar-masuk app" yang terjadi karena
-    // onConnectivityChanged hanya terpicu saat status koneksi BERUBAH,
-    // bukan saat koneksi memang sudah menyala sejak awal.
-    if (AutoSyncController.instance.isEnabled) {
-      await _syncService.syncWaiting().catchError((_) {});
-    }
-
-    await _loadWaitingData(showLoading: false);
-  }
-
-  Future<void> _loadWaitingData({bool showLoading = true}) async {
+  Future<void> _loadAllData({bool showLoading = true}) async {
     if (!mounted) return;
 
     if (showLoading) {
@@ -76,13 +63,17 @@ class _SyncPageState extends State<SyncPage> {
 
     try {
       await _database.restoreInterruptedSyncs();
-      final List<NonOssLocalData> result = await _database.getWaiting(
+      final List<NonOssLocalData> waiting = await _database.getWaiting(
         limit: 500,
+      );
+      final List<NonOssLocalData> drafts = await _database.getDrafts(
+        limit: 200,
       );
 
       if (!mounted) return;
       setState(() {
-        _waitingData = result;
+        _waitingData = waiting;
+        _draftData = drafts;
         _isLoading = false;
       });
     } catch (_) {
@@ -99,10 +90,10 @@ class _SyncPageState extends State<SyncPage> {
     int synced = 0;
 
     try {
-      await _syncService
-          .syncWaiting(limit: 500)
-          .timeout(const Duration(seconds: 60));
-      await _loadWaitingData(showLoading: false);
+      await _syncService.syncWaiting(limit: 500).timeout(
+        const Duration(seconds: 60),
+      );
+      await _loadAllData(showLoading: false);
       synced = before - _waitingData.length;
     } on TimeoutException {
       synced = 0;
@@ -132,7 +123,7 @@ class _SyncPageState extends State<SyncPage> {
       success = await _syncService
           .syncOne(data)
           .timeout(const Duration(seconds: 30));
-      await _loadWaitingData(showLoading: false);
+      await _loadAllData(showLoading: false);
     } on TimeoutException {
       success = false;
     } catch (_) {
@@ -153,6 +144,28 @@ class _SyncPageState extends State<SyncPage> {
     );
   }
 
+  /// Handler tombol utama pada baris tabel — bercabang berdasarkan status:
+  /// draft membuka form untuk melanjutkan pengisian, selain itu memicu
+  /// proses sync seperti biasa.
+  Future<void> _handlePrimaryAction(NonOssLocalData data) async {
+    if (data.isDraft) {
+      await _continueDraft(data);
+    } else {
+      await _syncOne(data);
+    }
+  }
+
+  Future<void> _continueDraft(NonOssLocalData data) async {
+    await Navigator.of(context).push<Object?>(
+      MaterialPageRoute<Object?>(
+        builder: (_) => NonOssFormPage(editingData: data),
+      ),
+    );
+    // Form draft selalu pop lewat popUntil(isFirst) atau submit biasa;
+    // baik hasilnya apa pun, muat ulang supaya daftar tetap sinkron.
+    await _loadAllData(showLoading: false);
+  }
+
   Future<void> _openDetail(NonOssLocalData data) async {
     final Object? result = await Navigator.of(context).push<Object?>(
       MaterialPageRoute<Object?>(
@@ -165,7 +178,7 @@ class _SyncPageState extends State<SyncPage> {
     );
 
     if (result == 'synced' || result == 'deleted' || result == 'edited') {
-      await _loadWaitingData(showLoading: false);
+      await _loadAllData(showLoading: false);
     }
   }
 
@@ -230,11 +243,22 @@ class _SyncPageState extends State<SyncPage> {
             ),
           ],
         ),
+        actions: [
+          IconButton(
+            tooltip: 'Muat ulang',
+            onPressed: _isLoading ? null : () => _loadAllData(),
+            icon: Icon(
+              Icons.refresh_rounded,
+              color: AppTheme.textSecondary(context),
+            ),
+          ),
+          const SizedBox(width: 8),
+        ],
       ),
       body: SafeArea(
-                child: RefreshIndicator(
+        child: RefreshIndicator(
           color: AppTheme.primaryColor,
-          onRefresh: _onRefresh,
+          onRefresh: () => _loadAllData(showLoading: false),
           child: LayoutBuilder(
             builder: (context, constraints) {
               final double contentWidth = constraints.maxWidth >= 1100
@@ -257,7 +281,31 @@ class _SyncPageState extends State<SyncPage> {
                           waitingCount: _waitingData.length,
                           onSyncAll: _syncAll,
                         ),
+                        if (!_isLoading && _draftData.isNotEmpty) ...[
+                          const SizedBox(height: 20),
+                          _buildSectionTitle(
+                            context,
+                            'Draft (${_draftData.length})',
+                            'Data yang belum lengkap, belum ikut sinkronisasi.',
+                          ),
+                          const SizedBox(height: 10),
+                          SyncTable(
+                            waitingData: _draftData,
+                            expandedUuid: _expandedUuid,
+                            syncingIds: _syncingIds,
+                            onToggleExpand: _toggleExpand,
+                            onOpenDetail: _openDetail,
+                            onSync: _handlePrimaryAction,
+                          ),
+                        ],
                         const SizedBox(height: 20),
+                        if (!_isLoading)
+                          _buildSectionTitle(
+                            context,
+                            'Menunggu Sinkronisasi',
+                            null,
+                          ),
+                        if (!_isLoading) const SizedBox(height: 10),
                         if (_isLoading)
                           const TableLoading()
                         else if (_waitingData.isEmpty)
@@ -269,7 +317,7 @@ class _SyncPageState extends State<SyncPage> {
                             syncingIds: _syncingIds,
                             onToggleExpand: _toggleExpand,
                             onOpenDetail: _openDetail,
-                            onSync: _syncOne,
+                            onSync: _handlePrimaryAction,
                           ),
                       ],
                     ),
@@ -280,6 +328,32 @@ class _SyncPageState extends State<SyncPage> {
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildSectionTitle(BuildContext context, String title, String? subtitle) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          title,
+          style: TextStyle(
+            color: AppTheme.textColor(context),
+            fontSize: 14,
+            fontWeight: FontWeight.w800,
+          ),
+        ),
+        if (subtitle != null) ...[
+          const SizedBox(height: 2),
+          Text(
+            subtitle,
+            style: TextStyle(
+              color: AppTheme.textSecondary(context),
+              fontSize: 11.5,
+            ),
+          ),
+        ],
+      ],
     );
   }
 }

@@ -36,6 +36,9 @@ class _NonOssFormPageState extends State<NonOssFormPage> {
   final _key = GlobalKey<FormState>();
   late final NonOssFormData _data;
 
+  late final Map<String, String> _snapshotAwal;
+  late final int _jumlahFotoAwal;
+
   late final ApiClient _api;
   late final RegionService _regions;
   late final NonOssService _service;
@@ -52,6 +55,132 @@ class _NonOssFormPageState extends State<NonOssFormPage> {
   LocationSource? _gpsSource;
   Set<_Section> _sectionErrors = {};
   bool get _isEditing => widget.editingData != null;
+
+  bool get _isDirty {
+    final Map<String, String> sekarang = _data.toFields();
+
+    if (sekarang.length != _snapshotAwal.length) {
+      return true;
+    }
+    for (final MapEntry<String, String> entry in sekarang.entries) {
+      if (_snapshotAwal[entry.key] != entry.value) {
+        return true;
+      }
+    }
+    return _data.photos.length != _jumlahFotoAwal;
+  }
+
+  Future<_BackAction?> _tanyaSimpanDraft() {
+    return showDialog<_BackAction>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+        title: const Text(
+          'Simpan sebagai draft?',
+          textAlign: TextAlign.center,
+          style: TextStyle(fontSize: 17, fontWeight: FontWeight.w800),
+        ),
+        content: const Text(
+          'Data yang sudah diisi belum tersimpan. Simpan sebagai draft '
+          'supaya bisa dilanjutkan nanti, atau buang perubahan ini.',
+          textAlign: TextAlign.center,
+        ),
+        actionsPadding: const EdgeInsets.fromLTRB(20, 4, 20, 16),
+        actions: [
+          Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              SizedBox(
+                width: double.infinity,
+                child: FilledButton(
+                  onPressed: () =>
+                      Navigator.pop(dialogContext, _BackAction.saveDraft),
+                  style: FilledButton.styleFrom(
+                    backgroundColor: _primary,
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                  ),
+                  child: const Text('Simpan Draft', style: TextStyle(color: Colors.white)),
+                ),
+              ),
+              const SizedBox(height: 10),
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: () =>
+                          Navigator.pop(dialogContext, _BackAction.discard),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: Colors.red,
+                        side: const BorderSide(color: Colors.red),
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                      ),
+                      child: const Text('Buang'),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: () =>
+                          Navigator.pop(dialogContext, _BackAction.cancel),
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                      ),
+                      child: const Text('Batal'),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _saveDraftAndGoHome() async {
+    if (!_offlineQueue.hasAnyContent(_data)) {
+      _error(
+        Exception('Isi minimal satu data sebelum menyimpan sebagai draft.'),
+      );
+      return;
+    }
+
+    setState(() => _saving = true);
+    try {
+      if (_isEditing) {
+        await _offlineQueue.updateDraft(widget.editingData!, _data);
+      } else {
+        await _offlineQueue.saveDraft(_data);
+      }
+      if (!mounted) return;
+      // popUntil isFirst: memastikan benar-benar kembali ke Home, baik
+      // form dibuka langsung dari Home maupun lewat alur edit (Sync ->
+      // Detail -> Form).
+      Navigator.of(context).popUntil((Route<dynamic> route) => route.isFirst);
+    } catch (e) {
+      if (mounted) _error(e);
+    } finally {
+      if (mounted) setState(() => _saving = false);
+    }
+  }
+
+  Future<void> _handleBackAttempt() async {
+    if (_saving) return;
+
+    if (!_isDirty) {
+      Navigator.of(context).pop();
+      return;
+    }
+
+    final _BackAction? aksi = await _tanyaSimpanDraft();
+
+    if (aksi == _BackAction.discard) {
+      if (mounted) Navigator.of(context).pop();
+    } else if (aksi == _BackAction.saveDraft) {
+      await _saveDraftAndGoHome();
+    }
+    // _BackAction.cancel atau null (dialog ditutup tanpa pilih): tetap di form.
+  }
 
   // ---------------------------------------------------------------------
   // TextEditingController untuk setiap field teks.
@@ -100,6 +229,10 @@ class _NonOssFormPageState extends State<NonOssFormPage> {
     _data = widget.editingData != null
         ? NonOssFormData.fromLocalData(widget.editingData!)
         : NonOssFormData();
+
+    // Snapshot kondisi awal, dipakai untuk deteksi "dirty" saat back ditekan.
+    _snapshotAwal = Map<String, String>.from(_data.toFields());
+    _jumlahFotoAwal = _data.photos.length;
 
     _api = ApiClient();
     _regions = RegionService();
@@ -684,403 +817,417 @@ class _NonOssFormPageState extends State<NonOssFormPage> {
         ),
       ),
     ),
-    child: Scaffold(
-      backgroundColor: AppTheme.scaffoldColorDynamic(context),
-      appBar: AppBar(
-        elevation: 0,
-        backgroundColor: _navy,
-        foregroundColor: Colors.white,
-        titleSpacing: 4,
-        title: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              _isEditing ? 'Edit Pengawasan Non-OSS' : 'Pengawasan Non-OSS',
-              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
-            ),
-            Text(
-              _isEditing
-                  ? 'Perbarui data yang tersimpan'
-                  : 'Pendataan usaha pariwisata',
-              style: const TextStyle(
-                fontSize: 11.5,
-                fontWeight: FontWeight.w400,
+    child: PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (bool didPop, Object? result) {
+        if (didPop) return;
+        _handleBackAttempt();
+      },
+      child: Scaffold(
+        backgroundColor: AppTheme.scaffoldColorDynamic(context),
+        appBar: AppBar(
+          elevation: 0,
+          backgroundColor: _navy,
+          foregroundColor: Colors.white,
+          titleSpacing: 4,
+          title: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                _isEditing ? 'Edit Pengawasan Non-OSS' : 'Pengawasan Non-OSS',
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w800,
+                ),
               ),
-            ),
-          ],
+              Text(
+                _isEditing
+                    ? 'Perbarui data yang tersimpan'
+                    : 'Pendataan usaha pariwisata',
+                style: const TextStyle(
+                  fontSize: 11.5,
+                  fontWeight: FontWeight.w400,
+                ),
+              ),
+            ],
+          ),
         ),
-      ),
-      body: _loadingRegions
-          ? const Center(child: CircularProgressIndicator())
-          : Form(
-              key: _key,
-              child: ListView(
-                keyboardDismissBehavior:
-                    ScrollViewKeyboardDismissBehavior.onDrag,
-                padding: const EdgeInsets.fromLTRB(16, 18, 16, 30),
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(16),
-                    margin: const EdgeInsets.only(bottom: 16),
-                    decoration: BoxDecoration(
-                      gradient: const LinearGradient(
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                        colors: [Color(0xFF0B4E91), AppTheme.primaryColor],
+        body: _loadingRegions
+            ? const Center(child: CircularProgressIndicator())
+            : Form(
+                key: _key,
+                child: ListView(
+                  keyboardDismissBehavior:
+                      ScrollViewKeyboardDismissBehavior.onDrag,
+                  padding: const EdgeInsets.fromLTRB(16, 18, 16, 30),
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      margin: const EdgeInsets.only(bottom: 16),
+                      decoration: BoxDecoration(
+                        gradient: const LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: [Color(0xFF0B4E91), AppTheme.primaryColor],
+                        ),
+                        borderRadius: BorderRadius.circular(20),
                       ),
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: const Row(
-                      children: [
-                        Icon(
-                          Icons.assignment_rounded,
-                          color: Colors.white,
-                          size: 34,
-                        ),
-                        SizedBox(width: 13),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'Formulir Pendataan Lapangan',
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w800,
+                      child: const Row(
+                        children: [
+                          Icon(
+                            Icons.assignment_rounded,
+                            color: Colors.white,
+                            size: 34,
+                          ),
+                          SizedBox(width: 13),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Formulir Pendataan Lapangan',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w800,
+                                  ),
                                 ),
-                              ),
-                              SizedBox(height: 4),
-                              Text(
-                                'Lengkapi data bertanda * dan pastikan lokasi serta foto sudah sesuai.',
-                                style: TextStyle(
-                                  color: Color(0xFFE7F2FF),
-                                  height: 1.35,
+                                SizedBox(height: 4),
+                                Text(
+                                  'Lengkapi data bertanda * dan pastikan lokasi serta foto sudah sesuai.',
+                                  style: TextStyle(
+                                    color: Color(0xFFE7F2FF),
+                                    height: 1.35,
+                                  ),
                                 ),
-                              ),
-                            ],
+                              ],
+                            ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
-                  ),
-                  FormSection(
-                    number: 1,
-                    title: 'Identitas Usaha',
-                    subtitle: 'Informasi dasar pemilik dan jenis usaha.',
-                    icon: Icons.store,
-                    hasError: _sectionErrors.contains(_Section.identitas),
-                    child: Column(
-                      children: [
-                        // NIB
-                        _choice<String>(
-                          label: 'Apakah usaha memiliki NIB? *',
-                          value: _data.memilikiNib,
-                          choices: const {
-                            'TIDAK': 'Tidak',
-                            'TIDAK TAHU': 'Tidak Tahu',
-                          },
-                          onChanged: (v) =>
-                              setState(() => _data.memilikiNib = v),
-                        ),
-
-                        const SizedBox(height: 12),
-
-                        // Nama Pemilik
-                        _text(
-                          'Nama Pemilik',
-                          _namaPemilikCtrl,
-                          (v) => _data.namaPemilik = v,
-                        ),
-
-                        // Nama Brand
-                        _text(
-                          'Nama Brand',
-                          _namaBrandCtrl,
-                          (v) => _data.namaBrand = v,
-                        ),
-
-                        DropdownButtonFormField<String>(
-                          initialValue: _data.jenisProduk.isEmpty
-                              ? null
-                              : _data.jenisProduk,
-                          decoration: const InputDecoration(
-                            labelText: 'Jenis Produk *',
-                            border: OutlineInputBorder(),
+                    FormSection(
+                      number: 1,
+                      title: 'Identitas Usaha',
+                      subtitle: 'Informasi dasar pemilik dan jenis usaha.',
+                      icon: Icons.store,
+                      hasError: _sectionErrors.contains(_Section.identitas),
+                      child: Column(
+                        children: [
+                          // NIB
+                          _choice<String>(
+                            label: 'Apakah usaha memiliki NIB? *',
+                            value: _data.memilikiNib,
+                            choices: const {
+                              'TIDAK': 'Tidak',
+                              'TIDAK TAHU': 'Tidak Tahu',
+                            },
+                            onChanged: (v) =>
+                                setState(() => _data.memilikiNib = v),
                           ),
-                          items: products
-                              .map(
-                                (v) =>
-                                    DropdownMenuItem(value: v, child: Text(v)),
-                              )
-                              .toList(),
-                          // Perbaikan: sebelumnya tidak ada setState di sini,
-                          // sehingga _data.jenisProduk berubah tanpa Flutter
-                          // "tahu", dan saat Form.validate() memicu rebuild
-                          // (mis. saat tombol Simpan ditekan), dropdown ini
-                          // balik ke initialValue lama seolah terhapus.
-                          onChanged: (v) =>
-                              setState(() => _data.jenisProduk = v ?? ''),
-                          validator: (v) => v == null ? 'Wajib dipilih.' : null,
-                        ),
-                      ],
-                    ),
-                  ),
-                  FormSection(
-                    number: 2,
-                    title: 'Wilayah dan Alamat',
-                    subtitle:
-                        'Pilih wilayah secara berurutan hingga kelurahan.',
-                    icon: Icons.location_city,
-                    hasError: _sectionErrors.contains(_Section.wilayah),
-                    child: Column(
-                      children: [
-                        _region(
-                          'Provinsi',
-                          _data.provinsiId,
-                          _provinces,
-                          _chooseProvince,
-                        ),
-                        _region(
-                          'Kabupaten/Kota',
-                          _data.kabupatenId,
-                          _regencies,
-                          _chooseRegency,
-                        ),
-                        _region(
-                          'Kecamatan',
-                          _data.kecamatanId,
-                          _districts,
-                          _chooseDistrict,
-                        ),
-                        _region(
-                          'Kelurahan/Desa',
-                          _data.kelurahanId,
-                          _villages,
-                          (v) => setState(() => _data.kelurahanId = v),
-                        ),
-                        _text(
-                          'Alamat Lengkap',
-                          _alamatCtrl,
-                          (v) => _data.alamat = v,
-                          lines: 3,
-                        ),
-                      ],
-                    ),
-                  ),
-                  FormSection(
-                    number: 3,
-                    title: 'Lokasi dan Peta',
-                    subtitle:
-                        'Ambil koordinat langsung dari perangkat petugas.',
-                    icon: Icons.gps_fixed,
-                    hasError: _sectionErrors.contains(_Section.lokasi),
-                    child: LocationPicker(
-                      latitude: _data.latitude,
-                      longitude: _data.longitude,
-                      loading: _gpsLoading,
-                      status: _gpsStatus,
-                      sisaDetik: _gpsCountdown,
-                      source: _gpsSource,
-                      onGetLocation: _gps,
-                    ),
-                  ),
-                  FormSection(
-                    number: 4,
-                    title: 'Kontak dan Legalitas',
-                    subtitle: 'Data kontak aktif memudahkan proses verifikasi.',
-                    icon: Icons.contact_phone,
-                    hasError: _sectionErrors.contains(_Section.kontak),
-                    child: Column(
-                      children: [
-                        _text(
-                          'NPWPD',
-                          _npwpdCtrl,
-                          (v) => _data.npwpd = v,
-                          required: false,
-                        ),
-                        _text(
-                          'Website',
-                          _websiteCtrl,
-                          (v) => _data.website = v,
-                          required: false,
-                          type: TextInputType.url,
-                          hintText: 'https://www.example.com',
-                          // Format URL diperiksa hanya jika field diisi.
-                          validator: _urlValidator,
-                        ),
-                        _text(
-                          'Telepon/WhatsApp',
-                          _noHpCtrl,
-                          (v) => _data.noHp = v,
-                          type: TextInputType.phone,
-                          hintText: '081234567890',
-                          inputFormatters: [
-                            // Hanya menerima karakter angka.
-                            FilteringTextInputFormatter.digitsOnly,
-                            // Batasi maksimal 15 digit.
-                            LengthLimitingTextInputFormatter(15),
-                          ],
-                          validator: _phoneValidator,
-                        ),
-                        _text(
-                          'Email',
-                          _emailCtrl,
-                          (v) => _data.email = v,
-                          required: false,
-                          type: TextInputType.emailAddress,
-                          hintText: 'example@example.com',
-                          // Format email diperiksa hanya jika field diisi.
-                          validator: _emailValidator,
-                        ),
-                      ],
-                    ),
-                  ),
-                  FormSection(
-                    number: 5,
-                    title: 'Platform OTA',
-                    subtitle: 'Catat platform dan URL listing usaha.',
-                    icon: Icons.travel_explore,
-                    hasError: _sectionErrors.contains(_Section.ota),
-                    child: Column(
-                      children: [
-                        _choice<String>(
-                          label: 'Apakah terdaftar di OTA? *',
-                          value: _data.terdaftarOta,
-                          choices: const {'YA': 'Ya', 'TIDAK': 'Tidak'},
-                          onChanged: (v) =>
-                              setState(() => _data.terdaftarOta = v),
-                        ),
-                        if (_data.terdaftarOta == 'YA')
-                          OtaSelector(
-                            urls: _data.otaUrls,
-                            onChanged: (v) => setState(() {
-                              _data.otaUrls
-                                ..clear()
-                                ..addAll(v);
-                            }),
-                          ),
-                        if (_data.terdaftarOta == 'YA' &&
-                            _data.otaUrls.containsKey('lainnya'))
+
+                          const SizedBox(height: 12),
+
+                          // Nama Pemilik
                           _text(
-                            'Nama OTA lainnya',
-                            _otaLainnyaCtrl,
-                            (v) => _data.otaLainnyaNama = v,
+                            'Nama Pemilik',
+                            _namaPemilikCtrl,
+                            (v) => _data.namaPemilik = v,
                           ),
-                      ],
+
+                          // Nama Brand
+                          _text(
+                            'Nama Brand',
+                            _namaBrandCtrl,
+                            (v) => _data.namaBrand = v,
+                          ),
+
+                          DropdownButtonFormField<String>(
+                            initialValue: _data.jenisProduk.isEmpty
+                                ? null
+                                : _data.jenisProduk,
+                            decoration: const InputDecoration(
+                              labelText: 'Jenis Produk *',
+                              border: OutlineInputBorder(),
+                            ),
+                            items: products
+                                .map(
+                                  (v) => DropdownMenuItem(
+                                    value: v,
+                                    child: Text(v),
+                                  ),
+                                )
+                                .toList(),
+                            // Perbaikan: sebelumnya tidak ada setState di sini,
+                            // sehingga _data.jenisProduk berubah tanpa Flutter
+                            // "tahu", dan saat Form.validate() memicu rebuild
+                            // (mis. saat tombol Simpan ditekan), dropdown ini
+                            // balik ke initialValue lama seolah terhapus.
+                            onChanged: (v) =>
+                                setState(() => _data.jenisProduk = v ?? ''),
+                            validator: (v) =>
+                                v == null ? 'Wajib dipilih.' : null,
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
-                  FormSection(
-                    number: 6,
-                    title: 'Hasil Pengawasan',
-                    icon: Icons.fact_check,
-                    hasError: _sectionErrors.contains(_Section.hasil),
-                    child: Column(
-                      children: [
-                        DropdownButtonFormField<int>(
-                          initialValue: _data.statusPengawasan,
-                          decoration: const InputDecoration(
-                            labelText: 'Status Pengawasan *',
-                            border: OutlineInputBorder(),
+                    FormSection(
+                      number: 2,
+                      title: 'Wilayah dan Alamat',
+                      subtitle:
+                          'Pilih wilayah secara berurutan hingga kelurahan.',
+                      icon: Icons.location_city,
+                      hasError: _sectionErrors.contains(_Section.wilayah),
+                      child: Column(
+                        children: [
+                          _region(
+                            'Provinsi',
+                            _data.provinsiId,
+                            _provinces,
+                            _chooseProvince,
                           ),
-                          items: statuses.entries
-                              .map(
-                                (e) => DropdownMenuItem(
-                                  value: e.key,
-                                  child: Text(e.value),
+                          _region(
+                            'Kabupaten/Kota',
+                            _data.kabupatenId,
+                            _regencies,
+                            _chooseRegency,
+                          ),
+                          _region(
+                            'Kecamatan',
+                            _data.kecamatanId,
+                            _districts,
+                            _chooseDistrict,
+                          ),
+                          _region(
+                            'Kelurahan/Desa',
+                            _data.kelurahanId,
+                            _villages,
+                            (v) => setState(() => _data.kelurahanId = v),
+                          ),
+                          _text(
+                            'Alamat Lengkap',
+                            _alamatCtrl,
+                            (v) => _data.alamat = v,
+                            lines: 3,
+                          ),
+                        ],
+                      ),
+                    ),
+                    FormSection(
+                      number: 3,
+                      title: 'Lokasi dan Peta',
+                      subtitle:
+                          'Ambil koordinat langsung dari perangkat petugas.',
+                      icon: Icons.gps_fixed,
+                      hasError: _sectionErrors.contains(_Section.lokasi),
+                      child: LocationPicker(
+                        latitude: _data.latitude,
+                        longitude: _data.longitude,
+                        loading: _gpsLoading,
+                        status: _gpsStatus,
+                        sisaDetik: _gpsCountdown,
+                        source: _gpsSource,
+                        onGetLocation: _gps,
+                      ),
+                    ),
+                    FormSection(
+                      number: 4,
+                      title: 'Kontak dan Legalitas',
+                      subtitle:
+                          'Data kontak aktif memudahkan proses verifikasi.',
+                      icon: Icons.contact_phone,
+                      hasError: _sectionErrors.contains(_Section.kontak),
+                      child: Column(
+                        children: [
+                          _text(
+                            'NPWPD',
+                            _npwpdCtrl,
+                            (v) => _data.npwpd = v,
+                            required: false,
+                          ),
+                          _text(
+                            'Website',
+                            _websiteCtrl,
+                            (v) => _data.website = v,
+                            required: false,
+                            type: TextInputType.url,
+                            hintText: 'https://www.example.com',
+                            // Format URL diperiksa hanya jika field diisi.
+                            validator: _urlValidator,
+                          ),
+                          _text(
+                            'Telepon/WhatsApp',
+                            _noHpCtrl,
+                            (v) => _data.noHp = v,
+                            type: TextInputType.phone,
+                            hintText: '081234567890',
+                            inputFormatters: [
+                              // Hanya menerima karakter angka.
+                              FilteringTextInputFormatter.digitsOnly,
+                              // Batasi maksimal 15 digit.
+                              LengthLimitingTextInputFormatter(15),
+                            ],
+                            validator: _phoneValidator,
+                          ),
+                          _text(
+                            'Email',
+                            _emailCtrl,
+                            (v) => _data.email = v,
+                            required: false,
+                            type: TextInputType.emailAddress,
+                            hintText: 'example@example.com',
+                            // Format email diperiksa hanya jika field diisi.
+                            validator: _emailValidator,
+                          ),
+                        ],
+                      ),
+                    ),
+                    FormSection(
+                      number: 5,
+                      title: 'Platform OTA',
+                      subtitle: 'Catat platform dan URL listing usaha.',
+                      icon: Icons.travel_explore,
+                      hasError: _sectionErrors.contains(_Section.ota),
+                      child: Column(
+                        children: [
+                          _choice<String>(
+                            label: 'Apakah terdaftar di OTA? *',
+                            value: _data.terdaftarOta,
+                            choices: const {'YA': 'Ya', 'TIDAK': 'Tidak'},
+                            onChanged: (v) =>
+                                setState(() => _data.terdaftarOta = v),
+                          ),
+                          if (_data.terdaftarOta == 'YA')
+                            OtaSelector(
+                              urls: _data.otaUrls,
+                              onChanged: (v) => setState(() {
+                                _data.otaUrls
+                                  ..clear()
+                                  ..addAll(v);
+                              }),
+                            ),
+                          if (_data.terdaftarOta == 'YA' &&
+                              _data.otaUrls.containsKey('lainnya'))
+                            _text(
+                              'Nama OTA lainnya',
+                              _otaLainnyaCtrl,
+                              (v) => _data.otaLainnyaNama = v,
+                            ),
+                        ],
+                      ),
+                    ),
+                    FormSection(
+                      number: 6,
+                      title: 'Hasil Pengawasan',
+                      icon: Icons.fact_check,
+                      hasError: _sectionErrors.contains(_Section.hasil),
+                      child: Column(
+                        children: [
+                          DropdownButtonFormField<int>(
+                            initialValue: _data.statusPengawasan,
+                            decoration: const InputDecoration(
+                              labelText: 'Status Pengawasan *',
+                              border: OutlineInputBorder(),
+                            ),
+                            items: statuses.entries
+                                .map(
+                                  (e) => DropdownMenuItem(
+                                    value: e.key,
+                                    child: Text(e.value),
+                                  ),
+                                )
+                                .toList(),
+                            onChanged: (v) =>
+                                setState(() => _data.statusPengawasan = v!),
+                          ),
+                          const SizedBox(height: 12),
+                          _text(
+                            'Keterangan',
+                            _keteranganCtrl,
+                            (v) => _data.keterangan = v,
+                            required: false,
+                            lines: 3,
+                          ),
+                          _text(
+                            'Catatan Petugas',
+                            _catatanPetugasCtrl,
+                            (v) => _data.catatanPetugas = v,
+                            required: false,
+                            lines: 3,
+                          ),
+                          ListTile(
+                            contentPadding: EdgeInsets.zero,
+                            title: const Text('Tanggal Pengawasan *'),
+                            subtitle: Text(
+                              DateFormat(
+                                'dd-MM-yyyy',
+                              ).format(_data.tanggalPengawasan),
+                            ),
+                            trailing: const Icon(Icons.calendar_month),
+                            onTap: _date,
+                          ),
+                        ],
+                      ),
+                    ),
+                    FormSection(
+                      number: 7,
+                      title: 'Foto Dokumentasi',
+                      subtitle: 'Tambahkan 1–5 foto kondisi usaha di lapangan.',
+                      icon: Icons.photo_camera,
+                      hasError: _sectionErrors.contains(_Section.foto),
+                      child: PhotoPicker(
+                        photos: _data.photos,
+                        onChanged: (v) => setState(() {
+                          _data.photos
+                            ..clear()
+                            ..addAll(v);
+                        }),
+                      ),
+                    ),
+                    SizedBox(
+                      height: 54,
+                      child: FilledButton.icon(
+                        onPressed: _saving ? null : _submit,
+                        style: FilledButton.styleFrom(
+                          backgroundColor: _primary,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(15),
+                          ),
+                        ),
+                        icon: _saving
+                            ? const SizedBox(
+                                width: 20,
+                                height: 20,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: Colors.white,
                                 ),
                               )
-                              .toList(),
-                          onChanged: (v) =>
-                              setState(() => _data.statusPengawasan = v!),
-                        ),
-                        const SizedBox(height: 12),
-                        _text(
-                          'Keterangan',
-                          _keteranganCtrl,
-                          (v) => _data.keterangan = v,
-                          required: false,
-                          lines: 3,
-                        ),
-                        _text(
-                          'Catatan Petugas',
-                          _catatanPetugasCtrl,
-                          (v) => _data.catatanPetugas = v,
-                          required: false,
-                          lines: 3,
-                        ),
-                        ListTile(
-                          contentPadding: EdgeInsets.zero,
-                          title: const Text('Tanggal Pengawasan *'),
-                          subtitle: Text(
-                            DateFormat(
-                              'dd-MM-yyyy',
-                            ).format(_data.tanggalPengawasan),
-                          ),
-                          trailing: const Icon(Icons.calendar_month),
-                          onTap: _date,
-                        ),
-                      ],
-                    ),
-                  ),
-                  FormSection(
-                    number: 7,
-                    title: 'Foto Dokumentasi',
-                    subtitle: 'Tambahkan 1–5 foto kondisi usaha di lapangan.',
-                    icon: Icons.photo_camera,
-                    hasError: _sectionErrors.contains(_Section.foto),
-                    child: PhotoPicker(
-                      photos: _data.photos,
-                      onChanged: (v) => setState(() {
-                        _data.photos
-                          ..clear()
-                          ..addAll(v);
-                      }),
-                    ),
-                  ),
-                  SizedBox(
-                    height: 54,
-                    child: FilledButton.icon(
-                      onPressed: _saving ? null : _submit,
-                      style: FilledButton.styleFrom(
-                        backgroundColor: _primary,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(15),
-                        ),
-                      ),
-                      icon: _saving
-                          ? const SizedBox(
-                              width: 20,
-                              height: 20,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
+                            : const Icon(
+                                Icons.cloud_upload_rounded,
                                 color: Colors.white,
                               ),
-                            )
-                          : const Icon(
-                              Icons.cloud_upload_rounded,
-                              color: Colors.white,
-                            ),
-                      label: Text(
-                        _saving
-                            ? (_isEditing
-                                  ? 'Menyimpan perubahan...'
-                                  : 'Menyimpan data...')
-                            : (_isEditing
-                                  ? 'Simpan Perubahan'
-                                  : 'Simpan Pengawasan'),
-                        style: TextStyle(
-                          fontWeight: FontWeight.w800,
-                          fontSize: 15,
-                          color: Colors.white,
+                        label: Text(
+                          _saving
+                              ? (_isEditing
+                                    ? 'Menyimpan perubahan...'
+                                    : 'Menyimpan data...')
+                              : (_isEditing
+                                    ? 'Simpan Perubahan'
+                                    : 'Simpan Pengawasan'),
+                          style: TextStyle(
+                            fontWeight: FontWeight.w800,
+                            fontSize: 15,
+                            color: Colors.white,
+                          ),
                         ),
                       ),
                     ),
-                  ),
-                  const SizedBox(height: 24),
-                ],
+                    const SizedBox(height: 24),
+                  ],
+                ),
               ),
-            ),
+      ),
     ),
   );
 }
@@ -1092,3 +1239,5 @@ class _RequiredCheck {
   final bool hasError;
   _RequiredCheck(this.section, this.hasError);
 }
+
+enum _BackAction { discard, cancel, saveDraft }
