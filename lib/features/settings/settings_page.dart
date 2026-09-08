@@ -2,22 +2,22 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 
-import '../../../app/app_theme.dart';
-import '../../authentication/models/auth_user.dart';
-import '../../authentication/services/auth_service.dart';
-import '../../profile/profile_page.dart';
-import '../../profile/services/profile_services.dart';
+import '../../app/app_theme.dart';
+import '../authentication/models/auth_user.dart';
+import '../authentication/services/auth_service.dart';
+import '../profile/profile_page.dart';
+import '../profile/services/profile_services.dart';
 
-import '../../home/models/menu_data.dart';
-import '../../home/pages/feature_placeholder_page.dart';
-import '../../home/widgets/menu_list_tile.dart';
+import '../home/models/menu_data.dart';
+import '../home/pages/feature_placeholder_page.dart';
+import '../home/widgets/menu_list_tile.dart';
 
-import '../widgets/profile_preview_card.dart';
+import 'widgets/profile_preview_card.dart';
 
-import '../../non_oss/offline/auto_sync_controller.dart';
-import '../../non_oss/offline/sync_service.dart';
-import '../../non_oss/services/non_oss_service.dart';
-import '../../../core/api/api_client.dart';
+import '../non_oss/offline/auto_sync_controller.dart';
+import '../non_oss/offline/sync_service.dart';
+import '../non_oss/services/non_oss_service.dart';
+import '../../core/api/api_client.dart';
 
 class SettingsPage extends StatefulWidget {
   const SettingsPage({super.key});

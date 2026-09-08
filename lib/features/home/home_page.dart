@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../app/app_theme.dart';
 import '../dashboard/dashboard_page.dart';
 import '../non_oss/non_oss_form_page.dart';
+import '../oss/oss_validasi_page.dart';
 import '../sinkronisasi/sync_page.dart';
 import '../riwayat/riwayat_page.dart';
 
@@ -10,7 +11,7 @@ import 'models/menu_data.dart';
 import 'pages/feature_placeholder_page.dart';
 
 import '../profile/profile_page.dart';
-import '../settings/pages/settings_page.dart';
+import '../settings/settings_page.dart';
 
 import 'widgets/menu_card.dart';
 import 'widgets/menu_list_tile.dart';
@@ -35,7 +36,7 @@ class _HomePageState extends State<HomePage> {
       backgroundColor: AppTheme.menuDashboardBg,
     ),
     MenuData(
-      title: 'Pengawasan OSS',
+      title: 'Validasi OSS',
       description: 'Verifikasi proyek dan usaha OSS',
       icon: Icons.fact_check_outlined,
       color: AppTheme.menuOss,
@@ -85,6 +86,12 @@ class _HomePageState extends State<HomePage> {
         Navigator.of(
           context,
         ).push(MaterialPageRoute<void>(builder: (_) => const DashboardPage()));
+        return;
+
+      case 'Validasi OSS':
+        Navigator.of(context).push(
+          MaterialPageRoute<void>(builder: (_) => const OssValidasiPage()),
+        );
         return;
 
       case 'Pengawasan Non-OSS':
