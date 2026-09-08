@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:ipardasbor/features/shared_widgets/connection_error_state.dart';
 
 import '../../app/app_theme.dart';
 import '../authentication/models/auth_user.dart';
@@ -169,28 +170,22 @@ class _ProfilePageState extends State<ProfilePage> {
                     ? snapshot.error.toString()
                     : 'Gagal memuat data profil.';
 
-                return ListView(
-                  physics: const AlwaysScrollableScrollPhysics(),
-                  padding: const EdgeInsets.all(24),
-                  children: [
-                    const SizedBox(height: 60),
-                    const Icon(
-                      Icons.error_outline_rounded,
-                      size: 46,
-                      color: AppTheme.danger,
-                    ),
-                    const SizedBox(height: 14),
-                    Text(
-                      message,
-                      textAlign: TextAlign.center,
-                      style: TextStyle(color: AppTheme.textSecondary(context)),
-                    ),
-                    const SizedBox(height: 18),
-                    OutlinedButton(
-                      onPressed: _refresh,
-                      child: const Text('Coba Lagi'),
-                    ),
-                  ],
+                return LayoutBuilder(
+                  builder: (context, constraints) {
+                    return SingleChildScrollView(
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      child: ConstrainedBox(
+                        constraints: BoxConstraints(
+                          minHeight: constraints.maxHeight,
+                        ),
+                        child: ConnectionErrorState(
+                          title: 'Profil gagal dimuat',
+                          message: message,
+                          onRetry: () => _refresh(),
+                        ),
+                      ),
+                    );
+                  },
                 );
               }
 
@@ -281,8 +276,15 @@ class _ProfilePageState extends State<ProfilePage> {
                     width: double.infinity,
                     child: OutlinedButton.icon(
                       onPressed: () => _logout(context),
-                      icon: const Icon(Icons.logout_rounded, size: 19, color: Colors.white),
-                      label: const Text('Keluar', style: TextStyle(color: Colors.white)),
+                      icon: const Icon(
+                        Icons.logout_rounded,
+                        size: 19,
+                        color: Colors.white,
+                      ),
+                      label: const Text(
+                        'Keluar',
+                        style: TextStyle(color: Colors.white),
+                      ),
                       style: OutlinedButton.styleFrom(
                         backgroundColor: AppTheme.danger,
                         side: const BorderSide(color: AppTheme.danger),

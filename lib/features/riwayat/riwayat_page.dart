@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:ipardasbor/features/shared_widgets/connection_error_state.dart';
 
 import '../../app/app_theme.dart';
 
@@ -240,7 +241,12 @@ class _RiwayatPageState extends State<RiwayatPage> {
     }
 
     if (_pesanError != null) {
-      return _ErrorState(message: _pesanError!, onRetry: _muatUlang);
+      return ConnectionErrorState(
+        title: 'Riwayat gagal dimuat',
+        message: _pesanError!,
+        isRetrying: _loadingAwal,
+        onRetry: _muatUlang,
+      );
     }
 
     if (_items.isEmpty) {
@@ -295,36 +301,6 @@ class _EmptyState extends StatelessWidget {
               textAlign: TextAlign.center,
               style: TextStyle(color: AppTheme.textSecondary(context)),
             ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _ErrorState extends StatelessWidget {
-  const _ErrorState({required this.message, required this.onRetry});
-
-  final String message;
-  final VoidCallback onRetry;
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(32),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: <Widget>[
-            const Icon(
-              Icons.error_outline_rounded,
-              size: 48,
-              color: Colors.red,
-            ),
-            const SizedBox(height: 12),
-            Text(message, textAlign: TextAlign.center),
-            const SizedBox(height: 16),
-            FilledButton(onPressed: onRetry, child: const Text('Coba Lagi')),
           ],
         ),
       ),

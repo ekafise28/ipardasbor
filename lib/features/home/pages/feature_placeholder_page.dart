@@ -54,12 +54,18 @@ class FeaturePlaceholderPage extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 28),
-              OutlinedButton.icon(
+              FilledButton.icon(
                 onPressed: () {
                   Navigator.pop(context);
                 },
-                icon: const Icon(Icons.arrow_back_rounded),
-                label: const Text('Kembali ke Menu Utama'),
+                style: FilledButton.styleFrom(
+                  backgroundColor: AppTheme.primaryColor,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                ),
+                icon: const Icon(Icons.arrow_back_rounded, color: Colors.white),
+                label: const Text('Kembali ke Menu Utama', style: TextStyle(color: Colors.white)),
               ),
             ],
           ),

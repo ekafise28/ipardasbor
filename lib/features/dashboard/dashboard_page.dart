@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:ipardasbor/features/shared_widgets/connection_error_state.dart';
 import '../../core/api/api_client.dart';
 import '../../core/api/api_exception.dart';
 import '../../app/app_theme.dart';
@@ -326,16 +327,23 @@ class _DashboardPageState extends State<DashboardPage> {
       return const _DashboardLoading();
     }
 
-    if (_errorMessage != null && _dashboard == null) {
-      return _DashboardError(message: _errorMessage!, onRetry: _loadDashboard);
+        if (_errorMessage != null && _dashboard == null) {
+      return ConnectionErrorState(
+        title: 'Dashboard gagal dimuat',
+        message: _errorMessage!,
+        isRetrying: _isLoading,
+        onRetry: () => _loadDashboard(showLoading: true),
+      );
     }
 
     final DashboardData? dashboard = _dashboard;
 
     if (dashboard == null) {
-      return _DashboardError(
+      return ConnectionErrorState(
+        title: 'Dashboard gagal dimuat',
         message: 'Data dashboard tidak tersedia.',
-        onRetry: _loadDashboard,
+        isRetrying: _isLoading,
+        onRetry: () => _loadDashboard(showLoading: true),
       );
     }
 
@@ -1519,82 +1527,6 @@ class _DashboardLoading extends StatelessWidget {
                 color: AppTheme.textSecondary(context),
                 fontSize: 14,
                 fontWeight: FontWeight.w600,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _DashboardError extends StatelessWidget {
-  final String message;
-  final Future<void> Function({bool showLoading}) onRetry;
-
-  const _DashboardError({required this.message, required this.onRetry});
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: SingleChildScrollView(
-        padding: const EdgeInsets.all(28),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Container(
-              width: 82,
-              height: 82,
-              decoration: const BoxDecoration(
-                color: Color(0xFFFFEBEE),
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(
-                Icons.cloud_off_rounded,
-                color: Color(0xFFC62828),
-                size: 39,
-              ),
-            ),
-            const SizedBox(height: 20),
-            Text(
-              'Dashboard gagal dimuat',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                color: AppTheme.textColor(context),
-                fontSize: 19,
-                fontWeight: FontWeight.w800,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              message,
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                color: AppTheme.textSecondary(context),
-                fontSize: 14,
-                height: 1.5,
-              ),
-            ),
-            const SizedBox(height: 22),
-            FilledButton.icon(
-              onPressed: () {
-                onRetry(showLoading: true);
-              },
-              style: FilledButton.styleFrom(
-                backgroundColor: AppTheme.primaryColor,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 20,
-                  vertical: 13,
-                ),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(13),
-                ),
-              ),
-              icon: const Icon(Icons.refresh_rounded),
-              label: const Text(
-                'Coba Lagi',
-                style: TextStyle(fontWeight: FontWeight.w700),
               ),
             ),
           ],
