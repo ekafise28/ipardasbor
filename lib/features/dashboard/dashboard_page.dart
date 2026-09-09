@@ -417,14 +417,14 @@ class _DashboardPageState extends State<DashboardPage> {
         // ============================================================
         DashboardDataTable(
           title: 'Rekap Kabupaten/Kota',
-          columns: const ['Kabupaten', 'Total', 'OSS', 'Non OSS'],
+          columns: const ['Kabupaten', 'OSS', 'Non OSS', 'Total'],
           rows: dashboard.districtRecap.map((row) {
             return [
               row['nama_kabupaten']?.toString() ??
-                  '-', // <-- perbaikan masalah 1
-              row['total']?.toString() ?? '0',
+                  '-',
               row['oss']?.toString() ?? '0',
               row['non_oss']?.toString() ?? '0',
+              row['total']?.toString() ?? '0',
             ];
           }).toList(),
         ),
