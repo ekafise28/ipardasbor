@@ -80,7 +80,14 @@ class _DashboardMapSectionState extends State<DashboardMapSection> {
                       TileLayer(
                         urlTemplate:
                             'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                        userAgentPackageName: 'com.yourapp.package',
+                        userAgentPackageName: 'id.go.kemenpar.ipardasbor',
+                        errorTileCallback: (tile, error, stackTrace) {
+                          // Sengaja diabaikan: kegagalan memuat tile peta
+                          // (offline, lambat, dsb) adalah kondisi normal,
+                          // bukan bug. Tanpa callback ini, exception-nya
+                          // "lolos" sebagai unhandled error dan bikin
+                          // debugger pause di VS Code.
+                        },
                       ),
                       MarkerClusterLayerWidget(
                         options: MarkerClusterLayerOptions(
