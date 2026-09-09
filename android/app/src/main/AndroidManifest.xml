@@ -24,8 +24,10 @@
         android:name="${applicationName}"
         android:label="IPAR Dasbor"
         android:icon="@mipmap/ic_launcher"
-        android:usesCleartextTraffic="true">
-        android:enableOnBackInvokedCallback="true
+        android:usesCleartextTraffic="true"
+        android:enableOnBackInvokedCallback="true"
+        android:allowBackup="false"
+        >
 
         <activity
             android:name=".MainActivity"
