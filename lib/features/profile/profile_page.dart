@@ -258,7 +258,7 @@ class _ProfilePageState extends State<ProfilePage> {
                       ),
                       label: Text(
                         'Ubah Password',
-                        style: TextStyle(color: AppTheme.textColor(context)),
+                        style: TextStyle(color: Colors.white),
                       ),
                       style: OutlinedButton.styleFrom(
                         backgroundColor: AppTheme.primaryColor,
