@@ -16,7 +16,7 @@ class ApiEndpoints {
   static const String logout = '/mobile/logout';
   static const String me = '/mobile/me';
 
-  // PLACEHOLDER — ganti path ini setelah cek Network tab di web.
+  // PLACEHOLDER - ganti path ini setelah cek Network tab di web.
   // Kemungkinan pola umum Laravel: '/mobile/profile/change-password'
   // atau '/mobile/change-password'.
   static const String changePassword = '/mobile/change-password';

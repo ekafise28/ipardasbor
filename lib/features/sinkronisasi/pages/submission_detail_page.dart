@@ -566,7 +566,7 @@ String _formatDateTime(DateTime value) {
 
 /// Kartu section OTA bergaya sama dengan halaman detail Riwayat, tapi
 /// data submission cuma punya nama platform + daftar URL (tanpa status,
-/// harga, rating — karena itu semua diisi lewat proses verifikasi OSS
+/// harga, rating - karena itu semua diisi lewat proses verifikasi OSS
 /// yang belum berlaku untuk ajuan yang masih di antrean lokal).
 class _SubmissionOtaSection extends StatelessWidget {
   const _SubmissionOtaSection({required this.entries, required this.onTapUrl});

@@ -610,7 +610,7 @@ class _DashboardPageState extends State<DashboardPage> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     // Selalu dirender, tidak peduli status dashboard dari
-                    // server — antrean ini dibaca langsung dari SQLite lokal
+                    // server - antrean ini dibaca langsung dari SQLite lokal
                     // sehingga tidak butuh internet sama sekali.
                     _buildOfflineQueueSection(),
                     const SizedBox(height: 18),

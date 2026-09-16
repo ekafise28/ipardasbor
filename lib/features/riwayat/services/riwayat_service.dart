@@ -1,3 +1,5 @@
+import 'package:flutter/foundation.dart';
+
 import '../../../core/api/api_client.dart';
 import '../../../core/api/api_endpoints.dart';
 import '../models/riwayat_filter.dart';
@@ -16,7 +18,7 @@ class RiwayatService {
 
   /// Mengambil satu halaman data riwayat sesuai [filter] dan nomor [page].
   ///
-  /// Melempar [ApiException] (dari core/api) apabila request gagal —
+  /// Melempar [ApiException] (dari core/api) apabila request gagal -
   /// biarkan exception ini ditangkap di level UI (RiwayatPage) supaya
   /// pesannya bisa ditampilkan langsung ke user.
   Future<RiwayatPageResult> fetch({
@@ -27,6 +29,8 @@ class RiwayatService {
       ApiEndpoints.riwayatOss,
       queryParameters: filter.toQueryParameters(page),
     );
+
+    // debugPrint('DEBUG riwayat response: $response'); // tambahkan ini sementara
 
     final Map<String, dynamic> body = response is Map<String, dynamic>
         ? response

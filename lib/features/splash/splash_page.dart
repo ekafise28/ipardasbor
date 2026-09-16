@@ -127,7 +127,7 @@ class _SplashPageState extends State<SplashPage>
     // spinner right as the page changes.
     _controller.stop();
 
-    // Kick off the exit zoom/fade, but don't wait for it to fully finish —
+    // Kick off the exit zoom/fade, but don't wait for it to fully finish -
     // we navigate while it's still ~70% through. That way its tail end
     // overlaps with the system's own page transition instead of running
     // one after the other, which is what was causing the blank pause.
@@ -236,7 +236,7 @@ class _SplashPageState extends State<SplashPage>
                 ),
               ),
               const SizedBox(height: 52),
-              // Not wrapped in _exitFade/_exitScale — keeps spinning
+              // Not wrapped in _exitFade/_exitScale - keeps spinning
               // unaffected by the logo/text exit animation.
               FadeTransition(
                 opacity: _loaderFade,

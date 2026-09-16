@@ -11,7 +11,7 @@ import '../services/profile_services.dart';
 /// CATATAN INTEGRASI:
 /// Endpoint pasti (URL, method, nama field payload) belum dikonfirmasi ke
 /// backend Laravel. Path `ApiEndpoints.changePassword` di bawah ini masih
-/// PLACEHOLDER — cek Network tab di web versi "Ubah Password" untuk
+/// PLACEHOLDER - cek Network tab di web versi "Ubah Password" untuk
 /// mendapatkan URL & payload yang sebenarnya, lalu sesuaikan:
 ///  1. Tambahkan konstanta path yang benar di `api_endpoints.dart`
 ///  2. Sesuaikan nama field body di `ProfileService.changePassword`

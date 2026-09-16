@@ -72,7 +72,7 @@ class _IparAppState extends State<IparApp> with WidgetsBindingObserver {
     // pernah menyebabkan crash di level aplikasi.
     unawaited(
       _nonOssSync.syncWaiting().catchError((Object _) {
-        // Sengaja diabaikan — proses ini berjalan di latar belakang tanpa
+        // Sengaja diabaikan - proses ini berjalan di latar belakang tanpa
         // UI, jadi tidak ada tempat yang tepat untuk menampilkan error.
       }),
     );

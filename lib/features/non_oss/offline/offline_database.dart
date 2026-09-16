@@ -88,7 +88,7 @@ class OfflineDatabase {
     return rows.map(NonOssLocalData.fromDatabase).toList(growable: false);
   }
 
-  /// Draft SENGAJA dipisah dari getWaiting() — draft tidak boleh pernah
+  /// Draft SENGAJA dipisah dari getWaiting() - draft tidak boleh pernah
   /// ikut ke-fetch untuk proses sync otomatis, karena isinya belum tentu
   /// valid/lengkap.
   Future<List<NonOssLocalData>> getDrafts({int limit = 100}) async {

@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 
 import '../../app/app_navigator.dart';
@@ -41,6 +42,7 @@ class ApiClient {
 
     if (useToken) {
       final String? token = await SecureStorage.getAccessToken();
+      // debugPrint('DEBUG token: $token');
 
       if (token != null && token.trim().isNotEmpty) {
         headers['Authorization'] = 'Bearer ${token.trim()}';

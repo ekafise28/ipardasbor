@@ -7,7 +7,7 @@ import '../../app/app_theme.dart';
 ///
 /// [title] boleh disesuaikan per halaman (mis. "Dashboard gagal dimuat"),
 /// dengan default generik "Gagal memuat data" kalau tidak diisi.
-/// [onRetry] cukup [VoidCallback] — pemanggil membungkus proses async-nya
+/// [onRetry] cukup [VoidCallback] - pemanggil membungkus proses async-nya
 /// sendiri lewat closure, mis. `onRetry: () => _muatUlang()`.
 class ConnectionErrorState extends StatelessWidget {
   const ConnectionErrorState({
@@ -25,7 +25,7 @@ class ConnectionErrorState extends StatelessWidget {
   final VoidCallback onRetry;
 
   /// Saat true, tombol menampilkan spinner kecil dan dinonaktifkan.
-  /// Opsional — banyak pemanggil langsung mengganti seluruh body ke state
+  /// Opsional - banyak pemanggil langsung mengganti seluruh body ke state
   /// loading penuh saat retry ditekan, sehingga spinner ini mungkin tidak
   /// sempat terlihat lama. Tetap disediakan untuk kasus yang butuh.
   final bool isRetrying;

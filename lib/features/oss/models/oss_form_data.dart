@@ -6,7 +6,7 @@ import 'package:image_picker/image_picker.dart';
 ///
 /// Struktur field mengikuti kolom `tbl_oss_pengawasan` (lihat model
 /// Laravel OssPengawasan) ditambah field khusus tahap ketidaksesuaian yang
-/// masih dari alur `OssValidasiLanjutan` — backend belum final, jadi
+/// masih dari alur `OssValidasiLanjutan` - backend belum final, jadi
 /// [toFields] ini sifatnya sementara untuk keperluan visual/debug saja.
 class OssFormData {
   OssFormData({

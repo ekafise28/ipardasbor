@@ -45,7 +45,7 @@ class PermanentPhotoStorage {
 
     /// Mengganti seluruh foto milik [clientUuid] dengan [photos] yang baru.
   ///
-  /// Dipakai saat mode edit — BERBEDA dari persistAll biasa karena foto
+  /// Dipakai saat mode edit - BERBEDA dari persistAll biasa karena foto
   /// lama yang tidak diubah user pun path-nya berada di folder yang sama
   /// yang akan dihapus. Kalau langsung pakai persistAll (hapus dulu, baru
   /// salin), foto lama bisa lenyap sebelum sempat disalin ulang. Di sini,

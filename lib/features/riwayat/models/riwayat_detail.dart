@@ -220,7 +220,7 @@ String? _toStringSafe(dynamic value) {
     return value;
   }
   // Backend kadang ngirim status/kode sebagai number atau bool,
-  // bukan string — convert aja daripada crash.
+  // bukan string - convert aja daripada crash.
   return value.toString();
 }
 

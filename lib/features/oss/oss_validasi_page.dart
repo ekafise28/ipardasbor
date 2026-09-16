@@ -6,7 +6,7 @@ import 'oss_form_page.dart';
 
 /// Tahap 1: validasi NIB, KBLI, dan NKU sebelum masuk ke form lanjutan.
 ///
-/// Mengikuti alur Laravel (oss_validasi_lanjutan) — bedanya, karena
+/// Mengikuti alur Laravel (oss_validasi_lanjutan) - bedanya, karena
 /// endpoint validasi backend belum tersedia, hasil valid/tidak valid untuk
 /// sekarang ditentukan lewat toggle simulasi manual di halaman ini.
 class OssValidasiPage extends StatefulWidget {

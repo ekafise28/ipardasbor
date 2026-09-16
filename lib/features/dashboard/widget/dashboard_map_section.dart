@@ -362,7 +362,7 @@ class _MapLegend extends StatelessWidget {
                     materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
                   ),
                   Text(
-                    '${type.label} — ${_dotLabel(type)}',
+                    '${type.label} - ${_dotLabel(type)}',
                     style: TextStyle(
                       fontSize: 12,
                       color: AppTheme.textColor(context),

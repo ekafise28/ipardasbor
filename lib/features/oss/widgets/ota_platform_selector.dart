@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:ipardasbor/app/app_theme.dart';
 
 /// Selector platform OTA bergaya checkbox grid + URL inline, mengikuti
-/// tampilan form Laravel OSS (form blade 2) — beda gaya dari OtaSelector
+/// tampilan form Laravel OSS (form blade 2) - beda gaya dari OtaSelector
 /// milik Non-OSS (ListTile vertikal), tapi struktur datanya sama:
 /// Map<String, List<String>> key platform -> daftar URL.
 class OtaPlatformSelector extends StatelessWidget {

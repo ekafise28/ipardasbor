@@ -149,7 +149,7 @@ class OfflineQueueService {
   /// Status SENGAJA di-reset ke [SyncStatus.pending] supaya ajuan yang
   /// tadinya gagal (FAILED) bisa dicoba sync lagi setelah dikoreksi.
   /// id, clientUuid, createdAt, dan retryCount tetap dipertahankan dari
-  /// data [original] — ini bukan ajuan baru, cuma versi terbaru dari
+  /// data [original] - ini bukan ajuan baru, cuma versi terbaru dari
   /// ajuan yang sama.
   Future<NonOssLocalData> update(
     NonOssLocalData original,

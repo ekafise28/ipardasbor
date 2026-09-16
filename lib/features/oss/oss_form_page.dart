@@ -18,7 +18,7 @@ import 'widgets/status_ketidaksesuaian_selector.dart';
 /// Tahap 2: form lanjutan validasi OSS, dibuka setelah [OssValidasiPage]
 /// mengembalikan [OssValidasiResult].
 ///
-/// Backend penyimpanan (POST) belum tersedia — tombol submit untuk
+/// Backend penyimpanan (POST) belum tersedia - tombol submit untuk
 /// sekarang cuma mencetak payload ke console lewat [OssFormData.debugJson].
 class OssFormPage extends StatefulWidget {
   const OssFormPage({super.key, required this.validasi});
@@ -405,7 +405,7 @@ class _OssFormPageState extends State<OssFormPage> {
         title: const Text('Berhasil (Simulasi)'),
         content: const Text(
           'Data validasi OSS berhasil divalidasi secara lokal. '
-          'Payload telah dicetak ke console — belum dikirim ke server '
+          'Payload telah dicetak ke console - belum dikirim ke server '
           'karena backend belum tersedia.',
         ),
         actions: [
@@ -713,8 +713,8 @@ class _OssFormPageState extends State<OssFormPage> {
                               const SizedBox(height: 4),
                               Text(
                                 widget.validasi.isValid
-                                    ? 'Data OSS tervalidasi — lengkapi informasi usaha di bawah.'
-                                    : 'Data belum valid — lengkapi ketidaksesuaian di bagian bawah.',
+                                    ? 'Data OSS tervalidasi - lengkapi informasi usaha di bawah.'
+                                    : 'Data belum valid - lengkapi ketidaksesuaian di bagian bawah.',
                                 style: const TextStyle(
                                   color: Color(0xFFE7F2FF),
                                   height: 1.35,
@@ -947,7 +947,7 @@ class _OssFormPageState extends State<OssFormPage> {
                       number: 6,
                       title: 'Status Ketidaksesuaian',
                       subtitle:
-                          'Data hasil validasi tidak sesuai — pilih kondisi yang ditemukan.',
+                          'Data hasil validasi tidak sesuai - pilih kondisi yang ditemukan.',
                       icon: Icons.report_gmailerrorred_rounded,
                       hasError: _sectionErrors.contains(
                         _Section.ketidaksesuaian,
@@ -1078,7 +1078,7 @@ class _OssFormPageState extends State<OssFormPage> {
   );
 }
 
-/// Kartu section untuk halaman OSS — SENGAJA disalin dari [FormSection]
+/// Kartu section untuk halaman OSS - SENGAJA disalin dari [FormSection]
 /// milik Non-OSS (bukan reuse) sesuai keputusan untuk belum menyatukan ke
 /// shared widget. Style identik, gampang dipindah ke shared nanti.
 class FormSectionOss extends StatelessWidget {

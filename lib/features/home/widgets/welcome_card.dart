@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../core/storage/secure_storage.dart';
 import '../../../app/app_theme.dart';
 
-/// UI-only for now — swap this for a real value once sync data
+/// UI-only for now - swap this for a real value once sync data
 /// is wired up (e.g. from a SyncService or local DB query).
 enum SyncStatus { synced, pending }
 
@@ -14,7 +14,7 @@ class WelcomeCard extends StatefulWidget {
     this.pendingCount = 0,
   });
 
-  /// Placeholder inputs — replace with real backend-driven state later.
+  /// Placeholder inputs - replace with real backend-driven state later.
   final SyncStatus syncStatus;
   final int pendingCount;
 

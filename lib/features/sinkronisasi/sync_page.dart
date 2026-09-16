@@ -144,7 +144,7 @@ class _SyncPageState extends State<SyncPage> {
     );
   }
 
-  /// Handler tombol utama pada baris tabel — bercabang berdasarkan status:
+  /// Handler tombol utama pada baris tabel - bercabang berdasarkan status:
   /// draft membuka form untuk melanjutkan pengisian, selain itu memicu
   /// proses sync seperti biasa.
   Future<void> _handlePrimaryAction(NonOssLocalData data) async {

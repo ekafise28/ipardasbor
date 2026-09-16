@@ -1,6 +1,6 @@
 /// State filter untuk halaman Riwayat.
 ///
-/// Immutable — gunakan [copyWith] untuk membuat versi baru saat salah satu
+/// Immutable - gunakan [copyWith] untuk membuat versi baru saat salah satu
 /// filter diubah dari UI (dropdown, date picker, search box).
 class RiwayatFilter {
   const RiwayatFilter({

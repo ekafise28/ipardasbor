@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:ipardasbor/app/app_theme.dart';
 
-/// Pilihan status ketidaksesuaian data — multi-pilih (checkbox), mengikuti
+/// Pilihan status ketidaksesuaian data - multi-pilih (checkbox), mengikuti
 /// form Laravel OSS. Kunci opsi masih sementara/dummy sampai backend
 /// validasi lanjutan OSS final.
 class StatusKetidaksesuaianSelector extends StatelessWidget {
