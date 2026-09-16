@@ -85,7 +85,7 @@ class _SubmissionDetailPageState extends State<SubmissionDetailPage> {
     if (mounted) setState(() => _regionNames = resolved);
   }
 
-    List<Baris> _informasiUsahaRows() {
+  List<Baris> _informasiUsahaRows() {
     final Map<String, String> p = _data.payload;
     return <Baris>[
       Baris('Nama Pemilik', p['nama_pemilik']),
@@ -149,7 +149,10 @@ class _SubmissionDetailPageState extends State<SubmissionDetailPage> {
   }
 
   String? _mapsUrlFromLatLng(String? lat, String? lng) {
-    if (lat == null || lng == null || lat.trim().isEmpty || lng.trim().isEmpty) {
+    if (lat == null ||
+        lng == null ||
+        lat.trim().isEmpty ||
+        lng.trim().isEmpty) {
       return null;
     }
     return 'https://www.google.com/maps?q=$lat,$lng';
@@ -196,7 +199,8 @@ class _SubmissionDetailPageState extends State<SubmissionDetailPage> {
       );
     }
   }
-    Future<void> _openEdit() async {
+
+  Future<void> _openEdit() async {
     final Object? result = await Navigator.of(context).push<Object?>(
       MaterialPageRoute<Object?>(
         builder: (_) => NonOssFormPage(editingData: _data),
@@ -244,37 +248,42 @@ class _SubmissionDetailPageState extends State<SubmissionDetailPage> {
           actions: [
             Row(
               children: [
-            Expanded(
-              child: OutlinedButton(
-                onPressed: () => Navigator.pop(dialogContext, false),
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: AppTheme.textColor(context),
-                  side: BorderSide(color: AppTheme.border(context)),
-                  padding: const EdgeInsets.symmetric(vertical: 12),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: () => Navigator.pop(dialogContext, false),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: AppTheme.textColor(context),
+                      side: BorderSide(color: AppTheme.border(context)),
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    child: const Text('Batal'),
                   ),
                 ),
-                child: const Text('Batal'),
-              ),
-            ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: ElevatedButton(
-                onPressed: () => Navigator.pop(dialogContext, true),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppTheme.danger,
-                  elevation: 0,
-                  padding: const EdgeInsets.symmetric(vertical: 12),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: () => Navigator.pop(dialogContext, true),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppTheme.danger,
+                      elevation: 0,
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    child: const Text(
+                      'Hapus',
+                      style: TextStyle(color: Colors.white),
+                    ),
                   ),
                 ),
-                child: const Text('Hapus', style: TextStyle(color: Colors.white)),
-              ),
+              ],
             ),
           ],
-        )]);
+        );
       },
     );
 
@@ -320,12 +329,16 @@ class _SubmissionDetailPageState extends State<SubmissionDetailPage> {
     );
   }
 
-  void _showMessage(String message, {required bool success}) {
+  void _showMessage(
+    String message, {
+    required bool success,
+    Color textColor = Colors.white,
+  }) {
     ScaffoldMessenger.of(context)
       ..hideCurrentSnackBar()
       ..showSnackBar(
         SnackBar(
-          content: Text(message),
+          content: Text(message, style: TextStyle(color: textColor)),
           backgroundColor: success
               ? const Color(0xFF238636)
               : const Color(0xFFC2410C),
@@ -355,7 +368,7 @@ class _SubmissionDetailPageState extends State<SubmissionDetailPage> {
   }
 
   @override
-    @override
+  @override
   Widget build(BuildContext context) {
     final bool failed = _data.isFailed;
     final Color statusColor = failed
@@ -467,11 +480,14 @@ class _SubmissionDetailPageState extends State<SubmissionDetailPage> {
                     height: 16,
                     child: CircularProgressIndicator(strokeWidth: 2),
                   )
-                : const Icon(Icons.delete_outline_rounded, size: 19, color: Colors.white),
-            label: Text(_isDeleting ? 'Menghapus...' : 'Hapus', 
-              style: TextStyle(
-                color: Colors.white,
-              ),
+                : const Icon(
+                    Icons.delete_outline_rounded,
+                    size: 19,
+                    color: Colors.white,
+                  ),
+            label: Text(
+              _isDeleting ? 'Menghapus...' : 'Hapus',
+              style: TextStyle(color: Colors.white),
             ),
           ),
         ),
@@ -639,8 +655,9 @@ class _SubmissionOtaTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final List<String> urls =
-        entry.urls.where((String u) => u.trim().isNotEmpty).toList();
+    final List<String> urls = entry.urls
+        .where((String u) => u.trim().isNotEmpty)
+        .toList();
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -662,7 +679,9 @@ class _SubmissionOtaTile extends StatelessWidget {
               for (int i = 0; i < urls.length; i++)
                 _LinkButtonSubmission(
                   icon: Icons.open_in_new_rounded,
-                  label: urls.length > 1 ? 'Buka Link ${i + 1}' : 'Buka Listing',
+                  label: urls.length > 1
+                      ? 'Buka Link ${i + 1}'
+                      : 'Buka Listing',
                   onTap: () => onTapUrl(urls[i]),
                 ),
             ],

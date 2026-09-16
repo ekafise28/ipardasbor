@@ -90,9 +90,9 @@ class _SyncPageState extends State<SyncPage> {
     int synced = 0;
 
     try {
-      await _syncService.syncWaiting(limit: 500).timeout(
-        const Duration(seconds: 60),
-      );
+      await _syncService
+          .syncWaiting(limit: 500)
+          .timeout(const Duration(seconds: 60));
       await _loadAllData(showLoading: false);
       synced = before - _waitingData.length;
     } on TimeoutException {
@@ -188,12 +188,16 @@ class _SyncPageState extends State<SyncPage> {
     });
   }
 
-  void _showMessage(String message, {required bool success}) {
+  void _showMessage(
+    String message, {
+    required bool success,
+    Color textColor = Colors.white,
+  }) {
     ScaffoldMessenger.of(context)
       ..hideCurrentSnackBar()
       ..showSnackBar(
         SnackBar(
-          content: Text(message),
+          content: Text(message, style: TextStyle(color: textColor)),
           backgroundColor: success
               ? const Color(0xFF238636)
               : const Color(0xFFC2410C),
@@ -331,7 +335,11 @@ class _SyncPageState extends State<SyncPage> {
     );
   }
 
-  Widget _buildSectionTitle(BuildContext context, String title, String? subtitle) {
+  Widget _buildSectionTitle(
+    BuildContext context,
+    String title,
+    String? subtitle,
+  ) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
