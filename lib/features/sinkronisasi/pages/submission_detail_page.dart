@@ -242,6 +242,8 @@ class _SubmissionDetailPageState extends State<SubmissionDetailPage> {
           actionsPadding: const EdgeInsets.fromLTRB(20, 4, 20, 16),
           actionsAlignment: MainAxisAlignment.center,
           actions: [
+            Row(
+              children: [
             Expanded(
               child: OutlinedButton(
                 onPressed: () => Navigator.pop(dialogContext, false),
@@ -272,7 +274,7 @@ class _SubmissionDetailPageState extends State<SubmissionDetailPage> {
               ),
             ),
           ],
-        );
+        )]);
       },
     );
 
