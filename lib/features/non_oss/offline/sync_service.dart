@@ -17,6 +17,15 @@ class NonOssSyncService {
   /// Jika server tidak tersedia atau pengiriman gagal,
   /// data tetap tersimpan di SQLite.
   Future<bool> syncOne(NonOssLocalData data) async {
+    // Draft TIDAK BOLEH pernah diproses sync, apa pun jalur pemanggilnya
+    // (baik dari SyncPage maupun SubmissionDetailPage). Draft belum tentu
+    // lengkap/valid, dan kalau lolos ke sini lalu gagal, statusnya akan
+    // berubah jadi FAILED - yang membuatnya salah masuk ke grup "Menunggu
+    // Sinkronisasi" (lihat OfflineDatabase.getWaiting()).
+    if (data.isDraft) {
+      return false;
+    }
+
     try {
       final bool serverAvailable = await remote.isServerAvailable();
 

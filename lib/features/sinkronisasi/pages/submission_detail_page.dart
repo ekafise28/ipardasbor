@@ -159,7 +159,7 @@ class _SubmissionDetailPageState extends State<SubmissionDetailPage> {
   }
 
   Future<void> _sync() async {
-    if (_isSyncing || _isDeleting) return;
+    if (_isSyncing || _isDeleting || _data.isDraft) return;
 
     setState(() => _isSyncing = true);
 
@@ -371,9 +371,10 @@ class _SubmissionDetailPageState extends State<SubmissionDetailPage> {
   @override
   Widget build(BuildContext context) {
     final bool failed = _data.isFailed;
-    final Color statusColor = failed
-        ? const Color(0xFFFF3B30)
-        : const Color(0xFFFF9500);
+    final bool isDraft = _data.isDraft;
+    final Color statusColor = isDraft
+        ? const Color(0xFF6B7280)
+        : (failed ? const Color(0xFFFF3B30) : const Color(0xFFFF9500));
 
     return Scaffold(
       backgroundColor: AppTheme.scaffoldColorDynamic(context),
@@ -407,11 +408,13 @@ class _SubmissionDetailPageState extends State<SubmissionDetailPage> {
             StatusHeaderCard(
               title: _data.displayName,
               subtitle: _formatDateTime(_data.createdAt),
-              errorMessage: failed ? _data.lastError : null,
+              errorMessage: (!isDraft && failed) ? _data.lastError : null,
               badges: <StatusBadge>[
                 StatusBadge(text: 'NON OSS', color: AppTheme.menuNonOss),
                 StatusBadge(
-                  text: failed ? 'Gagal Sync' : 'Menunggu Sync',
+                  text: isDraft
+                      ? 'Draft'
+                      : (failed ? 'Gagal Sync' : 'Menunggu Sync'),
                   color: statusColor,
                 ),
               ],
@@ -453,14 +456,14 @@ class _SubmissionDetailPageState extends State<SubmissionDetailPage> {
               onTapUrl: _openUrl,
             ),
             const SizedBox(height: 24),
-            _buildActionButtons(context, failed),
+            _buildActionButtons(context, failed, isDraft),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildActionButtons(BuildContext context, bool failed) {
+  Widget _buildActionButtons(BuildContext context, bool failed, bool isDraft) {
     return Row(
       children: [
         Expanded(
@@ -495,9 +498,13 @@ class _SubmissionDetailPageState extends State<SubmissionDetailPage> {
         Expanded(
           flex: 2,
           child: FilledButton.icon(
-            onPressed: _isSyncing || _isDeleting ? null : _sync,
+            onPressed: _isSyncing || _isDeleting
+                ? null
+                : (isDraft ? _openEdit : _sync),
             style: FilledButton.styleFrom(
-              backgroundColor: const Color(0xFF007AFF),
+              backgroundColor: isDraft
+                  ? const Color(0xFF6B7280)
+                  : const Color(0xFF007AFF),
               foregroundColor: Colors.white,
               padding: const EdgeInsets.symmetric(vertical: 14),
               shape: RoundedRectangleBorder(
@@ -513,11 +520,16 @@ class _SubmissionDetailPageState extends State<SubmissionDetailPage> {
                       color: Colors.white,
                     ),
                   )
-                : const Icon(Icons.sync_rounded, size: 19),
+                : Icon(
+                    isDraft ? Icons.edit_note_rounded : Icons.sync_rounded,
+                    size: 19,
+                  ),
             label: Text(
               _isSyncing
                   ? 'Menyinkronkan...'
-                  : (failed ? 'Coba Sync Lagi' : 'Sync Sekarang'),
+                  : (isDraft
+                        ? 'Lanjutkan Isi'
+                        : (failed ? 'Coba Sync Lagi' : 'Sync Sekarang')),
             ),
           ),
         ),
