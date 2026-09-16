@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
+import 'package:intl/intl.dart';
 import 'package:ipardasbor/app/app_theme.dart';
 import 'package:latlong2/latlong.dart';
 
@@ -15,6 +16,7 @@ class LocationPicker extends StatelessWidget {
     this.status,
     this.sisaDetik,
     this.source,
+    this.savedAt,
   });
 
   final String latitude;
@@ -30,6 +32,7 @@ class LocationPicker extends StatelessWidget {
   final int? sisaDetik;
 
   final LocationSource? source;
+  final DateTime? savedAt;
 
   @override
   Widget build(BuildContext context) {
@@ -92,7 +95,7 @@ class LocationPicker extends StatelessWidget {
           ),
           if (source != null && source != LocationSource.gpsLangsung) ...[
             const SizedBox(height: 8),
-            _SumberBadge(source: source!),
+            _SumberBadge(source: source!, savedAt: savedAt),
           ],
           const SizedBox(height: 10),
           ClipRRect(
@@ -284,21 +287,40 @@ class _Coordinate extends StatelessWidget {
 }
 
 class _SumberBadge extends StatelessWidget {
-  const _SumberBadge({required this.source});
+  const _SumberBadge({required this.source, this.savedAt});
 
   final LocationSource source;
+  final DateTime? savedAt;
 
   @override
   Widget build(BuildContext context) {
-    final bool tanpaInternet = source == LocationSource.tersimpanTanpaInternet;
+    final Color warna;
+    final String pesan;
 
-    final Color warna = tanpaInternet
-        ? const Color(0xFFD97706) // oranye — perlu perhatian lebih
-        : const Color(0xFF64748B); // abu-abu — netral
-
-    final String pesan = tanpaInternet
-        ? 'Perangkat sedang offline — koordinat ini dari lokasi tersimpan terakhir, bukan posisi saat ini.'
-        : 'Sinyal GPS lemah — koordinat ini dari lokasi tersimpan terakhir, bukan posisi saat ini.';
+    switch (source) {
+      case LocationSource.tersimpanTanpaInternet:
+        warna = const Color(0xFFD97706);
+        pesan =
+            'Perangkat sedang offline — koordinat ini dari lokasi tersimpan terakhir, bukan posisi saat ini.';
+        break;
+      case LocationSource.tersimpanSinyalLemah:
+        warna = const Color(0xFF64748B);
+        pesan =
+            'Sinyal GPS lemah — koordinat ini dari lokasi tersimpan terakhir, bukan posisi saat ini.';
+        break;
+      case LocationSource.cacheManual:
+        warna = const Color(0xFFD97706);
+        final waktu = savedAt != null
+            ? DateFormat('dd MMM yyyy, HH:mm').format(savedAt!)
+            : 'waktu tidak diketahui';
+        pesan =
+            'GPS dan lokasi tersimpan sistem tidak tersedia — memakai koordinat cadangan aplikasi dari $waktu, bukan posisi saat ini.';
+        break;
+      case LocationSource.gpsLangsung:
+        warna = const Color(0xFF64748B);
+        pesan = '';
+        break;
+    }
 
     return Container(
       width: double.infinity,

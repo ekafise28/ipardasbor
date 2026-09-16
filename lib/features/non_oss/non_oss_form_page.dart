@@ -53,6 +53,8 @@ class _NonOssFormPageState extends State<NonOssFormPage> {
   LocationFetchStatus? _gpsStatus;
   int? _gpsCountdown;
   LocationSource? _gpsSource;
+  DateTime? _gpsSavedAt;
+
   Set<_Section> _sectionErrors = {};
   bool get _isEditing => widget.editingData != null;
 
@@ -99,7 +101,10 @@ class _NonOssFormPageState extends State<NonOssFormPage> {
                     backgroundColor: _primary,
                     padding: const EdgeInsets.symmetric(vertical: 12),
                   ),
-                  child: const Text('Simpan Draft', style: TextStyle(color: Colors.white)),
+                  child: const Text(
+                    'Simpan Draft',
+                    style: TextStyle(color: Colors.white),
+                  ),
                 ),
               ),
               const SizedBox(height: 10),
@@ -373,7 +378,8 @@ class _NonOssFormPageState extends State<NonOssFormPage> {
     });
 
     try {
-      final LocationResult hasil = await _location.current(
+      final LocationResult? hasil = await _location.current(
+        // tambah "?"
         onStatus: (LocationFetchStatus status) {
           if (!mounted) return;
           setState(() => _gpsStatus = status);
@@ -388,10 +394,21 @@ class _NonOssFormPageState extends State<NonOssFormPage> {
         return;
       }
 
+      if (hasil == null) {
+        // tambah blok ini
+        _error(
+          Exception(
+            'GPS tidak tersedia dan belum ada koordinat tersimpan sebelumnya.',
+          ),
+        );
+        return;
+      }
+
       setState(() {
         _data.latitude = hasil.position.latitude.toStringAsFixed(8);
         _data.longitude = hasil.position.longitude.toStringAsFixed(8);
         _gpsSource = hasil.source;
+        _gpsSavedAt = hasil.savedAt;
       });
     } catch (e) {
       if (mounted) {
@@ -1027,6 +1044,7 @@ class _NonOssFormPageState extends State<NonOssFormPage> {
                         status: _gpsStatus,
                         sisaDetik: _gpsCountdown,
                         source: _gpsSource,
+                        savedAt: _gpsSavedAt,
                         onGetLocation: _gps,
                       ),
                     ),

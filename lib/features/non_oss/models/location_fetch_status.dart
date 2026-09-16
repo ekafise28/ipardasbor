@@ -14,4 +14,5 @@ enum LocationSource {
   gpsLangsung,
   tersimpanTanpaInternet,
   tersimpanSinyalLemah,
+  cacheManual
 }
