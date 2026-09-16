@@ -3,20 +3,29 @@ import 'package:flutter/material.dart';
 import '../../../core/storage/secure_storage.dart';
 import '../../../app/app_theme.dart';
 
-/// UI-only for now - swap this for a real value once sync data
-/// is wired up (e.g. from a SyncService or local DB query).
-enum SyncStatus { synced, pending }
+/// Status koneksi ke server saat ini, dipakai untuk warna & ikon awan di
+/// kartu sambutan Home. BERBEDA dari `SyncStatus` di
+/// `offline/sync_status.dart` (status per-ajuan seperti draft/pending/
+/// synced) - enum ini soal bisa/tidaknya SERVER dijangkau sekarang,
+/// dicek lewat ping (NonOssService.isServerAvailable), bukan cuma status
+/// jaringan device.
+enum ServerConnectionStatus { checking, online, offline }
 
 class WelcomeCard extends StatefulWidget {
   const WelcomeCard({
     super.key,
-    this.syncStatus = SyncStatus.synced,
-    this.pendingCount = 0,
+    this.serverStatus = ServerConnectionStatus.checking,
+    this.offlineCount = 0,
+    this.onTapSyncStatus,
   });
 
-  /// Placeholder inputs - replace with real backend-driven state later.
-  final SyncStatus syncStatus;
-  final int pendingCount;
+  final ServerConnectionStatus serverStatus;
+  final int offlineCount;
+
+  /// Dipanggil saat icon status sync ditekan. Kalau null, icon tetap
+  /// tampil tapi tidak bisa ditekan (mis. dipakai di tempat lain tanpa
+  /// perlu navigasi).
+  final VoidCallback? onTapSyncStatus;
 
   @override
   State<WelcomeCard> createState() => _WelcomeCardState();
@@ -231,8 +240,9 @@ class _WelcomeCardState extends State<WelcomeCard> {
                 ),
                 const SizedBox(width: 8),
                 _SyncStatusChip(
-                  status: widget.syncStatus,
-                  pendingCount: widget.pendingCount,
+                  status: widget.serverStatus,
+                  offlineCount: widget.offlineCount,
+                  onTap: widget.onTapSyncStatus,
                 ),
               ],
             ),
@@ -244,55 +254,64 @@ class _WelcomeCardState extends State<WelcomeCard> {
 }
 
 // ikon terhubung dengan internet
+// ikon status koneksi server + jumlah data tersimpan offline
 class _SyncStatusChip extends StatelessWidget {
-  const _SyncStatusChip({required this.status, required this.pendingCount});
+  const _SyncStatusChip({
+    required this.status,
+    required this.offlineCount,
+    this.onTap,
+  });
 
-  final SyncStatus status;
-  final int pendingCount;
-
-  bool get _isSynced => status == SyncStatus.synced;
+  final ServerConnectionStatus status;
+  final int offlineCount;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
+    final _ChipStyle style = _resolveStyle();
+
     return Stack(
       clipBehavior: Clip.none,
       children: [
-        Container(
-          width: 40,
-          height: 40,
-          decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: 0.14),
+        Material(
+          color: Colors.white.withValues(alpha: 0.14),
+          borderRadius: BorderRadius.circular(13),
+          child: InkWell(
+            onTap: onTap,
             borderRadius: BorderRadius.circular(13),
-            border: Border.all(
-              color: Colors.white.withValues(alpha: 0.18),
+            child: Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(13),
+                border: Border.all(color: Colors.white.withValues(alpha: 0.18)),
+              ),
+              child: Icon(style.icon, color: style.iconColor, size: 21),
             ),
           ),
-          child: Icon(
-            _isSynced ? Icons.cloud_done_rounded : Icons.cloud_upload_rounded,
-            color: _isSynced ? const Color(0xFFB9F6CA) : const Color(0xFFFFD166),
-            size: 21,
-          ),
         ),
-        if (!_isSynced && pendingCount > 0)
+        if (offlineCount > 0)
           Positioned(
             top: -5,
             right: -5,
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
-              constraints: const BoxConstraints(minWidth: 18),
-              decoration: BoxDecoration(
-                color: AppTheme.danger,
-                borderRadius: BorderRadius.circular(9),
-                border: Border.all(color: AppTheme.primaryColor, width: 1.5),
-              ),
-              child: Text(
-                pendingCount > 99 ? '99+' : '$pendingCount',
-                textAlign: TextAlign.center,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 9,
-                  fontWeight: FontWeight.w800,
-                  height: 1.2,
+            child: IgnorePointer(
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+                constraints: const BoxConstraints(minWidth: 18),
+                decoration: BoxDecoration(
+                  color: AppTheme.danger,
+                  borderRadius: BorderRadius.circular(9),
+                  border: Border.all(color: AppTheme.primaryColor, width: 1.5),
+                ),
+                child: Text(
+                  offlineCount > 99 ? '99+' : '$offlineCount',
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 9,
+                    fontWeight: FontWeight.w800,
+                    height: 1.2,
+                  ),
                 ),
               ),
             ),
@@ -300,6 +319,38 @@ class _SyncStatusChip extends StatelessWidget {
       ],
     );
   }
+
+  _ChipStyle _resolveStyle() {
+    switch (status) {
+      case ServerConnectionStatus.checking:
+        return const _ChipStyle(
+          icon: Icons.cloud_sync_rounded,
+          iconColor: Color(0xFFE0E0E0),
+        );
+      case ServerConnectionStatus.offline:
+        return const _ChipStyle(
+          icon: Icons.cloud_off_rounded,
+          iconColor: Color(0xFFFF8A80),
+        );
+      case ServerConnectionStatus.online:
+        return offlineCount > 0
+            ? const _ChipStyle(
+                icon: Icons.cloud_upload_rounded,
+                iconColor: Color(0xFFFFD166),
+              )
+            : const _ChipStyle(
+                icon: Icons.cloud_done_rounded,
+                iconColor: Color(0xFFB9F6CA),
+              );
+    }
+  }
+}
+
+class _ChipStyle {
+  const _ChipStyle({required this.icon, required this.iconColor});
+
+  final IconData icon;
+  final Color iconColor;
 }
 
 class _DecorationCircle extends StatelessWidget {

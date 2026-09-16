@@ -184,4 +184,17 @@ class OfflineDatabase {
       whereArgs: <Object?>[data.clientUuid],
     );
   }
+
+  /// Menghitung seluruh ajuan yang tersimpan lokal dan BELUM synced -
+  /// mencakup draft, pending, failed, dan syncing (kalau sedang berjalan).
+  /// Dipakai untuk badge jumlah di ikon status Home: total data tersimpan
+  /// offline, bukan cuma yang siap sync (beda dengan getWaiting()).
+  Future<int> countUnsynced() async {
+    final Database db = await database;
+    final List<Map<String, Object?>> rows = await db.rawQuery(
+      'SELECT COUNT(*) AS total FROM $table WHERE sync_status != ?',
+      <Object?>[SyncStatus.synced.value],
+    );
+    return Sqflite.firstIntValue(rows) ?? 0;
+  }
 }

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../app/app_theme.dart';
 import '../dashboard/dashboard_page.dart';
-import '../non_oss/non_oss_form_page.dart';
+
 import '../oss/oss_validasi_page.dart';
 import '../sinkronisasi/sync_page.dart';
 import '../riwayat/riwayat_page.dart';
@@ -17,6 +17,11 @@ import 'widgets/menu_card.dart';
 import 'widgets/menu_list_tile.dart';
 import 'widgets/welcome_card.dart';
 
+import '../../core/api/api_client.dart';
+import '../non_oss/offline/offline_database.dart';
+import '../non_oss/services/non_oss_service.dart';
+import '../non_oss/non_oss_form_page.dart';
+
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
 
@@ -26,6 +31,45 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   bool _isGridView = true;
+
+  late final ApiClient _api;
+  late final NonOssService _nonOssService;
+  final OfflineDatabase _database = OfflineDatabase.instance;
+
+  ServerConnectionStatus _serverStatus = ServerConnectionStatus.checking;
+  int _offlineCount = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _api = ApiClient();
+    _nonOssService = NonOssService(_api);
+    _refreshSyncStatus();
+  }
+
+  @override
+  void dispose() {
+    _api.close();
+    super.dispose();
+  }
+
+  /// Mengecek status koneksi ke SERVER (ping asli, bukan cuma jaringan
+  /// device) dan menghitung seluruh data tersimpan lokal yang belum synced
+  /// (draft + pending + failed). Dipanggil saat halaman dibuka, tiap 60
+  /// detik, saat pull-to-refresh, dan setelah kembali dari halaman lain
+  /// yang mungkin mengubah antrean (mis. Sinkronisasi, form Non-OSS).
+  Future<void> _refreshSyncStatus() async {
+    final bool online = await _nonOssService.isServerAvailable();
+    final int count = await _database.countUnsynced();
+
+    if (!mounted) return;
+    setState(() {
+      _serverStatus = online
+          ? ServerConnectionStatus.online
+          : ServerConnectionStatus.offline;
+      _offlineCount = count;
+    });
+  }
 
   static const List<MenuData> menus = [
     MenuData(
@@ -80,51 +124,53 @@ class _HomePageState extends State<HomePage> {
   ];
 
   // Menu Fitur
-  void _openMenu(BuildContext context, MenuData menu) {
+  Future<void> _openMenu(BuildContext context, MenuData menu) async {
     switch (menu.title) {
       case 'Dashboard':
-        Navigator.of(
+        await Navigator.of(
           context,
         ).push(MaterialPageRoute<void>(builder: (_) => const DashboardPage()));
-        return;
+        break;
 
       case 'Validasi OSS':
-        Navigator.of(context).push(
+        await Navigator.of(context).push(
           MaterialPageRoute<void>(builder: (_) => const OssValidasiPage()),
         );
-        return;
+        break;
 
       case 'Pengawasan Non-OSS':
-        Navigator.of(
+        await Navigator.of(
           context,
         ).push(MaterialPageRoute<void>(builder: (_) => const NonOssFormPage()));
-        return;
+        break;
 
       case 'Profil Petugas':
-        Navigator.of(
+        await Navigator.of(
           context,
         ).push(MaterialPageRoute<void>(builder: (_) => const ProfilePage()));
-        return;
+        break;
 
       case 'Riwayat':
-        Navigator.of(
+        await Navigator.of(
           context,
         ).push(MaterialPageRoute<void>(builder: (_) => const RiwayatPage()));
-        return;
+        break;
 
       case 'Sinkronisasi':
-        Navigator.of(
+        await Navigator.of(
           context,
         ).push(MaterialPageRoute<void>(builder: (_) => const SyncPage()));
-        return;
+        break;
 
       default:
-        Navigator.of(context).push(
+        await Navigator.of(context).push(
           MaterialPageRoute<void>(
             builder: (_) => FeaturePlaceholderPage(menu: menu),
           ),
         );
     }
+
+    await _refreshSyncStatus();
   }
 
   void _showNotification(BuildContext context) {
@@ -173,9 +219,7 @@ class _HomePageState extends State<HomePage> {
 
             return RefreshIndicator(
               color: AppTheme.primaryColor,
-              onRefresh: () async {
-                await Future<void>.delayed(const Duration(milliseconds: 700));
-              },
+              onRefresh: _refreshSyncStatus,
               child: SingleChildScrollView(
                 physics: const AlwaysScrollableScrollPhysics(
                   parent: ClampingScrollPhysics(),
@@ -184,7 +228,18 @@ class _HomePageState extends State<HomePage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const WelcomeCard(),
+                    WelcomeCard(
+                      serverStatus: _serverStatus,
+                      offlineCount: _offlineCount,
+                      onTapSyncStatus: () async {
+                        await Navigator.of(context).push<void>(
+                          MaterialPageRoute<void>(
+                            builder: (_) => const SyncPage(),
+                          ),
+                        );
+                        await _refreshSyncStatus();
+                      },
+                    ),
                     const SizedBox(height: 22),
                     _buildSectionHeader(),
                     const SizedBox(height: 14),

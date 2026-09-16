@@ -283,6 +283,7 @@ class _SyncPageState extends State<SyncPage> {
                           isLoading: _isLoading,
                           isSyncingAll: _isSyncingAll,
                           waitingCount: _waitingData.length,
+                          draftCount: _draftData.length,
                           onSyncAll: _syncAll,
                         ),
                         if (!_isLoading && _draftData.isNotEmpty) ...[

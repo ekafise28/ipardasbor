@@ -10,12 +10,20 @@ class SyncSummaryCard extends StatelessWidget {
     required this.isLoading,
     required this.isSyncingAll,
     required this.waitingCount,
+    required this.draftCount,
     required this.onSyncAll,
   });
 
   final bool isLoading;
   final bool isSyncingAll;
   final int waitingCount;
+
+  /// Jumlah draft (belum lengkap, TIDAK ikut diproses tombol "Sync
+  /// Semua"). Disebutkan terpisah di pesan supaya user tidak bingung
+  /// kenapa jumlah yang benar-benar terkirim beda dari total data yang
+  /// tersimpan di perangkat.
+  final int draftCount;
+
   final VoidCallback onSyncAll;
 
   @override
@@ -36,6 +44,7 @@ class SyncSummaryCard extends StatelessWidget {
         ],
       ),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
           Container(
             width: 44,
@@ -66,18 +75,40 @@ class SyncSummaryCard extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 3),
-                Text(
-                  isLoading
-                      ? 'Memuat data...'
-                      : '$waitingCount data tersimpan aman di perangkat',
-                  style: TextStyle(
-                    color: AppTheme.textSecondary(context),
-                    fontSize: 12,
+                if (isLoading)
+                  Text(
+                    'Memuat data...',
+                    style: TextStyle(
+                      color: AppTheme.textSecondary(context),
+                      fontSize: 12,
+                    ),
+                  )
+                else ...[
+                  Text(
+                    waitingCount == 0
+                        ? '✅ Semua data siap sync sudah terkirim.'
+                        : '🔃 $waitingCount data tersimpan aman di perangkat.',
+                    style: TextStyle(
+                      color: AppTheme.textSecondary(context),
+                      fontSize: 12,
+                    ),
                   ),
-                ),
+                  if (draftCount > 0) ...[
+                    const SizedBox(height: 2),
+                    Text(
+                      '📝 $draftCount draft belum lengkap - lihat di bagian '
+                      'Draft di bawah.',
+                      style: TextStyle(
+                        color: AppTheme.textSecondary(context),
+                        fontSize: 11.5,
+                      ),
+                    ),
+                  ],
+                ],
               ],
             ),
           ),
+          const SizedBox(width: 8),
           FilledButton.icon(
             onPressed: waitingCount == 0 || isSyncingAll || isLoading
                 ? null
