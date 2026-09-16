@@ -32,6 +32,14 @@ android {
             signingConfig = signingConfigs.getByName("debug")
         }
     }
+
+        applicationVariants.all {
+        val variantName = versionName
+        outputs.all {
+            val outputImpl = this as com.android.build.gradle.internal.api.BaseVariantOutputImpl
+            outputImpl.outputFileName = "app-release-ipar_v${variantName}.apk"
+        }
+    }
 }
 
 kotlin {
