@@ -301,12 +301,12 @@ class _SumberBadge extends StatelessWidget {
       case LocationSource.tersimpanTanpaInternet:
         warna = const Color(0xFFD97706);
         pesan =
-            'Perangkat sedang offline — koordinat ini dari lokasi tersimpan terakhir, bukan posisi saat ini.';
+            'Perangkat sedang offline - koordinat ini dari lokasi tersimpan terakhir, bukan posisi saat ini.';
         break;
       case LocationSource.tersimpanSinyalLemah:
         warna = const Color(0xFF64748B);
         pesan =
-            'Sinyal GPS lemah — koordinat ini dari lokasi tersimpan terakhir, bukan posisi saat ini.';
+            'Sinyal GPS lemah - koordinat ini dari lokasi tersimpan terakhir, bukan posisi saat ini.';
         break;
       case LocationSource.cacheManual:
         warna = const Color(0xFFD97706);
@@ -314,11 +314,17 @@ class _SumberBadge extends StatelessWidget {
             ? DateFormat('dd MMM yyyy, HH:mm').format(savedAt!)
             : 'waktu tidak diketahui';
         pesan =
-            'GPS dan lokasi tersimpan sistem tidak tersedia — memakai koordinat cadangan aplikasi dari $waktu, bukan posisi saat ini.';
+            'GPS dan lokasi tersimpan sistem tidak tersedia - memakai koordinat cadangan aplikasi dari $waktu, bukan posisi saat ini.';
         break;
       case LocationSource.gpsLangsung:
         warna = const Color(0xFF64748B);
         pesan = '';
+        break;
+      case LocationSource.tersimpanLayananNonaktif:
+        warna = const Color(0xFFD97706);
+        pesan =
+            'Layanan lokasi nonaktif - koordinat ini dari lokasi tersimpan '
+            'sistem, bukan posisi saat ini.';
         break;
     }
 

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
+import 'dart:async';
+
 import 'package:ipardasbor/app/app_theme.dart';
 import 'package:ipardasbor/features/non_oss/models/location_fetch_status.dart';
 import 'package:ipardasbor/features/non_oss/offline/non_oss_local_data.dart';
@@ -30,7 +32,8 @@ class NonOssFormPage extends StatefulWidget {
   State<NonOssFormPage> createState() => _NonOssFormPageState();
 }
 
-class _NonOssFormPageState extends State<NonOssFormPage> {
+class _NonOssFormPageState extends State<NonOssFormPage>
+    with WidgetsBindingObserver {
   static const _primary = AppTheme.primaryColor;
   static const _navy = Color(0xFF0B3F78);
   final _key = GlobalKey<FormState>();
@@ -54,6 +57,15 @@ class _NonOssFormPageState extends State<NonOssFormPage> {
   int? _gpsCountdown;
   LocationSource? _gpsSource;
   DateTime? _gpsSavedAt;
+
+  /*
+  Dipakai untuk menunggu app benar-benar kembali ke foreground (resumed)
+  setelah user pergi ke halaman Settings lokasi. `openLocationSettings()`
+  hanya melempar Intent dan langsung return, TIDAK menunggu user kembali,
+  jadi tanpa ini pengecekan `isLocationServiceEnabled()` akan dijalankan
+  terlalu dini (masih membaca status lama).
+  */
+  Completer<void>? _resumeCompleter;
 
   Set<_Section> _sectionErrors = {};
   bool get _isEditing => widget.editingData != null;
@@ -134,6 +146,60 @@ class _NonOssFormPageState extends State<NonOssFormPage> {
                     ),
                   ),
                 ],
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<bool?> _tanyaAktifkanLokasi() {
+    return showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+        icon: const Icon(
+          Icons.location_off_rounded,
+          color: Color(0xFFD97706),
+          size: 48,
+        ),
+        title: const Text(
+          'Aktifkan Lokasi?',
+          textAlign: TextAlign.center,
+          style: TextStyle(fontSize: 17, fontWeight: FontWeight.w800),
+        ),
+        content: const Text(
+          'Layanan lokasi (GPS) di perangkat ini sedang nonaktif. '
+          'Aktifkan untuk mendapatkan koordinat yang akurat.',
+          textAlign: TextAlign.center,
+        ),
+        actionsPadding: const EdgeInsets.fromLTRB(20, 4, 20, 16),
+        actions: [
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton(
+                  onPressed: () => Navigator.pop(dialogContext, false),
+                  style: OutlinedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                  ),
+                  child: const Text('Batal'),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: FilledButton(
+                  onPressed: () => Navigator.pop(dialogContext, true),
+                  style: FilledButton.styleFrom(
+                    backgroundColor: _primary,
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                  ),
+                  child: const Text(
+                    'Aktifkan',
+                    style: TextStyle(color: Colors.white),
+                  ),
+                ),
               ),
             ],
           ),
@@ -231,6 +297,8 @@ class _NonOssFormPageState extends State<NonOssFormPage> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
+
     _data = widget.editingData != null
         ? NonOssFormData.fromLocalData(widget.editingData!)
         : NonOssFormData();
@@ -260,7 +328,9 @@ class _NonOssFormPageState extends State<NonOssFormPage> {
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _api.close();
+
     // Buang semua controller agar tidak membebani memori.
     _namaPemilikCtrl.dispose();
     _namaBrandCtrl.dispose();
@@ -273,6 +343,37 @@ class _NonOssFormPageState extends State<NonOssFormPage> {
     _catatanPetugasCtrl.dispose();
     _otaLainnyaCtrl.dispose();
     super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      _resumeCompleter?.complete();
+      _resumeCompleter = null;
+    }
+  }
+
+  /*
+  Menunggu sampai app kembali ke foreground (mis. setelah user kembali
+  dari halaman Settings lokasi). Diberi [timeout] sebagai jaga-jaga kalau
+  event resume entah kenapa tidak pernah terpicu, supaya alur GPS tidak
+  nyangkut selamanya - setelah timeout, kode lanjut seperti biasa dan
+  hasil pengecekan `isLocationServiceEnabled()` tetap valid apa adanya.
+  */
+  Future<void> _tungguAppResume({
+    Duration timeout = const Duration(seconds: 30),
+  }) {
+    final Completer<void> completer = Completer<void>();
+    _resumeCompleter = completer;
+
+    return completer.future.timeout(
+      timeout,
+      onTimeout: () {
+        if (_resumeCompleter == completer) {
+          _resumeCompleter = null;
+        }
+      },
+    );
   }
 
   Future<void> _loadProvinces() async {
@@ -289,15 +390,17 @@ class _NonOssFormPageState extends State<NonOssFormPage> {
     }
   }
 
-  /// Memuat daftar kabupaten/kecamatan/kelurahan sesuai ID yang sudah
-  /// tersimpan, supaya dropdown wilayah langsung terisi benar saat form
-  /// dibuka dalam mode edit (bukan cuma menunggu user memilih ulang).
+  /*
+    Memuat daftar kabupaten/kecamatan/kelurahan sesuai ID yang sudah
+    tersimpan, supaya dropdown wilayah langsung terisi benar saat form
+    dibuka dalam mode edit (bukan cuma menunggu user memilih ulang).
+  */
   Future<void> _preloadRegionsForEditing() async {
     if (_data.provinsiId != null) {
       try {
         _regencies = await _regions.regencies(_data.provinsiId!);
       } catch (_) {
-        // Biarkan kosong kalau gagal — user tetap bisa pilih ulang manual.
+        // Biarkan kosong kalau gagal - user tetap bisa pilih ulang manual.
       }
     }
     if (_data.kabupatenId != null) {
@@ -368,18 +471,44 @@ class _NonOssFormPageState extends State<NonOssFormPage> {
       return;
     }
 
+    bool layananAktif = await _location.isLocationServiceEnabled();
+    if (!mounted) return;
+
+    if (!layananAktif) {
+      final bool? aktifkan = await _tanyaAktifkanLokasi();
+      if (!mounted) return;
+
+      if (aktifkan == true) {
+        await _location.openLocationSettings();
+        if (!mounted) return;
+
+        // Menunggu user BENAR-BENAR kembali ke app dari halaman Settings,
+        // bukan langsung cek status setelah openLocationSettings() return
+        // (Future itu selesai duluan sebelum user sempat apa-apa).
+        await _tungguAppResume();
+        if (!mounted) return;
+
+        layananAktif = await _location.isLocationServiceEnabled();
+        if (!mounted) return;
+      }
+
+      if (!layananAktif) {
+        await _pakaiCadanganDenganKonfirmasi();
+        return;
+      }
+
+      // Kalau layananAktif berubah jadi true, lanjut ke proses normal
+      // di bawah seperti biasa.
+    }
+
     setState(() {
       _gpsLoading = true;
       _gpsStatus = null;
       _gpsCountdown = null;
-      // _gpsSource SENGAJA tidak direset di sini, supaya kalau proses gagal
-      // di tengah jalan, keterangan sumber lokasi sebelumnya (jika ada)
-      // tidak hilang begitu saja.
     });
 
     try {
       final LocationResult? hasil = await _location.current(
-        // tambah "?"
         onStatus: (LocationFetchStatus status) {
           if (!mounted) return;
           setState(() => _gpsStatus = status);
@@ -395,7 +524,6 @@ class _NonOssFormPageState extends State<NonOssFormPage> {
       }
 
       if (hasil == null) {
-        // tambah blok ini
         _error(
           Exception(
             'GPS tidak tersedia dan belum ada koordinat tersimpan sebelumnya.',
@@ -423,6 +551,98 @@ class _NonOssFormPageState extends State<NonOssFormPage> {
     }
   }
 
+  /// Dipanggil hanya ketika layanan lokasi diketahui nonaktif (baik user
+  /// pilih "Batal" di dialog aktivasi, maupun sudah ke Settings tapi masih
+  /// nonaktif). Mengecek dulu apakah ada cadangan SEBELUM menampilkan
+  /// konfirmasi pemakaiannya — supaya tidak menanyakan sesuatu yang
+  /// cadangannya sendiri kosong.
+  Future<void> _pakaiCadanganDenganKonfirmasi() async {
+    final LocationResult? cadangan = await _location.peekCadangan();
+    if (!mounted) return;
+
+    if (cadangan == null) {
+      _error(
+        Exception(
+          'GPS tidak tersedia dan belum ada koordinat tersimpan sebelumnya.',
+        ),
+      );
+      return;
+    }
+
+    final bool? gunakan = await _tanyaGunakanCadangan(cadangan.savedAt);
+    if (!mounted) return;
+
+    if (gunakan != true) {
+      // Batal: sesuai kesepakatan, tidak ada pesan apa pun.
+      return;
+    }
+
+    setState(() {
+      _data.latitude = cadangan.position.latitude.toStringAsFixed(8);
+      _data.longitude = cadangan.position.longitude.toStringAsFixed(8);
+      _gpsSource = cadangan.source;
+      _gpsSavedAt = cadangan.savedAt;
+    });
+  }
+
+  Future<bool?> _tanyaGunakanCadangan(DateTime? savedAt) {
+    final String waktu = savedAt != null
+        ? DateFormat('dd MMM yyyy, HH:mm').format(savedAt)
+        : 'waktu tidak diketahui';
+
+    return showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+        icon: const Icon(
+          Icons.history_rounded,
+          color: Color(0xFFD97706),
+          size: 48,
+        ),
+        title: const Text(
+          'Gunakan Koordinat Cadangan?',
+          textAlign: TextAlign.center,
+          style: TextStyle(fontSize: 17, fontWeight: FontWeight.w800),
+        ),
+        content: Text(
+          'Lokasi GPS tidak aktif. Gunakan koordinat tersimpan terakhir '
+          'pada $waktu? Koordinat ini bukan posisi Anda saat ini.',
+          textAlign: TextAlign.center,
+        ),
+        actionsPadding: const EdgeInsets.fromLTRB(20, 4, 20, 16),
+        actions: [
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton(
+                  onPressed: () => Navigator.pop(dialogContext, false),
+                  style: OutlinedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                  ),
+                  child: const Text('Batal'),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: FilledButton(
+                  onPressed: () => Navigator.pop(dialogContext, true),
+                  style: FilledButton.styleFrom(
+                    backgroundColor: _primary,
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                  ),
+                  child: const Text(
+                    'Gunakan',
+                    style: TextStyle(color: Colors.white),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
   Future<void> _date() async {
     final d = await showDatePicker(
       context: context,
@@ -439,7 +659,7 @@ class _NonOssFormPageState extends State<NonOssFormPage> {
   // ---------------------------------------------------------------------
   // Validator format nomor telepon.
   // Pengecekan "wajib diisi" SENGAJA tidak dilakukan di sini karena sudah
-  // ditangani oleh _buildChecks (lihat _RequiredCheck) — supaya field ini
+  // ditangani oleh _buildChecks (lihat _RequiredCheck) - supaya field ini
   // tidak menampilkan dua peringatan sekaligus untuk kondisi kosong.
   // Validator ini hanya memeriksa format saat field sudah terisi (panjang
   // 9-15 digit; karakter non-angka sudah dicegah lewat inputFormatters
@@ -559,24 +779,39 @@ class _NonOssFormPageState extends State<NonOssFormPage> {
     }
 
     setState(() => _saving = true);
+
+    // Menentukan pesan dialog sukses: khusus mode edit, selalu pesan yang
+    // sama (edit selalu tersimpan lokal dulu, lihat _submitOnlineOrQueue).
+    // Untuk data baru, pesannya tergantung apakah berhasil ke server atau
+    // jatuh ke penyimpanan lokal.
+    String pesanSukses;
+    IconData ikonSukses = Icons.check_circle;
+    Color warnaIkonSukses = Colors.green;
+
     try {
       if (_isEditing) {
         await _offlineQueue.update(widget.editingData!, _data);
+        pesanSukses = 'Perubahan data berhasil disimpan.';
       } else {
-        await _submitOnlineOrQueue();
+        final bool berhasilKeServer = await _submitOnlineOrQueue();
+        if (berhasilKeServer) {
+          pesanSukses = 'Data pengawasan Non-OSS berhasil disimpan.';
+        } else {
+          pesanSukses =
+              'Tidak ada koneksi ke server. Data disimpan sementara '
+              'di perangkat. Lihat status di halaman Sinkronisasi.';
+          ikonSukses = Icons.cloud_off_rounded;
+          warnaIkonSukses = const Color(0xFFD97706);
+        }
       }
 
       if (!mounted) return;
       await showDialog<void>(
         context: context,
         builder: (c) => AlertDialog(
-          icon: const Icon(Icons.check_circle, color: Colors.green, size: 52),
+          icon: Icon(ikonSukses, color: warnaIkonSukses, size: 52),
           title: const Text('Berhasil'),
-          content: Text(
-            _isEditing
-                ? 'Perubahan data berhasil disimpan.'
-                : 'Data pengawasan Non-OSS berhasil disimpan.',
-          ),
+          content: Text(pesanSukses),
           actions: [
             FilledButton(
               onPressed: () => Navigator.pop(c),
@@ -598,19 +833,24 @@ class _NonOssFormPageState extends State<NonOssFormPage> {
   /// (misalnya putus saat upload foto), fallback ke penyimpanan lokal juga.
   /// Kegagalan karena sebab lain (validasi server, dsb) tetap dilempar apa
   /// adanya ke pemanggil.
-  Future<void> _submitOnlineOrQueue() async {
+  ///
+  /// Return value: true kalau berhasil terkirim ke server, false kalau
+  /// tersimpan lokal (menunggu sinkronisasi manual di halaman Sinkronisasi).
+  Future<bool> _submitOnlineOrQueue() async {
     final bool online = await _service.isServerAvailable();
 
     if (!online) {
       await _saveOffline();
-      return;
+      return false;
     }
 
     try {
       await _service.submit(_data);
+      return true;
     } catch (e) {
       if (_service.isConnectionFailure(e)) {
         await _saveOffline();
+        return false;
       } else {
         rethrow;
       }

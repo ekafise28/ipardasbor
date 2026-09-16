@@ -23,6 +23,11 @@ class LocationService {
   static const _kCacheLngKey = 'last_manual_location_lng';
   static const _kCacheTimeKey = 'last_manual_location_time';
 
+  Future<bool> isLocationServiceEnabled() =>
+      Geolocator.isLocationServiceEnabled();
+
+  Future<void> openLocationSettings() => Geolocator.openLocationSettings();
+
   Future<LocationResult?> current({
     void Function(LocationFetchStatus status)? onStatus,
     void Function(int sisaDetik)? onCountdown,
@@ -45,7 +50,7 @@ class LocationService {
     }
 
     // Dicek di depan. Kalau tidak ada internet, tidak perlu mencoba GPS
-    // langsung sama sekali — langsung ke jalur cadangan.
+    // langsung sama sekali - langsung ke jalur cadangan.
     final bool adaInternet = await _cekInternet();
 
     if (!adaInternet) {
@@ -95,6 +100,38 @@ class LocationService {
     } finally {
       countdownTimer.cancel();
     }
+  }
+
+  /// Cuma MENGECEK apakah ada cadangan (cache OS atau cache manual), tanpa
+  /// langsung menjadikannya hasil akhir. Dipakai saat layanan lokasi
+  /// nonaktif, supaya UI bisa menampilkan konfirmasi dulu ke user sebelum
+  /// koordinat cadangan benar-benar dipakai.
+  Future<LocationResult?> peekCadangan() async {
+    Position? posisiTerakhir;
+    try {
+      posisiTerakhir = await Geolocator.getLastKnownPosition();
+    } catch (_) {
+      posisiTerakhir = null;
+    }
+
+    if (posisiTerakhir != null) {
+      return LocationResult(
+        position: posisiTerakhir,
+        source: LocationSource.tersimpanLayananNonaktif,
+      );
+    }
+
+    final _CachedLocation? cacheManual = await _bacaCacheManual();
+
+    if (cacheManual != null) {
+      return LocationResult(
+        position: cacheManual.toPosition(),
+        source: LocationSource.cacheManual,
+        savedAt: cacheManual.savedAt,
+      );
+    }
+
+    return null;
   }
 
   Future<LocationResult?> _pakaiCadanganAtauGagal(
