@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 
 import '../../../../app/app_theme.dart';
+
 import '../../../non_oss/offline/non_oss_local_data.dart';
+import '../../../non_oss/offline/draft_completeness.dart';
 
 /// Satu baris tabel di [SyncPage]. Bisa di-tap untuk expand/collapse
 /// menampilkan tombol "Lihat Detail" dan "Sync" (atau "Lanjutkan Isi"
@@ -130,15 +132,17 @@ class SubmissionRow extends StatelessWidget {
     );
   }
 
-  Widget _buildExpandedContent(BuildContext context, bool isDraft, bool failed) {
+  Widget _buildExpandedContent(
+    BuildContext context,
+    bool isDraft,
+    bool failed,
+  ) {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.fromLTRB(14, 4, 14, 14),
       decoration: BoxDecoration(
         color: AppTheme.scaffoldColorDynamic(context),
-        border: Border(
-          bottom: BorderSide(color: AppTheme.border(context)),
-        ),
+        border: Border(bottom: BorderSide(color: AppTheme.border(context))),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -148,21 +152,12 @@ class SubmissionRow extends StatelessWidget {
               data.lastError!,
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
-              style: const TextStyle(
-                color: Color(0xFFB42318),
-                fontSize: 11.5,
-              ),
+              style: const TextStyle(color: Color(0xFFB42318), fontSize: 11.5),
             ),
             const SizedBox(height: 10),
           ],
           if (isDraft) ...[
-            Text(
-              'Data ini belum lengkap dan belum ikut proses sinkronisasi.',
-              style: TextStyle(
-                color: AppTheme.textSecondary(context),
-                fontSize: 11.5,
-              ),
-            ),
+            _DraftChecklist(data: data),
             const SizedBox(height: 10),
           ],
           Row(
@@ -206,7 +201,9 @@ class SubmissionRow extends StatelessWidget {
                           ),
                         )
                       : Icon(
-                          isDraft ? Icons.edit_note_rounded : Icons.sync_rounded,
+                          isDraft
+                              ? Icons.edit_note_rounded
+                              : Icons.sync_rounded,
                           size: 17,
                         ),
                   label: Text(isDraft ? 'Lanjutkan Isi' : 'Sync'),
@@ -223,5 +220,95 @@ class SubmissionRow extends StatelessWidget {
     final DateTime local = value.toLocal();
     String two(int number) => number.toString().padLeft(2, '0');
     return '${two(local.day)}/${two(local.month)}/${local.year}';
+  }
+}
+
+/// Checklist bagian form yang masih perlu dilengkapi pada sebuah draft.
+/// Menggantikan pesan generik lama supaya user langsung tahu apa yang
+/// kurang, tanpa perlu membuka form dulu untuk mengetahuinya.
+class _DraftChecklist extends StatelessWidget {
+  const _DraftChecklist({required this.data});
+
+  final NonOssLocalData data;
+
+  @override
+  Widget build(BuildContext context) {
+    final List<DraftMissingItem> missing = DraftCompletenessChecker.check(
+      data.payload,
+      data.photoPaths,
+    );
+
+    if (missing.isEmpty) {
+      return Text(
+        'Semua data sudah lengkap. Tekan "Lanjutkan Isi" untuk meninjau '
+        'kembali sebelum dikirim.',
+        style: TextStyle(
+          color: AppTheme.textSecondary(context),
+          fontSize: 11.5,
+        ),
+      );
+    }
+
+    final Map<String, List<String>> grouped = <String, List<String>>{};
+    for (final DraftMissingItem item in missing) {
+      grouped.putIfAbsent(item.section, () => <String>[]).add(item.label);
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Bagian yang masih perlu dilengkapi:',
+          style: TextStyle(
+            color: AppTheme.textColor(context),
+            fontSize: 11.5,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+        const SizedBox(height: 6),
+        for (final MapEntry<String, List<String>> entry in grouped.entries)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 6),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  entry.key,
+                  style: TextStyle(
+                    color: AppTheme.primaryColor,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: 3),
+                for (final String label in entry.value)
+                  Padding(
+                    padding: const EdgeInsets.only(left: 2, bottom: 2),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Icon(
+                          Icons.radio_button_unchecked_rounded,
+                          size: 13,
+                          color: AppTheme.warning,
+                        ),
+                        const SizedBox(width: 6),
+                        Expanded(
+                          child: Text(
+                            label,
+                            style: TextStyle(
+                              color: AppTheme.textSecondary(context),
+                              fontSize: 11.5,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+              ],
+            ),
+          ),
+      ],
+    );
   }
 }

@@ -6,12 +6,14 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../../app/app_theme.dart';
 import '../../shared_widgets/detail_section_card.dart';
 import '../../shared_widgets/detail_status_header.dart';
+
 import '../../non_oss/offline/non_oss_local_data.dart';
 import '../../non_oss/offline/offline_database.dart';
 import '../../non_oss/offline/offline_queue_service.dart';
 import '../../non_oss/offline/sync_service.dart';
 import '../../non_oss/offline/wilayah_local_database.dart';
 import '../../non_oss/non_oss_form_page.dart';
+import '../../non_oss/offline/draft_completeness.dart';
 
 import '../widget/widget_submission/detail_photo_section.dart';
 import '../widget/widget_submission/ota_tile.dart';
@@ -419,6 +421,11 @@ class _SubmissionDetailPageState extends State<SubmissionDetailPage> {
                 ),
               ],
             ),
+            const SizedBox(height: 12),
+            if (isDraft) ...[
+              _DraftChecklistCard(data: _data),
+              const SizedBox(height: 12),
+            ],
             const SizedBox(height: 16),
             if (_data.photoPaths.isNotEmpty) ...[
               DetailPhotoSection(
@@ -454,8 +461,8 @@ class _SubmissionDetailPageState extends State<SubmissionDetailPage> {
             _SubmissionOtaSection(
               entries: _parseOtaEntries(),
               onTapUrl: _openUrl,
-            ),
-            const SizedBox(height: 24),
+            ),           
+            const SizedBox(height: 12),
             _buildActionButtons(context, failed, isDraft),
           ],
         ),
@@ -699,6 +706,138 @@ class _SubmissionOtaTile extends StatelessWidget {
             ],
           ),
         ],
+      ],
+    );
+  }
+}
+
+/// Checklist bagian form yang masih perlu dilengkapi. Sama persis logic-nya
+/// dengan yang dipakai di expanded row SyncPage (SubmissionRow) - lihat
+/// DraftCompletenessChecker untuk sumber kebenarannya.
+class _DraftChecklistCard extends StatelessWidget {
+  const _DraftChecklistCard({required this.data});
+
+  final NonOssLocalData data;
+
+  @override
+  Widget build(BuildContext context) {
+    final List<DraftMissingItem> missing = DraftCompletenessChecker.check(
+      data.payload,
+      data.photoPaths,
+    );
+
+    return Card(
+      elevation: 0,
+      color: AppTheme.surface(context),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(14),
+        side: BorderSide(color: Colors.black.withOpacity(0.06)),
+      ),
+      margin: EdgeInsets.zero,
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            Row(
+              children: <Widget>[
+                Icon(
+                  Icons.checklist_rounded,
+                  size: 18,
+                  color: AppTheme.menuDashboard,
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  'Data Yang Belum Lengkap',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w800,
+                    color: AppTheme.textColor(context),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            if (missing.isEmpty)
+              Row(
+                children: [
+                  const Icon(
+                    Icons.check_circle_rounded,
+                    size: 16,
+                    color: Color(0xFF238636),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'Semua data sudah lengkap. Tekan "Lanjutkan Isi" untuk '
+                      'meninjau kembali sebelum dikirim.',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: AppTheme.textSecondary(context),
+                      ),
+                    ),
+                  ),
+                ],
+              )
+            else
+              _buildGrouped(context, missing),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildGrouped(BuildContext context, List<DraftMissingItem> missing) {
+    final Map<String, List<String>> grouped = <String, List<String>>{};
+    for (final DraftMissingItem item in missing) {
+      grouped.putIfAbsent(item.section, () => <String>[]).add(item.label);
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        for (final MapEntry<String, List<String>> entry in grouped.entries)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 10),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  entry.key,
+                  style: TextStyle(
+                    color: AppTheme.primaryColor,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                for (final String label in entry.value)
+                  Padding(
+                    padding: const EdgeInsets.only(left: 2, bottom: 3),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Icon(
+                          Icons.radio_button_unchecked_rounded,
+                          size: 13,
+                          color: AppTheme.warning,
+                        ),
+                        const SizedBox(width: 6),
+                        Expanded(
+                          child: Text(
+                            label,
+                            style: TextStyle(
+                              color: AppTheme.textSecondary(context),
+                              fontSize: 12,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+              ],
+            ),
+          ),
       ],
     );
   }
