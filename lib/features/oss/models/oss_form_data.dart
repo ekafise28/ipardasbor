@@ -15,14 +15,14 @@ class OssFormData {
     required this.nku,
     required this.isValid,
     String kbliDesc = '',
-  }) : _kbliDesc = kbliDesc;
+  }) : kbliDesc = kbliDesc;
 
   // --- Dari tahap validasi (readonly di form lanjutan) ---
   final String nib;
   final String kbli;
   final String nku;
   final bool isValid;
-  final String _kbliDesc;
+  final String kbliDesc;
 
   String namaPemilik = '';
   String namaBrand = '';
@@ -64,13 +64,16 @@ class OssFormData {
 
   Map<String, String> toFields() {
     final Map<String, String> fields = <String, String>{
-      'nib': nib,
-      'kbli': kbli,
-      'id_proyek': nku,
-      'sumber_data': 'OSS',
+      // --- WAJIB ditambahkan (belum ada di form Non-OSS) ---
+      'nib': nib.trim(),
+      'kbli': kbli.trim(),
+      'nku': nku.trim(),
+      if (kbliDesc.trim().isNotEmpty) 'kbli_desc': kbliDesc.trim(),
+
+      // --- Sama seperti Non-OSS ---
       'nama_pemilik': namaPemilik.trim(),
       'nama_brand': namaBrand.trim(),
-      'jenis_produk': (isValid ? kbli : jenisProduk).trim(),
+      'jenis_produk': jenisProduk.trim(),
       'alamat': alamat.trim(),
       'latitude': latitude.trim(),
       'longitude': longitude.trim(),
@@ -79,10 +82,6 @@ class OssFormData {
       'status_pengawasan': statusPengawasan.toString(),
       'tanggal_pengawasan': _formatDate(tanggalPengawasan),
     };
-
-    if (kbli == '55900') {
-      fields['kbli_desc'] = _kbliDesc;
-    }
 
     _addOptionalInt(fields, 'provinsi_id', provinsiId);
     _addOptionalInt(fields, 'kabupaten_id', kabupatenId);
@@ -95,21 +94,20 @@ class OssFormData {
     _addOptional(fields, 'keterangan', keterangan);
     _addOptional(fields, 'catatan_petugas', catatanPetugas);
 
-    if (terdaftarOta.trim().toUpperCase() == 'YA') {
-      _addOtaFields(fields);
-    }
-
+    // --- Hanya kalau data hasil validasi TIDAK VALID ---
     if (!isValid) {
       for (int i = 0; i < statusKetidaksesuaian.length; i++) {
         fields['status_ketidaksesuaian[$i]'] = statusKetidaksesuaian[i];
       }
-      if (statusKetidaksesuaian.contains('LAINNYA')) {
-        _addOptional(
-          fields,
-          'keterangan_ketidaksesuaian',
-          keteranganKetidaksesuaian,
-        );
-      }
+      _addOptional(
+        fields,
+        'keterangan_ketidaksesuaian',
+        keteranganKetidaksesuaian,
+      );
+    }
+
+    if (terdaftarOta.trim().toUpperCase() == 'YA') {
+      _addOtaFields(fields); // logic sama persis seperti NonOssFormData
     }
 
     return fields;

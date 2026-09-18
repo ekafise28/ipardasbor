@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import 'package:ipardasbor/app/app_theme.dart';
 
+import '../../core/api/api_client.dart';
 import '../non_oss/models/location_fetch_status.dart';
 import '../non_oss/models/region_option.dart';
 import '../non_oss/services/location_service.dart';
@@ -12,14 +13,15 @@ import '../non_oss/widgets/photo_picker.dart';
 
 import 'models/oss_form_data.dart';
 import 'models/oss_validasi_result.dart';
+import 'services/oss_service.dart';
 import 'widgets/ota_platform_selector.dart';
 import 'widgets/status_ketidaksesuaian_selector.dart';
 
 /// Tahap 2: form lanjutan validasi OSS, dibuka setelah [OssValidasiPage]
 /// mengembalikan [OssValidasiResult].
 ///
-/// Backend penyimpanan (POST) belum tersedia - tombol submit untuk
-/// sekarang cuma mencetak payload ke console lewat [OssFormData.debugJson].
+/// Data dikirim ke backend lewat [OssService.submit], yang menyimpannya
+/// ke tbl_oss_pengawasan beserta OTA dan foto dokumentasi.
 class OssFormPage extends StatefulWidget {
   const OssFormPage({super.key, required this.validasi});
 
@@ -36,6 +38,8 @@ class _OssFormPageState extends State<OssFormPage> {
   final _key = GlobalKey<FormState>();
   late final OssFormData _data;
   late final RegionService _regions;
+  late final ApiClient _api;
+  late final OssService _ossService;
   final _location = LocationService();
 
   List<RegionOption> _provinces = [],
@@ -104,6 +108,8 @@ class _OssFormPageState extends State<OssFormPage> {
     }
 
     _regions = RegionService();
+    _api = ApiClient();
+    _ossService = OssService(_api);
 
     _namaPemilikCtrl = TextEditingController();
     _namaBrandCtrl = TextEditingController();
@@ -388,35 +394,39 @@ class _OssFormPageState extends State<OssFormPage> {
 
     setState(() => _saving = true);
 
-    // TODO(dev): ganti dengan pemanggilan API sungguhan setelah backend
-    // penyimpanan validasi OSS tersedia. Untuk sekarang cuma dicetak
-    // ke console supaya struktur payload bisa dicek manual.
-    await Future<void>.delayed(const Duration(milliseconds: 500));
-    debugPrint('=== OSS FORM PAYLOAD (dummy submit) ===');
-    debugPrint(_data.debugJson());
+    try {
+      await _ossService.submit(_data);
 
-    if (!mounted) return;
-    setState(() => _saving = false);
+      if (!mounted) return;
+      setState(() => _saving = false);
 
-    await showDialog<void>(
-      context: context,
-      builder: (c) => AlertDialog(
-        icon: const Icon(Icons.check_circle, color: Colors.green, size: 52),
-        title: const Text('Berhasil (Simulasi)'),
-        content: const Text(
-          'Data validasi OSS berhasil divalidasi secara lokal. '
-          'Payload telah dicetak ke console - belum dikirim ke server '
-          'karena backend belum tersedia.',
-        ),
-        actions: [
-          FilledButton(
-            onPressed: () => Navigator.pop(c),
-            child: const Text('OK'),
+      await showDialog<void>(
+        context: context,
+        builder: (c) => AlertDialog(
+          icon: const Icon(Icons.check_circle, color: Colors.green, size: 52),
+          title: const Text('Berhasil'),
+          content: const Text(
+            'Data pengawasan OSS berhasil disimpan ke server.',
           ),
-        ],
-      ),
-    );
-    if (mounted) Navigator.pop(context, true);
+          actions: [
+            FilledButton(
+              onPressed: () => Navigator.pop(c),
+              child: const Text('OK'),
+            ),
+          ],
+        ),
+      );
+      if (mounted) Navigator.pop(context, true);
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _saving = false);
+
+      final String pesan = _ossService.isConnectionFailure(e)
+          ? 'Tidak dapat terhubung ke server. Periksa koneksi internet.'
+          : e.toString().replaceFirst('Exception: ', '');
+
+      _error(Exception(pesan));
+    }
   }
 
   Widget _text(

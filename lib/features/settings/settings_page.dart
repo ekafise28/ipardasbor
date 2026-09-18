@@ -257,7 +257,7 @@ class _SettingsPageState extends State<SettingsPage> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Sinkronisasi Otomatis',
+                      'Sinkronisasi Otomatis (Alpha)',
                       style: TextStyle(
                         color: AppTheme.textColor(context),
                         fontSize: 14.5,

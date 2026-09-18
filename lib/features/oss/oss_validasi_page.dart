@@ -1,14 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:ipardasbor/app/app_theme.dart';
 
+import '../../core/api/api_client.dart';
 import 'models/oss_validasi_result.dart';
 import 'oss_form_page.dart';
+import 'services/oss_service.dart';
 
 /// Tahap 1: validasi NIB, KBLI, dan NKU sebelum masuk ke form lanjutan.
 ///
-/// Mengikuti alur Laravel (oss_validasi_lanjutan) - bedanya, karena
-/// endpoint validasi backend belum tersedia, hasil valid/tidak valid untuk
-/// sekarang ditentukan lewat toggle simulasi manual di halaman ini.
+/// Mengikuti alur Laravel (oss_validasi_lanjutan) - validasi NIB dikirim
+/// ke backend, yang kemudian meneruskannya ke API OSS pemerintah dan
+/// mencocokkan KBLI/NKU-nya. Backend adalah sumber kebenaran; hasil valid/
+/// tidak valid TIDAK ditentukan di sisi aplikasi.
 class OssValidasiPage extends StatefulWidget {
   const OssValidasiPage({super.key});
 
@@ -25,13 +28,11 @@ class _OssValidasiPageState extends State<OssValidasiPage> {
   final _kbliCtrl = TextEditingController();
   final _nkuCtrl = TextEditingController();
 
+  late final ApiClient _api;
+  late final OssService _ossService;
+
   String? _kbliDesc;
   bool _submitting = false;
-
-  /// TODO(dev): hapus toggle ini setelah endpoint validasi backend siap.
-  /// Untuk sekarang dipakai supaya alur "data tidak valid" (yang membuka
-  /// section Status Ketidaksesuaian di form lanjutan) tetap bisa dites.
-  bool _simulasiTidakValid = false;
 
   static const List<String> _daftarKbliDiizinkan = [
     '55105', '55104', '55103', '55102', '55101', '55106',
@@ -39,6 +40,13 @@ class _OssValidasiPageState extends State<OssValidasiPage> {
     '87303', '55909', '55901', '55110', '55120', '55130',
     '55191', '55192', '55193', '55194', '55199', '55900',
   ];
+
+  @override
+  void initState() {
+    super.initState();
+    _api = ApiClient();
+    _ossService = OssService(_api);
+  }
 
   @override
   void dispose() {
@@ -63,6 +71,12 @@ class _OssValidasiPageState extends State<OssValidasiPage> {
   String? _requiredValidator(String? v) =>
       (v == null || v.trim().isEmpty) ? 'Wajib diisi.' : null;
 
+  void _showError(String pesan) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(pesan)),
+    );
+  }
+
   Future<void> _submit() async {
     final bool valid = _key.currentState?.validate() ?? false;
 
@@ -71,34 +85,48 @@ class _OssValidasiPageState extends State<OssValidasiPage> {
     }
 
     if (!valid || (_isKbli55900 && _kbliDesc == null)) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Periksa kembali data yang diisi.')),
-      );
+      _showError('Periksa kembali data yang diisi.');
       return;
     }
 
     setState(() => _submitting = true);
 
-    // Simulasi jeda pemanggilan API validasi.
-    await Future<void>.delayed(const Duration(milliseconds: 400));
+    try {
+      final OssValidasiResult hasilApi = await _ossService.validasi(
+        nib: _nibCtrl.text.trim(),
+        kbli: _kbliCtrl.text.trim(),
+        nku: _nkuCtrl.text.trim(),
+      );
 
-    if (!mounted) return;
-    setState(() => _submitting = false);
+      if (!mounted) return;
+      setState(() => _submitting = false);
 
-    final OssValidasiResult hasil = OssValidasiResult(
-      nib: _nibCtrl.text.trim(),
-      kbli: _kbliCtrl.text.trim(),
-      nku: _nkuCtrl.text.trim(),
-      kbliDesc: _kbliDesc ?? '',
-      isValid: !_simulasiTidakValid,
-    );
+      // kbli_desc (khusus KBLI 55900) tetap dari pilihan user di halaman
+      // ini - backend tidak menentukan jenis usaha spesifiknya.
+      final OssValidasiResult hasil = OssValidasiResult(
+        nib: hasilApi.nib,
+        kbli: hasilApi.kbli,
+        nku: hasilApi.nku,
+        kbliDesc: _kbliDesc ?? '',
+        isValid: hasilApi.isValid,
+      );
 
-    if (!mounted) return;
-    Navigator.of(context).push<void>(
-      MaterialPageRoute<void>(
-        builder: (_) => OssFormPage(validasi: hasil),
-      ),
-    );
+      if (!mounted) return;
+      Navigator.of(context).push<void>(
+        MaterialPageRoute<void>(
+          builder: (_) => OssFormPage(validasi: hasil),
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _submitting = false);
+
+      final String pesan = _ossService.isConnectionFailure(e)
+          ? 'Tidak dapat terhubung ke server. Periksa koneksi internet.'
+          : e.toString().replaceFirst('Exception: ', '');
+
+      _showError(pesan);
+    }
   }
 
   @override
@@ -268,24 +296,6 @@ class _OssValidasiPageState extends State<OssValidasiPage> {
                   ),
               ],
               const SizedBox(height: 20),
-              SwitchListTile(
-                contentPadding: EdgeInsets.zero,
-                value: _simulasiTidakValid,
-                onChanged: (v) => setState(() => _simulasiTidakValid = v),
-                title: const Text(
-                  'Simulasikan: Data Tidak Valid',
-                  style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700),
-                ),
-                subtitle: Text(
-                  'Sementara, untuk menguji tampilan section Ketidaksesuaian '
-                  'sebelum validasi backend tersedia.',
-                  style: TextStyle(
-                    color: AppTheme.textSecondary(context),
-                    fontSize: 11,
-                  ),
-                ),
-              ),
-              const SizedBox(height: 12),
               SizedBox(
                 height: 54,
                 child: FilledButton.icon(
