@@ -93,45 +93,49 @@ class _ProfilePageState extends State<ProfilePage> {
           actionsPadding: const EdgeInsets.fromLTRB(20, 4, 20, 16),
           actionsAlignment: MainAxisAlignment.center,
           actions: [
-            Expanded(
-              child: OutlinedButton(
-                onPressed: () => Navigator.pop(dialogContext),
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: AppTheme.textColor(context),
-                  side: BorderSide(color: AppTheme.border(context)),
-                  padding: const EdgeInsets.symmetric(vertical: 12),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: () => Navigator.pop(dialogContext),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: AppTheme.textColor(context),
+                      side: BorderSide(color: AppTheme.border(context)),
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    child: const Text('Batal'),
                   ),
                 ),
-                child: const Text('Batal'),
-              ),
-            ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: ElevatedButton(
-                onPressed: () async {
-                  Navigator.pop(dialogContext);
-                  await AuthService().logout();
-                  if (context.mounted) {
-                    Navigator.pushNamedAndRemoveUntil(
-                      context,
-                      '/login',
-                      (route) => false,
-                    );
-                  }
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppTheme.danger,
-                  foregroundColor: Colors.white,
-                  elevation: 0,
-                  padding: const EdgeInsets.symmetric(vertical: 12),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: () async {
+                      Navigator.pop(dialogContext);
+                      await AuthService().logout();
+                      if (context.mounted) {
+                        Navigator.pushNamedAndRemoveUntil(
+                          context,
+                          '/login',
+                          (route) => false,
+                        );
+                      }
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppTheme.danger,
+                      foregroundColor: Colors.white,
+                      elevation: 0,
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    child: const Text('Keluar'),
                   ),
                 ),
-                child: const Text('Keluar'),
-              ),
+              ],
             ),
           ],
         );
