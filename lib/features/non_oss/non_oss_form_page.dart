@@ -4,15 +4,14 @@ import 'package:intl/intl.dart';
 import 'dart:async';
 
 import 'package:ipardasbor/app/app_theme.dart';
-import 'package:ipardasbor/features/non_oss/models/location_fetch_status.dart';
 import 'package:ipardasbor/features/non_oss/offline/non_oss_local_data.dart';
+import 'package:ipardasbor/shared/gps/gps_capture_mixin.dart';
 
 import '../../core/api/api_client.dart';
 
 import 'models/non_oss_form_data.dart';
 import 'models/region_option.dart';
 
-import 'services/location_service.dart';
 import 'services/non_oss_service.dart';
 import 'services/region_service.dart';
 
@@ -33,7 +32,7 @@ class NonOssFormPage extends StatefulWidget {
 }
 
 class _NonOssFormPageState extends State<NonOssFormPage>
-    with WidgetsBindingObserver {
+    with WidgetsBindingObserver, GpsCaptureMixin<NonOssFormPage> {
   static const _primary = AppTheme.primaryColor;
   static const _navy = Color(0xFF0B3F78);
   final _key = GlobalKey<FormState>();
@@ -46,26 +45,12 @@ class _NonOssFormPageState extends State<NonOssFormPage>
   late final RegionService _regions;
   late final NonOssService _service;
   late final OfflineQueueService _offlineQueue;
-  final _location = LocationService();
 
   List<RegionOption> _provinces = [],
       _regencies = [],
       _districts = [],
       _villages = [];
-  bool _loadingRegions = true, _gpsLoading = false, _saving = false;
-  LocationFetchStatus? _gpsStatus;
-  int? _gpsCountdown;
-  LocationSource? _gpsSource;
-  DateTime? _gpsSavedAt;
-
-  /*
-  Dipakai untuk menunggu app benar-benar kembali ke foreground (resumed)
-  setelah user pergi ke halaman Settings lokasi. `openLocationSettings()`
-  hanya melempar Intent dan langsung return, TIDAK menunggu user kembali,
-  jadi tanpa ini pengecekan `isLocationServiceEnabled()` akan dijalankan
-  terlalu dini (masih membaca status lama).
-  */
-  Completer<void>? _resumeCompleter;
+  bool _loadingRegions = true, _saving = false;
 
   Set<_Section> _sectionErrors = {};
   bool get _isEditing => widget.editingData != null;
@@ -146,60 +131,6 @@ class _NonOssFormPageState extends State<NonOssFormPage>
                     ),
                   ),
                 ],
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Future<bool?> _tanyaAktifkanLokasi() {
-    return showDialog<bool>(
-      context: context,
-      builder: (dialogContext) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
-        icon: const Icon(
-          Icons.location_off_rounded,
-          color: Color(0xFFD97706),
-          size: 48,
-        ),
-        title: const Text(
-          'Aktifkan Lokasi?',
-          textAlign: TextAlign.center,
-          style: TextStyle(fontSize: 17, fontWeight: FontWeight.w800),
-        ),
-        content: const Text(
-          'Layanan lokasi (GPS) di perangkat ini sedang nonaktif. '
-          'Aktifkan untuk mendapatkan koordinat yang akurat.',
-          textAlign: TextAlign.center,
-        ),
-        actionsPadding: const EdgeInsets.fromLTRB(20, 4, 20, 16),
-        actions: [
-          Row(
-            children: [
-              Expanded(
-                child: OutlinedButton(
-                  onPressed: () => Navigator.pop(dialogContext, false),
-                  style: OutlinedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                  ),
-                  child: const Text('Batal'),
-                ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: FilledButton(
-                  onPressed: () => Navigator.pop(dialogContext, true),
-                  style: FilledButton.styleFrom(
-                    backgroundColor: _primary,
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                  ),
-                  child: const Text(
-                    'Aktifkan',
-                    style: TextStyle(color: Colors.white),
-                  ),
-                ),
               ),
             ],
           ),
@@ -297,7 +228,7 @@ class _NonOssFormPageState extends State<NonOssFormPage>
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addObserver(this);
+    initGpsCapture();
 
     _data = widget.editingData != null
         ? NonOssFormData.fromLocalData(widget.editingData!)
@@ -328,7 +259,7 @@ class _NonOssFormPageState extends State<NonOssFormPage>
 
   @override
   void dispose() {
-    WidgetsBinding.instance.removeObserver(this);
+    disposeGpsCapture();
     _api.close();
 
     // Buang semua controller agar tidak membebani memori.
@@ -343,37 +274,6 @@ class _NonOssFormPageState extends State<NonOssFormPage>
     _catatanPetugasCtrl.dispose();
     _otaLainnyaCtrl.dispose();
     super.dispose();
-  }
-
-  @override
-  void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state == AppLifecycleState.resumed) {
-      _resumeCompleter?.complete();
-      _resumeCompleter = null;
-    }
-  }
-
-  /*
-  Menunggu sampai app kembali ke foreground (mis. setelah user kembali
-  dari halaman Settings lokasi). Diberi [timeout] sebagai jaga-jaga kalau
-  event resume entah kenapa tidak pernah terpicu, supaya alur GPS tidak
-  nyangkut selamanya - setelah timeout, kode lanjut seperti biasa dan
-  hasil pengecekan `isLocationServiceEnabled()` tetap valid apa adanya.
-  */
-  Future<void> _tungguAppResume({
-    Duration timeout = const Duration(seconds: 30),
-  }) {
-    final Completer<void> completer = Completer<void>();
-    _resumeCompleter = completer;
-
-    return completer.future.timeout(
-      timeout,
-      onTimeout: () {
-        if (_resumeCompleter == completer) {
-          _resumeCompleter = null;
-        }
-      },
-    );
   }
 
   Future<void> _loadProvinces() async {
@@ -464,183 +364,6 @@ class _NonOssFormPageState extends State<NonOssFormPage>
         _error(e);
       }
     }
-  }
-
-  Future<void> _gps() async {
-    if (!mounted) {
-      return;
-    }
-
-    bool layananAktif = await _location.isLocationServiceEnabled();
-    if (!mounted) return;
-
-    if (!layananAktif) {
-      final bool? aktifkan = await _tanyaAktifkanLokasi();
-      if (!mounted) return;
-
-      if (aktifkan == true) {
-        await _location.openLocationSettings();
-        if (!mounted) return;
-
-        // Menunggu user BENAR-BENAR kembali ke app dari halaman Settings,
-        // bukan langsung cek status setelah openLocationSettings() return
-        // (Future itu selesai duluan sebelum user sempat apa-apa).
-        await _tungguAppResume();
-        if (!mounted) return;
-
-        layananAktif = await _location.isLocationServiceEnabled();
-        if (!mounted) return;
-      }
-
-      if (!layananAktif) {
-        await _pakaiCadanganDenganKonfirmasi();
-        return;
-      }
-
-      // Kalau layananAktif berubah jadi true, lanjut ke proses normal
-      // di bawah seperti biasa.
-    }
-
-    setState(() {
-      _gpsLoading = true;
-      _gpsStatus = null;
-      _gpsCountdown = null;
-    });
-
-    try {
-      final LocationResult? hasil = await _location.current(
-        onStatus: (LocationFetchStatus status) {
-          if (!mounted) return;
-          setState(() => _gpsStatus = status);
-        },
-        onCountdown: (int sisaDetik) {
-          if (!mounted) return;
-          setState(() => _gpsCountdown = sisaDetik);
-        },
-      );
-
-      if (!mounted) {
-        return;
-      }
-
-      if (hasil == null) {
-        _error(
-          Exception(
-            'GPS tidak tersedia dan belum ada koordinat tersimpan sebelumnya.',
-          ),
-        );
-        return;
-      }
-
-      setState(() {
-        _data.latitude = hasil.position.latitude.toStringAsFixed(8);
-        _data.longitude = hasil.position.longitude.toStringAsFixed(8);
-        _gpsSource = hasil.source;
-        _gpsSavedAt = hasil.savedAt;
-      });
-    } catch (e) {
-      if (mounted) {
-        _error(e);
-      }
-    } finally {
-      if (mounted) {
-        setState(() {
-          _gpsLoading = false;
-        });
-      }
-    }
-  }
-
-  /// Dipanggil hanya ketika layanan lokasi diketahui nonaktif (baik user
-  /// pilih "Batal" di dialog aktivasi, maupun sudah ke Settings tapi masih
-  /// nonaktif). Mengecek dulu apakah ada cadangan SEBELUM menampilkan
-  /// konfirmasi pemakaiannya — supaya tidak menanyakan sesuatu yang
-  /// cadangannya sendiri kosong.
-  Future<void> _pakaiCadanganDenganKonfirmasi() async {
-    final LocationResult? cadangan = await _location.peekCadangan();
-    if (!mounted) return;
-
-    if (cadangan == null) {
-      _error(
-        Exception(
-          'GPS tidak tersedia dan belum ada koordinat tersimpan sebelumnya.',
-        ),
-      );
-      return;
-    }
-
-    final bool? gunakan = await _tanyaGunakanCadangan(cadangan.savedAt);
-    if (!mounted) return;
-
-    if (gunakan != true) {
-      // Batal: sesuai kesepakatan, tidak ada pesan apa pun.
-      return;
-    }
-
-    setState(() {
-      _data.latitude = cadangan.position.latitude.toStringAsFixed(8);
-      _data.longitude = cadangan.position.longitude.toStringAsFixed(8);
-      _gpsSource = cadangan.source;
-      _gpsSavedAt = cadangan.savedAt;
-    });
-  }
-
-  Future<bool?> _tanyaGunakanCadangan(DateTime? savedAt) {
-    final String waktu = savedAt != null
-        ? DateFormat('dd MMM yyyy, HH:mm').format(savedAt)
-        : 'waktu tidak diketahui';
-
-    return showDialog<bool>(
-      context: context,
-      builder: (dialogContext) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
-        icon: const Icon(
-          Icons.history_rounded,
-          color: Color(0xFFD97706),
-          size: 48,
-        ),
-        title: const Text(
-          'Gunakan Koordinat Cadangan?',
-          textAlign: TextAlign.center,
-          style: TextStyle(fontSize: 17, fontWeight: FontWeight.w800),
-        ),
-        content: Text(
-          'Lokasi GPS tidak aktif. Gunakan koordinat tersimpan terakhir '
-          'pada $waktu? Koordinat ini bukan posisi Anda saat ini.',
-          textAlign: TextAlign.center,
-        ),
-        actionsPadding: const EdgeInsets.fromLTRB(20, 4, 20, 16),
-        actions: [
-          Row(
-            children: [
-              Expanded(
-                child: OutlinedButton(
-                  onPressed: () => Navigator.pop(dialogContext, false),
-                  style: OutlinedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                  ),
-                  child: const Text('Batal'),
-                ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: FilledButton(
-                  onPressed: () => Navigator.pop(dialogContext, true),
-                  style: FilledButton.styleFrom(
-                    backgroundColor: _primary,
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                  ),
-                  child: const Text(
-                    'Gunakan',
-                    style: TextStyle(color: Colors.white),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
   }
 
   Future<void> _date() async {
@@ -1280,12 +1003,19 @@ class _NonOssFormPageState extends State<NonOssFormPage>
                       child: LocationPicker(
                         latitude: _data.latitude,
                         longitude: _data.longitude,
-                        loading: _gpsLoading,
-                        status: _gpsStatus,
-                        sisaDetik: _gpsCountdown,
-                        source: _gpsSource,
-                        savedAt: _gpsSavedAt,
-                        onGetLocation: _gps,
+                        loading: gpsLoading,
+                        status: gpsStatus,
+                        sisaDetik: gpsCountdown,
+                        source: gpsSource,
+                        savedAt: gpsSavedAt,
+                        onGetLocation: () => ambilLokasiGps(
+                          onBerhasil: (hasil) => setState(() {
+                            _data.latitude = hasil.position.latitude
+                                .toStringAsFixed(8);
+                            _data.longitude = hasil.position.longitude
+                                .toStringAsFixed(8);
+                          }),
+                        ),
                       ),
                     ),
                     FormSection(

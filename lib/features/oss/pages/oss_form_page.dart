@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import 'package:ipardasbor/app/app_theme.dart';
 import 'package:ipardasbor/core/api/api_exception.dart';
+import 'package:ipardasbor/shared/gps/gps_capture_mixin.dart';
 
 import '../../../core/api/api_client.dart';
 import '../../non_oss/models/location_fetch_status.dart';
@@ -32,7 +33,8 @@ class OssFormPage extends StatefulWidget {
   State<OssFormPage> createState() => _OssFormPageState();
 }
 
-class _OssFormPageState extends State<OssFormPage> {
+class _OssFormPageState extends State<OssFormPage>
+    with WidgetsBindingObserver, GpsCaptureMixin<OssFormPage> {
   static const _primary = AppTheme.primaryColor;
   static const _navy = Color(0xFF0B3F78);
 
@@ -41,7 +43,6 @@ class _OssFormPageState extends State<OssFormPage> {
   late final RegionService _regions;
   late final ApiClient _api;
   late final OssService _ossService;
-  final _location = LocationService();
 
   /// Snapshot nilai field yang diisi otomatis dari hasil validasi OSS,
   /// dipakai untuk mendeteksi "apakah petugas sudah mengubahnya".
@@ -55,11 +56,8 @@ class _OssFormPageState extends State<OssFormPage> {
       _regencies = [],
       _districts = [],
       _villages = [];
-  bool _loadingRegions = true, _gpsLoading = false, _saving = false;
-  LocationFetchStatus? _gpsStatus;
-  int? _gpsCountdown;
-  LocationSource? _gpsSource;
-  DateTime? _gpsSavedAt;
+  bool _loadingRegions = true, _saving = false;
+
   Set<_Section> _sectionErrors = {};
 
   late final TextEditingController _namaPemilikCtrl;
@@ -104,6 +102,7 @@ class _OssFormPageState extends State<OssFormPage> {
   @override
   void initState() {
     super.initState();
+    initGpsCapture();
     _data = OssFormData(
       nib: widget.validasi.nib,
       kbli: widget.validasi.kbli,
@@ -137,6 +136,7 @@ class _OssFormPageState extends State<OssFormPage> {
 
   @override
   void dispose() {
+    disposeGpsCapture();
     _namaPemilikCtrl.dispose();
     _namaBrandCtrl.dispose();
     _npwpdCtrl.dispose();
@@ -300,66 +300,6 @@ class _OssFormPageState extends State<OssFormPage> {
         if (mounted) setState(() => _villages = v);
       } catch (e) {
         _error(e);
-      }
-    }
-  }
-
-  Future<void> _gps() async {
-    if (!mounted) {
-      return;
-    }
-
-    setState(() {
-      _gpsLoading = true;
-      _gpsStatus = null;
-      _gpsCountdown = null;
-      // _gpsSource SENGAJA tidak direset di sini, supaya kalau proses gagal
-      // di tengah jalan, keterangan sumber lokasi sebelumnya (jika ada)
-      // tidak hilang begitu saja.
-    });
-
-    try {
-      final LocationResult? hasil = await _location.current(
-        // tambah "?"
-        onStatus: (LocationFetchStatus status) {
-          if (!mounted) return;
-          setState(() => _gpsStatus = status);
-        },
-        onCountdown: (int sisaDetik) {
-          if (!mounted) return;
-          setState(() => _gpsCountdown = sisaDetik);
-        },
-      );
-
-      if (!mounted) {
-        return;
-      }
-
-      if (hasil == null) {
-        // tambah blok ini
-        _error(
-          Exception(
-            'GPS tidak tersedia dan belum ada koordinat tersimpan sebelumnya.',
-          ),
-        );
-        return;
-      }
-
-      setState(() {
-        _data.latitude = hasil.position.latitude.toStringAsFixed(8);
-        _data.longitude = hasil.position.longitude.toStringAsFixed(8);
-        _gpsSource = hasil.source;
-        _gpsSavedAt = hasil.savedAt;
-      });
-    } catch (e) {
-      if (mounted) {
-        _error(e);
-      }
-    } finally {
-      if (mounted) {
-        setState(() {
-          _gpsLoading = false;
-        });
       }
     }
   }
@@ -997,12 +937,19 @@ class _OssFormPageState extends State<OssFormPage> {
                     child: LocationPicker(
                       latitude: _data.latitude,
                       longitude: _data.longitude,
-                      loading: _gpsLoading,
-                      status: _gpsStatus,
-                      sisaDetik: _gpsCountdown,
-                      source: _gpsSource,
-                      savedAt: _gpsSavedAt,
-                      onGetLocation: _gps,
+                      loading: gpsLoading,
+                      status: gpsStatus,
+                      sisaDetik: gpsCountdown,
+                      source: gpsSource,
+                      savedAt: gpsSavedAt,
+                      onGetLocation: () => ambilLokasiGps(
+                        onBerhasil: (hasil) => setState(() {
+                          _data.latitude = hasil.position.latitude
+                              .toStringAsFixed(8);
+                          _data.longitude = hasil.position.longitude
+                              .toStringAsFixed(8);
+                        }),
+                      ),
                     ),
                   ),
                   FormSectionOss(
