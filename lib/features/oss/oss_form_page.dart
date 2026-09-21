@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import 'package:ipardasbor/app/app_theme.dart';
+import 'package:ipardasbor/core/api/api_exception.dart';
 
 import '../../core/api/api_client.dart';
 import '../non_oss/models/location_fetch_status.dart';
@@ -523,11 +524,11 @@ class _OssFormPageState extends State<OssFormPage> {
       if (!mounted) return;
       setState(() => _saving = false);
 
-      final String pesan = _ossService.isConnectionFailure(e)
+            final String pesan = _ossService.isConnectionFailure(e)
           ? 'Tidak dapat terhubung ke server. Periksa koneksi internet.'
-          : e.toString().replaceFirst('Exception: ', '');
-
-      _error(Exception(pesan));
+          : (e is ApiException
+              ? e.message
+              : e.toString().replaceFirst('Exception: ', ''));
     }
   }
 
