@@ -42,6 +42,14 @@ class _OssFormPageState extends State<OssFormPage> {
   late final OssService _ossService;
   final _location = LocationService();
 
+  /// Snapshot nilai field yang diisi otomatis dari hasil validasi OSS,
+  /// dipakai untuk mendeteksi "apakah petugas sudah mengubahnya".
+  final Map<String, String> _nilaiAsliOtomatis = <String, String>{};
+
+  /// Nama wilayah asli dari API OSS untuk jenjang yang GAGAL dicocokkan
+  /// ke ID lokal (ditampilkan sebagai hint di bawah dropdown).
+  final Map<String, String?> _hintWilayahAsli = <String, String?>{};
+
   List<RegionOption> _provinces = [],
       _regencies = [],
       _districts = [],
@@ -123,6 +131,7 @@ class _OssFormPageState extends State<OssFormPage> {
     _otaLainnyaCtrl = TextEditingController();
 
     _loadProvinces();
+    _terapkanAutofillProyek();
   }
 
   @override
@@ -148,6 +157,99 @@ class _OssFormPageState extends State<OssFormPage> {
     } finally {
       if (mounted) setState(() => _loadingRegions = false);
     }
+  }
+
+  /// Isi field form dari data proyek hasil validasi (kalau ada), dan catat
+  /// nilai aslinya supaya bisa dideteksi kalau petugas mengubahnya nanti.
+  Future<void> _terapkanAutofillProyek() async {
+    final Map<String, dynamic>? proyek = widget.validasi.proyek;
+    if (proyek == null) return;
+
+    String? teks(String key) {
+      final dynamic v = proyek[key];
+      if (v == null) return null;
+      final String s = v.toString().trim();
+      return s.isEmpty ? null : s;
+    }
+
+    int? angka(String key) {
+      final dynamic v = proyek[key];
+      if (v is int) return v;
+      return int.tryParse(v?.toString() ?? '');
+    }
+
+    final String? namaPerusahaan = teks('nama_perusahaan');
+    if (namaPerusahaan != null) {
+      _data.namaBrand = namaPerusahaan;
+      _namaBrandCtrl.text = namaPerusahaan;
+      _nilaiAsliOtomatis['namaBrand'] = namaPerusahaan;
+    }
+
+    final String? alamat = teks('alamat_usaha');
+    if (alamat != null) {
+      _data.alamat = alamat;
+      _alamatCtrl.text = alamat;
+      _nilaiAsliOtomatis['alamat'] = alamat;
+    }
+
+    final String? noHp = teks('nomor_telp_perusahaan');
+    if (noHp != null) {
+      final String bersih = noHp.replaceAll(RegExp(r'\D'), '');
+      if (bersih.isNotEmpty) {
+        _data.noHp = bersih;
+        _noHpCtrl.text = bersih;
+        _nilaiAsliOtomatis['noHp'] = bersih;
+      }
+    }
+
+    final String? email = teks('email_perusahaan');
+    if (email != null) {
+      _data.email = email;
+      _emailCtrl.text = email;
+      _nilaiAsliOtomatis['email'] = email;
+    }
+
+    if (mounted) setState(() {});
+
+    // Wilayah - berjenjang, pakai method cascading yang sudah ada (sama
+    // seperti kalau petugas memilih manual) supaya dropdown level
+    // berikutnya ikut ter-load dengan benar.
+    final int? provinsiId = angka('provinsi_id');
+    if (provinsiId != null) {
+      await _chooseProvince(provinsiId);
+    } else {
+      _hintWilayahAsli['provinsi'] = teks('provinsi_usaha');
+    }
+
+    final int? kabupatenId = angka('kabupaten_id');
+    if (kabupatenId != null) {
+      await _chooseRegency(kabupatenId);
+    } else {
+      _hintWilayahAsli['kabupaten'] = teks('kab_kota_usaha');
+    }
+
+    final int? kecamatanId = angka('kecamatan_id');
+    if (kecamatanId != null) {
+      await _chooseDistrict(kecamatanId);
+    } else {
+      _hintWilayahAsli['kecamatan'] = teks('kecamatan');
+    }
+
+    final int? kelurahanId = angka('kelurahan_id');
+    if (kelurahanId != null) {
+      if (mounted) setState(() => _data.kelurahanId = kelurahanId);
+    } else {
+      _hintWilayahAsli['kelurahan'] = teks('kelurahan');
+    }
+
+    if (mounted) setState(() {});
+  }
+
+  /// Apakah nilai field [key] sekarang beda dari nilai hasil autofill asli.
+  bool _diubahDariAsli(String key, String nilaiSekarang) {
+    final String? asli = _nilaiAsliOtomatis[key];
+    if (asli == null) return false;
+    return nilaiSekarang.trim() != asli.trim();
   }
 
   Future<void> _chooseProvince(int? id) async {
@@ -440,31 +542,52 @@ class _OssFormPageState extends State<OssFormPage> {
     List<TextInputFormatter>? inputFormatters,
     String? Function(String?)? validator,
     IconData icon = Icons.notes_rounded,
-  }) => Padding(
-    padding: const EdgeInsets.only(bottom: 12),
-    child: TextFormField(
-      controller: controller,
-      decoration: InputDecoration(
-        labelText: '$label${required ? ' *' : ''}',
-        hintText: hintText,
-        filled: true,
-        fillColor: AppTheme.scaffoldColorDynamic(context),
-        prefixIcon: Icon(icon, size: 20),
+    String? autofillKey,
+  }) {
+    final bool diubah = autofillKey != null &&
+        _diubahDariAsli(autofillKey, controller.text);
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: TextFormField(
+        controller: controller,
+        decoration: InputDecoration(
+          labelText: '$label${required ? ' *' : ''}',
+          hintText: hintText,
+          filled: true,
+          fillColor: AppTheme.scaffoldColorDynamic(context),
+          prefixIcon: Icon(icon, size: 20),
+          suffixIcon: diubah
+              ? Tooltip(
+                  message: 'Diubah dari data resmi OSS',
+                  child: Icon(
+                    Icons.edit_note_rounded,
+                    size: 20,
+                    color: Colors.orange.shade700,
+                  ),
+                )
+              : null,
+        ),
+        keyboardType: type,
+        maxLines: lines,
+        inputFormatters: inputFormatters,
+        validator: validator ?? (required ? _required : null),
+        onChanged: (v) {
+          changed(v);
+          // supaya badge "diubah" langsung muncul/hilang saat mengetik
+          if (autofillKey != null) setState(() {});
+        },
       ),
-      keyboardType: type,
-      maxLines: lines,
-      inputFormatters: inputFormatters,
-      validator: validator ?? (required ? _required : null),
-      onChanged: changed,
-    ),
-  );
+    );
+  }
 
   Widget _region(
     String label,
     int? value,
     List<RegionOption> values,
-    ValueChanged<int?> changed,
-  ) {
+    ValueChanged<int?> changed, {
+    String? hintNamaAsli,
+  }) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: DropdownButtonFormField<int>(
@@ -475,6 +598,10 @@ class _OssFormPageState extends State<OssFormPage> {
           filled: true,
           fillColor: AppTheme.scaffoldColorDynamic(context),
           prefixIcon: const Icon(Icons.location_on_outlined, size: 20),
+          helperText: (value == null && hintNamaAsli != null)
+              ? 'Data OSS: $hintNamaAsli \u2014 tidak ditemukan di daftar, pilih manual.'
+              : null,
+          helperMaxLines: 2,
         ),
         items: values
             .map(
@@ -757,6 +884,7 @@ class _OssFormPageState extends State<OssFormPage> {
                           _namaBrandCtrl,
                           (v) => _data.namaBrand = v,
                           icon: Icons.storefront_outlined,
+                          autofillKey: 'namaBrand',
                         ),
                         if (_data.isValid)
                           Padding(
@@ -822,24 +950,28 @@ class _OssFormPageState extends State<OssFormPage> {
                           _data.provinsiId,
                           _provinces,
                           _chooseProvince,
+                          hintNamaAsli: _hintWilayahAsli['provinsi'],
                         ),
                         _region(
                           'Kabupaten/Kota',
                           _data.kabupatenId,
                           _regencies,
                           _chooseRegency,
+                          hintNamaAsli: _hintWilayahAsli['kabupaten'],
                         ),
                         _region(
                           'Kecamatan',
                           _data.kecamatanId,
                           _districts,
                           _chooseDistrict,
+                          hintNamaAsli: _hintWilayahAsli['kecamatan'],
                         ),
                         _region(
                           'Kelurahan/Desa',
                           _data.kelurahanId,
                           _villages,
                           (v) => setState(() => _data.kelurahanId = v),
+                          hintNamaAsli: _hintWilayahAsli['kelurahan'],
                         ),
                         _text(
                           'Alamat Lengkap',
@@ -847,6 +979,7 @@ class _OssFormPageState extends State<OssFormPage> {
                           (v) => _data.alamat = v,
                           lines: 3,
                           icon: Icons.home_work_outlined,
+                          autofillKey: 'alamat',
                         ),
                       ],
                     ),
@@ -899,6 +1032,7 @@ class _OssFormPageState extends State<OssFormPage> {
                           ],
                           validator: _phoneValidator,
                           icon: Icons.phone_outlined,
+                          autofillKey: 'noHp',
                         ),
                         _text(
                           'Email',
@@ -909,6 +1043,7 @@ class _OssFormPageState extends State<OssFormPage> {
                           hintText: 'example@example.com',
                           validator: _emailValidator,
                           icon: Icons.email_outlined,
+                          autofillKey: 'email',
                         ),
                       ],
                     ),

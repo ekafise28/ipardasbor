@@ -56,6 +56,10 @@ class RiwayatCard extends StatelessWidget {
                   _Badge(text: item.jenis, color: warnaJenis),
                   const SizedBox(width: 8),
                   _StatusBadge(selesai: item.selesai, label: item.status),
+                  if (item.ossTidakValid) ...<Widget>[
+                    const SizedBox(width: 8),
+                    const _TidakValidBadge(),
+                  ],
                   const Spacer(),
                   if (tanggalLabel != '-')
                     Column(
@@ -204,6 +208,36 @@ class _StatusBadge extends StatelessWidget {
               fontSize: 11,
               fontWeight: FontWeight.w700,
               color: warna,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _TidakValidBadge extends StatelessWidget {
+  const _TidakValidBadge();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: Colors.red.withOpacity(0.12),
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: const Row(
+        mainAxisSize: MainAxisSize.min,
+        children: <Widget>[
+          Icon(Icons.error_outline_rounded, size: 12, color: Colors.red),
+          SizedBox(width: 4),
+          Text(
+            'Tidak Valid',
+            style: TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w700,
+              color: Colors.red,
             ),
           ),
         ],

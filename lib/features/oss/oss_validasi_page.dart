@@ -13,7 +13,20 @@ import 'services/oss_service.dart';
 /// mencocokkan KBLI/NKU-nya. Backend adalah sumber kebenaran; hasil valid/
 /// tidak valid TIDAK ditentukan di sisi aplikasi.
 class OssValidasiPage extends StatefulWidget {
-  const OssValidasiPage({super.key});
+  const OssValidasiPage({
+    super.key,
+    this.initialNib,
+    this.initialKbli,
+    this.initialNku,
+    this.namaUsaha,
+  });
+
+  /// Diisi saat dibuka dari daftar usaha. Kalau ketiganya ada, pengecekan
+  /// ke API OSS langsung dijalankan tanpa menunggu tombol ditekan.
+  final String? initialNib;
+  final String? initialKbli;
+  final String? initialNku;
+  final String? namaUsaha;
 
   @override
   State<OssValidasiPage> createState() => _OssValidasiPageState();
@@ -35,10 +48,30 @@ class _OssValidasiPageState extends State<OssValidasiPage> {
   bool _submitting = false;
 
   static const List<String> _daftarKbliDiizinkan = [
-    '55105', '55104', '55103', '55102', '55101', '55106',
-    '55203', '55201', '55202', '55204', '55300', '55209',
-    '87303', '55909', '55901', '55110', '55120', '55130',
-    '55191', '55192', '55193', '55194', '55199', '55900',
+    '55105',
+    '55104',
+    '55103',
+    '55102',
+    '55101',
+    '55106',
+    '55203',
+    '55201',
+    '55202',
+    '55204',
+    '55300',
+    '55209',
+    '87303',
+    '55909',
+    '55901',
+    '55110',
+    '55120',
+    '55130',
+    '55191',
+    '55192',
+    '55193',
+    '55194',
+    '55199',
+    '55900',
   ];
 
   @override
@@ -46,6 +79,17 @@ class _OssValidasiPageState extends State<OssValidasiPage> {
     super.initState();
     _api = ApiClient();
     _ossService = OssService(_api);
+
+    _nibCtrl.text = (widget.initialNib ?? '').trim();
+    _kbliCtrl.text = (widget.initialKbli ?? '').trim();
+    _nkuCtrl.text = (widget.initialNku ?? '').trim();
+
+    // KBLI 55900 butuh pilihan jenis usaha dari petugas, jadi tidak otomatis.
+    if (_dariDaftar && !_isKbli55900) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _submit();
+      });
+    }
   }
 
   @override
@@ -57,6 +101,11 @@ class _OssValidasiPageState extends State<OssValidasiPage> {
   }
 
   bool get _isKbli55900 => _kbliCtrl.text.trim() == '55900';
+
+  bool get _dariDaftar =>
+      (widget.initialNib ?? '').trim().isNotEmpty &&
+      (widget.initialKbli ?? '').trim().isNotEmpty &&
+      (widget.initialNku ?? '').trim().isNotEmpty;
 
   String? _kbliValidator(String? v) {
     final value = v?.trim() ?? '';
@@ -72,9 +121,7 @@ class _OssValidasiPageState extends State<OssValidasiPage> {
       (v == null || v.trim().isEmpty) ? 'Wajib diisi.' : null;
 
   void _showError(String pesan) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(pesan)),
-    );
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(pesan)));
   }
 
   Future<void> _submit() async {
@@ -109,14 +156,19 @@ class _OssValidasiPageState extends State<OssValidasiPage> {
         nku: hasilApi.nku,
         kbliDesc: _kbliDesc ?? '',
         isValid: hasilApi.isValid,
+        proyek: hasilApi.proyek,
       );
 
       if (!mounted) return;
-      Navigator.of(context).push<void>(
-        MaterialPageRoute<void>(
-          builder: (_) => OssFormPage(validasi: hasil),
-        ),
+      final bool? tersimpan = await Navigator.of(context).push<bool>(
+        MaterialPageRoute<bool>(builder: (_) => OssFormPage(validasi: hasil)),
       );
+
+      // Dibuka dari daftar: halaman ini hanya perantara, jadi setelah form
+      // ditutup (disimpan atau dibatalkan) langsung kembali ke daftar.
+      if (mounted && (tersimpan == true || _dariDaftar)) {
+        Navigator.of(context).pop(tersimpan == true);
+      }
     } catch (e) {
       if (!mounted) return;
       setState(() => _submitting = false);
@@ -227,8 +279,40 @@ class _OssValidasiPageState extends State<OssValidasiPage> {
                   ],
                 ),
               ),
+              if (_dariDaftar && widget.namaUsaha != null)
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(12),
+                  margin: const EdgeInsets.only(bottom: 14),
+                  decoration: BoxDecoration(
+                    color: AppTheme.surfaceMuted(context),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: AppTheme.border(context)),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        widget.namaUsaha!,
+                        style: TextStyle(
+                          fontWeight: FontWeight.w800,
+                          color: AppTheme.textColor(context),
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        'NIB, KBLI, dan NKU diisi otomatis dari daftar.',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: AppTheme.textSecondary(context),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               TextFormField(
                 controller: _nkuCtrl,
+                // readOnly: _dariDaftar,
                 decoration: const InputDecoration(
                   labelText: 'NKU *',
                   hintText: 'Contoh: 202210051139546023359',
@@ -240,6 +324,7 @@ class _OssValidasiPageState extends State<OssValidasiPage> {
               const SizedBox(height: 12),
               TextFormField(
                 controller: _nibCtrl,
+                // readOnly: _dariDaftar,
                 decoration: const InputDecoration(
                   labelText: 'NIB *',
                   hintText: 'Masukkan NIB',
@@ -251,6 +336,7 @@ class _OssValidasiPageState extends State<OssValidasiPage> {
               const SizedBox(height: 12),
               TextFormField(
                 controller: _kbliCtrl,
+                // readOnly: _dariDaftar,
                 decoration: const InputDecoration(
                   labelText: 'KBLI *',
                   hintText: 'Masukkan 5 digit KBLI',

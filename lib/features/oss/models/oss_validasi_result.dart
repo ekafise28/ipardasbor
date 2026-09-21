@@ -1,8 +1,7 @@
 /// Hasil tahap validasi NIB/KBLI/NKU, dibawa ke [OssFormPage].
 ///
-/// [isValid] untuk sekarang SELALU diisi manual dari toggle simulasi di
-/// [OssValidasiPage] karena backend validasi belum tersedia. Setelah API
-/// validasi jadi, nilai ini akan datang dari respons server.
+/// [isValid] dan [proyek] berasal dari respons backend (`OssService.validasi`),
+/// yang meneruskan pengecekan ke API OSS pemerintah dan mencocokkan KBLI/NKU.
 class OssValidasiResult {
   const OssValidasiResult({
     required this.nib,
@@ -10,6 +9,7 @@ class OssValidasiResult {
     required this.nku,
     required this.kbliDesc,
     required this.isValid,
+    this.proyek,
   });
 
   final String nib;
@@ -20,4 +20,11 @@ class OssValidasiResult {
   final String kbliDesc;
 
   final bool isValid;
+
+  /// Data usaha hasil pencocokan ke proyek OSS: nama_perusahaan,
+  /// alamat_usaha, nomor_telp_perusahaan, email_perusahaan, provinsi_id,
+  /// provinsi_usaha, kabupaten_id, kab_kota_usaha, kecamatan_id, kecamatan,
+  /// kelurahan_id, kelurahan. Dipakai [OssFormPage] untuk autofill form.
+  /// Null kalau NIB tidak ditemukan API OSS sama sekali.
+  final Map<String, dynamic>? proyek;
 }

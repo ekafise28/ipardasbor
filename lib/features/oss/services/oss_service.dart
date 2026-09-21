@@ -31,6 +31,9 @@ class OssService {
     }
 
     final Map<String, dynamic> data = Map<String, dynamic>.from(response);
+    final Map<String, dynamic>? proyek = data['proyek'] is Map
+        ? Map<String, dynamic>.from(data['proyek'] as Map)
+        : null;
 
     return OssValidasiResult(
       nib: nib,
@@ -38,6 +41,10 @@ class OssService {
       nku: nku,
       kbliDesc: '',
       isValid: data['valid'] == true,
+      // Data usaha (nama, alamat, kontak, wilayah) hasil pencocokan ke
+      // proyek OSS - dipakai OssFormPage untuk autofill. Null kalau NIB
+      // tidak ditemukan sama sekali.
+      proyek: proyek,
     );
   }
 

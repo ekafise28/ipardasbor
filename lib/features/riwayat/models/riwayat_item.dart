@@ -69,6 +69,7 @@ class RiwayatItem {
     required this.petugas,
     required this.tanggal,
     required this.status,
+    this.hasilValidasi,
   });
 
   final int id;
@@ -80,7 +81,16 @@ class RiwayatItem {
   final DateTime? tanggal;
   final String status;
 
+  /// Hanya relevan untuk [jenis] == 'OSS'. Nilainya 'VALID' / 'TIDAK_VALID',
+  /// atau null untuk data Non-OSS/OTA (tidak melalui tahap validasi ini).
+  final String? hasilValidasi;
+
   bool get selesai => status.toUpperCase() == 'SELESAI';
+
+  /// True kalau data OSS ini hasil validasinya TIDAK_VALID - dipakai untuk
+  /// menampilkan badge peringatan di kartu/daftar riwayat.
+  bool get ossTidakValid =>
+      jenis.toUpperCase() == 'OSS' && hasilValidasi == 'TIDAK_VALID';
 
   factory RiwayatItem.fromJson(Map<String, dynamic> json) {
     return RiwayatItem(
@@ -98,6 +108,7 @@ class RiwayatItem {
           ? DateTime.tryParse(json['tanggal'] as String)
           : null,
       status: (json['status'] as String?) ?? '-',
+      hasilValidasi: json['hasil_validasi'] as String?,
     );
   }
 }

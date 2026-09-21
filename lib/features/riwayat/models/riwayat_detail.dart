@@ -73,8 +73,11 @@ class RiwayatDetail {
     required this.alamat,
     required this.latitude,
     required this.longitude,
+    required this.hasilValidasi,
+    required this.pesanValidasi,
     required this.statusPengawasan,
     required this.statusKetidaksesuaian,
+    required this.keteranganKetidaksesuaian,
     required this.keterangan,
     required this.catatanPetugas,
     required this.tanggalPengawasan,
@@ -85,7 +88,11 @@ class RiwayatDetail {
   });
 
   final int id;
-  final int? idProyek;
+
+  /// NKU (bentuk "R-xxxxxxxxx"), disimpan di kolom id_proyek. BUKAN angka
+  /// - jangan di-parse pakai int.tryParse, cuma string identifier.
+  final String? idProyek;
+
   final String sumberData;
   final String statusVerifikasi;
 
@@ -110,8 +117,24 @@ class RiwayatDetail {
   final double? latitude;
   final double? longitude;
 
+  /// 'VALID' / 'TIDAK_VALID' - hasil validasi otomatis NIB/KBLI/NKU ke API
+  /// OSS saat data ini disimpan. Null untuk data Non-OSS/OTA.
+  final String? hasilValidasi;
+
+  /// Penjelasan dari sistem kenapa hasilnya begitu (mis. "KBLI tidak sesuai
+  /// dengan proyek OSS.").
+  final String? pesanValidasi;
+
   final String? statusPengawasan;
-  final String? statusKetidaksesuaian;
+
+  /// Kategori ketidaksesuaian yang dipilih petugas (hanya diisi kalau
+  /// [hasilValidasi] == 'TIDAK_VALID'). Kolomnya di backend di-cast array,
+  /// jadi ini beneran List, bukan String tunggal.
+  final List<String> statusKetidaksesuaian;
+
+  /// Penjelasan bebas dari petugas untuk ketidaksesuaian di atas.
+  final String? keteranganKetidaksesuaian;
+
   final String? keterangan;
   final String? catatanPetugas;
 
@@ -126,10 +149,15 @@ class RiwayatDetail {
   /// dibatasi hanya kolom tbl_oss_pengawasan.)
   String get namaUsaha => namaBrand ?? namaPemilik ?? '-';
 
+  /// True kalau data OSS ini hasil validasinya TIDAK_VALID - dipakai untuk
+  /// menampilkan badge peringatan di halaman detail.
+  bool get ossTidakValid =>
+      sumberData.toUpperCase() == 'OSS' && hasilValidasi == 'TIDAK_VALID';
+
   factory RiwayatDetail.fromJson(Map<String, dynamic> json) {
     return RiwayatDetail(
       id: (json['id'] as num).toInt(),
-      idProyek: _toInt(json['id_proyek']),
+      idProyek: json['id_proyek'] as String?,
       sumberData: (json['sumber_data'] as String?) ?? '-',
       statusVerifikasi: (json['status_verifikasi'] as String?) ?? '-',
       petugas: json['petugas'] as String?,
@@ -151,8 +179,11 @@ class RiwayatDetail {
       alamat: json['alamat'] as String?,
       latitude: _toDouble(json['latitude']),
       longitude: _toDouble(json['longitude']),
+      hasilValidasi: json['hasil_validasi'] as String?,
+      pesanValidasi: json['pesan_validasi'] as String?,
       statusPengawasan: _toStringSafe(json['status_pengawasan']),
-      statusKetidaksesuaian: _toStringSafe(json['status_ketidaksesuaian']),
+      statusKetidaksesuaian: _toStringList(json['status_ketidaksesuaian']),
+      keteranganKetidaksesuaian: json['keterangan_ketidaksesuaian'] as String?,
       keterangan: json['keterangan'] as String?,
       catatanPetugas: json['catatan_petugas'] as String?,
       tanggalPengawasan: json['tanggal_pengawasan'] != null
@@ -178,22 +209,6 @@ class RiwayatDetail {
           .toList(),
     );
   }
-}
-
-int? _toInt(dynamic value) {
-  if (value == null) {
-    return null;
-  }
-
-  if (value is num) {
-    return value.toInt();
-  }
-
-  if (value is String) {
-    return int.tryParse(value);
-  }
-
-  return null;
 }
 
 double? _toDouble(dynamic value) {
@@ -222,6 +237,25 @@ String? _toStringSafe(dynamic value) {
   // Backend kadang ngirim status/kode sebagai number atau bool,
   // bukan string - convert aja daripada crash.
   return value.toString();
+}
+
+/// Backend meng-cast status_ketidaksesuaian sebagai array (JSON), jadi di
+/// sini kita terima List asli - bukan di-stringify seperti _toStringSafe.
+List<String> _toStringList(dynamic value) {
+  if (value == null) {
+    return const <String>[];
+  }
+
+  if (value is List) {
+    return value
+        .map((dynamic e) => e.toString().trim())
+        .where((String e) => e.isNotEmpty)
+        .toList();
+  }
+
+  // Jaga-jaga kalau suatu saat backend malah kirim string tunggal.
+  final String s = value.toString().trim();
+  return s.isEmpty ? const <String>[] : <String>[s];
 }
 
 /// Satu foto dokumentasi hasil pengawasan.
@@ -304,7 +338,7 @@ class RiwayatDetailOta {
       latitude: _toDouble(json['latitude']),
       longitude: _toDouble(json['longitude']),
       catatan: json['catatan'] as String?,
-       mapsUrl: json['maps_url'] as String?,
+      mapsUrl: json['maps_url'] as String?,
     );
   }
 

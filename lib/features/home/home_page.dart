@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import '../../app/app_theme.dart';
 import '../dashboard/dashboard_page.dart';
 
-import '../oss/oss_validasi_page.dart';
+import '../oss/oss_proyek_page.dart';
 import '../sinkronisasi/sync_page.dart';
 import '../riwayat/riwayat_page.dart';
 
@@ -134,7 +134,7 @@ class _HomePageState extends State<HomePage> {
 
       case 'Validasi OSS':
         await Navigator.of(context).push(
-          MaterialPageRoute<void>(builder: (_) => const OssValidasiPage()),
+          MaterialPageRoute<void>(builder: (_) => const OssProyekPage()),
         );
         break;
 

@@ -138,6 +138,8 @@ class _RiwayatDetailPageState extends State<RiwayatDetailPage> {
                     ? Colors.green
                     : Colors.orange,
               ),
+              if (detail.ossTidakValid)
+                const StatusBadge(text: 'Data Tidak Valid', color: Colors.red),
             ],
           ),
           const SizedBox(height: 16),
@@ -168,8 +170,20 @@ class _RiwayatDetailPageState extends State<RiwayatDetailPage> {
               Baris('Status Verifikasi', detail.statusVerifikasi),
               Baris('Memiliki NIB', detail.memilikiNib),
               Baris('Nomor NIB', detail.nib),
+              Baris('NKU', detail.idProyek),
               Baris('NPWPD', detail.npwpd),
               Baris('Terdaftar OTA', detail.terdaftarOta),
+              if (detail.sumberData.toUpperCase() == 'OSS') ...<Baris>[
+                Baris(
+                  'Hasil Validasi OSS',
+                  detail.hasilValidasi == 'TIDAK_VALID'
+                      ? 'Tidak Valid'
+                      : detail.hasilValidasi == 'VALID'
+                      ? 'Valid'
+                      : null,
+                ),
+                Baris('Keterangan Validasi', detail.pesanValidasi),
+              ],
             ],
           ),
           const SizedBox(height: 12),
@@ -196,7 +210,16 @@ class _RiwayatDetailPageState extends State<RiwayatDetailPage> {
             rows: <Baris>[
               Baris('Petugas', detail.petugas),
               Baris('Status Pengawasan', detail.statusPengawasan),
-              Baris('Status Ketidaksesuaian', detail.statusKetidaksesuaian),
+              Baris(
+                'Status Ketidaksesuaian',
+                detail.statusKetidaksesuaian.isEmpty
+                    ? null
+                    : detail.statusKetidaksesuaian.join(', '),
+              ),
+              Baris(
+                'Keterangan Ketidaksesuaian',
+                detail.keteranganKetidaksesuaian,
+              ),
               Baris('Keterangan', detail.keterangan),
               Baris('Catatan Petugas', detail.catatanPetugas),
               Baris(
@@ -260,6 +283,7 @@ class _RiwayatDetailPageState extends State<RiwayatDetailPage> {
     return '$tanggalLabel, $jam:$menit';
   }
 }
+
 /// Kartu section khusus foto dokumentasi, tampil grid 3 kolom.
 /// Tap foto membuka full-screen viewer dengan zoom.
 class _FotoSection extends StatelessWidget {
