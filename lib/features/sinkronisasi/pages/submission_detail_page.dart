@@ -4,8 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../../app/app_theme.dart';
-import '../../shared_widgets/detail_section_card.dart';
-import '../../shared_widgets/detail_status_header.dart';
+import '../../../shared/widgets/detail_section_card.dart';
+import '../../../shared/widgets/detail_status_header.dart';
 
 import '../../non_oss/offline/non_oss_local_data.dart';
 import '../../non_oss/offline/offline_database.dart';

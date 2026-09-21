@@ -1,7 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:ipardasbor/features/shared_widgets/connection_error_state.dart';
+import 'package:ipardasbor/shared/widgets/connection_error_state.dart';
 
 import '../../app/app_theme.dart';
 

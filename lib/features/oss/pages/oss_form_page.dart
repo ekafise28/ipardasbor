@@ -4,19 +4,19 @@ import 'package:intl/intl.dart';
 import 'package:ipardasbor/app/app_theme.dart';
 import 'package:ipardasbor/core/api/api_exception.dart';
 
-import '../../core/api/api_client.dart';
-import '../non_oss/models/location_fetch_status.dart';
-import '../non_oss/models/region_option.dart';
-import '../non_oss/services/location_service.dart';
-import '../non_oss/services/region_service.dart';
-import '../non_oss/widgets/location_picker.dart';
-import '../non_oss/widgets/photo_picker.dart';
+import '../../../core/api/api_client.dart';
+import '../../non_oss/models/location_fetch_status.dart';
+import '../../non_oss/models/region_option.dart';
+import '../../non_oss/services/location_service.dart';
+import '../../non_oss/services/region_service.dart';
+import '../../non_oss/widgets/location_picker.dart';
+import '../../non_oss/widgets/photo_picker.dart';
 
-import 'models/oss_form_data.dart';
-import 'models/oss_validasi_result.dart';
-import 'services/oss_service.dart';
-import 'widgets/ota_platform_selector.dart';
-import 'widgets/status_ketidaksesuaian_selector.dart';
+import '../models/oss_form_data.dart';
+import '../models/oss_validasi_result.dart';
+import '../services/oss_service.dart';
+import '../widgets/ota_platform_selector.dart';
+import '../widgets/status_ketidaksesuaian_selector.dart';
 
 /// Tahap 2: form lanjutan validasi OSS, dibuka setelah [OssValidasiPage]
 /// mengembalikan [OssValidasiResult].
@@ -524,11 +524,13 @@ class _OssFormPageState extends State<OssFormPage> {
       if (!mounted) return;
       setState(() => _saving = false);
 
-            final String pesan = _ossService.isConnectionFailure(e)
+      final String pesan = _ossService.isConnectionFailure(e)
           ? 'Tidak dapat terhubung ke server. Periksa koneksi internet.'
           : (e is ApiException
-              ? e.message
-              : e.toString().replaceFirst('Exception: ', ''));
+                ? e.message
+                : e.toString().replaceFirst('Exception: ', ''));
+
+      _error(Exception(pesan));
     }
   }
 
@@ -545,8 +547,8 @@ class _OssFormPageState extends State<OssFormPage> {
     IconData icon = Icons.notes_rounded,
     String? autofillKey,
   }) {
-    final bool diubah = autofillKey != null &&
-        _diubahDariAsli(autofillKey, controller.text);
+    final bool diubah =
+        autofillKey != null && _diubahDariAsli(autofillKey, controller.text);
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),

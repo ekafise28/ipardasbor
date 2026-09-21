@@ -8,11 +8,11 @@ import '../../app/app_theme.dart';
 import '../../core/api/api_exception.dart';
 import '../riwayat/models/riwayat_page_result.dart' show RiwayatPagination;
 import '../riwayat/pages/riwayat_detail_page.dart';
-import '../shared_widgets/connection_error_state.dart';
+import '../../shared/widgets/connection_error_state.dart';
 import 'models/oss_proyek_filter.dart';
 import 'models/oss_proyek_item.dart';
 import 'models/oss_proyek_page_result.dart';
-import 'oss_validasi_page.dart';
+import 'pages/oss_validasi_page.dart';
 import 'services/oss_proyek_service.dart';
 import 'widgets/oss_proyek_card.dart';
 
