@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:ipardasbor/features/non_oss/services/wilayah_akses_service.dart';
 import 'package:ipardasbor/shared/widgets/connection_error_state.dart';
 
 import '../../app/app_theme.dart';
@@ -114,6 +115,7 @@ class _ProfilePageState extends State<ProfilePage> {
                   child: ElevatedButton(
                     onPressed: () async {
                       Navigator.pop(dialogContext);
+                      await WilayahAksesService.instance.clear();
                       await AuthService().logout();
                       if (context.mounted) {
                         Navigator.pushNamedAndRemoveUntil(

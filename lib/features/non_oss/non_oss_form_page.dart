@@ -38,7 +38,7 @@ class _NonOssFormPageState extends State<NonOssFormPage>
   final _key = GlobalKey<FormState>();
   late final NonOssFormData _data;
 
-  late final Map<String, String> _snapshotAwal;
+  late Map<String, String> _snapshotAwal;
   late final int _jumlahFotoAwal;
 
   late final ApiClient _api;
@@ -283,10 +283,54 @@ class _NonOssFormPageState extends State<NonOssFormPage>
       if (_isEditing) {
         await _preloadRegionsForEditing();
       }
+
+      await _sesuaikanWilayahDenganAkses();
     } catch (e) {
       _error(e);
     } finally {
       if (mounted) setState(() => _loadingRegions = false);
+    }
+  }
+
+  /// Menyesuaikan wilayah dengan kewenangan akun.
+  /// - Draft lama yang wilayahnya sudah di luar akses dikosongkan.
+  /// - Akun terkunci ke satu wilayah: provinsi/kabupaten dipilih otomatis.
+  Future<void> _sesuaikanWilayahDenganAkses() async {
+    bool berubah = false;
+
+    if (_data.provinsiId != null &&
+        !_provinces.any((RegionOption o) => o.id == _data.provinsiId)) {
+      _data.provinsiId = _data.kabupatenId = _data.kecamatanId =
+          _data.kelurahanId = null;
+      _regencies = [];
+      _districts = [];
+      _villages = [];
+      berubah = true;
+    } else if (_data.kabupatenId != null &&
+        !_regencies.any((RegionOption o) => o.id == _data.kabupatenId)) {
+      _data.kabupatenId = _data.kecamatanId = _data.kelurahanId = null;
+      _districts = [];
+      _villages = [];
+      berubah = true;
+    }
+
+    if (_data.provinsiId == null && _provinces.length == 1) {
+      await _chooseProvince(_provinces.first.id);
+      berubah = true;
+    }
+
+    if (_data.provinsiId != null &&
+        _data.kabupatenId == null &&
+        _regencies.length == 1) {
+      await _chooseRegency(_regencies.first.id);
+      berubah = true;
+    }
+
+    // Perubahan otomatis ini bukan perubahan petugas. Perbarui snapshot
+    // supaya tombol Kembali tidak menampilkan "Simpan sebagai draft?"
+    // tanpa alasan.
+    if (berubah) {
+      _snapshotAwal = Map<String, String>.from(_data.toFields());
     }
   }
 
@@ -662,10 +706,14 @@ class _NonOssFormPageState extends State<NonOssFormPage>
     List<RegionOption> values,
     ValueChanged<int?> changed,
   ) {
+    final int? nilai = values.any((RegionOption r) => r.id == value)
+        ? value
+        : null;
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: DropdownButtonFormField<int>(
-        initialValue: value,
+        key: ValueKey<String>('$label-$nilai-${values.length}'),
+        initialValue: nilai,
         isExpanded: true,
         decoration: InputDecoration(
           labelText: '$label *',

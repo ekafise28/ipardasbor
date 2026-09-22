@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:ipardasbor/features/non_oss/services/wilayah_akses_service.dart';
 
 import '../../app/app_theme.dart';
 import '../authentication/models/auth_user.dart';
@@ -202,6 +203,7 @@ class _SettingsPageState extends State<SettingsPage> {
                   child: ElevatedButton(
                     onPressed: () async {
                       Navigator.pop(dialogContext);
+                      await WilayahAksesService.instance.clear();
                       await AuthService().logout();
                       if (context.mounted) {
                         Navigator.pushNamedAndRemoveUntil(

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:ipardasbor/features/non_oss/services/wilayah_akses_service.dart';
 
 import '../../app/app_theme.dart';
 import '../dashboard/dashboard_page.dart';
@@ -42,6 +43,7 @@ class _HomePageState extends State<HomePage> {
   @override
   void initState() {
     super.initState();
+    WilayahAksesService.instance.refresh(); // tanpa await, berjalan di latar
     _api = ApiClient();
     _nonOssService = NonOssService(_api);
     _refreshSyncStatus();

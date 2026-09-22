@@ -3,9 +3,9 @@ class ApiEndpoints {
 
   // Base URL utama API Laravel.
   // static const String baseUrl = 'https://dasbor.kemenpar.online/api';
-  // static const String baseUrl = 'https://dasbor.kemenpar.tech/api';
+  static const String baseUrl = 'https://dasbor.kemenpar.tech/api';
   // static const String baseUrl = 'http://localhost:3000';
-  static const String baseUrl = 'http://localhost:8000/api';
+  // static const String baseUrl = 'http://localhost:8000/api';
 
   // Health check tanpa prefix mobile.
   // Hasil: https://dasbor.kemenpar.online/api/health
@@ -29,6 +29,7 @@ class ApiEndpoints {
   static const String kabupaten = '/mobile/wilayah/kabupaten';
   static const String kecamatan = '/mobile/wilayah/kecamatan';
   static const String kelurahan = '/mobile/wilayah/kelurahan';
+  static const String wilayahAkses = '/mobile/wilayah/akses';
 
   // Pengawasan OSS
   static const String validasiOss = '/mobile/oss/validasi';

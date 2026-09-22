@@ -130,8 +130,7 @@ class _OssFormPageState extends State<OssFormPage>
     _catatanPetugasCtrl = TextEditingController();
     _otaLainnyaCtrl = TextEditingController();
 
-    _loadProvinces();
-    _terapkanAutofillProyek();
+    _muatAwal();
   }
 
   @override
@@ -148,6 +147,23 @@ class _OssFormPageState extends State<OssFormPage>
     _catatanPetugasCtrl.dispose();
     _otaLainnyaCtrl.dispose();
     super.dispose();
+  }
+
+  /// Berurutan: daftar provinsi harus siap sebelum autofill, supaya wilayah
+  /// dari API OSS bisa dicek terhadap wilayah kewenangan akun.
+  Future<void> _muatAwal() async {
+    await _loadProvinces();
+    await _terapkanAutofillProyek();
+    if (!mounted) return;
+
+    // Akun terkunci ke satu wilayah: pilih otomatis (seperti dropdown terkunci di web).
+    if (_data.provinsiId == null && _provinces.length == 1) {
+      await _chooseProvince(_provinces.first.id);
+    }
+    if (!mounted) return;
+    if (_data.kabupatenId == null && _regencies.length == 1) {
+      await _chooseRegency(_regencies.first.id);
+    }
   }
 
   Future<void> _loadProvinces() async {
@@ -216,28 +232,32 @@ class _OssFormPageState extends State<OssFormPage>
     // seperti kalau petugas memilih manual) supaya dropdown level
     // berikutnya ikut ter-load dengan benar.
     final int? provinsiId = angka('provinsi_id');
-    if (provinsiId != null) {
+    if (provinsiId != null &&
+        _provinces.any((RegionOption o) => o.id == provinsiId)) {
       await _chooseProvince(provinsiId);
     } else {
       _hintWilayahAsli['provinsi'] = teks('provinsi_usaha');
     }
 
     final int? kabupatenId = angka('kabupaten_id');
-    if (kabupatenId != null) {
+    if (kabupatenId != null &&
+        _regencies.any((RegionOption o) => o.id == kabupatenId)) {
       await _chooseRegency(kabupatenId);
     } else {
       _hintWilayahAsli['kabupaten'] = teks('kab_kota_usaha');
     }
 
     final int? kecamatanId = angka('kecamatan_id');
-    if (kecamatanId != null) {
+    if (kecamatanId != null &&
+        _districts.any((RegionOption o) => o.id == kecamatanId)) {
       await _chooseDistrict(kecamatanId);
     } else {
       _hintWilayahAsli['kecamatan'] = teks('kecamatan');
     }
 
     final int? kelurahanId = angka('kelurahan_id');
-    if (kelurahanId != null) {
+    if (kelurahanId != null &&
+        _villages.any((RegionOption o) => o.id == kelurahanId)) {
       if (mounted) setState(() => _data.kelurahanId = kelurahanId);
     } else {
       _hintWilayahAsli['kelurahan'] = teks('kelurahan');
@@ -531,17 +551,20 @@ class _OssFormPageState extends State<OssFormPage>
     ValueChanged<int?> changed, {
     String? hintNamaAsli,
   }) {
+    final int? nilai = values.any((RegionOption r) => r.id == value)
+        ? value
+        : null;
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: DropdownButtonFormField<int>(
-        initialValue: value,
+        initialValue: nilai,
         isExpanded: true,
         decoration: InputDecoration(
           labelText: '$label *',
           filled: true,
           fillColor: AppTheme.scaffoldColorDynamic(context),
           prefixIcon: const Icon(Icons.location_on_outlined, size: 20),
-          helperText: (value == null && hintNamaAsli != null)
+          helperText: (nilai == null && hintNamaAsli != null)
               ? 'Data OSS: $hintNamaAsli \u2014 tidak ditemukan di daftar, pilih manual.'
               : null,
           helperMaxLines: 2,
