@@ -55,8 +55,6 @@ class OssFormData {
   final List<String> statusKetidaksesuaian = <String>[];
   String keteranganKetidaksesuaian = '';
 
-  int statusPengawasan = 1;
-  String keterangan = '';
   String catatanPetugas = '';
   DateTime tanggalPengawasan = DateTime.now();
 
@@ -79,7 +77,7 @@ class OssFormData {
       'longitude': longitude.trim(),
       'no_hp': noHp.trim(),
       'terdaftar_ota': terdaftarOta.trim().toUpperCase(),
-      'status_pengawasan': statusPengawasan.toString(),
+      'status_pengawasan': '0',
       'tanggal_pengawasan': _formatDate(tanggalPengawasan),
     };
 
@@ -91,7 +89,6 @@ class OssFormData {
     _addOptional(fields, 'npwpd', npwpd);
     _addOptional(fields, 'website', website);
     _addOptional(fields, 'email', email);
-    _addOptional(fields, 'keterangan', keterangan);
     _addOptional(fields, 'catatan_petugas', catatanPetugas);
 
     // --- Hanya kalau data hasil validasi TIDAK VALID ---

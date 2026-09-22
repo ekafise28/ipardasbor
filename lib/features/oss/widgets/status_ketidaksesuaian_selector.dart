@@ -29,15 +29,18 @@ class StatusKetidaksesuaianSelector extends StatelessWidget {
   final ValueChanged<String> onKeteranganChanged;
   final String keteranganLabel;
 
-  /// TODO(oss): opsi ini masih dummy, sesuaikan dengan 8 status
-  /// ketidaksesuaian OSS dari web (NIB ada KBLI sesuai NKU ada tapi tidak
-  /// valid, KBLI tidak ada, NKU tidak ada, dst) saat giliran OSS dikerjakan.
-  static const Map<String, String> ossDummyOptions = {
-    'TIDAK_BEROPERASI': 'Tidak Beroperasi',
-    'ALAMAT_TIDAK_DITEMUKAN': 'Alamat Tidak Ditemukan',
-    'MENOLAK_DIVERIFIKASI': 'Menolak Diverifikasi',
-    'PINDAH_ALAMAT': 'Pindah Alamat',
-    'TUTUP_PERMANEN': 'Tutup Permanen',
+  /// Status Hasil Pengawasan OSS - muncul hanya saat hasil validasi
+  /// TIDAK_VALID. Disimpan ke kolom status_ketidaksesuaian, persis
+  /// mengikuti $statusList di OssValidasiLanjutanController (web).
+  static const Map<String, String> ossStatusHasilOptions = {
+    'NIB_ADA_KBLI_SESUAI_NKU_ADA_TIDAK_VALID':
+        'NIB ada, KBLI Sesuai, NKU ada tetapi tidak valid',
+    'KBLI_TIDAK_ADA': 'KBLI tidak ada',
+    'NKU_TIDAK_ADA': 'NKU tidak ada',
+    'KBLI_NKU_TIDAK_ADA': 'KBLI dan NKU tidak ada',
+    'KBLI_TIDAK_SESUAI': 'KBLI tidak sesuai',
+    'KBLI_PENDUKUNG': 'KBLI pendukung',
+    'IZIN_BELUM_TERVERIFIKASI': 'Izin belum terbit/terverifikasi',
     'LAINNYA': 'Lainnya',
   };
 

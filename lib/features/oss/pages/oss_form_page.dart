@@ -6,9 +6,7 @@ import 'package:ipardasbor/core/api/api_exception.dart';
 import 'package:ipardasbor/shared/gps/gps_capture_mixin.dart';
 
 import '../../../core/api/api_client.dart';
-import '../../non_oss/models/location_fetch_status.dart';
 import '../../non_oss/models/region_option.dart';
-import '../../non_oss/services/location_service.dart';
 import '../../non_oss/services/region_service.dart';
 import '../../non_oss/widgets/location_picker.dart';
 import '../../non_oss/widgets/photo_picker.dart';
@@ -67,7 +65,6 @@ class _OssFormPageState extends State<OssFormPage>
   late final TextEditingController _websiteCtrl;
   late final TextEditingController _noHpCtrl;
   late final TextEditingController _emailCtrl;
-  late final TextEditingController _keteranganCtrl;
   late final TextEditingController _catatanPetugasCtrl;
   late final TextEditingController _otaLainnyaCtrl;
 
@@ -87,17 +84,6 @@ class _OssFormPageState extends State<OssFormPage>
     MapEntry('87303', 'Senior Living'),
     MapEntry('55909', 'Akomodasi Lainnya'),
   ];
-
-  static const Map<int, String> statuses = <int, String>{
-    1: 'Sesuai/aktif',
-    2: 'Tidak beroperasi',
-    3: 'Lainnya',
-    4: 'Alamat tidak ditemukan',
-    5: 'Menolak diverifikasi',
-    6: 'Pindah alamat',
-    7: 'Tutup permanen',
-    8: 'Status lainnya',
-  };
 
   @override
   void initState() {
@@ -126,7 +112,6 @@ class _OssFormPageState extends State<OssFormPage>
     _websiteCtrl = TextEditingController();
     _noHpCtrl = TextEditingController();
     _emailCtrl = TextEditingController();
-    _keteranganCtrl = TextEditingController();
     _catatanPetugasCtrl = TextEditingController();
     _otaLainnyaCtrl = TextEditingController();
 
@@ -143,7 +128,6 @@ class _OssFormPageState extends State<OssFormPage>
     _websiteCtrl.dispose();
     _noHpCtrl.dispose();
     _emailCtrl.dispose();
-    _keteranganCtrl.dispose();
     _catatanPetugasCtrl.dispose();
     _otaLainnyaCtrl.dispose();
     super.dispose();
@@ -429,11 +413,6 @@ class _OssFormPageState extends State<OssFormPage>
       !_data.isValid &&
           _data.statusKetidaksesuaian.contains('LAINNYA') &&
           _data.keteranganKetidaksesuaian.trim().isEmpty,
-    ),
-    _RequiredCheck(
-      _Section.hasil,
-      [3, 8].contains(_data.statusPengawasan) &&
-          _data.keterangan.trim().isEmpty,
     ),
     _RequiredCheck(_Section.foto, _data.photos.isEmpty),
   ];
@@ -1063,16 +1042,15 @@ class _OssFormPageState extends State<OssFormPage>
                   if (!_data.isValid)
                     FormSectionOss(
                       number: 6,
-                      title: 'Status Ketidaksesuaian',
-                      subtitle:
-                          'Data hasil validasi tidak sesuai - pilih kondisi yang ditemukan.',
+                      title: 'Status Hasil Pengawasan',
+                      subtitle: 'Pilih kondisi yang ditemukan di lapangan.',
                       icon: Icons.report_gmailerrorred_rounded,
                       hasError: _sectionErrors.contains(
                         _Section.ketidaksesuaian,
                       ),
                       child: StatusKetidaksesuaianSelector(
-                        options: StatusKetidaksesuaianSelector
-                            .ossDummyOptions, // <-- tambahkan ini
+                        options:
+                            StatusKetidaksesuaianSelector.ossStatusHasilOptions,
                         selected: _data.statusKetidaksesuaian,
                         onChanged: (v) => setState(() {
                           _data.statusKetidaksesuaian
@@ -1086,40 +1064,11 @@ class _OssFormPageState extends State<OssFormPage>
                     ),
                   FormSectionOss(
                     number: _data.isValid ? 6 : 7,
-                    title: 'Hasil Pengawasan',
+                    title: 'Catatan dan Tanggal',
                     icon: Icons.fact_check,
                     hasError: _sectionErrors.contains(_Section.hasil),
                     child: Column(
                       children: [
-                        DropdownButtonFormField<int>(
-                          initialValue: _data.statusPengawasan,
-                          decoration: const InputDecoration(
-                            labelText: 'Status Pengawasan *',
-                            prefixIcon: Icon(
-                              Icons.fact_check_outlined,
-                              size: 20,
-                            ),
-                          ),
-                          items: statuses.entries
-                              .map(
-                                (e) => DropdownMenuItem(
-                                  value: e.key,
-                                  child: Text(e.value),
-                                ),
-                              )
-                              .toList(),
-                          onChanged: (v) =>
-                              setState(() => _data.statusPengawasan = v!),
-                        ),
-                        const SizedBox(height: 12),
-                        _text(
-                          'Keterangan',
-                          _keteranganCtrl,
-                          (v) => _data.keterangan = v,
-                          required: false,
-                          lines: 3,
-                          icon: Icons.notes_rounded,
-                        ),
                         _text(
                           'Catatan Petugas',
                           _catatanPetugasCtrl,
