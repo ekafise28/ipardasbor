@@ -1,3 +1,5 @@
+import 'package:ipardasbor/features/non_oss/services/wilayah_akses_service.dart';
+
 import '../../../app/app_navigator.dart';
 import '../../../core/api/api_client.dart';
 import '../../../core/api/api_endpoints.dart';
@@ -56,6 +58,10 @@ class AuthService {
       role: user.role,
     );
 
+    // Muat wilayah kewenangan akun yang baru login.
+    await WilayahAksesService.instance.refresh(apiClient: _apiClient);
+
+
     // Mengaktifkan kembali handler sesi untuk login yang baru.
     AppNavigator.resetSessionRedirect();
 
@@ -73,6 +79,7 @@ class AuthService {
       // Tetap logout secara lokal apabila server tidak dapat dijangkau.
     } finally {
       await SecureStorage.clearSession();
+      await WilayahAksesService.instance.clear();
       AppNavigator.resetSessionRedirect();
     }
   }
