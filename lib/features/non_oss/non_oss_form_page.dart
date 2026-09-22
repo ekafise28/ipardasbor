@@ -5,6 +5,7 @@ import 'dart:async';
 
 import 'package:ipardasbor/app/app_theme.dart';
 import 'package:ipardasbor/features/non_oss/offline/non_oss_local_data.dart';
+import 'package:ipardasbor/features/oss/widgets/status_ketidaksesuaian_selector.dart';
 import 'package:ipardasbor/shared/gps/gps_capture_mixin.dart';
 
 import '../../core/api/api_client.dart';
@@ -214,16 +215,6 @@ class _NonOssFormPageState extends State<NonOssFormPage>
     'Bumi Perkemahan',
     'Akomodasi Lainnya',
   ];
-  static const statuses = <int, String>{
-    1: 'Sesuai/aktif',
-    2: 'Tidak beroperasi',
-    3: 'Lainnya',
-    4: 'Alamat tidak ditemukan',
-    5: 'Menolak diverifikasi',
-    6: 'Pindah alamat',
-    7: 'Tutup permanen',
-    8: 'Status lainnya',
-  };
 
   @override
   void initState() {
@@ -522,7 +513,11 @@ class _NonOssFormPageState extends State<NonOssFormPage>
     _RequiredCheck(_Section.ota, _hasInvalidOtaUrl()),
     _RequiredCheck(
       _Section.hasil,
-      [3, 8].contains(_data.statusPengawasan) &&
+      _data.memilikiNib == 'TIDAK TAHU' && _data.statusKetidaksesuaian.isEmpty,
+    ),
+    _RequiredCheck(
+      _Section.hasil,
+      _data.statusKetidaksesuaian.contains('LAINNYA') &&
           _data.keterangan.trim().isEmpty,
     ),
     _RequiredCheck(_Section.foto, _data.photos.isEmpty),
@@ -950,8 +945,14 @@ class _NonOssFormPageState extends State<NonOssFormPage>
                               'TIDAK': 'Tidak',
                               'TIDAK TAHU': 'Tidak Tahu',
                             },
-                            onChanged: (v) =>
-                                setState(() => _data.memilikiNib = v),
+                            onChanged: (v) => setState(() {
+                              _data.memilikiNib = v;
+                              // Opsi status berbeda per kondisi, jadi pilihan
+                              // lama tidak relevan lagi saat kondisi diganti.
+                              _data.statusKetidaksesuaian = <String>[];
+                              _data.keterangan = '';
+                              _keteranganCtrl.clear();
+                            }),
                           ),
 
                           const SizedBox(height: 12),
@@ -1159,31 +1160,61 @@ class _NonOssFormPageState extends State<NonOssFormPage>
                       hasError: _sectionErrors.contains(_Section.hasil),
                       child: Column(
                         children: [
-                          DropdownButtonFormField<int>(
-                            initialValue: _data.statusPengawasan,
-                            decoration: const InputDecoration(
-                              labelText: 'Status Pengawasan *',
-                              border: OutlineInputBorder(),
+                          Text(
+                            'Status Hasil Pengawasan *',
+                            style: TextStyle(
+                              color: AppTheme.textColor(context),
+                              fontSize: 12.5,
+                              fontWeight: FontWeight.w700,
                             ),
-                            items: statuses.entries
-                                .map(
-                                  (e) => DropdownMenuItem(
-                                    value: e.key,
-                                    child: Text(e.value),
+                          ),
+                          const SizedBox(height: 9),
+                          if (_data.memilikiNib == 'TIDAK')
+                            Container(
+                              width: double.infinity,
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 13,
+                              ),
+                              decoration: BoxDecoration(
+                                color: AppTheme.scaffoldColorDynamic(context),
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(
+                                  color: AppTheme.border(context),
+                                ),
+                              ),
+                              child: Row(
+                                children: [
+                                  Icon(
+                                    Icons.info_outline_rounded,
+                                    size: 18,
+                                    color: AppTheme.textSecondary(context),
                                   ),
-                                )
-                                .toList(),
-                            onChanged: (v) =>
-                                setState(() => _data.statusPengawasan = v!),
-                          ),
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    'Tidak Punya NIB',
+                                    style: TextStyle(
+                                      fontSize: 12.5,
+                                      fontWeight: FontWeight.w700,
+                                      color: AppTheme.textColor(context),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            )
+                          else
+                            StatusKetidaksesuaianSelector(
+                              options: StatusKetidaksesuaianSelector
+                                  .nonOssTidakTahuOptions,
+                              selected: _data.statusKetidaksesuaian,
+                              onChanged: (v) => setState(() {
+                                _data.statusKetidaksesuaian = v;
+                              }),
+                              keteranganLainnya: _data.keterangan,
+                              keteranganLabel: 'Keterangan Status Lainnya *',
+                              onKeteranganChanged: (v) => _data.keterangan = v,
+                            ),
                           const SizedBox(height: 12),
-                          _text(
-                            'Keterangan',
-                            _keteranganCtrl,
-                            (v) => _data.keterangan = v,
-                            required: false,
-                            lines: 3,
-                          ),
                           _text(
                             'Catatan Petugas',
                             _catatanPetugasCtrl,

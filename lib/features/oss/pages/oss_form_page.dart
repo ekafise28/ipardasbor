@@ -1071,6 +1071,8 @@ class _OssFormPageState extends State<OssFormPage>
                         _Section.ketidaksesuaian,
                       ),
                       child: StatusKetidaksesuaianSelector(
+                        options: StatusKetidaksesuaianSelector
+                            .ossDummyOptions, // <-- tambahkan ini
                         selected: _data.statusKetidaksesuaian,
                         onChanged: (v) => setState(() {
                           _data.statusKetidaksesuaian

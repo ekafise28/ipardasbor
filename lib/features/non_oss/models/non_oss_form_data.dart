@@ -5,7 +5,7 @@ import '../offline/non_oss_local_data.dart';
 
 class NonOssFormData {
   NonOssFormData();
-  
+
   String memilikiNib = 'TIDAK';
 
   String namaPemilik = '';
@@ -33,7 +33,11 @@ class NonOssFormData {
 
   String otaLainnyaNama = '';
 
-  int statusPengawasan = 1;
+  /// Kode status hasil pengawasan, mengikuti kondisi memilikiNib:
+  /// - 'TIDAK'      -> selalu ['NIB_TIDAK_DITEMUKAN'] (diisi otomatis di UI)
+  /// - 'TIDAK TAHU' -> checkbox: TIDAK_BERTEMU_PEMILIK,
+  ///                   PENGELOLA_TIDAK_BISA_MEMBERIKAN_DATA, LAINNYA
+  List<String> statusKetidaksesuaian = <String>[];
 
   String keterangan = '';
   String catatanPetugas = '';
@@ -41,6 +45,21 @@ class NonOssFormData {
   DateTime tanggalPengawasan = DateTime.now();
 
   final List<XFile> photos = <XFile>[];
+
+  static List<String> _parseStatusKetidaksesuaian(Map<String, String> payload) {
+    final RegExp pattern = RegExp(r'^status_ketidaksesuaian\[(\d+)\]$');
+    final Map<int, String> byIndex = <int, String>{};
+
+    for (final MapEntry<String, String> entry in payload.entries) {
+      final Match? match = pattern.firstMatch(entry.key);
+      if (match != null) {
+        byIndex[int.parse(match.group(1)!)] = entry.value;
+      }
+    }
+
+    final List<int> sortedKeys = byIndex.keys.toList()..sort();
+    return sortedKeys.map((int key) => byIndex[key]!).toList();
+  }
 
   /// Membangun ulang [NonOssFormData] dari data yang tersimpan di antrean
   /// lokal, untuk keperluan mode edit. Kebalikan dari [toFields].
@@ -70,8 +89,7 @@ class NonOssFormData {
     form.terdaftarOta = payload['terdaftar_ota'] ?? 'TIDAK';
     form.otaLainnyaNama = payload['ota_lainnya_nama'] ?? '';
 
-    form.statusPengawasan =
-        int.tryParse(payload['status_pengawasan'] ?? '') ?? 1;
+    form.statusKetidaksesuaian = _parseStatusKetidaksesuaian(payload);
 
     form.keterangan = payload['keterangan'] ?? '';
     form.catatanPetugas = payload['catatan_petugas'] ?? '';
@@ -136,9 +154,10 @@ class NonOssFormData {
       'longitude': longitude.trim(),
       'no_hp': noHp.trim(),
       'terdaftar_ota': terdaftarOta.trim().toUpperCase(),
-      'status_pengawasan': statusPengawasan.toString(),
       'tanggal_pengawasan': _formatDate(tanggalPengawasan),
     };
+
+    _addStatusKetidaksesuaianFields(fields);
 
     // Jangan mengirim teks "null". ID wilayah baru dimasukkan jika tersedia.
     _addOptionalInt(fields, 'provinsi_id', provinsiId);
@@ -157,6 +176,22 @@ class NonOssFormData {
     }
 
     return fields;
+  }
+
+  void _addStatusKetidaksesuaianFields(Map<String, String> fields) {
+    // Untuk 'TIDAK', status selalu tetap dan otomatis (tidak ada pilihan
+    // di UI), jadi diisi langsung di sini - tidak bergantung pada apakah
+    // sempat tersimpan di _data.statusKetidaksesuaian atau tidak.
+    final List<String> efektif = memilikiNib.trim().toUpperCase() == 'TIDAK'
+        ? const <String>['NIB_TIDAK_DITEMUKAN']
+        : statusKetidaksesuaian
+              .map((String kode) => kode.trim())
+              .where((String kode) => kode.isNotEmpty)
+              .toList(growable: false);
+
+    for (int i = 0; i < efektif.length; i++) {
+      fields['status_ketidaksesuaian[$i]'] = efektif[i];
+    }
   }
 
   void _addOtaFields(Map<String, String> fields) {
