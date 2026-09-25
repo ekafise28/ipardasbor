@@ -3,6 +3,8 @@ import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import 'package:ipardasbor/app/app_theme.dart';
 import 'package:ipardasbor/core/api/api_exception.dart';
+import 'package:ipardasbor/features/oss/models/jenis_produk_akomodasi.dart';
+import 'package:ipardasbor/features/oss/pages/akomodasi_form_page.dart';
 import 'package:ipardasbor/shared/gps/gps_capture_mixin.dart';
 
 import '../../../core/api/api_client.dart';
@@ -38,6 +40,22 @@ class _OssFormPageState extends State<OssFormPage>
 
   final _key = GlobalKey<FormState>();
   late final OssFormData _data;
+
+  /// True kalau Tahap 1 ini akan berlanjut ke Tahap 2 (AkomodasiFormPage) -
+  /// berlaku untuk KBLI 55900 (pilihan Manajemen Akomodasi) maupun 55901
+  /// (selalu Manajemen Akomodasi, lihat F2 di oss_validasi_page.dart).
+  bool get _isManajemenAkomodasi =>
+      _data.kbliDesc == 'MANAJEMEN AKOMODASI' ||
+      _data.kbliDesc == 'Jasa Manajemen Hotel';
+
+  /// KBLI 55900 dengan pilihan Senior Living / Kos-kosan-Asrama di Tahap 1 -
+  /// beda dari Jasa Manajemen Hotel karena TIDAK lanjut ke Tahap 2, dan jenis
+  /// produknya sudah ditentukan langsung dari pilihan di halaman validasi.
+  bool get _isAkomodasiLainnya55900 =>
+      _data.kbli == '55900' &&
+      (_data.kbliDesc == 'Senior Living' ||
+          _data.kbliDesc == 'Kos-kosan/Asrama');
+
   late final RegionService _regions;
   late final ApiClient _api;
   late final OssService _ossService;
@@ -67,23 +85,6 @@ class _OssFormPageState extends State<OssFormPage>
   late final TextEditingController _emailCtrl;
   late final TextEditingController _catatanPetugasCtrl;
   late final TextEditingController _otaLainnyaCtrl;
-
-  static const List<MapEntry<String, String>> jenisProdukOptions = [
-    MapEntry('55105', 'Hotel Bintang 1'),
-    MapEntry('55104', 'Hotel Bintang 2'),
-    MapEntry('55103', 'Hotel Bintang 3'),
-    MapEntry('55102', 'Hotel Bintang 4'),
-    MapEntry('55101', 'Hotel Bintang 5'),
-    MapEntry('55106', 'Hotel Non Bintang'),
-    MapEntry('55203', 'Vila'),
-    MapEntry('55201', 'Homestay'),
-    MapEntry('55202', 'Youth Hostel'),
-    MapEntry('55204', 'Apartemen Hotel'),
-    MapEntry('55300', 'Bumi Perkemahan'),
-    MapEntry('55209', 'Akomodasi Jangka Pendek Lainnya'),
-    MapEntry('87303', 'Senior Living'),
-    MapEntry('55909', 'Akomodasi Lainnya'),
-  ];
 
   @override
   void initState() {
@@ -181,9 +182,9 @@ class _OssFormPageState extends State<OssFormPage>
 
     final String? namaPerusahaan = teks('nama_perusahaan');
     if (namaPerusahaan != null) {
-      _data.namaBrand = namaPerusahaan;
-      _namaBrandCtrl.text = namaPerusahaan;
-      _nilaiAsliOtomatis['namaBrand'] = namaPerusahaan;
+      _data.namaPemilik = namaPerusahaan;
+      _namaPemilikCtrl.text = namaPerusahaan;
+      _nilaiAsliOtomatis['namaPemilik'] = namaPerusahaan;
     }
 
     final String? alamat = teks('alamat_usaha');
@@ -376,11 +377,17 @@ class _OssFormPageState extends State<OssFormPage>
   }
 
   List<_RequiredCheck> _buildChecks() => [
+    _RequiredCheck(
+      _Section.identitas,
+      !_isManajemenAkomodasi && !_data.isValid && _data.jenisProduk.isEmpty,
+    ),
     _RequiredCheck(_Section.identitas, _data.namaPemilik.trim().isEmpty),
     _RequiredCheck(_Section.identitas, _data.namaBrand.trim().isEmpty),
     _RequiredCheck(
       _Section.identitas,
-      !_data.isValid && _data.jenisProduk.isEmpty,
+      // Untuk Manajemen Akomodasi, jenis_produk selalu "Manajemen
+      // Akomodasi" (dipaksa di backend B2), bukan pilihan petugas.
+      !_isManajemenAkomodasi && !_data.isValid && _data.jenisProduk.isEmpty,
     ),
     _RequiredCheck(_Section.wilayah, _data.provinsiId == null),
     _RequiredCheck(_Section.wilayah, _data.kabupatenId == null),
@@ -395,14 +402,19 @@ class _OssFormPageState extends State<OssFormPage>
     _RequiredCheck(_Section.kontak, _phoneValidator(_data.noHp) != null),
     _RequiredCheck(_Section.kontak, _urlValidator(_data.website) != null),
     _RequiredCheck(_Section.kontak, _emailValidator(_data.email) != null),
-    _RequiredCheck(
-      _Section.ota,
-      _data.terdaftarOta == 'YA' &&
-          (_data.otaUrls.isEmpty ||
-              _data.otaUrls.values.any(
-                (v) => v.every((x) => x.trim().isEmpty),
-              )),
-    ),
+    // OTA Tahap 1 tidak relevan untuk Manajemen Akomodasi - OTA-nya ada
+    // per item di Tahap 2 (AkomodasiItemCard), bukan di sini.
+    if (!_isManajemenAkomodasi) ...[
+      _RequiredCheck(
+        _Section.ota,
+        _data.terdaftarOta == 'YA' &&
+            (_data.otaUrls.isEmpty ||
+                _data.otaUrls.values.any(
+                  (v) => v.every((x) => x.trim().isEmpty),
+                )),
+      ),
+      _RequiredCheck(_Section.ota, _hasInvalidOtaUrl()),
+    ],
     _RequiredCheck(_Section.ota, _hasInvalidOtaUrl()),
     _RequiredCheck(
       _Section.ketidaksesuaian,
@@ -414,7 +426,9 @@ class _OssFormPageState extends State<OssFormPage>
           _data.statusKetidaksesuaian.contains('LAINNYA') &&
           _data.keteranganKetidaksesuaian.trim().isEmpty,
     ),
-    _RequiredCheck(_Section.foto, _data.photos.isEmpty),
+    // Foto Tahap 1 juga tidak relevan - foto ada per item di Tahap 2.
+    if (!_isManajemenAkomodasi)
+      _RequiredCheck(_Section.foto, _data.photos.isEmpty),
   ];
 
   Future<void> _submit() async {
@@ -431,6 +445,18 @@ class _OssFormPageState extends State<OssFormPage>
 
     if (failedSections.isNotEmpty) {
       _error(Exception('Ada data yang belum diisi dengan benar.'));
+      return;
+    }
+
+    if (_isManajemenAkomodasi) {
+      // Tahap 1 BELUM dikirim ke server di sini - baru dikirim bersamaan
+      // dengan Tahap 2 dalam satu request atomic saat AkomodasiFormPage
+      // disimpan (lihat AkomodasiService.submit + catatan B2 di backend).
+      Navigator.of(context).push(
+        MaterialPageRoute<void>(
+          builder: (_) => AkomodasiFormPage(tahap1: _data),
+        ),
+      );
       return;
     }
 
@@ -664,6 +690,35 @@ class _OssFormPageState extends State<OssFormPage>
     );
   }
 
+  /// Field terkunci bergaya sama seperti field lain (NPWPD, dll) - dipakai
+  /// untuk menampilkan nilai yang sudah ditentukan otomatis dan tidak bisa
+  /// diubah petugas, tapi tetap konsisten secara visual.
+  Widget _lockedField(
+    String label,
+    String value, {
+    IconData icon = Icons.category_outlined,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: TextFormField(
+        initialValue: value,
+        readOnly: true,
+        style: TextStyle(color: AppTheme.textSecondary(context)),
+        decoration: InputDecoration(
+          labelText: label,
+          filled: true,
+          fillColor: AppTheme.scaffoldColorDynamic(context),
+          prefixIcon: Icon(icon, size: 20),
+          suffixIcon: Icon(
+            Icons.lock_outline_rounded,
+            size: 18,
+            color: AppTheme.textMuted,
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _identityItem(String label, String value) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -823,54 +878,54 @@ class _OssFormPageState extends State<OssFormPage>
                           _namaPemilikCtrl,
                           (v) => _data.namaPemilik = v,
                           icon: Icons.person_outline_rounded,
+                          autofillKey: 'namaPemilik',
                         ),
                         _text(
                           'Nama Brand',
                           _namaBrandCtrl,
                           (v) => _data.namaBrand = v,
                           icon: Icons.storefront_outlined,
-                          autofillKey: 'namaBrand',
                         ),
-                        if (_data.isValid)
-                          Padding(
-                            padding: const EdgeInsets.only(bottom: 12),
-                            child: _identityItem(
-                              'Jenis Produk (dari KBLI)',
-                              _data.kbli,
-                            ),
-                          )
-                        else
-                          Padding(
-                            padding: const EdgeInsets.only(bottom: 12),
-                            child: DropdownButtonFormField<String>(
-                              initialValue: _data.jenisProduk.isEmpty
-                                  ? null
-                                  : _data.jenisProduk,
-                              isExpanded: true,
-                              decoration: const InputDecoration(
-                                labelText: 'Jenis Produk Akomodasi *',
-                                prefixIcon: Icon(
-                                  Icons.category_outlined,
-                                  size: 20,
-                                ),
-                              ),
-                              items: jenisProdukOptions
-                                  .map(
-                                    (e) => DropdownMenuItem(
-                                      value: e.key,
-                                      child: Text(
-                                        e.value,
-                                        overflow: TextOverflow.ellipsis,
+                        if (!_isManajemenAkomodasi)
+                          _data.isValid
+                              ? _lockedField(
+                                  'Jenis Produk (dari KBLI)',
+                                  _isAkomodasiLainnya55900
+                                      ? _data.kbliDesc
+                                      : _data.kbli,
+                                )
+                              : Padding(
+                                  padding: const EdgeInsets.only(bottom: 12),
+                                  child: DropdownButtonFormField<String>(
+                                    initialValue: _data.jenisProduk.isEmpty
+                                        ? null
+                                        : _data.jenisProduk,
+                                    isExpanded: true,
+                                    decoration: const InputDecoration(
+                                      labelText: 'Jenis Produk Akomodasi *',
+                                      prefixIcon: Icon(
+                                        Icons.category_outlined,
+                                        size: 20,
                                       ),
                                     ),
-                                  )
-                                  .toList(),
-                              onChanged: (v) =>
-                                  setState(() => _data.jenisProduk = v ?? ''),
-                              validator: (v) =>
-                                  v == null ? 'Wajib dipilih.' : null,
-                            ),
-                          ),
+                                    items: JenisProdukAkomodasi.options
+                                        .map(
+                                          (e) => DropdownMenuItem(
+                                            value: e.key,
+                                            child: Text(
+                                              e.value,
+                                              overflow: TextOverflow.ellipsis,
+                                            ),
+                                          ),
+                                        )
+                                        .toList(),
+                                    onChanged: (v) => setState(
+                                      () => _data.jenisProduk = v ?? '',
+                                    ),
+                                    validator: (v) =>
+                                        v == null ? 'Wajib dipilih.' : null,
+                                  ),
+                                ),
                         _text(
                           'NPWPD',
                           _npwpdCtrl,
@@ -1000,45 +1055,46 @@ class _OssFormPageState extends State<OssFormPage>
                       ],
                     ),
                   ),
-                  FormSectionOss(
-                    number: 5,
-                    title: 'Platform OTA',
-                    subtitle: 'Catat platform dan URL listing usaha.',
-                    icon: Icons.travel_explore,
-                    hasError: _sectionErrors.contains(_Section.ota),
-                    child: Column(
-                      children: [
-                        _choice<String>(
-                          label: 'Apakah terdaftar di OTA? *',
-                          value: _data.terdaftarOta,
-                          choices: const {'YA': 'Ya', 'TIDAK': 'Tidak'},
-                          onChanged: (v) =>
-                              setState(() => _data.terdaftarOta = v),
-                        ),
-                        if (_data.terdaftarOta == 'YA') ...[
-                          const SizedBox(height: 12),
-                          OtaPlatformSelector(
-                            urls: _data.otaUrls,
-                            onChanged: (v) => setState(() {
-                              _data.otaUrls
-                                ..clear()
-                                ..addAll(v);
-                            }),
+                  if (!_isManajemenAkomodasi)
+                    FormSectionOss(
+                      number: 5,
+                      title: 'Platform OTA',
+                      subtitle: 'Catat platform dan URL listing usaha.',
+                      icon: Icons.travel_explore,
+                      hasError: _sectionErrors.contains(_Section.ota),
+                      child: Column(
+                        children: [
+                          _choice<String>(
+                            label: 'Apakah terdaftar di OTA? *',
+                            value: _data.terdaftarOta,
+                            choices: const {'YA': 'Ya', 'TIDAK': 'Tidak'},
+                            onChanged: (v) =>
+                                setState(() => _data.terdaftarOta = v),
                           ),
-                          if (_data.otaUrls.containsKey('lainnya'))
-                            Padding(
-                              padding: const EdgeInsets.only(top: 12),
-                              child: _text(
-                                'Nama OTA Lainnya',
-                                _otaLainnyaCtrl,
-                                (v) => _data.otaLainnyaNama = v,
-                                icon: Icons.edit_outlined,
-                              ),
+                          if (_data.terdaftarOta == 'YA') ...[
+                            const SizedBox(height: 12),
+                            OtaPlatformSelector(
+                              urls: _data.otaUrls,
+                              onChanged: (v) => setState(() {
+                                _data.otaUrls
+                                  ..clear()
+                                  ..addAll(v);
+                              }),
                             ),
+                            if (_data.otaUrls.containsKey('lainnya'))
+                              Padding(
+                                padding: const EdgeInsets.only(top: 12),
+                                child: _text(
+                                  'Nama OTA Lainnya',
+                                  _otaLainnyaCtrl,
+                                  (v) => _data.otaLainnyaNama = v,
+                                  icon: Icons.edit_outlined,
+                                ),
+                              ),
+                          ],
                         ],
-                      ],
+                      ),
                     ),
-                  ),
                   if (!_data.isValid)
                     FormSectionOss(
                       number: 6,
@@ -1091,21 +1147,22 @@ class _OssFormPageState extends State<OssFormPage>
                       ],
                     ),
                   ),
-                  FormSectionOss(
-                    number: _data.isValid ? 7 : 8,
-                    title: 'Foto Dokumentasi',
-                    subtitle: 'Tambahkan 1–5 foto kondisi usaha di lapangan.',
-                    icon: Icons.photo_camera,
-                    hasError: _sectionErrors.contains(_Section.foto),
-                    child: PhotoPicker(
-                      photos: _data.photos,
-                      onChanged: (v) => setState(() {
-                        _data.photos
-                          ..clear()
-                          ..addAll(v);
-                      }),
+                  if (!_isManajemenAkomodasi)
+                    FormSectionOss(
+                      number: _data.isValid ? 7 : 8,
+                      title: 'Foto Dokumentasi',
+                      subtitle: 'Tambahkan 1–5 foto kondisi usaha di lapangan.',
+                      icon: Icons.photo_camera,
+                      hasError: _sectionErrors.contains(_Section.foto),
+                      child: PhotoPicker(
+                        photos: _data.photos,
+                        onChanged: (v) => setState(() {
+                          _data.photos
+                            ..clear()
+                            ..addAll(v);
+                        }),
+                      ),
                     ),
-                  ),
                   SizedBox(
                     height: 54,
                     child: FilledButton.icon(
@@ -1125,12 +1182,18 @@ class _OssFormPageState extends State<OssFormPage>
                                 color: Colors.white,
                               ),
                             )
-                          : const Icon(
-                              Icons.cloud_upload_rounded,
+                          : Icon(
+                              _isManajemenAkomodasi
+                                  ? Icons.arrow_forward_rounded
+                                  : Icons.cloud_upload_rounded,
                               color: Colors.white,
                             ),
                       label: Text(
-                        _saving ? 'Menyimpan data...' : 'Simpan Pengawasan',
+                        _saving
+                            ? 'Menyimpan data...'
+                            : (_isManajemenAkomodasi
+                                  ? 'Lanjut ke Tahap 2'
+                                  : 'Simpan Pengawasan'),
                         style: const TextStyle(
                           fontWeight: FontWeight.w800,
                           fontSize: 15,

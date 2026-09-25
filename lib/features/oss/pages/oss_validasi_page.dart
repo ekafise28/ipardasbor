@@ -47,11 +47,37 @@ class _OssValidasiPageState extends State<OssValidasiPage> {
   String? _kbliDesc;
   bool _submitting = false;
 
-    static const List<String> _daftarKbliDiizinkan = [
-    '55105', '55104', '55103', '55102', '55101', '55106',
-    '55203', '55201', '55202', '55204', '55300', '55209',
-    '87303', '55909', '55901', '55110', '55120', '55130',
-    '55191', '55192', '55193', '55194', '55199', '55900',
+  static const List<String> _daftarKbliDiizinkan = [
+    '55105',
+    '55104',
+    '55103',
+    '55102',
+    '55101',
+    '55106',
+    '55203',
+    '55201',
+    '55202',
+    '55204',
+    '55300',
+    '55209',
+    '87303',
+    '55909',
+    '55901',
+    '55110',
+    '55120',
+    '55130',
+    '55191',
+    '55192',
+    '55193',
+    '55194',
+    '55199',
+    '55900',
+  ];
+
+  static const List<String> _daftarJenisUsaha55900 = [
+    'Jasa Manajemen Hotel',
+    'Senior Living',
+    'Kos-kosan/Asrama',
   ];
 
   @override
@@ -63,6 +89,12 @@ class _OssValidasiPageState extends State<OssValidasiPage> {
     _nibCtrl.text = (widget.initialNib ?? '').trim();
     _kbliCtrl.text = (widget.initialKbli ?? '').trim();
     _nkuCtrl.text = (widget.initialNku ?? '').trim();
+
+    // KBLI 55901 selalu otomatis Manajemen Akomodasi (sama seperti web),
+    // tidak ada pilihan untuk petugas.
+    if (_isKbli55901) {
+      _kbliDesc = 'MANAJEMEN AKOMODASI';
+    }
 
     // KBLI 55900 butuh pilihan jenis usaha dari petugas, jadi tidak otomatis.
     if (_dariDaftar && !_isKbli55900) {
@@ -81,6 +113,8 @@ class _OssValidasiPageState extends State<OssValidasiPage> {
   }
 
   bool get _isKbli55900 => _kbliCtrl.text.trim() == '55900';
+  bool get _isKbli55901 => _kbliCtrl.text.trim() == '55901';
+  bool get _isKbliAkomodasiKhusus => _isKbli55900 || _isKbli55901;
 
   bool get _dariDaftar =>
       (widget.initialNib ?? '').trim().isNotEmpty &&
@@ -111,7 +145,7 @@ class _OssValidasiPageState extends State<OssValidasiPage> {
       setState(() {}); // memicu rebuild supaya pesan error jenis usaha tampil
     }
 
-    if (!valid || (_isKbli55900 && _kbliDesc == null)) {
+    if (!valid || (_isKbliAkomodasiKhusus && _kbliDesc == null)) {
       _showError('Periksa kembali data yang diisi.');
       return;
     }
@@ -325,8 +359,69 @@ class _OssValidasiPageState extends State<OssValidasiPage> {
                 keyboardType: TextInputType.number,
                 maxLength: 5,
                 validator: _kbliValidator,
-                onChanged: (_) => setState(() {}),
+                onChanged: (_) => setState(() {
+                  if (_isKbli55901) {
+                    _kbliDesc = 'MANAJEMEN AKOMODASI';
+                  } else if (!_isKbli55900) {
+                    _kbliDesc = null;
+                  }
+                }),
               ),
+              if (_isKbli55901) ...[
+                const SizedBox(height: 4),
+                Text(
+                  'Jenis Usaha KBLI 55901',
+                  style: TextStyle(
+                    color: AppTheme.textColor(context),
+                    fontSize: 12.5,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: AppTheme.scaffoldColorDynamic(context),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: AppTheme.primaryColor.withOpacity(0.4),
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.check_circle_rounded,
+                        color: AppTheme.primaryColor,
+                        size: 20,
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'Jasa Manajemen Hotel',
+                              style: TextStyle(
+                                fontWeight: FontWeight.w800,
+                                fontSize: 13,
+                              ),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              'KBLI 55901 otomatis diproses sebagai Manajemen Akomodasi.',
+                              style: TextStyle(
+                                color: AppTheme.textSecondary(context),
+                                fontSize: 11.5,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
               if (_isKbli55900) ...[
                 const SizedBox(height: 4),
                 Text(
@@ -338,28 +433,25 @@ class _OssValidasiPageState extends State<OssValidasiPage> {
                   ),
                 ),
                 const SizedBox(height: 8),
-                ...<MapEntry<String, String>>[
-                  const MapEntry('MANAJEMEN AKOMODASI', 'Manajemen Akomodasi'),
-                  const MapEntry('SENIOR LIVING', 'Senior Living'),
-                  const MapEntry('KOS-KOSAN/ASRAMA', 'Kos-kosan/Asrama'),
-                ].map(
-                  (entry) => RadioListTile<String>(
-                    contentPadding: EdgeInsets.zero,
-                    dense: true,
-                    value: entry.key,
-                    groupValue: _kbliDesc,
-                    title: Text(entry.value),
-                    onChanged: (v) => setState(() => _kbliDesc = v),
+                DropdownButtonFormField<String>(
+                  value: _kbliDesc,
+                  isExpanded:
+                      true, // <- ini yang biasanya hilang & bikin overflow
+                  decoration: const InputDecoration(
+                    hintText: 'Pilih jenis usaha penyediaan akomodasi lainnya',
+                    prefixIcon: Icon(Icons.apartment_outlined, size: 20),
                   ),
+                  items: _daftarJenisUsaha55900
+                      .map(
+                        (e) => DropdownMenuItem(
+                          value: e,
+                          child: Text(e, overflow: TextOverflow.ellipsis),
+                        ),
+                      )
+                      .toList(),
+                  onChanged: (v) => setState(() => _kbliDesc = v),
+                  validator: (v) => v == null ? 'Wajib dipilih.' : null,
                 ),
-                if (_kbliDesc == null)
-                  const Padding(
-                    padding: EdgeInsets.only(left: 12),
-                    child: Text(
-                      'Wajib dipilih.',
-                      style: TextStyle(color: Colors.red, fontSize: 12),
-                    ),
-                  ),
               ],
               const SizedBox(height: 20),
               SizedBox(

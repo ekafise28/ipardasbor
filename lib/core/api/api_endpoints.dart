@@ -36,6 +36,10 @@ class ApiEndpoints {
   static const String proyekOss = '/mobile/oss/proyek';
   static const String pengawasanOss = '/mobile/oss/pengawasan';
   static const String riwayatOss = '/mobile/oss/riwayat';
+  // Manajemen Akomodasi (Tahap 1 + Tahap 2)
+  static const String validasiAkomodasi = '/mobile/oss/validasi-akomodasi';
+  static const String pengawasanAkomodasi = '/mobile/oss/pengawasan-akomodasi';
+
   static String riwayatOssDetail(int id) => '$riwayatOss/$id';
 
   // Dashboard
