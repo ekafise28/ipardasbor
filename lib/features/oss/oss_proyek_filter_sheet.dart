@@ -56,6 +56,9 @@ class _OssProyekFilterSheetState extends State<_OssProyekFilterSheet> {
   late int? _kabupatenId = widget.filter.kabupatenId;
   late int? _kecamatanId = widget.filter.kecamatanId;
   late int? _kelurahanId = widget.filter.kelurahanId;
+  late String? _statusModal = widget.filter.statusPenanamanModal;
+  late String? _skalaUsaha = widget.filter.uraianSkalaUsaha;
+  late String? _risiko = widget.filter.uraianRisiko;
 
   List<RegionOption> _daftarKecamatan = <RegionOption>[];
   List<RegionOption> _daftarKelurahan = <RegionOption>[];
@@ -142,6 +145,9 @@ class _OssProyekFilterSheetState extends State<_OssProyekFilterSheet> {
       _kelurahanId = null;
       _daftarKecamatan = <RegionOption>[];
       _daftarKelurahan = <RegionOption>[];
+      _statusModal = null;
+      _skalaUsaha = null;
+      _risiko = null;
     });
   }
 
@@ -156,15 +162,65 @@ class _OssProyekFilterSheetState extends State<_OssProyekFilterSheet> {
         clearKecamatanId: _kecamatanId == null,
         kelurahanId: _kelurahanId,
         clearKelurahanId: _kelurahanId == null,
+        statusPenanamanModal: _statusModal,
+        clearStatusPenanamanModal: _statusModal == null,
+        uraianSkalaUsaha: _skalaUsaha,
+        clearUraianSkalaUsaha: _skalaUsaha == null,
+        uraianRisiko: _risiko,
+        clearUraianRisiko: _risiko == null,
       ),
     );
   }
 
-  Widget _dropdown({
+  Widget _dropdownTeks({
     required String label,
-    required int? value,
-    required List<RegionOption> options,
-    required ValueChanged<int?> onChanged,
+    required String? value,
+    required List<String> options,
+    required ValueChanged<String?> onChanged,
+    required String semuaLabel,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 14),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          _Label(label),
+          DropdownButtonFormField<String?>(
+            key: ValueKey<String>('$label-$value'),
+            initialValue: value,
+            isExpanded: true,
+            decoration: const InputDecoration(
+              border: OutlineInputBorder(),
+              contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            ),
+            hint: Text(semuaLabel),
+            items: <DropdownMenuItem<String?>>[
+              DropdownMenuItem<String?>(value: null, child: Text(semuaLabel)),
+              for (final String o in options)
+                DropdownMenuItem<String?>(value: o, child: Text(o)),
+            ],
+            onChanged: onChanged,
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Opsi dropdown sebagai pasangan (nilai, label) supaya satu method bisa
+  /// dipakai untuk wilayah (int) maupun filter teks (String).
+  List<(int, String)> _opsiRegion(List<RegionOption> daftar) => <(int, String)>[
+    for (final RegionOption o in daftar) (o.id, o.name),
+  ];
+
+  List<(String, String)> _opsiTeks(List<String> daftar) => <(String, String)>[
+    for (final String o in daftar) (o, o),
+  ];
+
+  Widget _dropdown<T>({
+    required String label,
+    required T? value,
+    required List<(T, String)> options,
+    required ValueChanged<T?> onChanged,
     String? semuaLabel,
     bool enabled = true,
     bool loading = false,
@@ -172,7 +228,7 @@ class _OssProyekFilterSheetState extends State<_OssProyekFilterSheet> {
   }) {
     // Nilai hanya dipakai kalau memang ada di daftar (hindari assertion
     // Flutter saat daftar belum selesai dimuat).
-    final int? nilai = options.any((RegionOption o) => o.id == value)
+    final T? nilai = options.any(((T, String) o) => o.$1 == value)
         ? value
         : null;
 
@@ -182,12 +238,10 @@ class _OssProyekFilterSheetState extends State<_OssProyekFilterSheet> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
           _Label(label),
-          DropdownButtonFormField<int?>(
+          DropdownButtonFormField<T?>(
             // Key ikut berubah supaya field dibangun ulang (initialValue
             // hanya dibaca sekali) saat nilai atau daftar berubah.
-            key: ValueKey<String>(
-              '$label-$nilai-${options.length}-$enabled',
-            ),
+            key: ValueKey<String>('$label-$nilai-${options.length}-$enabled'),
             initialValue: nilai,
             isExpanded: true,
             decoration: InputDecoration(
@@ -210,13 +264,13 @@ class _OssProyekFilterSheetState extends State<_OssProyekFilterSheet> {
                   : null,
             ),
             hint: Text(semuaLabel ?? 'Pilih'),
-            items: <DropdownMenuItem<int?>>[
+            items: <DropdownMenuItem<T?>>[
               if (semuaLabel != null)
-                DropdownMenuItem<int?>(value: null, child: Text(semuaLabel)),
-              for (final RegionOption o in options)
-                DropdownMenuItem<int?>(
-                  value: o.id,
-                  child: Text(o.name, overflow: TextOverflow.ellipsis),
+                DropdownMenuItem<T?>(value: null, child: Text(semuaLabel)),
+              for (final (T, String) o in options)
+                DropdownMenuItem<T?>(
+                  value: o.$1,
+                  child: Text(o.$2, overflow: TextOverflow.ellipsis),
                 ),
             ],
             onChanged: enabled ? onChanged : null,
@@ -259,7 +313,7 @@ class _OssProyekFilterSheetState extends State<_OssProyekFilterSheet> {
               ),
               const SizedBox(height: 16),
               Text(
-                'Filter Wilayah',
+                'Filter',
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w800,
@@ -268,18 +322,20 @@ class _OssProyekFilterSheetState extends State<_OssProyekFilterSheet> {
               ),
               const SizedBox(height: 16),
               if (tampilProvinsi)
-                _dropdown(
+                _dropdown<int>(
                   label: 'Provinsi',
                   value: _provinsiId,
-                  options: widget.provinsiOptions,
+                  options: _opsiRegion(widget.provinsiOptions),
                   onChanged: _pilihProvinsi,
                 ),
-              _dropdown(
+              _dropdown<int>(
                 label: 'Kabupaten/Kota',
                 value: _kabupatenId,
-                options: _provinsiBerubah
-                    ? const <RegionOption>[]
-                    : widget.kabupatenOptions,
+                options: _opsiRegion(
+                  _provinsiBerubah
+                      ? const <RegionOption>[]
+                      : widget.kabupatenOptions,
+                ),
                 onChanged: _pilihKabupaten,
                 semuaLabel: 'Semua kabupaten/kota',
                 enabled: !_provinsiBerubah,
@@ -287,25 +343,48 @@ class _OssProyekFilterSheetState extends State<_OssProyekFilterSheet> {
                     ? 'Terapkan provinsi dulu, lalu buka filter lagi untuk memilih kabupaten/kota.'
                     : null,
               ),
-              _dropdown(
+              _dropdown<int>(
                 label: 'Kecamatan',
                 value: _kecamatanId,
-                options: _daftarKecamatan,
+                options: _opsiRegion(_daftarKecamatan),
                 onChanged: _pilihKecamatan,
                 semuaLabel: 'Semua kecamatan',
                 enabled: !_provinsiBerubah && _kabupatenId != null,
                 loading: _loadingKecamatan,
-                helper: _kabupatenId == null ? 'Pilih kabupaten/kota dulu.' : null,
+                helper: _kabupatenId == null
+                    ? 'Pilih kabupaten/kota dulu.'
+                    : null,
               ),
-              _dropdown(
+              _dropdown<int>(
                 label: 'Kelurahan/Desa',
                 value: _kelurahanId,
-                options: _daftarKelurahan,
+                options: _opsiRegion(_daftarKelurahan),
                 onChanged: (int? v) => setState(() => _kelurahanId = v),
                 semuaLabel: 'Semua kelurahan/desa',
                 enabled: !_provinsiBerubah && _kecamatanId != null,
                 loading: _loadingKelurahan,
                 helper: _kecamatanId == null ? 'Pilih kecamatan dulu.' : null,
+              ),
+              _dropdown<String>(
+                label: 'Status Penanaman Modal',
+                value: _statusModal,
+                options: _opsiTeks(OssProyekOpsi.statusPenanamanModal),
+                semuaLabel: 'Semua status',
+                onChanged: (String? v) => setState(() => _statusModal = v),
+              ),
+              _dropdown<String>(
+                label: 'Skala Usaha',
+                value: _skalaUsaha,
+                options: _opsiTeks(OssProyekOpsi.skalaUsaha),
+                semuaLabel: 'Semua skala usaha',
+                onChanged: (String? v) => setState(() => _skalaUsaha = v),
+              ),
+              _dropdown<String>(
+                label: 'Risiko Proyek',
+                value: _risiko,
+                options: _opsiTeks(OssProyekOpsi.risikoProyek),
+                semuaLabel: 'Semua tingkat risiko',
+                onChanged: (String? v) => setState(() => _risiko = v),
               ),
               const SizedBox(height: 8),
               Row(

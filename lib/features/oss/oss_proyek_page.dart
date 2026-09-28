@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:ipardasbor/features/oss/oss_proyek_filter_sheet.dart';
 
 import '../../app/app_theme.dart';
@@ -122,7 +123,11 @@ class _OssProyekPageState extends State<OssProyekPage> {
     } on ApiException catch (e) {
       _tanganiError(id, e.message, tampilkanLoading);
     } catch (_) {
-      _tanganiError(id, 'Terjadi kesalahan yang tidak terduga.', tampilkanLoading);
+      _tanganiError(
+        id,
+        'Terjadi kesalahan yang tidak terduga.',
+        tampilkanLoading,
+      );
     }
   }
 
@@ -131,7 +136,9 @@ class _OssProyekPageState extends State<OssProyekPage> {
 
     // Saat menyegarkan diam-diam dan daftar sudah terisi, cukup snackbar.
     if (!tampilkanLoading && _items.isNotEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(pesan)));
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(pesan)));
       return;
     }
 
@@ -162,7 +169,9 @@ class _OssProyekPageState extends State<OssProyekPage> {
     } on ApiException catch (e) {
       if (!mounted || id != _requestId) return;
       setState(() => _loadingBerikutnya = false);
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.message)));
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(e.message)));
     } catch (_) {
       if (!mounted || id != _requestId) return;
       setState(() => _loadingBerikutnya = false);
@@ -236,9 +245,9 @@ class _OssProyekPageState extends State<OssProyekPage> {
     final int? id = item.pengawasanId;
     if (id == null) return;
 
-    Navigator.of(context).push(
-      MaterialPageRoute<void>(builder: (_) => RiwayatDetailPage(id: id)),
-    );
+    Navigator.of(
+      context,
+    ).push(MaterialPageRoute<void>(builder: (_) => RiwayatDetailPage(id: id)));
   }
 
   /// Memuat ulang HANYA halaman server yang memuat [item], lalu mengganti
@@ -270,7 +279,9 @@ class _OssProyekPageState extends State<OssProyekPage> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Daftar belum diperbarui. Tarik ke bawah untuk menyegarkan.'),
+          content: Text(
+            'Daftar belum diperbarui. Tarik ke bawah untuk menyegarkan.',
+          ),
         ),
       );
     }
@@ -296,7 +307,7 @@ class _OssProyekPageState extends State<OssProyekPage> {
         title: const Text('Validasi OSS'),
         actions: <Widget>[
           IconButton(
-            tooltip: 'Filter wilayah',
+            tooltip: 'Filter',
             onPressed: _bukaFilter,
             icon: Icon(
               Icons.filter_list_rounded,
@@ -317,6 +328,10 @@ class _OssProyekPageState extends State<OssProyekPage> {
                 _terapkanPencarian(v);
               },
               keyboardType: TextInputType.number,
+              inputFormatters: <TextInputFormatter>[
+                FilteringTextInputFormatter.digitsOnly, // dulu filter...
+                LengthLimitingTextInputFormatter(21), // ...baru batasi panjang
+              ],
               textInputAction: TextInputAction.search,
               decoration: InputDecoration(
                 hintText: 'Cari NIB atau NKU...',
