@@ -4,7 +4,7 @@ class OssProyekOpsi {
   const OssProyekOpsi._();
 
   static const List<String> statusPenanamanModal = <String>[
-    'PMA', 'PMDN', 'Bukan PMA/PMDN', 'Usaha Kecil',
+    'PMA', 'PMDN', 'Bukan PMA/PMDN',
   ];
   static const List<String> skalaUsaha = <String>[
     'Usaha Besar', 'Usaha Menengah', 'Usaha Kecil', 'Usaha Mikro',
