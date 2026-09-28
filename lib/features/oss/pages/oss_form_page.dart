@@ -96,6 +96,7 @@ class _OssFormPageState extends State<OssFormPage>
       nku: widget.validasi.nku,
       isValid: widget.validasi.isValid,
       kbliDesc: widget.validasi.kbliDesc,
+      baselineOtaId: widget.validasi.baselineOtaId,
     );
 
     if (_data.isValid) {
@@ -1045,7 +1046,6 @@ class _OssFormPageState extends State<OssFormPage>
                           'Email',
                           _emailCtrl,
                           (v) => _data.email = v,
-                          required: false,
                           type: TextInputType.emailAddress,
                           hintText: 'example@example.com',
                           validator: _emailValidator,

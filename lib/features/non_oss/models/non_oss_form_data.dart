@@ -22,6 +22,11 @@ class NonOssFormData {
   String longitude = '';
 
   String npwpd = '';
+
+  /// ID baris tbl_oss_baseline_ota yang sedang diverifikasi, kalau form ini
+  /// dibuka dari alur Pengawasan OTA (BaselineOtaPage). null untuk
+  /// pengisian Non-OSS biasa.
+  int? baselineOtaId;
   String website = '';
   String noHp = '';
   String email = '';
@@ -93,6 +98,7 @@ class NonOssFormData {
 
     form.keterangan = payload['keterangan'] ?? '';
     form.catatanPetugas = payload['catatan_petugas'] ?? '';
+    form.baselineOtaId = int.tryParse(payload['baseline_ota_id'] ?? '');
 
     final String? tanggalMentah = payload['tanggal_pengawasan'];
     if (tanggalMentah != null && tanggalMentah.isNotEmpty) {
@@ -173,6 +179,9 @@ class NonOssFormData {
 
     if (terdaftarOta.trim().toUpperCase() == 'YA') {
       _addOtaFields(fields);
+    }
+    if (baselineOtaId != null) {
+      fields['baseline_ota_id'] = baselineOtaId.toString();
     }
 
     return fields;

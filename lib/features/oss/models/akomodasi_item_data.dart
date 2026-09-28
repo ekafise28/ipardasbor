@@ -112,6 +112,7 @@ class AkomodasiItemData {
         latitude.trim().isNotEmpty &&
         longitude.trim().isNotEmpty &&
         noHp.trim().isNotEmpty &&
+        email.trim().isNotEmpty &&
         photos.isNotEmpty;
 
     if (!identitasDasarLengkap) return false;

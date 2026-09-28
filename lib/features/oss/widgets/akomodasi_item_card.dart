@@ -59,7 +59,10 @@ class _AkomodasiItemCardState extends State<AkomodasiItemCard>
   bool _loadingRegions = true;
   bool _cekLoading = false;
 
-  List<RegionOption> _provinces = [], _regencies = [], _districts = [], _villages = [];
+  List<RegionOption> _provinces = [],
+      _regencies = [],
+      _districts = [],
+      _villages = [];
 
   AkomodasiItemData get _d => widget.data;
 
@@ -166,11 +169,11 @@ class _AkomodasiItemCardState extends State<AkomodasiItemCard>
   }
 
   Future<void> _gps() => ambilLokasiGps(
-        onBerhasil: (hasil) => setState(() {
-          _d.latitude = hasil.position.latitude.toStringAsFixed(8);
-          _d.longitude = hasil.position.longitude.toStringAsFixed(8);
-        }),
-      );
+    onBerhasil: (hasil) => setState(() {
+      _d.latitude = hasil.position.latitude.toStringAsFixed(8);
+      _d.longitude = hasil.position.longitude.toStringAsFixed(8);
+    }),
+  );
 
   /// Ganti pilihan Kepemilikan NIB. Status hasil pengawasan SELALU direset
   /// di sini - kalau pindah ke TIDAK, langsung dikunci ke satu nilai tetap
@@ -247,7 +250,10 @@ class _AkomodasiItemCardState extends State<AkomodasiItemCard>
               ),
               child: Text(
                 '${widget.index + 1}',
-                style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800),
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w800,
+                ),
               ),
             ),
             const SizedBox(width: 10),
@@ -386,7 +392,10 @@ class _AkomodasiItemCardState extends State<AkomodasiItemCard>
       ),
     );
 
-    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: sections);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: sections,
+    );
   }
 
   Widget _sectionKepemilikanNib() {
@@ -431,7 +440,10 @@ class _AkomodasiItemCardState extends State<AkomodasiItemCard>
           ),
           TextFormField(
             initialValue: _d.nku,
-            decoration: const InputDecoration(labelText: 'NKU *', hintText: 'Tanpa prefix R-'),
+            decoration: const InputDecoration(
+              labelText: 'NKU *',
+              hintText: 'Tanpa prefix R-',
+            ),
             validator: _required,
             onChanged: (v) => setState(() {
               _d.nku = v;
@@ -443,16 +455,21 @@ class _AkomodasiItemCardState extends State<AkomodasiItemCard>
             width: double.infinity,
             child: OutlinedButton.icon(
               style: OutlinedButton.styleFrom(
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(15),
+                ),
               ),
               onPressed: _cekLoading ? null : _cekValidasi,
               icon: _cekLoading
                   ? const SizedBox(
-                      width: 16, height: 16,
+                      width: 16,
+                      height: 16,
                       child: CircularProgressIndicator(strokeWidth: 2),
                     )
                   : const Icon(Icons.fact_check_outlined),
-              label: Text(_cekLoading ? 'Memeriksa...' : 'Cek Validasi NIB/KBLI/NKU'),
+              label: Text(
+                _cekLoading ? 'Memeriksa...' : 'Cek Validasi NIB/KBLI/NKU',
+              ),
             ),
           ),
           if (_d.pesanValidasiTerakhir != null) ...[
@@ -462,7 +479,8 @@ class _AkomodasiItemCardState extends State<AkomodasiItemCard>
               style: TextStyle(
                 fontSize: 12,
                 color: _d.validasiStatus == AkomodasiValidasiStatus.valid
-                    ? Colors.green[700] : Colors.red[700],
+                    ? Colors.green[700]
+                    : Colors.red[700],
               ),
             ),
           ],
@@ -485,7 +503,11 @@ class _AkomodasiItemCardState extends State<AkomodasiItemCard>
         ),
         child: Row(
           children: [
-            Icon(Icons.lock_outline_rounded, color: AppTheme.textSecondary(context), size: 20),
+            Icon(
+              Icons.lock_outline_rounded,
+              color: AppTheme.textSecondary(context),
+              size: 20,
+            ),
             const SizedBox(width: 10),
             const Expanded(
               child: Text(
@@ -559,7 +581,12 @@ class _AkomodasiItemCardState extends State<AkomodasiItemCard>
             prefixIcon: Icon(Icons.category_outlined, size: 20),
           ),
           items: JenisProdukAkomodasi.options
-              .map((e) => DropdownMenuItem(value: e.key, child: Text(e.value, overflow: TextOverflow.ellipsis)))
+              .map(
+                (e) => DropdownMenuItem(
+                  value: e.key,
+                  child: Text(e.value, overflow: TextOverflow.ellipsis),
+                ),
+              )
               .toList(),
           onChanged: (v) => setState(() => _d.jenisProduk = v ?? ''),
           validator: (v) => v == null ? 'Wajib dipilih.' : null,
@@ -573,9 +600,19 @@ class _AkomodasiItemCardState extends State<AkomodasiItemCard>
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _region('Provinsi', _d.provinsiId, _provinces, _onProvinsiChanged),
-        _region('Kabupaten/Kota', _d.kabupatenId, _regencies, _onKabupatenChanged),
+        _region(
+          'Kabupaten/Kota',
+          _d.kabupatenId,
+          _regencies,
+          _onKabupatenChanged,
+        ),
         _region('Kecamatan', _d.kecamatanId, _districts, _onKecamatanChanged),
-        _region('Kelurahan/Desa', _d.kelurahanId, _villages, (id) => setState(() => _d.kelurahanId = id)),
+        _region(
+          'Kelurahan/Desa',
+          _d.kelurahanId,
+          _villages,
+          (id) => setState(() => _d.kelurahanId = id),
+        ),
         TextFormField(
           initialValue: _d.alamat,
           decoration: const InputDecoration(labelText: 'Alamat Lengkap *'),
@@ -614,8 +651,16 @@ class _AkomodasiItemCardState extends State<AkomodasiItemCard>
         const SizedBox(height: 10),
         TextFormField(
           initialValue: _d.email,
-          decoration: const InputDecoration(labelText: 'Email'),
+          decoration: const InputDecoration(labelText: 'Email *'),
           keyboardType: TextInputType.emailAddress,
+          validator: (v) {
+            final value = v?.trim() ?? '';
+            if (value.isEmpty) return 'Wajib diisi.';
+            if (!RegExp(r'^[\w\.\-\+]+@[\w\-]+\.[\w\-\.]+$').hasMatch(value)) {
+              return 'Masukkan alamat email yang valid.';
+            }
+            return null;
+          },
           onChanged: (v) => _d.email = v,
         ),
       ],
@@ -653,7 +698,12 @@ class _AkomodasiItemCardState extends State<AkomodasiItemCard>
     );
   }
 
-  Widget _region(String label, int? value, List<RegionOption> values, ValueChanged<int?> onChanged) {
+  Widget _region(
+    String label,
+    int? value,
+    List<RegionOption> values,
+    ValueChanged<int?> onChanged,
+  ) {
     final int? nilai = values.any((r) => r.id == value) ? value : null;
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
@@ -662,7 +712,12 @@ class _AkomodasiItemCardState extends State<AkomodasiItemCard>
         isExpanded: true,
         decoration: InputDecoration(labelText: '$label *'),
         items: values
-            .map((r) => DropdownMenuItem(value: r.id, child: Text(r.name, overflow: TextOverflow.ellipsis)))
+            .map(
+              (r) => DropdownMenuItem(
+                value: r.id,
+                child: Text(r.name, overflow: TextOverflow.ellipsis),
+              ),
+            )
             .toList(),
         onChanged: onChanged,
         validator: (v) => v == null ? 'Wajib dipilih.' : null,
@@ -671,10 +726,10 @@ class _AkomodasiItemCardState extends State<AkomodasiItemCard>
   }
 
   TextStyle _label(BuildContext context) => TextStyle(
-        color: AppTheme.textColor(context),
-        fontSize: 12.5,
-        fontWeight: FontWeight.w700,
-      );
+    color: AppTheme.textColor(context),
+    fontSize: 12.5,
+    fontWeight: FontWeight.w700,
+  );
 }
 
 class _StatusBadge extends StatelessWidget {
@@ -687,8 +742,14 @@ class _StatusBadge extends StatelessWidget {
       AkomodasiValidasiStatus.valid => (Colors.green, Icons.check_circle),
       AkomodasiValidasiStatus.tidakValid => (Colors.orange, Icons.error),
       AkomodasiValidasiStatus.gagalKoneksi => (Colors.red, Icons.wifi_off),
-      AkomodasiValidasiStatus.sedangMemeriksa => (Colors.blueGrey, Icons.hourglass_top),
-      AkomodasiValidasiStatus.belumDicek => (Colors.grey, Icons.circle_outlined),
+      AkomodasiValidasiStatus.sedangMemeriksa => (
+        Colors.blueGrey,
+        Icons.hourglass_top,
+      ),
+      AkomodasiValidasiStatus.belumDicek => (
+        Colors.grey,
+        Icons.circle_outlined,
+      ),
     };
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 4),

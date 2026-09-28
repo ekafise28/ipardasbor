@@ -24,9 +24,23 @@ import 'widgets/photo_picker.dart';
 import 'offline/offline_queue_service.dart';
 
 class NonOssFormPage extends StatefulWidget {
-  const NonOssFormPage({super.key, this.editingData});
+  const NonOssFormPage({
+    super.key,
+    this.editingData,
+    this.memilikiNibTerkunci,
+    this.baselineOtaId,
+  });
 
   final NonOssLocalData? editingData;
+
+  /// Kalau diisi ('TIDAK' atau 'TIDAK TAHU'), field Kepemilikan NIB dikunci
+  /// ke nilai ini dan pilihannya disembunyikan - dipakai saat form ini
+  /// dibuka dari alur verifikasi Baseline OTA (lihat BaselineOtaPage).
+  final String? memilikiNibTerkunci;
+
+  /// ID baris tbl_oss_baseline_ota yang sedang diverifikasi, kalau form ini
+  /// dibuka dari BaselineOtaPage.
+  final int? baselineOtaId;
 
   @override
   State<NonOssFormPage> createState() => _NonOssFormPageState();
@@ -55,6 +69,8 @@ class _NonOssFormPageState extends State<NonOssFormPage>
 
   Set<_Section> _sectionErrors = {};
   bool get _isEditing => widget.editingData != null;
+  bool get _nibTerkunci =>
+      widget.memilikiNibTerkunci != null || _data.baselineOtaId != null;
 
   bool get _isDirty {
     final Map<String, String> sekarang = _data.toFields();
@@ -224,6 +240,13 @@ class _NonOssFormPageState extends State<NonOssFormPage>
     _data = widget.editingData != null
         ? NonOssFormData.fromLocalData(widget.editingData!)
         : NonOssFormData();
+
+    if (widget.memilikiNibTerkunci != null) {
+      _data.memilikiNib = widget.memilikiNibTerkunci!;
+    }
+    if (widget.baselineOtaId != null) {
+      _data.baselineOtaId = widget.baselineOtaId;
+    }
 
     // Snapshot kondisi awal, dipakai untuk deteksi "dirty" saat back ditekan.
     _snapshotAwal = Map<String, String>.from(_data.toFields());
@@ -446,14 +469,13 @@ class _NonOssFormPageState extends State<NonOssFormPage>
     return valid ? null : 'Masukkan URL yang valid, contoh: https://contoh.com';
   }
 
-  // Validator email. Field Email bersifat opsional, jadi hanya divalidasi
-  // formatnya ketika diisi.
+  // Validator email. Field Email
   static final RegExp _emailPattern = RegExp(
     r'^[\w\.\-\+]+@[\w\-]+\.[\w\-\.]+$',
   );
   String? _emailValidator(String? v) {
     final value = v?.trim() ?? '';
-    if (value.isEmpty) return null;
+    if (value.isEmpty) return 'Wajib diisi.';
     return _emailPattern.hasMatch(value)
         ? null
         : 'Masukkan alamat email yang valid.';
@@ -730,6 +752,39 @@ class _NonOssFormPageState extends State<NonOssFormPage>
     );
   }
 
+    Widget _lockedNibBanner() {
+    final String label = _data.memilikiNib == 'TIDAK' ? 'Tidak' : 'Tidak Tahu';
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 13),
+      decoration: BoxDecoration(
+        color: AppTheme.scaffoldColorDynamic(context),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppTheme.border(context)),
+      ),
+      child: Row(
+        children: [
+          Icon(
+            Icons.lock_outline_rounded,
+            size: 18,
+            color: AppTheme.textSecondary(context),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              'Kepemilikan NIB: $label (terkunci dari alur Baseline OTA)',
+              style: TextStyle(
+                fontSize: 12.5,
+                fontWeight: FontWeight.w700,
+                color: AppTheme.textColor(context),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _choice<T>({
     required String label,
     required T value,
@@ -937,23 +992,26 @@ class _NonOssFormPageState extends State<NonOssFormPage>
                       hasError: _sectionErrors.contains(_Section.identitas),
                       child: Column(
                         children: [
-                          // NIB
-                          _choice<String>(
-                            label: 'Apakah usaha memiliki NIB? *',
-                            value: _data.memilikiNib,
-                            choices: const {
-                              'TIDAK': 'Tidak',
-                              'TIDAK TAHU': 'Tidak Tahu',
-                            },
-                            onChanged: (v) => setState(() {
-                              _data.memilikiNib = v;
-                              // Opsi status berbeda per kondisi, jadi pilihan
-                              // lama tidak relevan lagi saat kondisi diganti.
-                              _data.statusKetidaksesuaian = <String>[];
-                              _data.keterangan = '';
-                              _keteranganCtrl.clear();
-                            }),
-                          ),
+                                                    // NIB
+                          if (_nibTerkunci)
+                            _lockedNibBanner()
+                          else
+                            _choice<String>(
+                              label: 'Apakah usaha memiliki NIB? *',
+                              value: _data.memilikiNib,
+                              choices: const {
+                                'TIDAK': 'Tidak',
+                                'TIDAK TAHU': 'Tidak Tahu',
+                              },
+                              onChanged: (v) => setState(() {
+                                _data.memilikiNib = v;
+                                // Opsi status berbeda per kondisi, jadi pilihan
+                                // lama tidak relevan lagi saat kondisi diganti.
+                                _data.statusKetidaksesuaian = <String>[];
+                                _data.keterangan = '';
+                                _keteranganCtrl.clear();
+                              }),
+                            ),
 
                           const SizedBox(height: 12),
 
@@ -1110,10 +1168,8 @@ class _NonOssFormPageState extends State<NonOssFormPage>
                             'Email',
                             _emailCtrl,
                             (v) => _data.email = v,
-                            required: false,
                             type: TextInputType.emailAddress,
                             hintText: 'example@example.com',
-                            // Format email diperiksa hanya jika field diisi.
                             validator: _emailValidator,
                           ),
                         ],

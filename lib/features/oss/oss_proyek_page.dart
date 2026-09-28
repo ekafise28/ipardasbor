@@ -21,7 +21,23 @@ import 'widgets/oss_proyek_card.dart';
 /// Padanan tabel "Daftar Pengawasan OSS Akomodasi" di web: pencarian NIB/NKU,
 /// filter wilayah, infinite scroll, dan tarik untuk menyegarkan.
 class OssProyekPage extends StatefulWidget {
-  const OssProyekPage({super.key});
+  const OssProyekPage({
+    super.key,
+    this.provinsiIdAwal,
+    this.kabupatenIdAwal,
+    this.baselineOtaId,
+  });
+
+  final int? provinsiIdAwal;
+
+  /// Kalau diisi, filter kabupaten langsung diterapkan saat halaman dibuka
+  /// - dipakai saat masuk dari tombol "Ada NIB" di BaselineOtaPage.
+  final int? kabupatenIdAwal;
+
+  /// ID baris tbl_oss_baseline_ota yang sedang diverifikasi, kalau halaman
+  /// ini dibuka dari BaselineOtaPage. Diteruskan ke OssValidasiPage saat
+  /// user memilih salah satu proyek atau memakai Cek Data OSS manual.
+  final int? baselineOtaId;
 
   @override
   State<OssProyekPage> createState() => _OssProyekPageState();
@@ -34,7 +50,7 @@ class _OssProyekPageState extends State<OssProyekPage> {
 
   Timer? _debounce;
 
-  OssProyekFilter _filter = const OssProyekFilter();
+  late OssProyekFilter _filter;
   OssProyekPageResult? _hasil; // hasil terakhir: opsi filter, provinsi, total
   final List<OssProyekItem> _items = <OssProyekItem>[];
   RiwayatPagination _pagination = RiwayatPagination.kosong;
@@ -50,6 +66,10 @@ class _OssProyekPageState extends State<OssProyekPage> {
   @override
   void initState() {
     super.initState();
+    _filter = OssProyekFilter(
+      provinsiId: widget.provinsiIdAwal,
+      kabupatenId: widget.kabupatenIdAwal,
+    );
     _scrollController.addListener(_onScroll);
     _muatUlang();
   }
@@ -189,6 +209,7 @@ class _OssProyekPageState extends State<OssProyekPage> {
           initialKbli: item.kbli,
           initialNku: item.nku,
           namaUsaha: item.namaPerusahaan,
+          baselineOtaId: widget.baselineOtaId,
         ),
       ),
     );
@@ -201,7 +222,9 @@ class _OssProyekPageState extends State<OssProyekPage> {
   /// Verifikasi manual untuk usaha yang belum ada di daftar.
   Future<void> _bukaCekManual() async {
     final bool? tersimpan = await Navigator.of(context).push<bool>(
-      MaterialPageRoute<bool>(builder: (_) => const OssValidasiPage()),
+      MaterialPageRoute<bool>(
+        builder: (_) => OssValidasiPage(baselineOtaId: widget.baselineOtaId),
+      ),
     );
 
     if (tersimpan == true && mounted) {

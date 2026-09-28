@@ -114,6 +114,7 @@ class AkomodasiService {
     if (tahap1.npwpd.trim().isNotEmpty) fields['npwpd'] = tahap1.npwpd.trim();
     if (tahap1.website.trim().isNotEmpty) fields['website'] = tahap1.website.trim();
     if (tahap1.email.trim().isNotEmpty) fields['email'] = tahap1.email.trim();
+    if (tahap1.baselineOtaId != null) fields['baseline_ota_id'] = tahap1.baselineOtaId.toString();
 
     if (!tahap1.isValid) {
       for (int i = 0; i < tahap1.statusKetidaksesuaian.length; i++) {

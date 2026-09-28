@@ -92,7 +92,9 @@ class DraftCompletenessChecker {
         const DraftMissingItem('Kontak dan Legalitas', 'Format Website'),
       );
     }
-    if (!empty('email') && !_emailPattern.hasMatch(v('email'))) {
+    if (empty('email')) {
+      missing.add(const DraftMissingItem('Kontak dan Legalitas', 'Email'));
+    } else if (!_emailPattern.hasMatch(v('email'))) {
       missing.add(
         const DraftMissingItem('Kontak dan Legalitas', 'Format Email'),
       );
@@ -114,9 +116,7 @@ class DraftCompletenessChecker {
           ),
         );
         if (adaUrlTidakValid) {
-          missing.add(
-            const DraftMissingItem('Platform OTA', 'Format URL OTA'),
-          );
+          missing.add(const DraftMissingItem('Platform OTA', 'Format URL OTA'));
         }
       }
     }
@@ -129,9 +129,7 @@ class DraftCompletenessChecker {
 
     // --- Foto Dokumentasi ---
     if (photoPaths.isEmpty) {
-      missing.add(
-        const DraftMissingItem('Foto Dokumentasi', 'Minimal 1 Foto'),
-      );
+      missing.add(const DraftMissingItem('Foto Dokumentasi', 'Minimal 1 Foto'));
     }
 
     return missing;
@@ -155,10 +153,8 @@ class DraftCompletenessChecker {
       if (match != null) {
         final String platform = match.group(1)!;
         final int index = int.parse(match.group(2)!);
-        byPlatform.putIfAbsent(
-          platform,
-          () => <int, String>{},
-        )[index] = entry.value;
+        byPlatform.putIfAbsent(platform, () => <int, String>{})[index] =
+            entry.value;
       }
     }
 

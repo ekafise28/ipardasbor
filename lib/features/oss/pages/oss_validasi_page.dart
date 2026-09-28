@@ -19,6 +19,7 @@ class OssValidasiPage extends StatefulWidget {
     this.initialKbli,
     this.initialNku,
     this.namaUsaha,
+    this.baselineOtaId,
   });
 
   /// Diisi saat dibuka dari daftar usaha. Kalau ketiganya ada, pengecekan
@@ -27,6 +28,10 @@ class OssValidasiPage extends StatefulWidget {
   final String? initialKbli;
   final String? initialNku;
   final String? namaUsaha;
+
+  /// ID baris tbl_oss_baseline_ota, kalau halaman ini dibuka lewat tombol
+  /// "Ada NIB" di BaselineOtaPage (lewat OssProyekPage).
+  final int? baselineOtaId;
 
   @override
   State<OssValidasiPage> createState() => _OssValidasiPageState();
@@ -171,6 +176,7 @@ class _OssValidasiPageState extends State<OssValidasiPage> {
         kbliDesc: _kbliDesc ?? '',
         isValid: hasilApi.isValid,
         proyek: hasilApi.proyek,
+        baselineOtaId: widget.baselineOtaId,
       );
 
       if (!mounted) return;

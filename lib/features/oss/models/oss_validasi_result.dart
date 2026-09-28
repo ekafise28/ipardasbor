@@ -10,11 +10,16 @@ class OssValidasiResult {
     required this.kbliDesc,
     required this.isValid,
     this.proyek,
+    this.baselineOtaId,
   });
 
   final String nib;
   final String kbli;
   final String nku;
+
+  /// ID baris tbl_oss_baseline_ota, kalau alur ini dibuka dari tombol
+  /// "Ada NIB" di BaselineOtaPage. null untuk validasi OSS biasa.
+  final int? baselineOtaId;
 
   /// Hanya relevan kalau [kbli] == '55900'.
   final String kbliDesc;

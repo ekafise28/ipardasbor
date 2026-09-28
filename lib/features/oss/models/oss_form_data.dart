@@ -15,6 +15,7 @@ class OssFormData {
     required this.nku,
     required this.isValid,
     String kbliDesc = '',
+    this.baselineOtaId,
   }) : kbliDesc = kbliDesc;
 
   // --- Dari tahap validasi (readonly di form lanjutan) ---
@@ -23,6 +24,10 @@ class OssFormData {
   final String nku;
   final bool isValid;
   final String kbliDesc;
+
+  /// ID baris tbl_oss_baseline_ota, kalau alur ini berasal dari verifikasi
+  /// Baseline OTA. Backend saat ini belum memakainya (lihat TODO backend).
+  final int? baselineOtaId;
 
   String namaPemilik = '';
   String namaBrand = '';
@@ -90,6 +95,7 @@ class OssFormData {
     _addOptional(fields, 'website', website);
     _addOptional(fields, 'email', email);
     _addOptional(fields, 'catatan_petugas', catatanPetugas);
+    _addOptionalInt(fields, 'baseline_ota_id', baselineOtaId);
 
     // --- Hanya kalau data hasil validasi TIDAK VALID ---
     if (!isValid) {

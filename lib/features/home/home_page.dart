@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:ipardasbor/features/non_oss/services/wilayah_akses_service.dart';
+import 'package:ipardasbor/features/ota/pages/baseline_ota_page.dart';
 
 import '../../app/app_theme.dart';
 import '../dashboard/dashboard_page.dart';
@@ -144,6 +145,12 @@ class _HomePageState extends State<HomePage> {
         await Navigator.of(
           context,
         ).push(MaterialPageRoute<void>(builder: (_) => const NonOssFormPage()));
+        break;
+
+      case 'Pengawasan OTA':
+        await Navigator.of(
+          context,
+        ).push(MaterialPageRoute<void>(builder: (_) => const BaselineOtaPage()));
         break;
 
       case 'Profil Petugas':
