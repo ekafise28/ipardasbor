@@ -48,8 +48,6 @@ class NonOssFormPage extends StatefulWidget {
 
 class _NonOssFormPageState extends State<NonOssFormPage>
     with WidgetsBindingObserver, GpsCaptureMixin<NonOssFormPage> {
-  static const _primary = AppTheme.primaryColor;
-  static const _navy = Color(0xFF0B3F78);
   final _key = GlobalKey<FormState>();
   late final NonOssFormData _data;
 
@@ -112,7 +110,7 @@ class _NonOssFormPageState extends State<NonOssFormPage>
                   onPressed: () =>
                       Navigator.pop(dialogContext, _BackAction.saveDraft),
                   style: FilledButton.styleFrom(
-                    backgroundColor: _primary,
+                    backgroundColor: AppTheme.primaryColor,
                     padding: const EdgeInsets.symmetric(vertical: 12),
                   ),
                   child: const Text(
@@ -826,7 +824,7 @@ class _NonOssFormPageState extends State<NonOssFormPage>
                           : AppTheme.scaffoldColorDynamic(context),
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(
-                        color: selected ? _primary : AppTheme.border(context),
+                        color: selected ? AppTheme.primaryColor : AppTheme.border(context),
                         width: selected ? 1.5 : 1,
                       ),
                     ),
@@ -838,7 +836,7 @@ class _NonOssFormPageState extends State<NonOssFormPage>
                               ? Icons.radio_button_checked
                               : Icons.radio_button_off,
                           size: 18,
-                          color: selected ? _primary : AppTheme.textMuted,
+                          color: selected ? AppTheme.primaryColor : AppTheme.textMuted,
                         ),
                         const SizedBox(width: 7),
                         Flexible(
@@ -847,7 +845,7 @@ class _NonOssFormPageState extends State<NonOssFormPage>
                             overflow: TextOverflow.ellipsis,
                             style: TextStyle(
                               color: selected
-                                  ? _primary
+                                  ? AppTheme.primaryColor
                                   : AppTheme.textSecondary(context),
                               fontSize: 12,
                               fontWeight: FontWeight.w700,
@@ -870,8 +868,8 @@ class _NonOssFormPageState extends State<NonOssFormPage>
   Widget build(BuildContext context) => Theme(
     data: Theme.of(context).copyWith(
       colorScheme: ColorScheme.fromSeed(
-        seedColor: _primary,
-        primary: _primary,
+        seedColor: AppTheme.primaryColor,
+        primary: AppTheme.primaryColor,
         brightness: Theme.of(context).brightness, // langsung dari context
         surface: AppTheme.surface(context),
       ),
@@ -891,7 +889,7 @@ class _NonOssFormPageState extends State<NonOssFormPage>
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(13),
-          borderSide: const BorderSide(color: _primary, width: 1.5),
+          borderSide: const BorderSide(color: AppTheme.primaryColor, width: 1.5),
         ),
       ),
     ),
@@ -905,7 +903,7 @@ class _NonOssFormPageState extends State<NonOssFormPage>
         backgroundColor: AppTheme.scaffoldColorDynamic(context),
         appBar: AppBar(
           elevation: 0,
-          backgroundColor: _navy,
+          backgroundColor: AppTheme.primaryDark,
           foregroundColor: Colors.white,
           titleSpacing: 4,
           title: Column(
@@ -1312,7 +1310,7 @@ class _NonOssFormPageState extends State<NonOssFormPage>
                       child: FilledButton.icon(
                         onPressed: _saving ? null : _submit,
                         style: FilledButton.styleFrom(
-                          backgroundColor: _primary,
+                          backgroundColor: AppTheme.primaryColor,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(15),
                           ),

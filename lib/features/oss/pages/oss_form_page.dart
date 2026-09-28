@@ -35,8 +35,6 @@ class OssFormPage extends StatefulWidget {
 
 class _OssFormPageState extends State<OssFormPage>
     with WidgetsBindingObserver, GpsCaptureMixin<OssFormPage> {
-  static const _primary = AppTheme.primaryColor;
-  static const _navy = Color(0xFF0B3F78);
 
   final _key = GlobalKey<FormState>();
   late final OssFormData _data;
@@ -630,7 +628,7 @@ class _OssFormPageState extends State<OssFormPage>
                           : AppTheme.scaffoldColorDynamic(context),
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(
-                        color: selected ? _primary : AppTheme.border(context),
+                        color: selected ? AppTheme.primaryColor : AppTheme.border(context),
                         width: selected ? 1.5 : 1,
                       ),
                     ),
@@ -642,7 +640,7 @@ class _OssFormPageState extends State<OssFormPage>
                               ? Icons.radio_button_checked
                               : Icons.radio_button_off,
                           size: 18,
-                          color: selected ? _primary : AppTheme.textMuted,
+                          color: selected ? AppTheme.primaryColor : AppTheme.textMuted,
                         ),
                         const SizedBox(width: 7),
                         Flexible(
@@ -651,7 +649,7 @@ class _OssFormPageState extends State<OssFormPage>
                             overflow: TextOverflow.ellipsis,
                             style: TextStyle(
                               color: selected
-                                  ? _primary
+                                  ? AppTheme.primaryColor
                                   : AppTheme.textSecondary(context),
                               fontSize: 12,
                               fontWeight: FontWeight.w700,
@@ -762,8 +760,8 @@ class _OssFormPageState extends State<OssFormPage>
   Widget build(BuildContext context) => Theme(
     data: Theme.of(context).copyWith(
       colorScheme: ColorScheme.fromSeed(
-        seedColor: _primary,
-        primary: _primary,
+        seedColor: AppTheme.primaryColor,
+        primary: AppTheme.primaryColor,
         brightness: Theme.of(context).brightness,
         surface: AppTheme.surface(context),
       ),
@@ -783,7 +781,7 @@ class _OssFormPageState extends State<OssFormPage>
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(13),
-          borderSide: const BorderSide(color: _primary, width: 1.5),
+          borderSide: const BorderSide(color: AppTheme.primaryColor, width: 1.5),
         ),
       ),
     ),
@@ -791,7 +789,7 @@ class _OssFormPageState extends State<OssFormPage>
       backgroundColor: AppTheme.scaffoldColorDynamic(context),
       appBar: AppBar(
         elevation: 0,
-        backgroundColor: _navy,
+        backgroundColor: AppTheme.primaryDark,
         foregroundColor: Colors.white,
         titleSpacing: 4,
         title: const Column(
@@ -799,11 +797,11 @@ class _OssFormPageState extends State<OssFormPage>
           children: [
             Text(
               'Validasi OSS',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
+              style: TextStyle(fontSize: 19, color: Colors.white,fontWeight: FontWeight.w800),
             ),
             Text(
               'Form lanjutan pendataan usaha',
-              style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w400),
+              style: TextStyle(fontSize: 11.5, color: Colors.white,fontWeight: FontWeight.w400),
             ),
           ],
         ),
@@ -1168,7 +1166,7 @@ class _OssFormPageState extends State<OssFormPage>
                     child: FilledButton.icon(
                       onPressed: _saving ? null : _submit,
                       style: FilledButton.styleFrom(
-                        backgroundColor: _primary,
+                        backgroundColor: AppTheme.primaryColor,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(15),
                         ),

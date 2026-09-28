@@ -149,15 +149,27 @@ class _ProfilePageState extends State<ProfilePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(
-          'Profil Petugas',
-          style: TextStyle(
-            color: AppTheme.textColor(context),
-            fontSize: 17,
-            fontWeight: FontWeight.w800,
-          ),
+        backgroundColor: AppTheme.primaryDark,
+        foregroundColor: Colors.white,
+        title: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Profil Petugas',
+              style: TextStyle(
+                fontSize: 19,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+            Text(
+              'Informasi akun dan profil petugas',
+              style: TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w400,
+              ),
+            ),
+          ],
         ),
-        centerTitle: false,
       ),
       body: SafeArea(
         top: false,

@@ -381,7 +381,8 @@ class _SubmissionDetailPageState extends State<SubmissionDetailPage> {
     return Scaffold(
       backgroundColor: AppTheme.scaffoldColorDynamic(context),
       appBar: AppBar(
-        backgroundColor: AppTheme.surface(context),
+        backgroundColor: AppTheme.primaryDark,
+        foregroundColor: Colors.white,
         surfaceTintColor: AppTheme.surface(context),
         elevation: 0,
         scrolledUnderElevation: 1,
@@ -389,8 +390,8 @@ class _SubmissionDetailPageState extends State<SubmissionDetailPage> {
         title: Text(
           'Detail Ajuan',
           style: TextStyle(
-            color: AppTheme.textColor(context),
-            fontSize: 17,
+            color: Colors.white,
+            fontSize: 19,
             fontWeight: FontWeight.w800,
           ),
         ),
@@ -398,7 +399,7 @@ class _SubmissionDetailPageState extends State<SubmissionDetailPage> {
           IconButton(
             tooltip: 'Edit',
             onPressed: _isSyncing || _isDeleting ? null : _openEdit,
-            icon: Icon(Icons.edit_outlined, color: AppTheme.textColor(context)),
+            icon: Icon(Icons.edit_outlined, color: Colors.white),
           ),
           const SizedBox(width: 4),
         ],

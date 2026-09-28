@@ -265,8 +265,8 @@ class _DashboardPageState extends State<DashboardPage> {
     return Scaffold(
       backgroundColor: AppTheme.scaffoldColorDynamic(context),
       appBar: AppBar(
-        backgroundColor: AppTheme.surface(context),
-        surfaceTintColor: AppTheme.surface(context),
+        backgroundColor: AppTheme.primaryDark,
+        foregroundColor: Colors.white,
         elevation: 0,
         scrolledUnderElevation: 1,
         leading: IconButton(
@@ -276,7 +276,7 @@ class _DashboardPageState extends State<DashboardPage> {
           },
           icon: Icon(
             Icons.arrow_back_rounded,
-            color: AppTheme.textColor(context),
+            color: Colors.white,
           ),
         ),
         titleSpacing: 4,
@@ -286,7 +286,6 @@ class _DashboardPageState extends State<DashboardPage> {
             Text(
               'Dashboard',
               style: TextStyle(
-                color: AppTheme.textColor(context),
                 fontSize: 19,
                 fontWeight: FontWeight.w800,
               ),
@@ -294,7 +293,6 @@ class _DashboardPageState extends State<DashboardPage> {
             Text(
               'Ringkasan Pengawasan Pariwisata',
               style: TextStyle(
-                color: AppTheme.textSecondary(context),
                 fontSize: 11,
                 fontWeight: FontWeight.w400,
               ),
@@ -312,7 +310,7 @@ class _DashboardPageState extends State<DashboardPage> {
                   },
             icon: Icon(
               Icons.refresh_rounded,
-              color: AppTheme.textSecondary(context),
+              color: Colors.white,
             ),
           ),
           const SizedBox(width: 8),

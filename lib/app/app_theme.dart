@@ -62,6 +62,22 @@ class AppTheme {
   static const Color warning = Color(0xFFEF6C00);
   static const Color warningBackground = Color(0xFFFFF1E3);
 
+  // ---- Semantic (dynamic) ----
+  static Color warningSurface(BuildContext context) {
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
+    return isDark ? const Color(0xFF3A2A17) : warningBackground;
+  }
+
+  static Color warningTitle(BuildContext context) {
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
+    return isDark ? const Color(0xFFFFCC80) : const Color(0xFF5D4037);
+  }
+
+  static Color warningBody(BuildContext context) {
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
+    return isDark ? const Color(0xFFD7B98E) : const Color(0xFF795548);
+  }
+
   // ---- Setting ----
   static const Color menuTampilan = Color(0xFF5C6BC0);
   static const Color menuTampilanBg = Color(0xFFE8EAF6);

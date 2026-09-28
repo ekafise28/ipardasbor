@@ -37,9 +37,7 @@ class OssValidasiPage extends StatefulWidget {
   State<OssValidasiPage> createState() => _OssValidasiPageState();
 }
 
-class _OssValidasiPageState extends State<OssValidasiPage> {
-  static const _primary = AppTheme.primaryColor;
-  static const _navy = Color(0xFF0B3F78);
+class _OssValidasiPageState extends State<OssValidasiPage> {  
 
   final _key = GlobalKey<FormState>();
   final _nibCtrl = TextEditingController();
@@ -206,8 +204,8 @@ class _OssValidasiPageState extends State<OssValidasiPage> {
     return Theme(
       data: Theme.of(context).copyWith(
         colorScheme: ColorScheme.fromSeed(
-          seedColor: _primary,
-          primary: _primary,
+          seedColor: AppTheme.primaryColor,
+          primary: AppTheme.primaryColor,
           brightness: Theme.of(context).brightness,
           surface: AppTheme.surface(context),
         ),
@@ -227,7 +225,7 @@ class _OssValidasiPageState extends State<OssValidasiPage> {
           ),
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(13),
-            borderSide: const BorderSide(color: _primary, width: 1.5),
+            borderSide: const BorderSide(color: AppTheme.primaryColor, width: 1.5),
           ),
         ),
       ),
@@ -235,7 +233,7 @@ class _OssValidasiPageState extends State<OssValidasiPage> {
         backgroundColor: AppTheme.scaffoldColorDynamic(context),
         appBar: AppBar(
           elevation: 0,
-          backgroundColor: _navy,
+          backgroundColor: AppTheme.primaryDark,
           foregroundColor: Colors.white,
           titleSpacing: 4,
           title: const Column(
@@ -465,7 +463,7 @@ class _OssValidasiPageState extends State<OssValidasiPage> {
                 child: FilledButton.icon(
                   onPressed: _submitting ? null : _submit,
                   style: FilledButton.styleFrom(
-                    backgroundColor: _primary,
+                    backgroundColor: AppTheme.primaryColor,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(15),
                     ),

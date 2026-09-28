@@ -86,7 +86,18 @@ class _RiwayatDetailPageState extends State<RiwayatDetailPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppTheme.scaffoldColorDynamic(context),
-      appBar: AppBar(title: const Text('Detail Riwayat')),
+      appBar: AppBar(
+        backgroundColor: AppTheme.primaryDark,
+        foregroundColor: Colors.white,
+        title: const Text(
+          'Detail Riwayat',
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: 19,
+            fontWeight: FontWeight.w800,
+          ),
+        ),
+      ),
       body: _buildBody(context),
     );
   }

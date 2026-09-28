@@ -26,7 +26,6 @@ class AkomodasiFormPage extends StatefulWidget {
 }
 
 class _AkomodasiFormPageState extends State<AkomodasiFormPage> {
-  static const _navy = Color(0xFF0B3F78);
 
   final _key = GlobalKey<FormState>();
   final RegionService _regions = RegionService();
@@ -108,15 +107,15 @@ class _AkomodasiFormPageState extends State<AkomodasiFormPage> {
       backgroundColor: AppTheme.scaffoldColorDynamic(context),
       appBar: AppBar(
         elevation: 0,
-        backgroundColor: _navy,
+        backgroundColor: AppTheme.primaryDark,
         foregroundColor: Colors.white,
         titleSpacing: 4,
         title: const Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Tahap 2 — Akomodasi yang Dikelola',
-              style: TextStyle(fontSize: 17, fontWeight: FontWeight.w800),
+              'Tahap 2 - Akomodasi yang Dikelola',
+              style: TextStyle(fontSize: 19, fontWeight: FontWeight.w800),
             ),
             Text(
               'Minimal satu akomodasi, isi lengkap tiap kartu',

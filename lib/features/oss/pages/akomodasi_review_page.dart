@@ -33,7 +33,6 @@ class AkomodasiReviewPage extends StatefulWidget {
 }
 
 class _AkomodasiReviewPageState extends State<AkomodasiReviewPage> {
-  static const _navy = Color(0xFF0B3F78);
 
   final RegionService _regions = RegionService();
   late final AkomodasiService _service;
@@ -146,7 +145,7 @@ class _AkomodasiReviewPageState extends State<AkomodasiReviewPage> {
       backgroundColor: AppTheme.scaffoldColorDynamic(context),
       appBar: AppBar(
         elevation: 0,
-        backgroundColor: _navy,
+        backgroundColor: AppTheme.primaryDark,
         foregroundColor: Colors.white,
         title: const Text('Review Sebelum Simpan', style: TextStyle(fontWeight: FontWeight.w800)),
       ),
@@ -157,14 +156,14 @@ class _AkomodasiReviewPageState extends State<AkomodasiReviewPage> {
               children: [
                 _ReviewSection(
                   icon: Icons.assignment_ind_outlined,
-                  title: 'Tahap 1 — Identitas Manajemen Akomodasi',
+                  title: 'Tahap 1 - Identitas Manajemen Akomodasi',
                   child: _tahap1Content(),
                 ),
                 for (int i = 0; i < widget.akomodasi.length; i++)
                   _ReviewSection(
                     icon: Icons.apartment_rounded,
                     title:
-                        'Akomodasi ${i + 1} — ${widget.akomodasi[i].namaBrand.trim().isEmpty ? '(belum ada nama)' : widget.akomodasi[i].namaBrand}',
+                        'Akomodasi ${i + 1} - ${widget.akomodasi[i].namaBrand.trim().isEmpty ? '(belum ada nama)' : widget.akomodasi[i].namaBrand}',
                     initiallyExpanded: false,
                     child: _akomodasiContent(widget.akomodasi[i], _wilayahAkomodasi[i]),
                   ),

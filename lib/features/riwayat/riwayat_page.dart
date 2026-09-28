@@ -197,7 +197,29 @@ class _RiwayatPageState extends State<RiwayatPage> {
     return Scaffold(
       backgroundColor: AppTheme.scaffoldColorDynamic(context),
       appBar: AppBar(
-        title: const Text('Riwayat'),
+        backgroundColor: AppTheme.primaryDark,
+        foregroundColor: Colors.white,
+        title: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Riwayat',
+              style: TextStyle(
+                fontSize: 19,
+                color: Colors.white,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+            Text(
+              'Data Pengawasan yang Telah Dilakukan',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 11,
+                fontWeight: FontWeight.w400,
+              ),
+            ),
+          ],
+        ),
         actions: <Widget>[
           IconButton(
             tooltip: 'Filter',

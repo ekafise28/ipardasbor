@@ -214,8 +214,8 @@ class _SyncPageState extends State<SyncPage> {
     return Scaffold(
       backgroundColor: AppTheme.scaffoldColorDynamic(context),
       appBar: AppBar(
-        backgroundColor: AppTheme.surface(context),
-        surfaceTintColor: AppTheme.surface(context),
+        backgroundColor: AppTheme.primaryDark,
+        foregroundColor: Colors.white,
         elevation: 0,
         scrolledUnderElevation: 1,
         leading: IconButton(
@@ -223,7 +223,7 @@ class _SyncPageState extends State<SyncPage> {
           onPressed: () => Navigator.of(context).pop(),
           icon: Icon(
             Icons.arrow_back_rounded,
-            color: AppTheme.textColor(context),
+            color: Colors.white,
           ),
         ),
         titleSpacing: 4,
@@ -233,7 +233,6 @@ class _SyncPageState extends State<SyncPage> {
             Text(
               'Sinkronisasi',
               style: TextStyle(
-                color: AppTheme.textColor(context),
                 fontSize: 19,
                 fontWeight: FontWeight.w800,
               ),
@@ -241,7 +240,6 @@ class _SyncPageState extends State<SyncPage> {
             Text(
               'Kirim data pengawasan yang tersimpan offline',
               style: TextStyle(
-                color: AppTheme.textSecondary(context),
                 fontSize: 11,
               ),
             ),
@@ -253,7 +251,7 @@ class _SyncPageState extends State<SyncPage> {
             onPressed: _isLoading ? null : () => _loadAllData(),
             icon: Icon(
               Icons.refresh_rounded,
-              color: AppTheme.textSecondary(context),
+              color: Colors.white,
             ),
           ),
           const SizedBox(width: 8),

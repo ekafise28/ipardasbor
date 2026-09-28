@@ -27,8 +27,6 @@ class BaselineOtaPage extends StatefulWidget {
 }
 
 class _BaselineOtaPageState extends State<BaselineOtaPage> {
-  static const _navy = Color(0xFF0B3F78);
-
   late final BaselineOtaService _service;
   final RegionService _regions = RegionService();
   final ScrollController _scroll = ScrollController();
@@ -211,7 +209,7 @@ class _BaselineOtaPageState extends State<BaselineOtaPage> {
       backgroundColor: AppTheme.scaffoldColorDynamic(context),
       appBar: AppBar(
         elevation: 0,
-        backgroundColor: _navy,
+        backgroundColor: AppTheme.primaryDark,
         foregroundColor: Colors.white,
         titleSpacing: 4,
         title: const Column(
@@ -219,11 +217,11 @@ class _BaselineOtaPageState extends State<BaselineOtaPage> {
           children: [
             Text(
               'Pengawasan OTA',
-              style: TextStyle(fontSize: 17, fontWeight: FontWeight.w800),
+              style: TextStyle(fontSize: 19, fontWeight: FontWeight.w800),
             ),
             Text(
               'Verifikasi hasil scraping baseline OTA',
-              style: TextStyle(fontSize: 11.5),
+              style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w400),
             ),
           ],
         ),

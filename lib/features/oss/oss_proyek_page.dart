@@ -304,7 +304,27 @@ class _OssProyekPageState extends State<OssProyekPage> {
     return Scaffold(
       backgroundColor: AppTheme.scaffoldColorDynamic(context),
       appBar: AppBar(
-        title: const Text('Validasi OSS'),
+        backgroundColor: AppTheme.primaryDark,
+        foregroundColor: Colors.white,
+        title: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Validasi OSS',
+              style: TextStyle(
+                fontSize: 19,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+            Text(
+              'Verifikasi Proyek dan Usaha OSS',
+              style: TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w400,
+              ),
+            ),
+          ],
+        ),
         actions: <Widget>[
           IconButton(
             tooltip: 'Filter',
@@ -428,23 +448,37 @@ class _KartuCekManual extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    const Color aksen = AppTheme.secondaryColor;
+
     return Card(
       elevation: 0,
-      color: AppTheme.warningBackground.withValues(alpha: 0.6),
+      color: AppTheme.surface(context),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(14),
-        side: BorderSide(color: AppTheme.warning.withValues(alpha: 0.25)),
+        side: BorderSide(color: AppTheme.border(context)),
       ),
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
       child: InkWell(
         borderRadius: BorderRadius.circular(14),
         onTap: onTap,
-        child: const Padding(
-          padding: EdgeInsets.all(14),
+        child: Padding(
+          padding: const EdgeInsets.all(14),
           child: Row(
             children: <Widget>[
-              Icon(Icons.edit_note_rounded, color: AppTheme.warning, size: 30),
-              SizedBox(width: 12),
+              Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                  color: aksen.withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Icon(
+                  Icons.edit_note_rounded,
+                  color: aksen,
+                  size: 26,
+                ),
+              ),
+              const SizedBox(width: 12),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -454,18 +488,24 @@ class _KartuCekManual extends StatelessWidget {
                       style: TextStyle(
                         fontWeight: FontWeight.w800,
                         fontSize: 14,
-                        color: Color(0xFF5D4037),
+                        color: AppTheme.textColor(context),
                       ),
                     ),
-                    SizedBox(height: 2),
+                    const SizedBox(height: 2),
                     Text(
                       'Gunakan apabila data usaha belum tersedia di daftar.',
-                      style: TextStyle(fontSize: 12, color: Color(0xFF795548)),
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: AppTheme.textSecondary(context),
+                      ),
                     ),
                   ],
                 ),
               ),
-              Icon(Icons.chevron_right_rounded, color: AppTheme.warning),
+              Icon(
+                Icons.chevron_right_rounded,
+                color: AppTheme.textSecondary(context),
+              ),
             ],
           ),
         ),
