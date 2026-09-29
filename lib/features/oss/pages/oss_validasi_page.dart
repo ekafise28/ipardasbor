@@ -1,5 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:ipardasbor/app/app_theme.dart';
+// OCR: import baru
+import 'package:ipardasbor/core/constants/kbli_constants.dart';
+import 'package:ipardasbor/shared/ocr/ocr_field_type.dart';
+import 'package:ipardasbor/shared/ocr/ocr_paste_flow.dart';
+import 'package:ipardasbor/shared/ocr/ocr_scan_flow.dart';
+import 'package:ipardasbor/shared/widgets/ocr_field_actions.dart';
+import 'package:ipardasbor/shared/widgets/ocr_scan_button.dart';
 
 import '../../../core/api/api_client.dart';
 import '../models/oss_validasi_result.dart';
@@ -37,8 +44,7 @@ class OssValidasiPage extends StatefulWidget {
   State<OssValidasiPage> createState() => _OssValidasiPageState();
 }
 
-class _OssValidasiPageState extends State<OssValidasiPage> {  
-
+class _OssValidasiPageState extends State<OssValidasiPage> {
   final _key = GlobalKey<FormState>();
   final _nibCtrl = TextEditingController();
   final _kbliCtrl = TextEditingController();
@@ -50,32 +56,7 @@ class _OssValidasiPageState extends State<OssValidasiPage> {
   String? _kbliDesc;
   bool _submitting = false;
 
-  static const List<String> _daftarKbliDiizinkan = [
-    '55105',
-    '55104',
-    '55103',
-    '55102',
-    '55101',
-    '55106',
-    '55203',
-    '55201',
-    '55202',
-    '55204',
-    '55300',
-    '55209',
-    '87303',
-    '55909',
-    '55901',
-    '55110',
-    '55120',
-    '55130',
-    '55191',
-    '55192',
-    '55193',
-    '55194',
-    '55199',
-    '55900',
-  ];
+  // OCR: _daftarKbliDiizinkan dipindah ke KbliConstants.daftarDiizinkan.
 
   static const List<String> _daftarJenisUsaha55900 = [
     'Jasa Manajemen Hotel',
@@ -128,7 +109,7 @@ class _OssValidasiPageState extends State<OssValidasiPage> {
     final value = v?.trim() ?? '';
     if (value.isEmpty) return 'Wajib diisi.';
     if (value.length != 5) return 'KBLI harus 5 digit.';
-    if (!_daftarKbliDiizinkan.contains(value)) {
+    if (!KbliConstants.isDiizinkan(value)) {
       return 'KBLI tidak termasuk dalam daftar yang diizinkan.';
     }
     return null;
@@ -139,6 +120,72 @@ class _OssValidasiPageState extends State<OssValidasiPage> {
 
   void _showError(String pesan) {
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(pesan)));
+  }
+
+  // OCR: logika KBLI khusus yang tadinya inline di onChanged, dijadikan satu
+  // fungsi supaya bisa dipanggil juga setelah controller diisi lewat kode
+  // (mengisi controller TIDAK memicu onChanged).
+  void _syncKbliState() {
+    setState(() {
+      if (_isKbli55901) {
+        _kbliDesc = 'MANAJEMEN AKOMODASI';
+      } else if (_isKbli55900) {
+        // Nilai lama (mis. MANAJEMEN AKOMODASI dari 55901) tidak ada di
+        // dropdown 55900 dan akan memicu assertion kalau dibiarkan.
+        if (!_daftarJenisUsaha55900.contains(_kbliDesc)) _kbliDesc = null;
+      } else {
+        _kbliDesc = null;
+      }
+    });
+  }
+
+  // OCR: scan dari foto/screenshot lalu isi field yang dicentang pengguna.
+  Future<void> _scanOcr(Set<OcrFieldType> targets) async {
+    final Map<OcrFieldType, String>? values = await runOcrScan(
+      context,
+      targets: targets,
+      currentValues: {
+        OcrFieldType.nib: _nibCtrl.text.trim(),
+        OcrFieldType.nku: _nkuCtrl.text.trim(),
+        OcrFieldType.kbli: _kbliCtrl.text.trim(),
+      },
+    );
+    if (!mounted || values == null || values.isEmpty) return;
+
+    values.forEach((type, value) {
+      switch (type) {
+        case OcrFieldType.nib:
+          _nibCtrl.text = value;
+        case OcrFieldType.nku:
+          _nkuCtrl.text = value;
+        case OcrFieldType.kbli:
+          _kbliCtrl.text = value;
+      }
+    });
+    _syncKbliState();
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('${values.length} field diisi dari scan.')),
+    );
+  }
+
+  // OCR: tempel dari clipboard ke satu field, dengan pembersihan otomatis.
+  Future<void> _pasteInto(OcrFieldType type) async {
+    final TextEditingController ctrl = switch (type) {
+      OcrFieldType.nib => _nibCtrl,
+      OcrFieldType.nku => _nkuCtrl,
+      OcrFieldType.kbli => _kbliCtrl,
+    };
+
+    final String? value = await runPaste(
+      context,
+      type: type,
+      currentValue: ctrl.text.trim(),
+    );
+    if (!mounted || value == null) return;
+
+    ctrl.text = value;
+    if (type == OcrFieldType.kbli) _syncKbliState();
   }
 
   Future<void> _submit() async {
@@ -328,13 +375,35 @@ class _OssValidasiPageState extends State<OssValidasiPage> {
                     ],
                   ),
                 ),
+              // OCR: tombol utama (scan semua field). Disembunyikan saat
+              // dibuka dari daftar karena datanya sudah terisi otomatis.
+              if (!_dariDaftar)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 14),
+                  child: OcrScanMainButton(
+                    onPressed: _submitting
+                        ? null
+                        : () => _scanOcr(OcrFieldType.values.toSet()),
+                  ),
+                ),
               TextFormField(
                 controller: _nkuCtrl,
                 // readOnly: _dariDaftar,
-                decoration: const InputDecoration(
+                decoration: InputDecoration(
                   labelText: 'NKU *',
                   hintText: 'Contoh: 202210051139546023359',
-                  prefixIcon: Icon(Icons.key_outlined, size: 20),
+                  prefixIcon: const Icon(Icons.key_outlined, size: 20),
+                  // OCR: ikon scan per field
+                  suffixIcon: _dariDaftar
+                      ? null
+                      : OcrFieldActions(
+                          onPaste: _submitting
+                              ? null
+                              : () => _pasteInto(OcrFieldType.nku),
+                          onScan: _submitting
+                              ? null
+                              : () => _scanOcr({OcrFieldType.nku}),
+                        ),
                 ),
                 keyboardType: TextInputType.number,
                 validator: _requiredValidator,
@@ -343,10 +412,21 @@ class _OssValidasiPageState extends State<OssValidasiPage> {
               TextFormField(
                 controller: _nibCtrl,
                 // readOnly: _dariDaftar,
-                decoration: const InputDecoration(
+                decoration: InputDecoration(
                   labelText: 'NIB *',
                   hintText: 'Masukkan NIB',
-                  prefixIcon: Icon(Icons.credit_card_outlined, size: 20),
+                  prefixIcon: const Icon(Icons.credit_card_outlined, size: 20),
+                  // OCR: ikon scan per field
+                  suffixIcon: _dariDaftar
+                      ? null
+                      : OcrFieldActions(
+                          onPaste: _submitting
+                              ? null
+                              : () => _pasteInto(OcrFieldType.nib),
+                          onScan: _submitting
+                              ? null
+                              : () => _scanOcr({OcrFieldType.nib}),
+                        ),
                 ),
                 keyboardType: TextInputType.number,
                 validator: _requiredValidator,
@@ -355,21 +435,27 @@ class _OssValidasiPageState extends State<OssValidasiPage> {
               TextFormField(
                 controller: _kbliCtrl,
                 // readOnly: _dariDaftar,
-                decoration: const InputDecoration(
+                decoration: InputDecoration(
                   labelText: 'KBLI *',
                   hintText: 'Masukkan 5 digit KBLI',
-                  prefixIcon: Icon(Icons.category_outlined, size: 20),
+                  prefixIcon: const Icon(Icons.category_outlined, size: 20),
+                  // OCR: ikon scan per field
+                  suffixIcon: _dariDaftar
+                      ? null
+                      : OcrFieldActions(
+                          onPaste: _submitting
+                              ? null
+                              : () => _pasteInto(OcrFieldType.kbli),
+                          onScan: _submitting
+                              ? null
+                              : () => _scanOcr({OcrFieldType.kbli}),
+                        ),
                 ),
                 keyboardType: TextInputType.number,
                 maxLength: 5,
                 validator: _kbliValidator,
-                onChanged: (_) => setState(() {
-                  if (_isKbli55901) {
-                    _kbliDesc = 'MANAJEMEN AKOMODASI';
-                  } else if (!_isKbli55900) {
-                    _kbliDesc = null;
-                  }
-                }),
+                // OCR: logika dipindah ke _syncKbliState
+                onChanged: (_) => _syncKbliState(),
               ),
               if (_isKbli55901) ...[
                 const SizedBox(height: 4),
