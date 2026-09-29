@@ -2,14 +2,8 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:ipardasbor/shared/widgets/connection_error_state.dart';
-import '../../core/api/api_client.dart';
 import '../../core/api/api_exception.dart';
 import '../../app/app_theme.dart';
-
-import '../non_oss/offline/non_oss_local_data.dart';
-import '../non_oss/offline/offline_database.dart';
-import '../non_oss/offline/sync_service.dart';
-import '../non_oss/services/non_oss_service.dart';
 
 import 'models/dashboard_data.dart';
 
@@ -32,17 +26,10 @@ class DashboardPage extends StatefulWidget {
 
 class _DashboardPageState extends State<DashboardPage> {
   final DashboardService _dashboardService = DashboardService();
-  late final ApiClient _syncApi;
-  late final NonOssSyncService _syncService;
-  final OfflineDatabase _offlineDatabase = OfflineDatabase.instance;
 
   DashboardData? _dashboard;
   bool _isLoading = true;
   String? _errorMessage;
-  List<NonOssLocalData> _waitingData = <NonOssLocalData>[];
-  final Set<String> _syncingIds = <String>{};
-  bool _isLoadingQueue = true;
-  bool _isSyncingAll = false;
 
   String _selectedProvince = 'jawa-timur';
 
@@ -51,16 +38,12 @@ class _DashboardPageState extends State<DashboardPage> {
   @override
   void initState() {
     super.initState();
-    _syncApi = ApiClient();
-    _syncService = NonOssSyncService(remote: NonOssService(_syncApi));
     _loadDashboard();
-    _loadWaitingData();
   }
 
   @override
   void dispose() {
     _dashboardService.dispose();
-    _syncApi.close();
     super.dispose();
   }
 
@@ -132,120 +115,7 @@ class _DashboardPageState extends State<DashboardPage> {
   }
 
   Future<void> _refreshDashboard() async {
-    await Future.wait<void>(<Future<void>>[
-      _loadDashboard(showLoading: false),
-      _loadWaitingData(),
-    ]);
-  }
-
-  Future<void> _loadWaitingData() async {
-    try {
-      await _offlineDatabase.restoreInterruptedSyncs();
-      final List<NonOssLocalData> result = await _offlineDatabase.getWaiting(
-        limit: 500,
-      );
-      if (!mounted) return;
-      setState(() {
-        _waitingData = result;
-        _isLoadingQueue = false;
-      });
-    } catch (_) {
-      if (!mounted) return;
-      setState(() => _isLoadingQueue = false);
-    }
-  }
-
-  Future<void> _syncOne(NonOssLocalData data) async {
-    if (_syncingIds.contains(data.clientUuid)) return;
-
-    setState(() => _syncingIds.add(data.clientUuid));
-
-    bool success = false;
-
-    try {
-      success = await _syncService
-          .syncOne(data)
-          .timeout(const Duration(seconds: 30));
-
-      await _loadWaitingData();
-
-      if (success) {
-        await _loadDashboard(showLoading: false);
-      }
-    } on TimeoutException {
-      success = false;
-    } catch (_) {
-      success = false;
-    } finally {
-      if (mounted) {
-        setState(() => _syncingIds.remove(data.clientUuid));
-      }
-    }
-
-    if (!mounted) return;
-
-    _showSyncMessage(
-      success
-          ? '${data.displayName} berhasil disinkronkan. Dashboard diperbarui.'
-          : 'Sinkronisasi gagal. Periksa internet atau server lalu coba lagi.',
-      success: success,
-    );
-  }
-
-  Future<void> _syncAll() async {
-    if (_isSyncingAll || _waitingData.isEmpty) return;
-    setState(() => _isSyncingAll = true);
-
-    final int before = _waitingData.length;
-
-    int synced = 0;
-
-    try {
-      await _syncService
-          .syncWaiting(limit: 500)
-          .timeout(const Duration(seconds: 60));
-
-      await _loadWaitingData();
-      synced = before - _waitingData.length;
-
-      if (synced > 0) {
-        await _loadDashboard(showLoading: false);
-      }
-    } on TimeoutException {
-      synced = 0;
-    } catch (_) {
-      synced = 0;
-    } finally {
-      if (mounted) {
-        setState(() => _isSyncingAll = false);
-      }
-    }
-
-    if (!mounted) return;
-
-    _showSyncMessage(
-      synced > 0
-          ? '$synced data berhasil disinkronkan. Dashboard diperbarui.'
-          : 'Belum ada data yang terkirim. Periksa internet/server.',
-      success: synced > 0,
-    );
-  }
-
-  void _showSyncMessage(String message, {required bool success}) {
-    ScaffoldMessenger.of(context)
-      ..hideCurrentSnackBar()
-      ..showSnackBar(
-        SnackBar(
-          content: Text(message),
-          backgroundColor: success
-              ? const Color(0xFF238636)
-              : const Color(0xFFC2410C),
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(14),
-          ),
-        ),
-      );
+    await _loadDashboard(showLoading: false);
   }
 
   Future<void> _changeProvince(String province) async {
@@ -274,10 +144,7 @@ class _DashboardPageState extends State<DashboardPage> {
           onPressed: () {
             Navigator.of(context).pop();
           },
-          icon: Icon(
-            Icons.arrow_back_rounded,
-            color: Colors.white,
-          ),
+          icon: Icon(Icons.arrow_back_rounded, color: Colors.white),
         ),
         titleSpacing: 4,
         title: Column(
@@ -285,17 +152,11 @@ class _DashboardPageState extends State<DashboardPage> {
           children: [
             Text(
               'Dashboard',
-              style: TextStyle(
-                fontSize: 19,
-                fontWeight: FontWeight.w800,
-              ),
+              style: TextStyle(fontSize: 19, fontWeight: FontWeight.w800),
             ),
             Text(
               'Ringkasan Pengawasan Pariwisata',
-              style: TextStyle(
-                fontSize: 11,
-                fontWeight: FontWeight.w400,
-              ),
+              style: TextStyle(fontSize: 11, fontWeight: FontWeight.w400),
             ),
           ],
         ),
@@ -306,12 +167,8 @@ class _DashboardPageState extends State<DashboardPage> {
                 ? null
                 : () async {
                     await _loadDashboard();
-                    await _loadWaitingData();
                   },
-            icon: Icon(
-              Icons.refresh_rounded,
-              color: Colors.white,
-            ),
+            icon: Icon(Icons.refresh_rounded, color: Colors.white),
           ),
           const SizedBox(width: 8),
         ],
@@ -325,7 +182,7 @@ class _DashboardPageState extends State<DashboardPage> {
       return const _DashboardLoading();
     }
 
-        if (_errorMessage != null && _dashboard == null) {
+    if (_errorMessage != null && _dashboard == null) {
       return ConnectionErrorState(
         title: 'Dashboard gagal dimuat',
         message: _errorMessage!,
@@ -418,8 +275,7 @@ class _DashboardPageState extends State<DashboardPage> {
           columns: const ['Kabupaten', 'OSS', 'Non OSS', 'Total'],
           rows: dashboard.districtRecap.map((row) {
             return [
-              row['nama_kabupaten']?.toString() ??
-                  '-',
+              row['nama_kabupaten']?.toString() ?? '-',
               row['oss']?.toString() ?? '0',
               row['non_oss']?.toString() ?? '0',
               row['total']?.toString() ?? '0',
@@ -606,9 +462,7 @@ class _DashboardPageState extends State<DashboardPage> {
                 width: contentWidth,
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _buildDashboardContent(),
-                  ],
+                  children: [_buildDashboardContent()],
                 ),
               ),
             ),
@@ -1408,175 +1262,6 @@ class _DashboardLoading extends StatelessWidget {
       ),
     );
   }
-}
-
-class _PendingDataTile extends StatelessWidget {
-  const _PendingDataTile({
-    required this.data,
-    required this.syncing,
-    required this.onSync,
-  });
-
-  final NonOssLocalData data;
-  final bool syncing;
-  final VoidCallback onSync;
-
-  @override
-  Widget build(BuildContext context) {
-    final bool failed = data.isFailed;
-    final Color statusColor = failed
-        ? const Color(0xFFFF3B30)
-        : const Color(0xFFFF9500);
-
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: AppTheme.scaffoldColorDynamic(context),
-        borderRadius: BorderRadius.circular(17),
-        border: Border.all(color: AppTheme.border(context)),
-      ),
-      child: Row(
-        children: <Widget>[
-          Container(
-            width: 42,
-            height: 42,
-            decoration: BoxDecoration(
-              color: statusColor.withValues(alpha: 0.11),
-              borderRadius: BorderRadius.circular(13),
-            ),
-            child: Icon(
-              failed ? Icons.error_outline_rounded : Icons.schedule_rounded,
-              color: statusColor,
-              size: 22,
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: <Widget>[
-                Text(
-                  data.displayName,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    color: AppTheme.textColor(context),
-                    fontSize: 14,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-                const SizedBox(height: 5),
-                Wrap(
-                  spacing: 7,
-                  runSpacing: 4,
-                  crossAxisAlignment: WrapCrossAlignment.center,
-                  children: <Widget>[
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 3,
-                      ),
-                      decoration: BoxDecoration(
-                        color: statusColor.withValues(alpha: 0.10),
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: Text(
-                        failed ? 'GAGAL' : 'PENDING',
-                        style: TextStyle(
-                          color: statusColor,
-                          fontSize: 10,
-                          fontWeight: FontWeight.w900,
-                        ),
-                      ),
-                    ),
-                    Text(
-                      _formatDateTime(data.createdAt),
-                      style: TextStyle(
-                        color: AppTheme.textSecondary(context),
-                        fontSize: 11,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ],
-                ),
-                if (failed && data.lastError != null) ...<Widget>[
-                  const SizedBox(height: 5),
-                  Text(
-                    data.lastError!,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      color: Color(0xFFB42318),
-                      fontSize: 10,
-                    ),
-                  ),
-                ],
-              ],
-            ),
-          ),
-          const SizedBox(width: 8),
-          IconButton.filled(
-            tooltip: failed ? 'Coba lagi' : 'Sinkronkan',
-            onPressed: syncing ? null : onSync,
-            style: IconButton.styleFrom(
-              backgroundColor: const Color(0xFFEAF3FF),
-              foregroundColor: const Color(0xFF007AFF),
-              disabledBackgroundColor: const Color(0xFFE5E7EB),
-            ),
-            icon: syncing
-                ? const SizedBox(
-                    width: 18,
-                    height: 18,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      color: Color(0xFF007AFF),
-                    ),
-                  )
-                : const Icon(Icons.sync_rounded, size: 21),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _QueueEmptyState extends StatelessWidget {
-  const _QueueEmptyState();
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
-      decoration: BoxDecoration(
-        color: Colors.green.withValues(alpha: 0.10),
-        borderRadius: BorderRadius.circular(17),
-      ),
-      child: Row(
-        children: <Widget>[
-          const Icon(Icons.check_circle_rounded, color: Colors.green),
-          const SizedBox(width: 11),
-          Expanded(
-            child: Text(
-              'Semua data sudah tersinkronisasi.',
-              style: TextStyle(
-                color: Colors.green.shade700,
-                fontSize: 13,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-String _formatDateTime(DateTime value) {
-  final DateTime local = value.toLocal();
-  String two(int number) => number.toString().padLeft(2, '0');
-  return '${two(local.day)}/${two(local.month)}/${local.year} '
-      '${two(local.hour)}:${two(local.minute)}';
 }
 
 String _formatNumber(int value) {

@@ -1,7 +1,9 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:ipardasbor/features/non_oss/offline/offline_database.dart';
 import 'package:ipardasbor/features/non_oss/services/wilayah_akses_service.dart';
+import 'package:ipardasbor/notifications/notification_settings_page.dart';
 
 import '../../app/app_theme.dart';
 import '../authentication/models/auth_user.dart';
@@ -137,6 +139,13 @@ class _SettingsPageState extends State<SettingsPage> {
 
   // Navigasi ke halaman menu yang dipilih.
   void _openMenu(MenuData menu) {
+    if (menu.title == 'Notifikasi') {
+      Navigator.of(context).push(
+        MaterialPageRoute<void>(builder: (_) => const NotificationSettingsPage()),
+      );
+      return;
+    }
+
     Navigator.of(context).push(
       MaterialPageRoute<void>(
         builder: (_) => FeaturePlaceholderPage(menu: menu),
@@ -152,7 +161,13 @@ class _SettingsPageState extends State<SettingsPage> {
   }
 
   // Menampilkan dialog konfirmasi untuk keluar dari akun.
-  void _logout(BuildContext context) {
+  Future<void> _logout(BuildContext context) async {
+    // Data offline TIDAK dihapus saat logout (tersimpan per akun dan muncul
+    // lagi saat akun ini masuk), tapi petugas perlu tahu bahwa data itu
+    // belum sampai ke server.
+    final int belumTerkirim = await OfflineDatabase.instance.countUnsynced();
+    if (!context.mounted) return;
+
     showDialog<void>(
       context: context,
       builder: (dialogContext) {
@@ -172,7 +187,11 @@ class _SettingsPageState extends State<SettingsPage> {
             ),
           ),
           content: Text(
-            'Anda perlu masuk kembali untuk mengakses aplikasi.',
+            belumTerkirim > 0
+                ? '$belumTerkirim data belum terkirim ke server. Data tetap '
+                      'tersimpan di perangkat ini dan hanya bisa dilihat '
+                      'akun ini saat masuk kembali.'
+                : 'Anda perlu masuk kembali untuk mengakses aplikasi.',
             textAlign: TextAlign.center,
             style: TextStyle(
               fontSize: 13.5,

@@ -1,3 +1,4 @@
+import 'package:ipardasbor/features/non_oss/offline/offline_database.dart';
 import 'package:ipardasbor/features/non_oss/services/wilayah_akses_service.dart';
 
 import '../../../app/app_navigator.dart';
@@ -57,6 +58,13 @@ class AuthService {
       email: user.email,
       role: user.role,
     );
+
+    // Data antrean offline lama yang belum punya pemilik (sisa sebelum
+    // skema v2) diserahkan ke akun yang baru login. Gagal di sini tidak
+    // boleh menggagalkan login.
+    try {
+      await OfflineDatabase.instance.claimUnownedRows();
+    } catch (_) {}
 
     // Muat wilayah kewenangan akun yang baru login.
     await WilayahAksesService.instance.refresh(apiClient: _apiClient);

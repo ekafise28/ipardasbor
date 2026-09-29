@@ -21,8 +21,10 @@ class OfflineQueueService {
   final Uuid _uuid;
 
   Future<void> delete(NonOssLocalData data) async {
-    await _database.deleteByClientUuid(data.clientUuid);
-    await _photoStorage.removeFor(data.clientUuid);
+    final int terhapus = await _database.deleteByClientUuid(data.clientUuid);
+    if (terhapus > 0) {
+      await _photoStorage.removeFor(data.clientUuid);
+    }
   }
 
   /// Draft tidak wajib lolos validasi field, tapi tetap tidak boleh

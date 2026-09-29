@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:ipardasbor/features/non_oss/services/wilayah_akses_service.dart';
 import 'package:ipardasbor/features/ota/pages/baseline_ota_page.dart';
+import 'package:ipardasbor/notifications/notification_page.dart';
+import 'package:ipardasbor/notifications/services/notification_service.dart';
 
 import '../../app/app_theme.dart';
 import '../dashboard/dashboard_page.dart';
@@ -40,6 +42,7 @@ class _HomePageState extends State<HomePage> {
 
   ServerConnectionStatus _serverStatus = ServerConnectionStatus.checking;
   int _offlineCount = 0;
+  int _unreadNotifications = 0;
 
   @override
   void initState() {
@@ -64,6 +67,7 @@ class _HomePageState extends State<HomePage> {
   Future<void> _refreshSyncStatus() async {
     final bool online = await _nonOssService.isServerAvailable();
     final int count = await _database.countUnsynced();
+    final int unread = await NotificationService.instance.countUnread();
 
     if (!mounted) return;
     setState(() {
@@ -71,6 +75,7 @@ class _HomePageState extends State<HomePage> {
           ? ServerConnectionStatus.online
           : ServerConnectionStatus.offline;
       _offlineCount = count;
+      _unreadNotifications = unread;
     });
   }
 
@@ -182,24 +187,11 @@ class _HomePageState extends State<HomePage> {
     await _refreshSyncStatus();
   }
 
-  void _showNotification(BuildContext context) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Row(
-          children: [
-            Icon(
-              Icons.notifications_none_rounded,
-              color: AppTheme.surfaceMuted(context),
-            ),
-            SizedBox(width: 12),
-            Text('Belum ada notifikasi baru.'),
-          ],
-        ),
-        behavior: SnackBarBehavior.floating,
-        margin: const EdgeInsets.all(16),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-      ),
+  Future<void> _openNotifications(BuildContext context) async {
+    await Navigator.of(context).push(
+      MaterialPageRoute<void>(builder: (_) => const NotificationPage()),
     );
+    await _refreshSyncStatus();
   }
 
   void _toggleView() {
@@ -347,7 +339,8 @@ class _HomePageState extends State<HomePage> {
         _AppBarAction(
           tooltip: 'Notifikasi',
           icon: Icons.notifications_none_rounded,
-          onPressed: () => _showNotification(context),
+          badgeCount: _unreadNotifications,
+          onPressed: () => _openNotifications(context),
         ),
         _AppBarAction(
           tooltip: 'Pengaturan',
@@ -447,11 +440,13 @@ class _AppBarAction extends StatelessWidget {
     required this.tooltip,
     required this.icon,
     required this.onPressed,
+    this.badgeCount = 0,
   });
 
   final String tooltip;
   final IconData icon;
   final VoidCallback onPressed;
+  final int badgeCount;
 
   @override
   Widget build(BuildContext context) {
@@ -460,14 +455,42 @@ class _AppBarAction extends StatelessWidget {
       child: IconButton(
         tooltip: tooltip,
         onPressed: onPressed,
-        icon: Container(
-          width: 38,
-          height: 38,
-          decoration: BoxDecoration(
-            color: AppTheme.surfaceMuted(context),
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Icon(icon, size: 21, color: AppTheme.textColor(context)),
+        icon: Stack(
+          clipBehavior: Clip.none,
+          children: [
+            Container(
+              width: 38,
+              height: 38,
+              decoration: BoxDecoration(
+                color: AppTheme.surfaceMuted(context),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Icon(icon, size: 21, color: AppTheme.textColor(context)),
+            ),
+            if (badgeCount > 0)
+              Positioned(
+                right: -2,
+                top: -2,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+                  decoration: BoxDecoration(
+                    color: Colors.red,
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: AppTheme.surface(context), width: 1.5),
+                  ),
+                  constraints: const BoxConstraints(minWidth: 16),
+                  child: Text(
+                    badgeCount > 99 ? '99+' : '$badgeCount',
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 9,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                ),
+              ),
+          ],
         ),
       ),
     );

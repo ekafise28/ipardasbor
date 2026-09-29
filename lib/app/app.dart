@@ -2,6 +2,9 @@ import 'dart:async';
 
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/material.dart';
+import 'package:ipardasbor/notifications/services/notification_retention_controller.dart';
+import 'package:ipardasbor/notifications/services/notification_service.dart';
+import 'package:ipardasbor/notifications/services/notification_triggers.dart';
 
 import '../core/api/api_client.dart';
 import '../features/authentication/login_page.dart';
@@ -37,6 +40,12 @@ class _IparAppState extends State<IparApp> with WidgetsBindingObserver {
     if (AutoSyncController.instance.isEnabled) {
       _runSyncSilently();
     }
+
+    NotificationService.instance
+        .prune(days: NotificationRetentionController.instance.value)
+        .catchError((Object _) {});
+
+    NotificationTriggers.run().catchError((Object _) {});
 
     _connectivitySubscription = Connectivity().onConnectivityChanged.listen((
       List<ConnectivityResult> results,

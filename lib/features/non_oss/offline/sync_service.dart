@@ -1,3 +1,6 @@
+import 'package:ipardasbor/notifications/models/notification_item.dart';
+import 'package:ipardasbor/notifications/services/notification_service.dart';
+
 import '../services/non_oss_service.dart';
 import 'non_oss_local_data.dart';
 import 'offline_database.dart';
@@ -26,9 +29,15 @@ class NonOssSyncService {
       return false;
     }
 
+    final String dedupeKey = 'sync_failed:${data.clientUuid}';
+
     try {
       final bool serverAvailable = await remote.isServerAvailable();
 
+      // Server tidak tersedia BUKAN kegagalan - ini kondisi normal saat
+      // offline, jadi TIDAK dibuatkan notifikasi (lihat diskusi: data
+      // yang menumpuk karena offline ditangani oleh pengecekan agregat
+      // "menunggu terlalu lama", bukan notifikasi per percobaan).
       if (!serverAvailable) {
         return false;
       }
@@ -42,15 +51,32 @@ class NonOssSyncService {
         serverId: remote.serverIdFrom(response),
       );
 
+      // Kalau sebelumnya sempat gagal dan bikin notifikasi, bersihkan -
+      // sekarang sudah berhasil, notifikasi lama jadi tidak relevan.
+      await NotificationService.instance.resolve(dedupeKey);
+
       return true;
     } catch (error) {
+      final String pesan = _clean(error);
+
       try {
-        await database.markFailed(data.clientUuid, _clean(error));
+        await database.markFailed(data.clientUuid, pesan);
       } catch (_) {
         // Data utama sudah tersimpan di SQLite.
         // Kegagalan memperbarui status sinkronisasi
         // tidak boleh diteruskan ke halaman form.
       }
+
+      // upsert() menimpa notifikasi gagal yang sama (bukan menumpuk) kalau
+      // data ini gagal lagi di percobaan otomatis berikutnya.
+      await NotificationService.instance.upsert(
+        type: NotificationType.syncFailed,
+        title: 'Gagal mengirim ${data.displayName}',
+        body: pesan,
+        dedupeKey: dedupeKey,
+        targetType: 'submission_detail',
+        targetId: data.clientUuid,
+      );
 
       return false;
     }
@@ -78,8 +104,22 @@ class NonOssSyncService {
         limit: limit,
       );
 
+      int berhasil = 0;
       for (final NonOssLocalData data in waiting) {
-        await syncOne(data);
+        if (await syncOne(data)) berhasil++;
+      }
+
+      // Notifikasi berhasil TIDAK memakai dedupeKey tetap - setiap putaran
+      // sinkron yang membuahkan hasil layak diberi tahu sendiri-sendiri,
+      // beda dengan notifikasi gagal yang memang harus saling menimpa.
+      if (berhasil > 0) {
+        await NotificationService.instance.upsert(
+          type: NotificationType.syncSuccess,
+          title: 'Sinkronisasi selesai',
+          body: '$berhasil data berhasil dikirim ke server.',
+          dedupeKey: 'sync_success:${DateTime.now().toIso8601String()}',
+          targetType: 'sync_page',
+        );
       }
     } finally {
       _running = false;
