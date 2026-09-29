@@ -1,5 +1,5 @@
-import 'package:ipardasbor/notifications/models/notification_item.dart';
-import 'package:ipardasbor/notifications/services/notification_service.dart';
+import 'package:ipardasbor/features/notifications/models/notification_item.dart';
+import 'package:ipardasbor/features/notifications/services/notification_service.dart';
 
 import '../services/non_oss_service.dart';
 import 'non_oss_local_data.dart';

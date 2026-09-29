@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:ipardasbor/notifications/services/notification_local_service.dart';
+import 'package:ipardasbor/features/notifications/services/notification_local_service.dart';
 
-import '../../app/app_theme.dart';
+import '../../../app/app_theme.dart';
 import 'models/notification_item.dart';
 import 'services/notification_category_preferences.dart';
 import 'services/notification_retention_controller.dart';

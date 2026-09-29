@@ -3,7 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:ipardasbor/features/non_oss/offline/offline_database.dart';
 import 'package:ipardasbor/features/non_oss/services/wilayah_akses_service.dart';
-import 'package:ipardasbor/notifications/notification_settings_page.dart';
+import 'package:ipardasbor/features/notifications/notification_settings_page.dart';
 
 import '../../app/app_theme.dart';
 import '../authentication/models/auth_user.dart';

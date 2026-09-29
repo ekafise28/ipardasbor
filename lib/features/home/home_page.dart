@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:ipardasbor/features/non_oss/services/wilayah_akses_service.dart';
 import 'package:ipardasbor/features/ota/pages/baseline_ota_page.dart';
-import 'package:ipardasbor/notifications/notification_page.dart';
-import 'package:ipardasbor/notifications/services/notification_service.dart';
+import 'package:ipardasbor/features/notifications/notification_page.dart';
+import 'package:ipardasbor/features/notifications/services/notification_service.dart';
 
 import '../../app/app_theme.dart';
 import '../dashboard/dashboard_page.dart';

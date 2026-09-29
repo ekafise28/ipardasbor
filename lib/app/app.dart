@@ -2,9 +2,9 @@ import 'dart:async';
 
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/material.dart';
-import 'package:ipardasbor/notifications/services/notification_retention_controller.dart';
-import 'package:ipardasbor/notifications/services/notification_service.dart';
-import 'package:ipardasbor/notifications/services/notification_triggers.dart';
+import 'package:ipardasbor/features/notifications/services/notification_retention_controller.dart';
+import 'package:ipardasbor/features/notifications/services/notification_service.dart';
+import 'package:ipardasbor/features/notifications/services/notification_triggers.dart';
 
 import '../core/api/api_client.dart';
 import '../features/authentication/login_page.dart';

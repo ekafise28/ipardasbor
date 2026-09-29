@@ -1,6 +1,6 @@
 import 'package:ipardasbor/features/non_oss/offline/offline_database.dart';
-import 'package:ipardasbor/notifications/services/notification_local_service.dart';
-import 'package:ipardasbor/notifications/services/notification_statusbar_controller.dart';
+import 'package:ipardasbor/features/notifications/services/notification_local_service.dart';
+import 'package:ipardasbor/features/notifications/services/notification_statusbar_controller.dart';
 
 import '../models/notification_item.dart';
 import 'notification_service.dart';
