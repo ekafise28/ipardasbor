@@ -6,6 +6,7 @@ import 'package:ipardasbor/core/api/api_exception.dart';
 import 'package:ipardasbor/features/oss/models/jenis_produk_akomodasi.dart';
 import 'package:ipardasbor/features/oss/pages/akomodasi_form_page.dart';
 import 'package:ipardasbor/shared/gps/gps_capture_mixin.dart';
+import 'package:ipardasbor/core/constants/bidang_usaha_constants.dart';
 
 import '../../../core/api/api_client.dart';
 import '../../non_oss/models/region_option.dart';
@@ -37,6 +38,10 @@ class _OssFormPageState extends State<OssFormPage>
     with WidgetsBindingObserver, GpsCaptureMixin<OssFormPage> {
   final _key = GlobalKey<FormState>();
   late final OssFormData _data;
+
+  /// Nama bidang usaha yang sedang divalidasi (mis. "Penyediaan Akomodasi"),
+  /// atau null kalau slug kosong/tidak dikenal.
+  String? get _namaBidang => BidangUsahaOpsi.namaDari(widget.validasi.bidang);
 
   bool get _isManajemenAkomodasi =>
       widget.validasi.bidang == 'akomodasi' &&
@@ -686,6 +691,88 @@ class _OssFormPageState extends State<OssFormPage>
     );
   }
 
+  /// Banner status validasi di atas form: hijau kalau data OSS tervalidasi,
+  /// merah kalau belum. Sengaja mencolok supaya petugas langsung tahu
+  /// kondisi data sebelum mengisi form.
+  Widget _statusBanner() {
+    final bool valid = widget.validasi.isValid;
+    final Color warnaAwal = valid ? AppTheme.successDark : AppTheme.dangerDark;
+    final Color warnaAkhir = valid ? AppTheme.success : AppTheme.danger;
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      margin: const EdgeInsets.only(bottom: 16),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [warnaAwal, warnaAkhir],
+        ),
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 52,
+            height: 52,
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.2),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              valid ? Icons.verified_rounded : Icons.gpp_bad_rounded,
+              color: Colors.white,
+              size: 30,
+            ),
+          ),
+          const SizedBox(width: 13),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 4,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Text(
+                    valid ? 'TERVALIDASI' : 'BELUM TERVALIDASI',
+                    style: TextStyle(
+                      color: warnaAkhir,
+                      fontSize: 11,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: 0.6,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                const Text(
+                  'Formulir Pendataan Lapangan',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  valid
+                      ? 'Data OSS tervalidasi - lengkapi informasi usaha di bawah.'
+                      : 'Data belum valid - lengkapi ketidaksesuaian di bagian bawah.',
+                  style: const TextStyle(color: Colors.white, height: 1.35),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _identityStrip() {
     return Container(
       padding: const EdgeInsets.all(12),
@@ -813,10 +900,10 @@ class _OssFormPageState extends State<OssFormPage>
         backgroundColor: AppTheme.primaryDark,
         foregroundColor: Colors.white,
         titleSpacing: 4,
-        title: const Column(
+        title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
+            const Text(
               'Validasi OSS',
               style: TextStyle(
                 fontSize: 19,
@@ -825,8 +912,10 @@ class _OssFormPageState extends State<OssFormPage>
               ),
             ),
             Text(
-              'Form lanjutan pendataan usaha',
-              style: TextStyle(
+              _namaBidang ?? 'Form lanjutan pendataan usaha',
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
                 fontSize: 11.5,
                 color: Colors.white,
                 fontWeight: FontWeight.w400,
@@ -844,53 +933,7 @@ class _OssFormPageState extends State<OssFormPage>
                     ScrollViewKeyboardDismissBehavior.onDrag,
                 padding: const EdgeInsets.fromLTRB(16, 18, 16, 30),
                 children: [
-                  Container(
-                    padding: const EdgeInsets.all(16),
-                    margin: const EdgeInsets.only(bottom: 16),
-                    decoration: BoxDecoration(
-                      gradient: const LinearGradient(
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                        colors: [Color(0xFF0B4E91), AppTheme.primaryColor],
-                      ),
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Row(
-                      children: [
-                        const Icon(
-                          Icons.assignment_rounded,
-                          color: Colors.white,
-                          size: 34,
-                        ),
-                        const SizedBox(width: 13),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const Text(
-                                'Formulir Pendataan Lapangan',
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w800,
-                                ),
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                widget.validasi.isValid
-                                    ? 'Data OSS tervalidasi - lengkapi informasi usaha di bawah.'
-                                    : 'Data belum valid - lengkapi ketidaksesuaian di bagian bawah.',
-                                style: const TextStyle(
-                                  color: Color(0xFFE7F2FF),
-                                  height: 1.35,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
+                  _statusBanner(),
                   FormSectionOss(
                     number: 1,
                     title: 'Identitas Usaha',

@@ -17,6 +17,13 @@ import 'pages/oss_validasi_page.dart';
 import 'services/oss_proyek_service.dart';
 import 'widgets/oss_proyek_card.dart';
 
+import 'package:ipardasbor/shared/ocr/ocr_field_type.dart';
+import 'package:ipardasbor/shared/ocr/ocr_paste_cleaner.dart';
+import 'package:ipardasbor/shared/ocr/ocr_result.dart';
+import 'package:ipardasbor/shared/ocr/ocr_result_sheet.dart';
+import 'package:ipardasbor/shared/ocr/ocr_scan_flow.dart';
+import 'package:ipardasbor/shared/widgets/ocr_field_actions.dart';
+
 /// Daftar usaha akomodasi OSS yang perlu diverifikasi.
 ///
 /// Padanan tabel "Daftar Pengawasan OSS Akomodasi" di web: pencarian NIB/NKU,
@@ -216,6 +223,87 @@ class _OssProyekPageState extends State<OssProyekPage> {
     );
   }
 
+  /// Mengisi kolom pencarian lewat kode, lalu langsung mencari.
+  /// (Mengubah controller.text tidak memicu onChanged.)
+  void _isiPencarian(String value) {
+    _debounce?.cancel();
+    _searchController.value = TextEditingValue(
+      text: value,
+      selection: TextSelection.collapsed(offset: value.length),
+    );
+    _terapkanPencarian(value);
+  }
+
+  /// Scan NIB/NKU dari foto atau screenshot.
+  Future<void> _scanPencarian() async {
+    final Map<OcrFieldType, String>? values = await runOcrScan(
+      context,
+      targets: {OcrFieldType.nib, OcrFieldType.nku},
+      currentValues: {OcrFieldType.nib: '', OcrFieldType.nku: ''},
+    );
+    if (!mounted || values == null || values.isEmpty) return;
+
+    // Kolom pencarian cuma satu: utamakan NKU (lebih spesifik), lalu NIB.
+    final OcrFieldType jenis = values.containsKey(OcrFieldType.nku)
+        ? OcrFieldType.nku
+        : OcrFieldType.nib;
+    final String? nilai = values[jenis];
+    if (nilai == null || nilai.isEmpty) return;
+
+    _isiPencarian(nilai);
+
+    final String info = values.length > 1
+        ? 'Mencari ${jenis.displayName}. NIB dan NKU sama-sama terbaca, '
+              'hanya satu yang dipakai.'
+        : 'Mencari ${jenis.displayName} dari hasil scan.';
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(info)));
+  }
+
+  /// Tempel dari clipboard: dicoba sebagai NKU dulu, lalu NIB.
+  Future<void> _tempelPencarian() async {
+    final ClipboardData? data = await Clipboard.getData(Clipboard.kTextPlain);
+    if (!mounted) return;
+
+    final String text = data?.text ?? '';
+    if (text.trim().isEmpty) {
+      _snack('Clipboard kosong.');
+      return;
+    }
+
+    OcrFieldType jenis = OcrFieldType.nku;
+    List<OcrResult> cands = OcrPasteCleaner.clean(text, jenis);
+    if (cands.isEmpty) {
+      jenis = OcrFieldType.nib;
+      cands = OcrPasteCleaner.clean(text, jenis);
+    }
+    if (cands.isEmpty) {
+      _snack('Tidak ada NIB atau NKU yang ditemukan di clipboard.');
+      return;
+    }
+
+    String? nilai;
+    if (cands.length == 1) {
+      nilai = cands.first.value;
+    } else {
+      final OcrSheetResult? sheet = await showOcrResultSheet(
+        context,
+        results: {jenis: cands},
+        currentValues: {jenis: _searchController.text.trim()},
+        allowRetry: false,
+      );
+      if (!mounted || sheet == null || sheet.retry) return;
+      nilai = sheet.values[jenis];
+    }
+
+    if (nilai == null || nilai.isEmpty) return;
+    _isiPencarian(nilai);
+    _snack('${jenis.displayName} ditempel, mencari...');
+  }
+
+  void _snack(String pesan) {
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(pesan)));
+  }
+
   Future<void> _bukaFilter() async {
     final OssProyekPageResult? h = _hasil;
 
@@ -401,6 +489,11 @@ class _OssProyekPageState extends State<OssProyekPage> {
                   color: AppTheme.textSecondary(context),
                 ),
                 prefixIcon: const Icon(Icons.search_rounded),
+                // OCR: tempel & scan
+                suffixIcon: OcrFieldActions(
+                  onPaste: _loadingAwal ? null : _tempelPencarian,
+                  onScan: _loadingAwal ? null : _scanPencarian,
+                ),
                 filled: true,
                 fillColor: AppTheme.surface(context),
                 contentPadding: const EdgeInsets.symmetric(vertical: 0),

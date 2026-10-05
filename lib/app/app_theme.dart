@@ -61,6 +61,9 @@ class AppTheme {
   static const Color dangerBackground = Color(0xFFFCE8E8);
   static const Color warning = Color(0xFFEF6C00);
   static const Color warningBackground = Color(0xFFFFF1E3);
+  static const Color success = Color(0xFF2E7D32);
+  static const Color successDark = Color(0xFF1B5E20);
+  static const Color dangerDark = Color(0xFF8E1B1B);
 
   // ---- Semantic (dynamic) ----
   static Color warningSurface(BuildContext context) {

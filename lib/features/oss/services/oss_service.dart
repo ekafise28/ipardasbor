@@ -20,7 +20,7 @@ class OssService {
     required String nib,
     required String kbli,
     required String nku,
-    String bidang = 'akomodasi',
+    String bidang = 'akomodasi',buka
   }) async {
     final dynamic response = await _api.post(
       ApiEndpoints.validasiOss,

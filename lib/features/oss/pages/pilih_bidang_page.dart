@@ -1,51 +1,83 @@
 import 'package:flutter/material.dart';
 import 'package:ipardasbor/app/app_theme.dart';
+import 'package:ipardasbor/core/constants/bidang_usaha_constants.dart';
 
 import '../oss_proyek_page.dart';
 
-class _Bidang {
-  const _Bidang(this.slug, this.nama, this.icon, this.warna);
-
-  final String slug;
-  final String nama;
-  final IconData icon;
-  final Color warna;
-}
+/// Tampilan visual satu bidang usaha (ikon dan warna kartu).
+typedef _Tampilan = ({IconData icon, Color warna});
 
 /// Pilih jenis usaha pariwisata sebelum masuk ke daftar proyek OSS.
-/// Slug harus sama dengan key di config/bidang_usaha_pariwisata.php.
+///
+/// Slug dan nama bidang berasal dari [BidangUsahaOpsi.daftar] (harus sama
+/// dengan key di config/bidang_usaha_pariwisata.php). Di sini hanya ikon
+/// dan warna yang didefinisikan, di-key dengan slug.
 class PilihBidangPage extends StatelessWidget {
   const PilihBidangPage({super.key});
 
-  static const List<_Bidang> _daftar = <_Bidang>[
-    _Bidang('transportasi-wisata', 'Jasa Transportasi Wisata',
-        Icons.directions_bus_rounded, Color(0xFF1E7BFF)),
-    _Bidang('akomodasi', 'Penyediaan Akomodasi', Icons.apartment_rounded,
-        Color(0xFF0FA3B8)),
-    _Bidang('makanan-minuman', 'Jasa Makanan dan Minuman',
-        Icons.restaurant_rounded, Color(0xFFF97316)),
-    _Bidang('kawasan-pariwisata', 'Kawasan Pariwisata', Icons.map_outlined,
-        Color(0xFF16A34A)),
-    _Bidang('konsultan-pariwisata', 'Jasa Konsultan Pariwisata',
-        Icons.work_outline_rounded, Color(0xFF8B3CF0)),
-    _Bidang('perjalanan-wisata', 'Jasa Perjalanan Wisata',
-        Icons.flight_rounded, Color(0xFFE11D48)),
-    _Bidang('informasi-pariwisata', 'Jasa Informasi Pariwisata',
-        Icons.info_outline_rounded, Color(0xFF0E94B0)),
-    _Bidang('pramuwisata', 'Jasa Pramuwisata', Icons.person_outline_rounded,
-        Color(0xFF4F46E5)),
-    _Bidang('mice-event', 'Penyelenggara MICE dan Event',
-        Icons.event_rounded, Color(0xFFD08A00)),
-    _Bidang('hiburan-rekreasi', 'Penyelenggaraan Kegiatan Hiburan dan Rekreasi',
-        Icons.sports_esports_rounded, Color(0xFFDB2777)),
-    _Bidang('daya-tarik-wisata', 'Daya Tarik Wisata',
-        Icons.photo_camera_outlined, Color(0xFF0284C7)),
-    _Bidang('wisata-tirta', 'Wisata Tirta', Icons.water_drop_outlined,
-        Color(0xFF0D9488)),
-    _Bidang('spa', 'SPA', Icons.spa_outlined, Color(0xFF9333EA)),
-  ];
+  /// Dipakai kalau ada bidang baru di [BidangUsahaOpsi.daftar] yang belum
+  /// didaftarkan di [_tampilan].
+  static const _Tampilan _fallback = (
+    icon: Icons.business_rounded,
+    warna: AppTheme.primaryColor,
+  );
 
-  void _buka(BuildContext context, _Bidang b) {
+  static const Map<String, _Tampilan> _tampilan = <String, _Tampilan>{
+    'transportasi-wisata': (
+      icon: Icons.directions_bus_rounded,
+      warna: Color(0xFF1E7BFF),
+    ),
+    'akomodasi': (
+      icon: Icons.apartment_rounded,
+      warna: Color(0xFF0FA3B8),
+    ),
+    'makanan-minuman': (
+      icon: Icons.restaurant_rounded,
+      warna: Color(0xFFF97316),
+    ),
+    'kawasan-pariwisata': (
+      icon: Icons.map_outlined,
+      warna: Color(0xFF16A34A),
+    ),
+    'konsultan-pariwisata': (
+      icon: Icons.work_outline_rounded,
+      warna: Color(0xFF8B3CF0),
+    ),
+    'perjalanan-wisata': (
+      icon: Icons.flight_rounded,
+      warna: Color(0xFFE11D48),
+    ),
+    'informasi-pariwisata': (
+      icon: Icons.info_outline_rounded,
+      warna: Color(0xFF0E94B0),
+    ),
+    'pramuwisata': (
+      icon: Icons.person_outline_rounded,
+      warna: Color(0xFF4F46E5),
+    ),
+    'mice-event': (
+      icon: Icons.event_rounded,
+      warna: Color(0xFFD08A00),
+    ),
+    'hiburan-rekreasi': (
+      icon: Icons.sports_esports_rounded,
+      warna: Color(0xFFDB2777),
+    ),
+    'daya-tarik-wisata': (
+      icon: Icons.photo_camera_outlined,
+      warna: Color(0xFF0284C7),
+    ),
+    'wisata-tirta': (
+      icon: Icons.water_drop_outlined,
+      warna: Color(0xFF0D9488),
+    ),
+    'spa': (
+      icon: Icons.spa_outlined,
+      warna: Color(0xFF9333EA),
+    ),
+  };
+
+  void _buka(BuildContext context, BidangUsahaOpsi b) {
     Navigator.of(context).push(
       MaterialPageRoute<void>(
         builder: (_) => OssProyekPage(bidang: b.slug, namaBidang: b.nama),
@@ -55,6 +87,8 @@ class PilihBidangPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    const List<BidangUsahaOpsi> daftar = BidangUsahaOpsi.daftar;
+
     return Scaffold(
       backgroundColor: AppTheme.scaffoldColorDynamic(context),
       appBar: AppBar(
@@ -72,10 +106,11 @@ class PilihBidangPage extends StatelessWidget {
       ),
       body: ListView.separated(
         padding: const EdgeInsets.fromLTRB(16, 16, 16, 28),
-        itemCount: _daftar.length,
+        itemCount: daftar.length,
         separatorBuilder: (_, __) => const SizedBox(height: 10),
         itemBuilder: (context, i) {
-          final _Bidang b = _daftar[i];
+          final BidangUsahaOpsi b = daftar[i];
+          final _Tampilan t = _tampilan[b.slug] ?? _fallback;
           return Material(
             color: AppTheme.surface(context),
             borderRadius: BorderRadius.circular(14),
@@ -94,10 +129,10 @@ class PilihBidangPage extends StatelessWidget {
                       width: 46,
                       height: 46,
                       decoration: BoxDecoration(
-                        color: b.warna,
+                        color: t.warna,
                         borderRadius: BorderRadius.circular(13),
                       ),
-                      child: Icon(b.icon, color: Colors.white, size: 25),
+                      child: Icon(t.icon, color: Colors.white, size: 25),
                     ),
                     const SizedBox(width: 12),
                     Expanded(
@@ -123,7 +158,7 @@ class PilihBidangPage extends StatelessWidget {
                         ],
                       ),
                     ),
-                    Icon(Icons.chevron_right_rounded, color: b.warna),
+                    Icon(Icons.chevron_right_rounded, color: t.warna),
                   ],
                 ),
               ),
