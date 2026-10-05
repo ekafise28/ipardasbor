@@ -16,10 +16,14 @@ class OssProyekService {
   Future<OssProyekPageResult> fetch({
     required OssProyekFilter filter,
     int page = 1,
+    String bidang = 'akomodasi',
   }) async {
     final dynamic response = await _apiClient.get(
       ApiEndpoints.proyekOss,
-      queryParameters: filter.toQueryParameters(page),
+      queryParameters: <String, dynamic>{
+        ...filter.toQueryParameters(page),
+        'bidang': bidang,
+      },
     );
 
     final Map<String, dynamic> body = response is Map<String, dynamic>

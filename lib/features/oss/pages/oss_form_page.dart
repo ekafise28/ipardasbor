@@ -35,16 +35,13 @@ class OssFormPage extends StatefulWidget {
 
 class _OssFormPageState extends State<OssFormPage>
     with WidgetsBindingObserver, GpsCaptureMixin<OssFormPage> {
-
   final _key = GlobalKey<FormState>();
   late final OssFormData _data;
 
-  /// True kalau Tahap 1 ini akan berlanjut ke Tahap 2 (AkomodasiFormPage) -
-  /// berlaku untuk KBLI 55900 (pilihan Manajemen Akomodasi) maupun 55901
-  /// (selalu Manajemen Akomodasi, lihat F2 di oss_validasi_page.dart).
   bool get _isManajemenAkomodasi =>
-      _data.kbliDesc == 'MANAJEMEN AKOMODASI' ||
-      _data.kbliDesc == 'Jasa Manajemen Hotel';
+      widget.validasi.bidang == 'akomodasi' &&
+      (_data.kbliDesc == 'MANAJEMEN AKOMODASI' ||
+          _data.kbliDesc == 'Jasa Manajemen Hotel');
 
   /// KBLI 55900 dengan pilihan Senior Living / Kos-kosan-Asrama di Tahap 1 -
   /// beda dari Jasa Manajemen Hotel karena TIDAK lanjut ke Tahap 2, dan jenis
@@ -95,6 +92,8 @@ class _OssFormPageState extends State<OssFormPage>
       isValid: widget.validasi.isValid,
       kbliDesc: widget.validasi.kbliDesc,
       baselineOtaId: widget.validasi.baselineOtaId,
+      bidang: widget.validasi.bidang,
+      dariDaftar: widget.validasi.dariDaftar,
     );
 
     if (_data.isValid) {
@@ -133,9 +132,23 @@ class _OssFormPageState extends State<OssFormPage>
     super.dispose();
   }
 
+  List<MapEntry<String, String>> _jenisProdukOptions =
+      JenisProdukAkomodasi.options;
+
+  Future<void> _muatJenisProduk() async {
+    if (widget.validasi.bidang == 'akomodasi') return;
+    try {
+      final opsi = await _ossService.jenisProduk(widget.validasi.bidang);
+      if (mounted) setState(() => _jenisProdukOptions = opsi);
+    } catch (e) {
+      _error(e);
+    }
+  }
+
   /// Berurutan: daftar provinsi harus siap sebelum autofill, supaya wilayah
   /// dari API OSS bisa dicek terhadap wilayah kewenangan akun.
   Future<void> _muatAwal() async {
+    _muatJenisProduk(); // paralel dengan load provinsi
     await _loadProvinces();
     await _terapkanAutofillProyek();
     if (!mounted) return;
@@ -324,8 +337,8 @@ class _OssFormPageState extends State<OssFormPage>
   String? _phoneValidator(String? v) {
     final value = v?.trim() ?? '';
     if (value.isEmpty) return null;
-    if (value.length < 9 || value.length > 15) {
-      return 'Nomor telepon harus 9-15 digit.';
+    if (value.length < 10 || value.length > 15) {
+      return 'Nomor telepon harus 10-15 digit.';
     }
     return null;
   }
@@ -400,6 +413,7 @@ class _OssFormPageState extends State<OssFormPage>
     _RequiredCheck(_Section.kontak, _data.noHp.trim().isEmpty),
     _RequiredCheck(_Section.kontak, _phoneValidator(_data.noHp) != null),
     _RequiredCheck(_Section.kontak, _urlValidator(_data.website) != null),
+    _RequiredCheck(_Section.kontak, _data.email.trim().isEmpty),
     _RequiredCheck(_Section.kontak, _emailValidator(_data.email) != null),
     // OTA Tahap 1 tidak relevan untuk Manajemen Akomodasi - OTA-nya ada
     // per item di Tahap 2 (AkomodasiItemCard), bukan di sini.
@@ -628,7 +642,9 @@ class _OssFormPageState extends State<OssFormPage>
                           : AppTheme.scaffoldColorDynamic(context),
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(
-                        color: selected ? AppTheme.primaryColor : AppTheme.border(context),
+                        color: selected
+                            ? AppTheme.primaryColor
+                            : AppTheme.border(context),
                         width: selected ? 1.5 : 1,
                       ),
                     ),
@@ -640,7 +656,9 @@ class _OssFormPageState extends State<OssFormPage>
                               ? Icons.radio_button_checked
                               : Icons.radio_button_off,
                           size: 18,
-                          color: selected ? AppTheme.primaryColor : AppTheme.textMuted,
+                          color: selected
+                              ? AppTheme.primaryColor
+                              : AppTheme.textMuted,
                         ),
                         const SizedBox(width: 7),
                         Flexible(
@@ -781,7 +799,10 @@ class _OssFormPageState extends State<OssFormPage>
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(13),
-          borderSide: const BorderSide(color: AppTheme.primaryColor, width: 1.5),
+          borderSide: const BorderSide(
+            color: AppTheme.primaryColor,
+            width: 1.5,
+          ),
         ),
       ),
     ),
@@ -797,11 +818,19 @@ class _OssFormPageState extends State<OssFormPage>
           children: [
             Text(
               'Validasi OSS',
-              style: TextStyle(fontSize: 19, color: Colors.white,fontWeight: FontWeight.w800),
+              style: TextStyle(
+                fontSize: 19,
+                color: Colors.white,
+                fontWeight: FontWeight.w800,
+              ),
             ),
             Text(
               'Form lanjutan pendataan usaha',
-              style: TextStyle(fontSize: 11.5, color: Colors.white,fontWeight: FontWeight.w400),
+              style: TextStyle(
+                fontSize: 11.5,
+                color: Colors.white,
+                fontWeight: FontWeight.w400,
+              ),
             ),
           ],
         ),
@@ -901,13 +930,13 @@ class _OssFormPageState extends State<OssFormPage>
                                         : _data.jenisProduk,
                                     isExpanded: true,
                                     decoration: const InputDecoration(
-                                      labelText: 'Jenis Produk Akomodasi *',
+                                      labelText: 'Jenis Produk *',
                                       prefixIcon: Icon(
                                         Icons.category_outlined,
                                         size: 20,
                                       ),
                                     ),
-                                    items: JenisProdukAkomodasi.options
+                                    items: _jenisProdukOptions
                                         .map(
                                           (e) => DropdownMenuItem(
                                             value: e.key,

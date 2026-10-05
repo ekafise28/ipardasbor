@@ -11,7 +11,16 @@ class OssValidasiResult {
     required this.isValid,
     this.proyek,
     this.baselineOtaId,
+    this.bidang = 'akomodasi',
+    this.dariDaftar = true,
   });
+
+  /// true kalau petugas masuk lewat tombol Verifikasi di daftar proyek,
+  /// false kalau lewat kartu "Cek Data OSS" (input manual).
+  final bool dariDaftar;
+
+  /// Slug bidang usaha (key config bidang_usaha_pariwisata).
+  final String bidang;
 
   final String nib;
   final String kbli;

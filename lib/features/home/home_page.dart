@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:ipardasbor/features/non_oss/services/wilayah_akses_service.dart';
+import 'package:ipardasbor/features/oss/pages/pilih_bidang_page.dart';
 import 'package:ipardasbor/features/ota/pages/baseline_ota_page.dart';
 import 'package:ipardasbor/features/notifications/notification_page.dart';
 import 'package:ipardasbor/features/notifications/services/notification_service.dart';
@@ -142,7 +143,7 @@ class _HomePageState extends State<HomePage> {
 
       case 'Validasi OSS':
         await Navigator.of(context).push(
-          MaterialPageRoute<void>(builder: (_) => const OssProyekPage()),
+          MaterialPageRoute<void>(builder: (_) => const PilihBidangPage()),
         );
         break;
 
@@ -153,9 +154,9 @@ class _HomePageState extends State<HomePage> {
         break;
 
       case 'Pengawasan OTA':
-        await Navigator.of(
-          context,
-        ).push(MaterialPageRoute<void>(builder: (_) => const BaselineOtaPage()));
+        await Navigator.of(context).push(
+          MaterialPageRoute<void>(builder: (_) => const BaselineOtaPage()),
+        );
         break;
 
       case 'Profil Petugas':
@@ -188,9 +189,9 @@ class _HomePageState extends State<HomePage> {
   }
 
   Future<void> _openNotifications(BuildContext context) async {
-    await Navigator.of(context).push(
-      MaterialPageRoute<void>(builder: (_) => const NotificationPage()),
-    );
+    await Navigator.of(
+      context,
+    ).push(MaterialPageRoute<void>(builder: (_) => const NotificationPage()));
     await _refreshSyncStatus();
   }
 
@@ -472,11 +473,17 @@ class _AppBarAction extends StatelessWidget {
                 right: -2,
                 top: -2,
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 5,
+                    vertical: 1,
+                  ),
                   decoration: BoxDecoration(
                     color: Colors.red,
                     borderRadius: BorderRadius.circular(10),
-                    border: Border.all(color: AppTheme.surface(context), width: 1.5),
+                    border: Border.all(
+                      color: AppTheme.surface(context),
+                      width: 1.5,
+                    ),
                   ),
                   constraints: const BoxConstraints(minWidth: 16),
                   child: Text(

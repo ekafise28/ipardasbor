@@ -37,10 +37,14 @@ class ApiEndpoints {
   static const String pengawasanOss = '/mobile/oss/pengawasan';
   static const String riwayatOss = '/mobile/oss/riwayat';
 
+  // Bidang usaha
+  static String jenisProdukBidang(String bidang) =>
+      '/mobile/bidang-usaha/${Uri.encodeComponent(bidang)}/jenis-produk';
+
   // Manajemen Akomodasi (Tahap 1 + Tahap 2)
   static const String validasiAkomodasi = '/mobile/oss/validasi-akomodasi';
   static const String pengawasanAkomodasi = '/mobile/oss/pengawasan-akomodasi';
-    static const String baselineOta = '/mobile/oss/baseline-ota';
+  static const String baselineOta = '/mobile/oss/baseline-ota';
 
   static String riwayatOssDetail(int id) => '$riwayatOss/$id';
 

@@ -20,10 +20,11 @@ class OssService {
     required String nib,
     required String kbli,
     required String nku,
+    String bidang = 'akomodasi',
   }) async {
     final dynamic response = await _api.post(
       ApiEndpoints.validasiOss,
-      body: {'nib': nib, 'kbli': kbli, 'nku': nku},
+      body: {'nib': nib, 'kbli': kbli, 'nku': nku, 'bidang': bidang},
     );
 
     if (response is! Map) {
@@ -46,6 +47,21 @@ class OssService {
       // tidak ditemukan sama sekali.
       proyek: proyek,
     );
+  }
+
+  /// Pilihan jenis produk (kode KBLI -> label) untuk satu bidang.
+  Future<List<MapEntry<String, String>>> jenisProduk(String bidang) async {
+    final dynamic response = await _api.get(
+      ApiEndpoints.jenisProdukBidang(bidang),
+    );
+
+    final dynamic data = response is Map ? response['data'] : null;
+    if (data is! List) return const <MapEntry<String, String>>[];
+
+    return data
+        .whereType<Map>()
+        .map((Map e) => MapEntry(e['kode'].toString(), e['label'].toString()))
+        .toList(growable: false);
   }
 
   /// Kirim data pengawasan OSS + foto dokumentasi (multipart), sama seperti

@@ -16,7 +16,13 @@ class OssFormData {
     required this.isValid,
     String kbliDesc = '',
     this.baselineOtaId,
+    this.bidang = 'akomodasi',
+    this.dariDaftar = true,
   }) : kbliDesc = kbliDesc;
+
+  final bool dariDaftar;
+
+  final String bidang;
 
   // --- Dari tahap validasi (readonly di form lanjutan) ---
   final String nib;
@@ -71,6 +77,8 @@ class OssFormData {
       'nib': nib.trim(),
       'kbli': kbli.trim(),
       'nku': nku.trim(),
+      'bidang_usaha': bidang,
+      'sumber_data': dariDaftar ? 'OSS' : 'NON OSS',
       if (kbliDesc.trim().isNotEmpty) 'kbli_desc': kbliDesc.trim(),
 
       // --- Sama seperti Non-OSS ---

@@ -104,24 +104,32 @@ class AkomodasiService {
       'longitude': tahap1.longitude.trim(),
       'no_hp': tahap1.noHp.trim(),
       'tanggal_pengawasan': _formatDate(tahap1.tanggalPengawasan),
+      'sumber_data': tahap1.dariDaftar ? 'OSS' : 'NON OSS',
     };
 
-    if (tahap1.provinsiId != null) fields['provinsi_id'] = tahap1.provinsiId.toString();
-    if (tahap1.kabupatenId != null) fields['kabupaten_id'] = tahap1.kabupatenId.toString();
-    if (tahap1.kecamatanId != null) fields['kecamatan_id'] = tahap1.kecamatanId.toString();
-    if (tahap1.kelurahanId != null) fields['kelurahan_id'] = tahap1.kelurahanId.toString();
+    if (tahap1.provinsiId != null)
+      fields['provinsi_id'] = tahap1.provinsiId.toString();
+    if (tahap1.kabupatenId != null)
+      fields['kabupaten_id'] = tahap1.kabupatenId.toString();
+    if (tahap1.kecamatanId != null)
+      fields['kecamatan_id'] = tahap1.kecamatanId.toString();
+    if (tahap1.kelurahanId != null)
+      fields['kelurahan_id'] = tahap1.kelurahanId.toString();
 
     if (tahap1.npwpd.trim().isNotEmpty) fields['npwpd'] = tahap1.npwpd.trim();
-    if (tahap1.website.trim().isNotEmpty) fields['website'] = tahap1.website.trim();
+    if (tahap1.website.trim().isNotEmpty)
+      fields['website'] = tahap1.website.trim();
     if (tahap1.email.trim().isNotEmpty) fields['email'] = tahap1.email.trim();
-    if (tahap1.baselineOtaId != null) fields['baseline_ota_id'] = tahap1.baselineOtaId.toString();
+    if (tahap1.baselineOtaId != null)
+      fields['baseline_ota_id'] = tahap1.baselineOtaId.toString();
 
     if (!tahap1.isValid) {
       for (int i = 0; i < tahap1.statusKetidaksesuaian.length; i++) {
         fields['status_ketidaksesuaian[$i]'] = tahap1.statusKetidaksesuaian[i];
       }
       if (tahap1.keteranganKetidaksesuaian.trim().isNotEmpty) {
-        fields['keterangan_ketidaksesuaian'] = tahap1.keteranganKetidaksesuaian.trim();
+        fields['keterangan_ketidaksesuaian'] = tahap1.keteranganKetidaksesuaian
+            .trim();
       }
     }
 

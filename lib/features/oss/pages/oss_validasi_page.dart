@@ -27,10 +27,13 @@ class OssValidasiPage extends StatefulWidget {
     this.initialNku,
     this.namaUsaha,
     this.baselineOtaId,
+    this.bidang = 'akomodasi',
   });
 
-  /// Diisi saat dibuka dari daftar usaha. Kalau ketiganya ada, pengecekan
-  /// ke API OSS langsung dijalankan tanpa menunggu tombol ditekan.
+  final String bidang;
+
+  /// Diisi saat dibuka dari daftar usaha. Kalau ketiganya ada, field
+  /// terisi otomatis dan petugas tinggal menekan tombol Cek Validasi.
   final String? initialNib;
   final String? initialKbli;
   final String? initialNku;
@@ -79,13 +82,6 @@ class _OssValidasiPageState extends State<OssValidasiPage> {
     if (_isKbli55901) {
       _kbliDesc = 'MANAJEMEN AKOMODASI';
     }
-
-    // KBLI 55900 butuh pilihan jenis usaha dari petugas, jadi tidak otomatis.
-    if (_dariDaftar && !_isKbli55900) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) _submit();
-      });
-    }
   }
 
   @override
@@ -96,9 +92,15 @@ class _OssValidasiPageState extends State<OssValidasiPage> {
     super.dispose();
   }
 
-  bool get _isKbli55900 => _kbliCtrl.text.trim() == '55900';
-  bool get _isKbli55901 => _kbliCtrl.text.trim() == '55901';
+  bool get _isAkomodasi => widget.bidang == 'akomodasi';
+  bool get _isKbli55900 => _isAkomodasi && _kbliCtrl.text.trim() == '55900';
+  bool get _isKbli55901 => _isAkomodasi && _kbliCtrl.text.trim() == '55901';
   bool get _isKbliAkomodasiKhusus => _isKbli55900 || _isKbli55901;
+  bool get _kbliDiLuarDaftar {
+    if (!_isAkomodasi) return false; // daftar KbliConstants khusus akomodasi
+    final String kbli = _kbliCtrl.text.trim();
+    return kbli.length == 5 && !KbliConstants.isDiizinkan(kbli);
+  }
 
   bool get _dariDaftar =>
       (widget.initialNib ?? '').trim().isNotEmpty &&
@@ -109,9 +111,8 @@ class _OssValidasiPageState extends State<OssValidasiPage> {
     final value = v?.trim() ?? '';
     if (value.isEmpty) return 'Wajib diisi.';
     if (value.length != 5) return 'KBLI harus 5 digit.';
-    if (!KbliConstants.isDiizinkan(value)) {
-      return 'KBLI tidak termasuk dalam daftar yang diizinkan.';
-    }
+    // KBLI di luar daftar KbliConstants.daftarDiizinkan tetap diterima;
+    // statusnya (mis. "KBLI tidak ada") ditentukan di OssFormPage.
     return null;
   }
 
@@ -207,6 +208,7 @@ class _OssValidasiPageState extends State<OssValidasiPage> {
         nib: _nibCtrl.text.trim(),
         kbli: _kbliCtrl.text.trim(),
         nku: _nkuCtrl.text.trim(),
+        bidang: widget.bidang,
       );
 
       if (!mounted) return;
@@ -222,6 +224,8 @@ class _OssValidasiPageState extends State<OssValidasiPage> {
         isValid: hasilApi.isValid,
         proyek: hasilApi.proyek,
         baselineOtaId: widget.baselineOtaId,
+        bidang: widget.bidang,
+        dariDaftar: _dariDaftar,
       );
 
       if (!mounted) return;
@@ -272,7 +276,10 @@ class _OssValidasiPageState extends State<OssValidasiPage> {
           ),
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(13),
-            borderSide: const BorderSide(color: AppTheme.primaryColor, width: 1.5),
+            borderSide: const BorderSide(
+              color: AppTheme.primaryColor,
+              width: 1.5,
+            ),
           ),
         ),
       ),
@@ -366,7 +373,7 @@ class _OssValidasiPageState extends State<OssValidasiPage> {
                       ),
                       const SizedBox(height: 2),
                       Text(
-                        'NIB, KBLI, dan NKU diisi otomatis dari daftar.',
+                        'NIB, KBLI, dan NKU diisi otomatis dari daftar. Tekan "Cek Validasi" untuk melanjutkan.',
                         style: TextStyle(
                           fontSize: 12,
                           color: AppTheme.textSecondary(context),
@@ -439,6 +446,11 @@ class _OssValidasiPageState extends State<OssValidasiPage> {
                   labelText: 'KBLI *',
                   hintText: 'Masukkan 5 digit KBLI',
                   prefixIcon: const Icon(Icons.category_outlined, size: 20),
+                  // Petunjuk non-blokir: KBLI tetap diterima, hanya memberi tahu petugas.
+                  helperText: _kbliDiLuarDaftar
+                      ? 'KBLI di luar daftar pengawasan, akan berstatus "KBLI tidak ada".'
+                      : null,
+                  helperMaxLines: 2,
                   // OCR: ikon scan per field
                   suffixIcon: _dariDaftar
                       ? null

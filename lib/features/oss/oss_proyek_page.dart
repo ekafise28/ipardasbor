@@ -27,7 +27,13 @@ class OssProyekPage extends StatefulWidget {
     this.provinsiIdAwal,
     this.kabupatenIdAwal,
     this.baselineOtaId,
+    this.bidang = 'akomodasi',
+    this.namaBidang,
   });
+
+  /// Slug bidang usaha (key di config bidang_usaha_pariwisata).
+  final String bidang;
+  final String? namaBidang;
 
   final int? provinsiIdAwal;
 
@@ -58,6 +64,7 @@ class _OssProyekPageState extends State<OssProyekPage> {
 
   bool _loadingAwal = true;
   bool _loadingBerikutnya = false;
+  bool _showBackToTop = false;
   String? _pesanError;
 
   /// Naik setiap kali daftar dimuat ulang; respons lama diabaikan supaya
@@ -91,6 +98,21 @@ class _OssProyekPageState extends State<OssProyekPage> {
         _scrollController.position.maxScrollExtent - 200;
 
     if (dekatBawah) _muatBerikutnya();
+
+    // Back to top: tampil setelah digulir cukup jauh.
+    final bool perluTampil = _scrollController.position.pixels > 400;
+    if (perluTampil != _showBackToTop) {
+      setState(() => _showBackToTop = perluTampil);
+    }
+  }
+
+  void _scrollKeAtas() {
+    if (!_scrollController.hasClients) return;
+    _scrollController.animateTo(
+      0,
+      duration: const Duration(milliseconds: 500),
+      curve: Curves.easeOut,
+    );
   }
 
   Future<void> _muatUlang({bool tampilkanLoading = true}) async {
@@ -108,6 +130,7 @@ class _OssProyekPageState extends State<OssProyekPage> {
       final OssProyekPageResult hasil = await _service.fetch(
         filter: _filter,
         page: 1,
+        bidang: widget.bidang,
       );
       if (!mounted || id != _requestId) return;
 
@@ -158,6 +181,7 @@ class _OssProyekPageState extends State<OssProyekPage> {
       final OssProyekPageResult hasil = await _service.fetch(
         filter: _filter,
         page: _pagination.currentPage + 1,
+        bidang: widget.bidang,
       );
       if (!mounted || id != _requestId) return;
 
@@ -209,6 +233,12 @@ class _OssProyekPageState extends State<OssProyekPage> {
     _muatUlang();
   }
 
+  void _infoSegeraHadir() {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Validasi untuk bidang ini segera hadir.')),
+    );
+  }
+
   /// Membuka halaman validasi dengan NIB, KBLI, dan NKU terisi dari baris ini.
   Future<void> _bukaVerifikasi(OssProyekItem item) async {
     final bool? tersimpan = await Navigator.of(context).push<bool>(
@@ -219,6 +249,7 @@ class _OssProyekPageState extends State<OssProyekPage> {
           initialNku: item.nku,
           namaUsaha: item.namaPerusahaan,
           baselineOtaId: widget.baselineOtaId,
+          bidang: widget.bidang,
         ),
       ),
     );
@@ -232,7 +263,10 @@ class _OssProyekPageState extends State<OssProyekPage> {
   Future<void> _bukaCekManual() async {
     final bool? tersimpan = await Navigator.of(context).push<bool>(
       MaterialPageRoute<bool>(
-        builder: (_) => OssValidasiPage(baselineOtaId: widget.baselineOtaId),
+        builder: (_) => OssValidasiPage(
+          baselineOtaId: widget.baselineOtaId,
+          bidang: widget.bidang,
+        ),
       ),
     );
 
@@ -264,6 +298,7 @@ class _OssProyekPageState extends State<OssProyekPage> {
       final OssProyekPageResult hasil = await _service.fetch(
         filter: _filter,
         page: halaman,
+        bidang: widget.bidang,
       );
       if (!mounted) return;
 
@@ -303,6 +338,15 @@ class _OssProyekPageState extends State<OssProyekPage> {
 
     return Scaffold(
       backgroundColor: AppTheme.scaffoldColorDynamic(context),
+      floatingActionButton: _showBackToTop
+          ? FloatingActionButton.small(
+              onPressed: _scrollKeAtas,
+              backgroundColor: AppTheme.primaryColor,
+              foregroundColor: Colors.white,
+              tooltip: 'Kembali ke atas',
+              child: const Icon(Icons.keyboard_arrow_up_rounded),
+            )
+          : null,
       appBar: AppBar(
         backgroundColor: AppTheme.primaryDark,
         foregroundColor: Colors.white,
@@ -310,18 +354,12 @@ class _OssProyekPageState extends State<OssProyekPage> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Validasi OSS',
-              style: TextStyle(
-                fontSize: 19,
-                fontWeight: FontWeight.w800,
-              ),
+              widget.namaBidang ?? 'Validasi OSS',
+              style: const TextStyle(fontSize: 19, fontWeight: FontWeight.w800),
             ),
-            Text(
+            const Text(
               'Verifikasi Proyek dan Usaha OSS',
-              style: TextStyle(
-                fontSize: 11,
-                fontWeight: FontWeight.w400,
-              ),
+              style: TextStyle(fontSize: 11, fontWeight: FontWeight.w400),
             ),
           ],
         ),
@@ -354,7 +392,14 @@ class _OssProyekPageState extends State<OssProyekPage> {
               ],
               textInputAction: TextInputAction.search,
               decoration: InputDecoration(
-                hintText: 'Cari NIB atau NKU...',
+                hintText: 'Cari NIB atau NKU lengkap',
+                helperText:
+                    'Contoh NIB: 8120115082852\nContoh NKU: 201912311521051085492',
+                helperMaxLines: 2,
+                helperStyle: TextStyle(
+                  fontSize: 11,
+                  color: AppTheme.textSecondary(context),
+                ),
                 prefixIcon: const Icon(Icons.search_rounded),
                 filled: true,
                 fillColor: AppTheme.surface(context),

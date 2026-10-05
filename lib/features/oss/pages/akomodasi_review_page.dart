@@ -33,7 +33,6 @@ class AkomodasiReviewPage extends StatefulWidget {
 }
 
 class _AkomodasiReviewPageState extends State<AkomodasiReviewPage> {
-
   final RegionService _regions = RegionService();
   late final AkomodasiService _service;
 
@@ -61,21 +60,30 @@ class _AkomodasiReviewPageState extends State<AkomodasiReviewPage> {
     const kosong = RegionOption(id: 0, name: '-');
 
     final provinces = await _regions.provinces();
-    final provinsi = provinces.firstWhere((r) => r.id == provinsiId, orElse: () => kosong);
+    final provinsi = provinces.firstWhere(
+      (r) => r.id == provinsiId,
+      orElse: () => kosong,
+    );
 
     String kabupaten = '-', kecamatan = '-', kelurahan = '-';
 
     if (kabupatenId != null) {
       final regencies = await _regions.regencies(provinsiId);
-      kabupaten = regencies.firstWhere((r) => r.id == kabupatenId, orElse: () => kosong).name;
+      kabupaten = regencies
+          .firstWhere((r) => r.id == kabupatenId, orElse: () => kosong)
+          .name;
     }
     if (kecamatanId != null && kabupatenId != null) {
       final districts = await _regions.districts(kabupatenId);
-      kecamatan = districts.firstWhere((r) => r.id == kecamatanId, orElse: () => kosong).name;
+      kecamatan = districts
+          .firstWhere((r) => r.id == kecamatanId, orElse: () => kosong)
+          .name;
     }
     if (kelurahanId != null && kecamatanId != null) {
       final villages = await _regions.villages(kecamatanId);
-      kelurahan = villages.firstWhere((r) => r.id == kelurahanId, orElse: () => kosong).name;
+      kelurahan = villages
+          .firstWhere((r) => r.id == kelurahanId, orElse: () => kosong)
+          .name;
     }
 
     return '$kelurahan, $kecamatan, $kabupaten, ${provinsi.name}';
@@ -91,12 +99,14 @@ class _AkomodasiReviewPageState extends State<AkomodasiReviewPage> {
 
     final List<String> item = [];
     for (final a in widget.akomodasi) {
-      item.add(await _resolveWilayah(
-        provinsiId: a.provinsiId,
-        kabupatenId: a.kabupatenId,
-        kecamatanId: a.kecamatanId,
-        kelurahanId: a.kelurahanId,
-      ));
+      item.add(
+        await _resolveWilayah(
+          provinsiId: a.provinsiId,
+          kabupatenId: a.kabupatenId,
+          kecamatanId: a.kecamatanId,
+          kelurahanId: a.kelurahanId,
+        ),
+      );
     }
 
     if (!mounted) return;
@@ -119,20 +129,34 @@ class _AkomodasiReviewPageState extends State<AkomodasiReviewPage> {
         builder: (c) => AlertDialog(
           icon: const Icon(Icons.check_circle, color: Colors.green, size: 52),
           title: const Text('Berhasil'),
-          content: const Text('Data Manajemen Akomodasi berhasil disimpan ke server.'),
+          content: const Text(
+            'Data Manajemen Akomodasi berhasil disimpan ke server.',
+          ),
           actions: [
-            FilledButton(onPressed: () => Navigator.pop(c), child: const Text('OK')),
+            FilledButton(
+              onPressed: () => Navigator.pop(c),
+              child: const Text('OK'),
+            ),
           ],
         ),
       );
-      if (mounted) Navigator.of(context).popUntil((route) => route.isFirst);
+      if (mounted) {
+        final NavigatorState nav = Navigator.of(context);
+        nav.pop(); // AkomodasiReviewPage
+        nav.pop(); // AkomodasiFormPage
+        nav.pop(true); // OssFormPage -> OssValidasiPage menerima true
+      }
     } on ApiException catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.message)));
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(e.message)));
     } catch (_) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Gagal menyimpan data. Periksa koneksi internet.')),
+        const SnackBar(
+          content: Text('Gagal menyimpan data. Periksa koneksi internet.'),
+        ),
       );
     } finally {
       if (mounted) setState(() => _saving = false);
@@ -147,7 +171,10 @@ class _AkomodasiReviewPageState extends State<AkomodasiReviewPage> {
         elevation: 0,
         backgroundColor: AppTheme.primaryDark,
         foregroundColor: Colors.white,
-        title: const Text('Review Sebelum Simpan', style: TextStyle(fontWeight: FontWeight.w800)),
+        title: const Text(
+          'Review Sebelum Simpan',
+          style: TextStyle(fontWeight: FontWeight.w800),
+        ),
       ),
       body: _loadingWilayah
           ? const Center(child: CircularProgressIndicator())
@@ -165,7 +192,10 @@ class _AkomodasiReviewPageState extends State<AkomodasiReviewPage> {
                     title:
                         'Akomodasi ${i + 1} - ${widget.akomodasi[i].namaBrand.trim().isEmpty ? '(belum ada nama)' : widget.akomodasi[i].namaBrand}',
                     initiallyExpanded: false,
-                    child: _akomodasiContent(widget.akomodasi[i], _wilayahAkomodasi[i]),
+                    child: _akomodasiContent(
+                      widget.akomodasi[i],
+                      _wilayahAkomodasi[i],
+                    ),
                   ),
                 const SizedBox(height: 8),
                 SizedBox(
@@ -173,11 +203,16 @@ class _AkomodasiReviewPageState extends State<AkomodasiReviewPage> {
                   height: 48,
                   child: OutlinedButton.icon(
                     style: OutlinedButton.styleFrom(
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(15),
+                      ),
                     ),
                     onPressed: _saving ? null : () => Navigator.pop(context),
                     icon: const Icon(Icons.arrow_back_rounded),
-                    label: const Text('Kembali', style: TextStyle(fontWeight: FontWeight.w700)),
+                    label: const Text(
+                      'Kembali',
+                      style: TextStyle(fontWeight: FontWeight.w700),
+                    ),
                   ),
                 ),
                 const SizedBox(height: 12),
@@ -187,17 +222,32 @@ class _AkomodasiReviewPageState extends State<AkomodasiReviewPage> {
                     onPressed: _saving ? null : _submit,
                     style: FilledButton.styleFrom(
                       backgroundColor: AppTheme.primaryColor,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(15),
+                      ),
                     ),
                     icon: _saving
                         ? const SizedBox(
-                            width: 20, height: 20,
-                            child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: Colors.white,
+                            ),
                           )
-                        : const Icon(Icons.cloud_upload_rounded, color: Colors.white),
+                        : const Icon(
+                            Icons.cloud_upload_rounded,
+                            color: Colors.white,
+                          ),
                     label: Text(
-                      _saving ? 'Menyimpan data...' : 'Simpan Manajemen Akomodasi',
-                      style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 15, color: Colors.white),
+                      _saving
+                          ? 'Menyimpan data...'
+                          : 'Simpan Manajemen Akomodasi',
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w800,
+                        fontSize: 15,
+                        color: Colors.white,
+                      ),
                     ),
                   ),
                 ),
@@ -215,7 +265,8 @@ class _AkomodasiReviewPageState extends State<AkomodasiReviewPage> {
         _kv('KBLI', t.kbli),
         _kv('NKU', t.nku),
         _kv('Status Validasi', t.isValid ? 'Valid' : 'Tidak Valid'),
-        if (!t.isValid) _kv('Status Ketidaksesuaian', t.statusKetidaksesuaian.join(', ')),
+        if (!t.isValid)
+          _kv('Status Ketidaksesuaian', t.statusKetidaksesuaian.join(', ')),
         if (!t.isValid && t.keteranganKetidaksesuaian.trim().isNotEmpty)
           _kv('Keterangan', t.keteranganKetidaksesuaian),
         const Divider(height: 24),
@@ -230,14 +281,20 @@ class _AkomodasiReviewPageState extends State<AkomodasiReviewPage> {
         _kv('Website', t.website.isEmpty ? '-' : t.website),
         _kv('No. HP', t.noHp),
         _kv('Email', t.email.isEmpty ? '-' : t.email),
-        _kv('Tanggal Pengawasan', DateFormat('dd-MM-yyyy').format(t.tanggalPengawasan)),
+        _kv(
+          'Tanggal Pengawasan',
+          DateFormat('dd-MM-yyyy').format(t.tanggalPengawasan),
+        ),
       ],
     );
   }
 
   Widget _akomodasiContent(AkomodasiItemData a, String wilayah) {
     final String jenisProdukLabel = JenisProdukAkomodasi.options
-        .firstWhere((e) => e.key == a.jenisProduk, orElse: () => MapEntry(a.jenisProduk, a.jenisProduk))
+        .firstWhere(
+          (e) => e.key == a.jenisProduk,
+          orElse: () => MapEntry(a.jenisProduk, a.jenisProduk),
+        )
         .value;
 
     return Column(
@@ -248,14 +305,11 @@ class _AkomodasiReviewPageState extends State<AkomodasiReviewPage> {
           _kv('NIB', a.nib),
           _kv('KBLI', a.kbli),
           _kv('NKU', a.nku),
-          _kv(
-            'Status Live-Check',
-            switch (a.validasiStatus) {
-              AkomodasiValidasiStatus.valid => 'Valid',
-              AkomodasiValidasiStatus.tidakValid => 'Tidak Valid',
-              _ => 'Belum dicek',
-            },
-          ),
+          _kv('Status Live-Check', switch (a.validasiStatus) {
+            AkomodasiValidasiStatus.valid => 'Valid',
+            AkomodasiValidasiStatus.tidakValid => 'Tidak Valid',
+            _ => 'Belum dicek',
+          }),
         ],
         if (a.statusKetidaksesuaian.isNotEmpty)
           _kv('Status Ketidaksesuaian', a.statusKetidaksesuaian.join(', ')),
@@ -279,12 +333,23 @@ class _AkomodasiReviewPageState extends State<AkomodasiReviewPage> {
         if (a.terdaftarOtaYa)
           ...a.otaUrls.entries
               .where((e) => e.value.any((u) => u.trim().isNotEmpty))
-              .map((e) => _kv(e.key, e.value.where((u) => u.trim().isNotEmpty).join(', '))),
+              .map(
+                (e) => _kv(
+                  e.key,
+                  e.value.where((u) => u.trim().isNotEmpty).join(', '),
+                ),
+              ),
         const Divider(height: 24),
-        Text('Foto (${a.photos.length})', style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 12.5)),
+        Text(
+          'Foto (${a.photos.length})',
+          style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 12.5),
+        ),
         const SizedBox(height: 8),
         if (a.photos.isEmpty)
-          const Text('Belum ada foto.', style: TextStyle(fontSize: 12, color: Colors.grey))
+          const Text(
+            'Belum ada foto.',
+            style: TextStyle(fontSize: 12, color: Colors.grey),
+          )
         else
           SizedBox(
             height: 72,
@@ -294,7 +359,12 @@ class _AkomodasiReviewPageState extends State<AkomodasiReviewPage> {
               separatorBuilder: (_, __) => const SizedBox(width: 8),
               itemBuilder: (_, i) => ClipRRect(
                 borderRadius: BorderRadius.circular(8),
-                child: Image.file(File(a.photos[i].path), width: 72, height: 72, fit: BoxFit.cover),
+                child: Image.file(
+                  File(a.photos[i].path),
+                  width: 72,
+                  height: 72,
+                  fit: BoxFit.cover,
+                ),
               ),
             ),
           ),
@@ -312,13 +382,20 @@ class _AkomodasiReviewPageState extends State<AkomodasiReviewPage> {
             width: 140,
             child: Text(
               label,
-              style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600, color: AppTheme.textSecondary(context)),
+              style: TextStyle(
+                fontSize: 12.5,
+                fontWeight: FontWeight.w600,
+                color: AppTheme.textSecondary(context),
+              ),
             ),
           ),
           Expanded(
             child: Text(
               value.trim().isEmpty ? '-' : value,
-              style: TextStyle(fontSize: 12.5, color: AppTheme.textColor(context)),
+              style: TextStyle(
+                fontSize: 12.5,
+                color: AppTheme.textColor(context),
+              ),
             ),
           ),
         ],
