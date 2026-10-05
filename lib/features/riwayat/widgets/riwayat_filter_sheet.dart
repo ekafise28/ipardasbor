@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
 import '../../../app/app_theme.dart';
+import '../../../core/constants/bidang_usaha_constants.dart';
+
 import '../models/riwayat_filter.dart';
 import '../models/riwayat_page_result.dart';
 
@@ -35,6 +37,7 @@ class _RiwayatFilterSheet extends StatefulWidget {
 class _RiwayatFilterSheetState extends State<_RiwayatFilterSheet> {
   late String? _sumberData = widget.filter.sumberData;
   late String? _statusVerifikasi = widget.filter.statusVerifikasi;
+  late String? _bidangUsaha = widget.filter.bidangUsaha;
   late int? _kabupatenId = widget.filter.kabupatenId;
   late DateTime? _tanggalMulai = widget.filter.tanggalMulai;
   late DateTime? _tanggalSelesai = widget.filter.tanggalSelesai;
@@ -65,6 +68,7 @@ class _RiwayatFilterSheetState extends State<_RiwayatFilterSheet> {
     setState(() {
       _sumberData = null;
       _statusVerifikasi = null;
+      _bidangUsaha = null;
       _kabupatenId = null;
       _tanggalMulai = null;
       _tanggalSelesai = null;
@@ -77,6 +81,8 @@ class _RiwayatFilterSheetState extends State<_RiwayatFilterSheet> {
       clearSumberData: _sumberData == null,
       statusVerifikasi: _statusVerifikasi,
       clearStatusVerifikasi: _statusVerifikasi == null,
+      bidangUsaha: _bidangUsaha,
+      clearBidangUsaha: _bidangUsaha == null,
       kabupatenId: _kabupatenId,
       clearKabupatenId: _kabupatenId == null,
       tanggalMulai: _tanggalMulai,
@@ -102,6 +108,7 @@ class _RiwayatFilterSheetState extends State<_RiwayatFilterSheet> {
           color: AppTheme.surface(context),
           borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
         ),
+        child:SingleChildScrollView(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -124,6 +131,32 @@ class _RiwayatFilterSheetState extends State<_RiwayatFilterSheet> {
                 fontWeight: FontWeight.w800,
                 color: AppTheme.textColor(context),
               ),
+            ),
+            const SizedBox(height: 16),
+
+            _Label('Bidang Usaha'),
+            DropdownButtonFormField<String?>(
+              initialValue: _bidangUsaha,
+              isExpanded: true,
+              decoration: const InputDecoration(
+                border: OutlineInputBorder(),
+                contentPadding: EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 8,
+                ),
+              ),
+              items: <DropdownMenuItem<String?>>[
+                const DropdownMenuItem<String?>(
+                  value: null,
+                  child: Text('Semua bidang'),
+                ),
+                for (final BidangUsahaOpsi b in BidangUsahaOpsi.daftar)
+                  DropdownMenuItem<String?>(
+                    value: b.slug,
+                    child: Text(b.nama, overflow: TextOverflow.ellipsis),
+                  ),
+              ],
+              onChanged: (String? v) => setState(() => _bidangUsaha = v),
             ),
             const SizedBox(height: 16),
 
@@ -152,7 +185,9 @@ class _RiwayatFilterSheetState extends State<_RiwayatFilterSheet> {
                     label: Text(opsi),
                     selected: _statusVerifikasi == opsi,
                     onSelected: (bool selected) {
-                      setState(() => _statusVerifikasi = selected ? opsi : null);
+                      setState(
+                        () => _statusVerifikasi = selected ? opsi : null,
+                      );
                     },
                   ),
               ],
@@ -165,7 +200,10 @@ class _RiwayatFilterSheetState extends State<_RiwayatFilterSheet> {
               isExpanded: true,
               decoration: const InputDecoration(
                 border: OutlineInputBorder(),
-                contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                contentPadding: EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 8,
+                ),
               ),
               hint: const Text('Semua kabupaten/kota'),
               items: <DropdownMenuItem<int?>>[
@@ -227,6 +265,7 @@ class _RiwayatFilterSheetState extends State<_RiwayatFilterSheet> {
           ],
         ),
       ),
+      )
     );
   }
 

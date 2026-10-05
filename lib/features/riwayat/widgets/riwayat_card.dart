@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../app/app_theme.dart';
+import '../../../core/constants/bidang_usaha_constants.dart';
 import '../models/riwayat_item.dart';
 
 /// Kartu ringkasan satu item riwayat pengawasan.
@@ -114,6 +115,15 @@ class RiwayatCard extends StatelessWidget {
                 text: item.petugas,
                 context: context,
               ),
+              if (BidangUsahaOpsi.namaDari(item.bidangUsaha) !=
+                  null) ...<Widget>[
+                const SizedBox(height: 4),
+                _IconLine(
+                  icon: Icons.category_outlined,
+                  text: BidangUsahaOpsi.namaDari(item.bidangUsaha)!,
+                  context: context,
+                ),
+              ],
               const SizedBox(height: 10),
               Align(
                 alignment: Alignment.centerRight,
@@ -136,8 +146,18 @@ class RiwayatCard extends StatelessWidget {
 
   static String _formatTanggal(DateTime tanggal) {
     const List<String> bulan = <String>[
-      'Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun',
-      'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des',
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'Mei',
+      'Jun',
+      'Jul',
+      'Agu',
+      'Sep',
+      'Okt',
+      'Nov',
+      'Des',
     ];
 
     return '${tanggal.day} ${bulan[tanggal.month - 1]} ${tanggal.year}';
@@ -197,7 +217,9 @@ class _StatusBadge extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: <Widget>[
           Icon(
-            selesai ? Icons.check_circle_rounded : Icons.hourglass_bottom_rounded,
+            selesai
+                ? Icons.check_circle_rounded
+                : Icons.hourglass_bottom_rounded,
             size: 12,
             color: warna,
           ),

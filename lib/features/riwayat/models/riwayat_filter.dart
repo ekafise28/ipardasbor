@@ -6,6 +6,7 @@ class RiwayatFilter {
   const RiwayatFilter({
     this.sumberData,
     this.statusVerifikasi,
+    this.bidangUsaha,
     this.kabupatenId,
     this.tanggalMulai,
     this.tanggalSelesai,
@@ -15,6 +16,7 @@ class RiwayatFilter {
 
   final String? sumberData;
   final String? statusVerifikasi;
+  final String? bidangUsaha;
   final int? kabupatenId;
   final DateTime? tanggalMulai;
   final DateTime? tanggalSelesai;
@@ -24,6 +26,7 @@ class RiwayatFilter {
   bool get hasActiveFilter =>
       sumberData != null ||
       statusVerifikasi != null ||
+      bidangUsaha != null ||
       kabupatenId != null ||
       tanggalMulai != null ||
       tanggalSelesai != null ||
@@ -34,6 +37,8 @@ class RiwayatFilter {
     bool clearSumberData = false,
     String? statusVerifikasi,
     bool clearStatusVerifikasi = false,
+    String? bidangUsaha,
+    bool clearBidangUsaha = false,
     int? kabupatenId,
     bool clearKabupatenId = false,
     DateTime? tanggalMulai,
@@ -48,9 +53,11 @@ class RiwayatFilter {
       statusVerifikasi: clearStatusVerifikasi
           ? null
           : (statusVerifikasi ?? this.statusVerifikasi),
+      bidangUsaha: clearBidangUsaha ? null : (bidangUsaha ?? this.bidangUsaha),
       kabupatenId: clearKabupatenId ? null : (kabupatenId ?? this.kabupatenId),
-      tanggalMulai:
-          clearTanggalMulai ? null : (tanggalMulai ?? this.tanggalMulai),
+      tanggalMulai: clearTanggalMulai
+          ? null
+          : (tanggalMulai ?? this.tanggalMulai),
       tanggalSelesai: clearTanggalSelesai
           ? null
           : (tanggalSelesai ?? this.tanggalSelesai),
@@ -67,6 +74,7 @@ class RiwayatFilter {
     return <String, dynamic>{
       'sumber_data': sumberData,
       'status_verifikasi': statusVerifikasi,
+      'bidang_usaha': bidangUsaha,
       'kabupaten_id': kabupatenId,
       'tanggal_mulai': _formatTanggal(tanggalMulai),
       'tanggal_selesai': _formatTanggal(tanggalSelesai),

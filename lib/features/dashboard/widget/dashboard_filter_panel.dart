@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:ipardasbor/app/app_theme.dart';
 
+import '../../../core/constants/bidang_usaha_constants.dart';
 import '../models/dashboard_data.dart';
 
 /// Nilai filter yang dipilih user, sebelum ditekan "Tampilkan".
@@ -12,12 +13,14 @@ class DashboardFilterValues {
   final DateTime? endDate;
   final int? districtId;
   final String? dataSource;
+  final String? bidangUsaha;
 
   const DashboardFilterValues({
     this.startDate,
     this.endDate,
     this.districtId,
     this.dataSource,
+    this.bidangUsaha,
   });
 
   DashboardFilterValues copyWith({
@@ -29,12 +32,15 @@ class DashboardFilterValues {
     bool clearDistrictId = false,
     String? dataSource,
     bool clearDataSource = false,
+    String? bidangUsaha, 
+    bool clearBidangUsaha = false,
   }) {
     return DashboardFilterValues(
       startDate: clearStartDate ? null : (startDate ?? this.startDate),
       endDate: clearEndDate ? null : (endDate ?? this.endDate),
       districtId: clearDistrictId ? null : (districtId ?? this.districtId),
       dataSource: clearDataSource ? null : (dataSource ?? this.dataSource),
+      bidangUsaha: clearBidangUsaha ? null : (bidangUsaha ?? this.bidangUsaha),
     );
   }
 
@@ -197,6 +203,7 @@ class _DashboardFilterPanelState extends State<DashboardFilterPanel> {
               final bool isWide = constraints.maxWidth >= 640;
 
               final List<Widget> fields = [
+                _buildBidangDropdown(),
                 _buildDateField(
                   label: 'Tanggal Mulai',
                   value: _draft.startDate,
@@ -295,6 +302,48 @@ class _DashboardFilterPanelState extends State<DashboardFilterPanel> {
           ),
         ],
       ),
+    );
+  }
+  
+    Widget _buildBidangDropdown() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Bidang Usaha',
+          style: TextStyle(
+            color: AppTheme.textColor(context),
+            fontSize: 12.5,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+        const SizedBox(height: 6),
+        DropdownButtonFormField<String?>(
+          initialValue: _draft.bidangUsaha,
+          isExpanded: true,
+          icon: const Icon(Icons.keyboard_arrow_down_rounded, size: 18),
+          decoration: _dropdownDecoration(),
+          items: [
+            const DropdownMenuItem<String?>(
+              value: null,
+              child: Text('Semua Bidang'),
+            ),
+            ...BidangUsahaOpsi.daftar.map(
+              (b) => DropdownMenuItem<String?>(
+                value: b.slug,
+                child: Text(b.nama, overflow: TextOverflow.ellipsis),
+              ),
+            ),
+          ],
+          onChanged: (value) {
+            setState(() {
+              _draft = value == null
+                  ? _draft.copyWith(clearBidangUsaha: true)
+                  : _draft.copyWith(bidangUsaha: value);
+            });
+          },
+        ),
+      ],
     );
   }
 

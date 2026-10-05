@@ -70,6 +70,7 @@ class RiwayatItem {
     required this.tanggal,
     required this.status,
     this.hasilValidasi,
+    this.bidangUsaha,
   });
 
   final int id;
@@ -80,6 +81,7 @@ class RiwayatItem {
   final String petugas;
   final DateTime? tanggal;
   final String status;
+  final String? bidangUsaha;
 
   /// Hanya relevan untuk [jenis] == 'OSS'. Nilainya 'VALID' / 'TIDAK_VALID',
   /// atau null untuk data Non-OSS/OTA (tidak melalui tahap validasi ini).
@@ -109,6 +111,7 @@ class RiwayatItem {
           : null,
       status: (json['status'] as String?) ?? '-',
       hasilValidasi: json['hasil_validasi'] as String?,
+      bidangUsaha: json['bidang_usaha'] as String?,
     );
   }
 }

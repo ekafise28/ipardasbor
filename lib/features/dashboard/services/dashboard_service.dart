@@ -20,6 +20,7 @@ class DashboardService {
     int? districtId,
     String? dataSource,
     String? verificationStatus,
+    String? bidangUsaha,
     bool includeMap = false,
   }) async {
     final String? accessToken = await SecureStorage.getAccessToken();
@@ -54,6 +55,10 @@ class DashboardService {
 
     if (verificationStatus != null && verificationStatus.trim().isNotEmpty) {
       queryParameters['status_verifikasi'] = verificationStatus.trim();
+    }
+
+    if (bidangUsaha != null && bidangUsaha.trim().isNotEmpty) {
+      queryParameters['bidang_usaha'] = bidangUsaha.trim();
     }
 
     final Uri uri = ApiEndpoints.uri(

@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:ipardasbor/core/constants/bidang_usaha_constants.dart';
 import 'package:ipardasbor/shared/widgets/connection_error_state.dart';
 import '../../core/api/api_exception.dart';
 import '../../app/app_theme.dart';
@@ -26,6 +27,9 @@ class DashboardPage extends StatefulWidget {
 
 class _DashboardPageState extends State<DashboardPage> {
   final DashboardService _dashboardService = DashboardService();
+
+  String get _labelBidang =>
+      BidangUsahaOpsi.namaDari(_filterValues.bidangUsaha) ?? 'Usaha Pariwisata';
 
   DashboardData? _dashboard;
   bool _isLoading = true;
@@ -60,6 +64,7 @@ class _DashboardPageState extends State<DashboardPage> {
     try {
       final DashboardData result = await _dashboardService
           .getDashboard(
+            bidangUsaha: _filterValues.bidangUsaha,
             province: _selectedProvince,
             includeMap: true,
             startDate: _filterValues.startDateApiFormat,
@@ -289,7 +294,7 @@ class _DashboardPageState extends State<DashboardPage> {
         // ============================================================
         const SizedBox(height: 48),
         DashboardBarChart(
-          title: 'Legalitas NIB Usaha Akomodasi',
+          title: 'Legalitas NIB $_labelBidang',
           subtitle: 'Kepemilikan NIB berdasarkan Kabupaten/Kota.',
           data: ChartSeriesData.fromDynamic(
             dashboard
@@ -405,7 +410,7 @@ class _DashboardPageState extends State<DashboardPage> {
         const SizedBox(height: 16),
 
         DashboardBarChart(
-          title: 'Jenis Produk Akomodasi',
+          title: 'Jenis Produk',
           subtitle: 'Komposisi jenis produk berdasarkan sumber data.',
           data: ChartSeriesData.fromDynamic(
             dashboard.charts.productType,
@@ -420,7 +425,7 @@ class _DashboardPageState extends State<DashboardPage> {
         const SizedBox(height: 16),
 
         DashboardDataTable(
-          title: 'Tabel Jenis Produk Akomodasi',
+          title: 'Tabel Jenis Produk',
           columns: const ['Jenis Produk', 'OSS', 'Non OSS', 'Total'],
           rows: dashboard.productTypeRecap.map((row) {
             return [
