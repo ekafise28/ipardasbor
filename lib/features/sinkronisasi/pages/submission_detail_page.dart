@@ -3,7 +3,6 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:ipardasbor/features/oss/models/jenis_produk_akomodasi.dart';
-import '../../../core/api/api_client.dart';
 import '../../non_oss/services/non_oss_service.dart';
 
 import '../../../app/app_theme.dart';
@@ -165,10 +164,43 @@ class _SubmissionDetailPageState extends State<SubmissionDetailPage> {
     ];
   }
 
+  static const Map<String, String> _labelStatus = <String, String>{
+    'NIB_TIDAK_DITEMUKAN': 'Tidak Punya NIB',
+    'TIDAK_BERTEMU_PEMILIK': 'Tidak bertemu pemilik',
+    'PENGELOLA_TIDAK_BISA_MEMBERIKAN_DATA':
+        'Pengelola tidak bisa memberikan data',
+    'LAINNYA': 'Lainnya',
+  };
+
+  /// Gabungan semua status_ketidaksesuaian[i] dari payload, urut indeks.
+  String? _statusPengawasanTampil() {
+    final RegExp pola = RegExp(r'^status_ketidaksesuaian\[(\d+)\]$');
+    final Map<int, String> byIndex = <int, String>{};
+
+    for (final MapEntry<String, String> e in _data.payload.entries) {
+      final Match? m = pola.firstMatch(e.key);
+      if (m != null && e.value.trim().isNotEmpty) {
+        byIndex[int.parse(m.group(1)!)] = e.value.trim();
+      }
+    }
+
+    // Data "Tidak" selalu bernilai tetap, walau draft lama belum menyimpannya.
+    if (byIndex.isEmpty &&
+        (_data.payload['memiliki_nib'] ?? '').toUpperCase() == 'TIDAK') {
+      return _labelStatus['NIB_TIDAK_DITEMUKAN'];
+    }
+    if (byIndex.isEmpty) return null;
+
+    final List<int> urut = byIndex.keys.toList()..sort();
+    return urut
+        .map((int i) => _labelStatus[byIndex[i]] ?? byIndex[i]!)
+        .join(', ');
+  }
+
   List<Baris> _hasilPengawasanRows() {
     final Map<String, String> p = _data.payload;
     return <Baris>[
-      Baris('Status Pengawasan', p['status_pengawasan']),
+      Baris('Status Pengawasan', _statusPengawasanTampil()),
       Baris('Keterangan', p['keterangan']),
       Baris('Catatan Petugas', p['catatan_petugas']),
       Baris('Tanggal Pengawasan', p['tanggal_pengawasan']),
