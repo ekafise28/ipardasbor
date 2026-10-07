@@ -7,6 +7,8 @@ import 'package:ipardasbor/app/app_theme.dart';
 import 'package:ipardasbor/features/non_oss/offline/non_oss_local_data.dart';
 import 'package:ipardasbor/features/oss/widgets/status_ketidaksesuaian_selector.dart';
 import 'package:ipardasbor/shared/gps/gps_capture_mixin.dart';
+import 'package:ipardasbor/core/constants/bidang_usaha_constants.dart';
+import 'package:ipardasbor/features/oss/models/jenis_produk_akomodasi.dart';
 
 import '../../core/api/api_client.dart';
 
@@ -29,7 +31,12 @@ class NonOssFormPage extends StatefulWidget {
     this.editingData,
     this.memilikiNibTerkunci,
     this.baselineOtaId,
+    this.bidang,
   });
+
+  /// Slug bidang usaha untuk data BARU. Diabaikan saat mode edit (bidang
+  /// diambil dari data tersimpan). null = akomodasi.
+  final String? bidang;
 
   final NonOssLocalData? editingData;
 
@@ -59,6 +66,13 @@ class _NonOssFormPageState extends State<NonOssFormPage>
   late final NonOssService _service;
   late final OfflineQueueService _offlineQueue;
 
+  /// "55105 - Hotel Bintang 1". Nilai lama (label teks, mis. "Hotel") tampil apa adanya.
+  String _labelJenisProduk(MapEntry<String, String> e) {
+    final bool kode = RegExp(r'^\d{5}$').hasMatch(e.key);
+    if (!kode) return e.value;
+    return e.value.startsWith(e.key) ? e.value : '${e.key} - ${e.value}';
+  }
+
   List<RegionOption> _provinces = [],
       _regencies = [],
       _districts = [],
@@ -82,6 +96,25 @@ class _NonOssFormPageState extends State<NonOssFormPage>
       }
     }
     return _data.photos.length != _jumlahFotoAwal;
+  }
+
+  List<MapEntry<String, String>> _jenisProdukOptions =
+      JenisProdukAkomodasi.options;
+
+  Future<void> _muatJenisProduk() async {
+    if (_data.bidang == 'akomodasi') return;
+    try {
+      final opsi = await _service.jenisProduk(_data.bidang);
+      if (mounted) setState(() => _jenisProdukOptions = opsi);
+    } catch (_) {
+      if (mounted) {
+        _error(
+          Exception(
+            'Daftar jenis produk gagal dimuat. Periksa koneksi internet.',
+          ),
+        );
+      }
+    }
   }
 
   Future<_BackAction?> _tanyaSimpanDraft() {
@@ -220,16 +253,6 @@ class _NonOssFormPageState extends State<NonOssFormPage>
   late final TextEditingController _catatanPetugasCtrl;
   late final TextEditingController _otaLainnyaCtrl;
 
-  static const products = [
-    'Hotel',
-    'Villa',
-    'Pondok Wisata',
-    'Apartemen',
-    'Penginapan',
-    'Bumi Perkemahan',
-    'Akomodasi Lainnya',
-  ];
-
   @override
   void initState() {
     super.initState();
@@ -246,6 +269,10 @@ class _NonOssFormPageState extends State<NonOssFormPage>
       _data.baselineOtaId = widget.baselineOtaId;
     }
 
+    if (widget.editingData == null && widget.bidang != null) {
+      _data.bidang = widget.bidang!;
+    }
+
     // Snapshot kondisi awal, dipakai untuk deteksi "dirty" saat back ditekan.
     _snapshotAwal = Map<String, String>.from(_data.toFields());
     _jumlahFotoAwal = _data.photos.length;
@@ -253,6 +280,7 @@ class _NonOssFormPageState extends State<NonOssFormPage>
     _api = ApiClient();
     _regions = RegionService();
     _service = NonOssService(_api);
+    _muatJenisProduk();
     _offlineQueue = OfflineQueueService();
     // Inisialisasi controller dengan nilai awal dari _data, satu kali saja.
     _namaPemilikCtrl = TextEditingController(text: _data.namaPemilik);
@@ -750,7 +778,7 @@ class _NonOssFormPageState extends State<NonOssFormPage>
     );
   }
 
-    Widget _lockedNibBanner() {
+  Widget _lockedNibBanner() {
     final String label = _data.memilikiNib == 'TIDAK' ? 'Tidak' : 'Tidak Tahu';
     return Container(
       width: double.infinity,
@@ -824,7 +852,9 @@ class _NonOssFormPageState extends State<NonOssFormPage>
                           : AppTheme.scaffoldColorDynamic(context),
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(
-                        color: selected ? AppTheme.primaryColor : AppTheme.border(context),
+                        color: selected
+                            ? AppTheme.primaryColor
+                            : AppTheme.border(context),
                         width: selected ? 1.5 : 1,
                       ),
                     ),
@@ -836,7 +866,9 @@ class _NonOssFormPageState extends State<NonOssFormPage>
                               ? Icons.radio_button_checked
                               : Icons.radio_button_off,
                           size: 18,
-                          color: selected ? AppTheme.primaryColor : AppTheme.textMuted,
+                          color: selected
+                              ? AppTheme.primaryColor
+                              : AppTheme.textMuted,
                         ),
                         const SizedBox(width: 7),
                         Flexible(
@@ -889,7 +921,10 @@ class _NonOssFormPageState extends State<NonOssFormPage>
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(13),
-          borderSide: const BorderSide(color: AppTheme.primaryColor, width: 1.5),
+          borderSide: const BorderSide(
+            color: AppTheme.primaryColor,
+            width: 1.5,
+          ),
         ),
       ),
     ),
@@ -919,7 +954,8 @@ class _NonOssFormPageState extends State<NonOssFormPage>
               Text(
                 _isEditing
                     ? 'Perbarui data yang tersimpan'
-                    : 'Pendataan usaha pariwisata',
+                    : (BidangUsahaOpsi.namaDari(_data.bidang) ??
+                          'Pendataan usaha pariwisata'),
                 style: const TextStyle(
                   fontSize: 11.5,
                   fontWeight: FontWeight.w400,
@@ -990,7 +1026,7 @@ class _NonOssFormPageState extends State<NonOssFormPage>
                       hasError: _sectionErrors.contains(_Section.identitas),
                       child: Column(
                         children: [
-                                                    // NIB
+                          // NIB
                           if (_nibTerkunci)
                             _lockedNibBanner()
                           else
@@ -1027,31 +1063,52 @@ class _NonOssFormPageState extends State<NonOssFormPage>
                             (v) => _data.namaBrand = v,
                           ),
 
-                          DropdownButtonFormField<String>(
-                            initialValue: _data.jenisProduk.isEmpty
-                                ? null
-                                : _data.jenisProduk,
-                            decoration: const InputDecoration(
-                              labelText: 'Jenis Produk *',
-                              border: OutlineInputBorder(),
-                            ),
-                            items: products
-                                .map(
-                                  (v) => DropdownMenuItem(
-                                    value: v,
-                                    child: Text(v),
+                          Builder(
+                            builder: (_) {
+                              final opsi = List<MapEntry<String, String>>.of(
+                                _jenisProdukOptions,
+                              );
+                              // Nilai tersimpan (draft/edit) yang tidak ada di
+                              // daftar tetap ditampilkan, supaya dropdown tidak
+                              // error dan nilainya tidak hilang.
+                              if (_data.jenisProduk.isNotEmpty &&
+                                  !opsi.any(
+                                    (e) => e.key == _data.jenisProduk,
+                                  )) {
+                                opsi.add(
+                                  MapEntry(
+                                    _data.jenisProduk,
+                                    _data.jenisProduk,
                                   ),
-                                )
-                                .toList(),
-                            // Perbaikan: sebelumnya tidak ada setState di sini,
-                            // sehingga _data.jenisProduk berubah tanpa Flutter
-                            // "tahu", dan saat Form.validate() memicu rebuild
-                            // (mis. saat tombol Simpan ditekan), dropdown ini
-                            // balik ke initialValue lama seolah terhapus.
-                            onChanged: (v) =>
-                                setState(() => _data.jenisProduk = v ?? ''),
-                            validator: (v) =>
-                                v == null ? 'Wajib dipilih.' : null,
+                                );
+                              }
+                              return DropdownButtonFormField<String>(
+                                key: ValueKey<String>('jp-${opsi.length}'),
+                                initialValue: _data.jenisProduk.isEmpty
+                                    ? null
+                                    : _data.jenisProduk,
+                                isExpanded: true,
+                                decoration: const InputDecoration(
+                                  labelText: 'Jenis Produk *',
+                                  border: OutlineInputBorder(),
+                                ),
+                                items: opsi
+                                    .map(
+                                      (e) => DropdownMenuItem(
+                                        value: e.key,
+                                        child: Text(
+                                          _labelJenisProduk(e),
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                      ),
+                                    )
+                                    .toList(),
+                                onChanged: (v) =>
+                                    setState(() => _data.jenisProduk = v ?? ''),
+                                validator: (v) =>
+                                    v == null ? 'Wajib dipilih.' : null,
+                              );
+                            },
                           ),
                         ],
                       ),

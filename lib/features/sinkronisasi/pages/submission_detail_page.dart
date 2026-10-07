@@ -2,6 +2,9 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:ipardasbor/features/oss/models/jenis_produk_akomodasi.dart';
+import '../../../core/api/api_client.dart';
+import '../../non_oss/services/non_oss_service.dart';
 
 import '../../../app/app_theme.dart';
 import '../../../shared/widgets/detail_section_card.dart';
@@ -18,6 +21,8 @@ import '../../non_oss/offline/draft_completeness.dart';
 import '../widget/widget_submission/detail_photo_section.dart';
 import '../widget/widget_submission/ota_tile.dart';
 import '../widget/widget_submission/photo_viewer.dart';
+
+import '../../../core/constants/bidang_usaha_constants.dart';
 
 /// Halaman detail satu ajuan Non-OSS yang berada di antrean lokal.
 ///
@@ -54,6 +59,33 @@ class _SubmissionDetailPageState extends State<SubmissionDetailPage> {
     super.initState();
     _data = widget.data;
     _loadRegionNames();
+    _muatLabelJenisProduk();
+  }
+
+  String? _labelJenisProdukTampil;
+
+  Future<void> _muatLabelJenisProduk() async {
+    final String? kode = _data.payload['jenis_produk'];
+    if (kode == null || kode.trim().isEmpty) return;
+
+    final String bidang = _data.payload['bidang_usaha'] ?? 'akomodasi';
+
+    final List<MapEntry<String, String>> daftar = bidang == 'akomodasi'
+        ? JenisProdukAkomodasi.options
+        : await NonOssService.jenisProdukTersimpan(bidang);
+
+    for (final e in daftar) {
+      if (e.key == kode) {
+        if (mounted) {
+          setState(
+            () => _labelJenisProdukTampil = e.value.startsWith(e.key)
+                ? e.value
+                : '${e.key} - ${e.value}',
+          );
+        }
+        return;
+      }
+    }
   }
 
   Map<String, String> _regionNames = <String, String>{};
@@ -90,9 +122,13 @@ class _SubmissionDetailPageState extends State<SubmissionDetailPage> {
   List<Baris> _informasiUsahaRows() {
     final Map<String, String> p = _data.payload;
     return <Baris>[
+      Baris(
+        'Bidang Usaha',
+        BidangUsahaOpsi.namaDari(p['bidang_usaha'] ?? 'akomodasi'),
+      ),
       Baris('Nama Pemilik', p['nama_pemilik']),
       Baris('Nama Brand', p['nama_brand']),
-      Baris('Jenis Produk', p['jenis_produk']),
+      Baris('Jenis Produk', _labelJenisProdukTampil ?? p['jenis_produk']),
       Baris('Website', p['website'], url: _normalisasiUrl(p['website'])),
       Baris('No. HP', p['no_hp']),
       Baris('Email', p['email']),
@@ -462,7 +498,7 @@ class _SubmissionDetailPageState extends State<SubmissionDetailPage> {
             _SubmissionOtaSection(
               entries: _parseOtaEntries(),
               onTapUrl: _openUrl,
-            ),           
+            ),
             const SizedBox(height: 12),
             _buildActionButtons(context, failed, isDraft),
           ],
