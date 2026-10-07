@@ -37,19 +37,23 @@ class OcrParser {
   static Map<OcrFieldType, List<OcrResult>> parseText(
     String text, {
     Set<OcrFieldType>? targets,
-  }) =>
-      parse(text.split(RegExp(r'\r?\n')), targets: targets);
+    String bidang = 'akomodasi',
+  }) => parse(text.split(RegExp(r'\r?\n')), targets: targets, bidang: bidang);
 
   /// [targets] kosong/null berarti ketiganya. Hasil selalu memuat kunci
   /// untuk setiap target (daftarnya kosong kalau tidak ditemukan).
   static Map<OcrFieldType, List<OcrResult>> parse(
     List<String> lines, {
     Set<OcrFieldType>? targets,
+    String bidang = 'akomodasi',
   }) {
-    final Set<OcrFieldType> wanted =
-        (targets == null || targets.isEmpty) ? OcrFieldType.values.toSet() : targets;
-    final List<String> clean =
-        lines.map((l) => l.trim()).where((l) => l.isNotEmpty).toList();
+    final Set<OcrFieldType> wanted = (targets == null || targets.isEmpty)
+        ? OcrFieldType.values.toSet()
+        : targets;
+    final List<String> clean = lines
+        .map((l) => l.trim())
+        .where((l) => l.isNotEmpty)
+        .toList();
 
     // 1) Kandidat lewat label, per jenis.
     final Map<OcrFieldType, List<String>> byLabel = {
@@ -63,7 +67,8 @@ class OcrParser {
       for (final v in byLabel[t]!) {
         final OcrFieldType? current = owners[v];
         if (current == null ||
-            (v.length == t.expectedLength && v.length != current.expectedLength)) {
+            (v.length == t.expectedLength &&
+                v.length != current.expectedLength)) {
           owners[v] = t;
         }
       }
@@ -77,18 +82,27 @@ class OcrParser {
     final Map<OcrFieldType, List<OcrResult>> result = {};
     for (final t in wanted) {
       if (t == OcrFieldType.kbli) {
-        result[t] = _kbliResults(clean, byLabel[t]!.toSet());
+        result[t] = _kbliResults(
+          clean,
+          byLabel[t]!.toSet(),
+          bidang,
+        );
         continue;
       }
       final List<String> labelValues = byLabel[t]!;
       if (labelValues.isNotEmpty) {
         result[t] = _rank(t, labelValues)
-            .map((v) => _build(t, v, byLabel: true))
+            .map(
+              (v) => _build(t, v, byLabel: true, bidang: bidang),
+            )
             .toList();
       } else {
         final List<String> fallback = _byFallback(t, clean, claimed);
-        result[t] =
-            _rank(t, fallback).map((v) => _build(t, v, byLabel: false)).toList();
+        result[t] = _rank(t, fallback)
+            .map(
+              (v) => _build(t, v, byLabel: false, bidang: bidang),
+            ) // <- tambah bidang
+            .toList();
       }
     }
     return result;
@@ -109,8 +123,11 @@ class OcrParser {
       if (matches.isEmpty) continue;
 
       final String remainder = lines[i].substring(matches.last.end);
-      List<String> cands =
-          _accept(type, _extractCandidates(remainder), byLabel: true);
+      List<String> cands = _accept(
+        type,
+        _extractCandidates(remainder),
+        byLabel: true,
+      );
       if (cands.isEmpty && i + 1 < lines.length) {
         cands = _accept(type, _extractCandidates(lines[i + 1]), byLabel: true);
       }
@@ -135,7 +152,11 @@ class OcrParser {
   /// diizinkan, hanya itu yang dipakai (sisanya dianggap noise seperti kode
   /// pos). Kalau tidak ada tapi ada yang ditemukan lewat label, tetap
   /// ditawarkan dengan peringatan.
-  static List<OcrResult> _kbliResults(List<String> lines, Set<String> labelSet) {
+  static List<OcrResult> _kbliResults(
+    List<String> lines,
+    Set<String> labelSet,
+    String bidang,
+  ) {
     final List<String> all5 = [];
     for (final line in lines) {
       all5.addAll(
@@ -143,16 +164,24 @@ class OcrParser {
       );
     }
     final List<String> unique = _dedupe(all5);
-    final List<String> allowed =
-        unique.where(KbliConstants.isDiizinkan).toList();
+    final List<String> allowed = unique
+        .where((k) => KbliConstants.isDiizinkan(k, bidang: bidang))
+        .toList();
 
     if (allowed.isNotEmpty) {
       return allowed
-          .map((v) => _build(OcrFieldType.kbli, v, byLabel: labelSet.contains(v)))
+          .map(
+            (v) => _build(
+              OcrFieldType.kbli,
+              v,
+              byLabel: labelSet.contains(v),
+              bidang: bidang,
+            ),
+          )
           .toList();
     }
     return labelSet
-        .map((v) => _build(OcrFieldType.kbli, v, byLabel: true))
+        .map((v) => _build(OcrFieldType.kbli, v, byLabel: true, bidang: bidang))
         .toList();
   }
 
@@ -160,10 +189,9 @@ class OcrParser {
     OcrFieldType type,
     List<String> candidates, {
     required bool byLabel,
-  }) =>
-      candidates
-          .where((c) => type.acceptsLength(c.length, byLabel: byLabel))
-          .toList();
+  }) => candidates
+      .where((c) => type.acceptsLength(c.length, byLabel: byLabel))
+      .toList();
 
   /// Ambil semua kandidat angka dari satu potongan teks. Deretan bersambung
   /// spasi ikut dicoba dalam bentuk gabungan DAN per potongan.
@@ -176,7 +204,8 @@ class OcrParser {
 
       if (compact.length != raw.length) {
         for (final token in raw.split(_separators)) {
-          if (token.isNotEmpty && _looksNumeric(token)) out.add(_correct(token));
+          if (token.isNotEmpty && _looksNumeric(token))
+            out.add(_correct(token));
         }
       }
     }
@@ -225,12 +254,14 @@ class OcrParser {
     OcrFieldType type,
     String value, {
     required bool byLabel,
+    String bidang = 'akomodasi',
   }) {
     final List<OcrWarning> warnings = [];
     if (value.length != type.expectedLength) {
       warnings.add(OcrWarning.unusualLength);
     }
-    if (type == OcrFieldType.kbli && !KbliConstants.isDiizinkan(value)) {
+    if (type == OcrFieldType.kbli &&
+        !KbliConstants.isDiizinkan(value, bidang: bidang)) {
       warnings.add(OcrWarning.notInAllowedList);
     }
     if (!byLabel) warnings.add(OcrWarning.noLabel);

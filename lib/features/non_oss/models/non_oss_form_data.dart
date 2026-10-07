@@ -6,6 +6,10 @@ import '../offline/non_oss_local_data.dart';
 class NonOssFormData {
   NonOssFormData();
 
+  /// Slug bidang usaha (key config bidang_usaha_pariwisata). Draft/antrean
+  /// lama tanpa nilai ini dianggap akomodasi.
+  String bidang = 'akomodasi';
+
   String memilikiNib = 'TIDAK';
 
   String namaPemilik = '';
@@ -73,6 +77,7 @@ class NonOssFormData {
     final Map<String, String> payload = data.payload;
 
     form.memilikiNib = payload['memiliki_nib'] ?? 'TIDAK';
+    form.bidang = payload['bidang_usaha'] ?? 'akomodasi';
     form.namaPemilik = payload['nama_pemilik'] ?? '';
     form.namaBrand = payload['nama_brand'] ?? '';
     form.jenisProduk = payload['jenis_produk'] ?? '';
@@ -152,6 +157,7 @@ class NonOssFormData {
   Map<String, String> toFields() {
     final Map<String, String> fields = <String, String>{
       'memiliki_nib': memilikiNib.trim().toUpperCase(),
+      'bidang_usaha': bidang,
       'nama_pemilik': namaPemilik.trim(),
       'nama_brand': namaBrand.trim(),
       'jenis_produk': jenisProduk.trim(),

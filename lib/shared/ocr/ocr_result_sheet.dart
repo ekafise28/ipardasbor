@@ -27,6 +27,7 @@ Future<OcrSheetResult?> showOcrResultSheet(
   required Map<OcrFieldType, List<OcrResult>> results,
   Map<OcrFieldType, String> currentValues = const {},
   bool allowRetry = true,
+  String bidang = 'akomodasi',
 }) {
   return showModalBottomSheet<OcrSheetResult>(
     context: context,
@@ -37,6 +38,7 @@ Future<OcrSheetResult?> showOcrResultSheet(
       results: results,
       currentValues: currentValues,
       allowRetry: allowRetry,
+      bidang: bidang,
     ),
   );
 }
@@ -46,11 +48,13 @@ class _OcrResultSheet extends StatefulWidget {
     required this.results,
     required this.currentValues,
     required this.allowRetry,
+    required this.bidang,
   });
 
   final Map<OcrFieldType, List<OcrResult>> results;
   final Map<OcrFieldType, String> currentValues;
   final bool allowRetry;
+  final String bidang;
 
   @override
   State<_OcrResultSheet> createState() => _OcrResultSheetState();
@@ -71,7 +75,9 @@ class _OcrResultSheetState extends State<_OcrResultSheet> {
       final List<OcrResult> cands = widget.results[t] ?? const [];
       if (cands.isEmpty) continue;
 
-      final TextEditingController c = TextEditingController(text: cands.first.value);
+      final TextEditingController c = TextEditingController(
+        text: cands.first.value,
+      );
       c.addListener(() {
         if (mounted) setState(() {});
       });
@@ -79,7 +85,8 @@ class _OcrResultSheetState extends State<_OcrResultSheet> {
       _picked[t] = 0;
       // Tercentang otomatis hanya kalau: kandidat tunggal, tanpa peringatan,
       // dan field di form masih kosong.
-      _checked[t] = cands.length == 1 && cands.first.isClean && _current(t).isEmpty;
+      _checked[t] =
+          cands.length == 1 && cands.first.isClean && _current(t).isEmpty;
     }
   }
 
@@ -119,7 +126,7 @@ class _OcrResultSheetState extends State<_OcrResultSheet> {
     }
     if (t == OcrFieldType.kbli &&
         text.length == 5 &&
-        !KbliConstants.isDiizinkan(text)) {
+        !KbliConstants.isDiizinkan(text, bidang: widget.bidang)) {
       w.add(OcrWarning.notInAllowedList);
     }
     if (noLabel) w.add(OcrWarning.noLabel);
@@ -230,8 +237,11 @@ class _OcrResultSheetState extends State<_OcrResultSheet> {
       padding: const EdgeInsets.symmetric(vertical: 28, horizontal: 8),
       child: Column(
         children: [
-          Icon(Icons.search_off_rounded,
-              size: 40, color: AppTheme.textSecondary(context)),
+          Icon(
+            Icons.search_off_rounded,
+            size: 40,
+            color: AppTheme.textSecondary(context),
+          ),
           const SizedBox(height: 10),
           Text(
             'Tidak ada angka yang terbaca.',
@@ -265,8 +275,11 @@ class _OcrResultSheetState extends State<_OcrResultSheet> {
       ),
       child: Row(
         children: [
-          Icon(Icons.remove_circle_outline,
-              size: 20, color: AppTheme.textSecondary(context)),
+          Icon(
+            Icons.remove_circle_outline,
+            size: 20,
+            color: AppTheme.textSecondary(context),
+          ),
           const SizedBox(width: 10),
           Expanded(
             child: Column(
@@ -308,7 +321,11 @@ class _OcrResultSheetState extends State<_OcrResultSheet> {
       type: t,
       value: text,
       foundByLabel: untouched ? picked.foundByLabel : true,
-      warnings: _liveWarnings(t, text, noLabel: untouched && !picked.foundByLabel),
+      warnings: _liveWarnings(
+        t,
+        text,
+        noLabel: untouched && !picked.foundByLabel,
+      ),
     );
     final String current = _current(t);
     final bool lengthOff = text.isNotEmpty && text.length != t.expectedLength;
@@ -367,7 +384,7 @@ class _OcrResultSheetState extends State<_OcrResultSheet> {
                       current == text
                           ? 'Sama dengan isi form saat ini.'
                           : 'Isi form saat ini: ${_group(current)}. '
-                              'Centang untuk menimpa.',
+                                'Centang untuk menimpa.',
                       style: TextStyle(
                         fontSize: 11.5,
                         color: AppTheme.textSecondary(context),
@@ -391,8 +408,11 @@ class _OcrResultSheetState extends State<_OcrResultSheet> {
                         ChoiceChip(
                           label: Text(cands[i].value),
                           avatar: cands[i].hasWarning
-                              ? const Icon(Icons.warning_amber_rounded,
-                                  size: 16, color: Color(0xFFB45309))
+                              ? const Icon(
+                                  Icons.warning_amber_rounded,
+                                  size: 16,
+                                  color: Color(0xFFB45309),
+                                )
                               : null,
                           selected: _picked[t] == i,
                           onSelected: (_) => setState(() {
@@ -432,8 +452,11 @@ class _OcrResultSheetState extends State<_OcrResultSheet> {
                     child: Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Icon(Icons.warning_amber_rounded,
-                            size: 16, color: Color(0xFFB45309)),
+                        const Icon(
+                          Icons.warning_amber_rounded,
+                          size: 16,
+                          color: Color(0xFFB45309),
+                        ),
                         const SizedBox(width: 6),
                         Expanded(
                           child: Text(

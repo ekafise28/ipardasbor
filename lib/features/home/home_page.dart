@@ -8,7 +8,6 @@ import 'package:ipardasbor/features/notifications/services/notification_service.
 import '../../app/app_theme.dart';
 import '../dashboard/dashboard_page.dart';
 
-import '../oss/oss_proyek_page.dart';
 import '../sinkronisasi/sync_page.dart';
 import '../riwayat/riwayat_page.dart';
 
@@ -25,7 +24,6 @@ import 'widgets/welcome_card.dart';
 import '../../core/api/api_client.dart';
 import '../non_oss/offline/offline_database.dart';
 import '../non_oss/services/non_oss_service.dart';
-import '../non_oss/non_oss_form_page.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -148,9 +146,11 @@ class _HomePageState extends State<HomePage> {
         break;
 
       case 'Pengawasan Non-OSS':
-        await Navigator.of(
-          context,
-        ).push(MaterialPageRoute<void>(builder: (_) => const NonOssFormPage()));
+        await Navigator.of(context).push(
+          MaterialPageRoute<void>(
+            builder: (_) => const PilihBidangPage(tujuan: TujuanBidang.nonOss),
+          ),
+        );
         break;
 
       case 'Pengawasan OTA':

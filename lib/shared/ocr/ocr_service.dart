@@ -43,19 +43,21 @@ class OcrService {
   Future<OcrScanResult?> scan(
     OcrImageSource source, {
     Set<OcrFieldType>? targets,
+    String bidang = 'akomodasi',
   }) async {
     final XFile? file = await pickImage(source);
     if (file == null) return null;
-    return scanPath(file.path, targets: targets);
+    return scanPath(file.path, targets: targets, bidang: bidang);
   }
 
   /// Jalankan OCR + parser untuk file yang sudah dipilih.
   Future<OcrScanResult> scanPath(
     String path, {
     Set<OcrFieldType>? targets,
+    String bidang = 'akomodasi',
   }) async {
     final List<String> lines = await readLines(path);
-    final results = OcrParser.parse(lines, targets: targets);
+    final results = OcrParser.parse(lines, targets: targets, bidang: bidang);
     return OcrScanResult(lines: lines, results: results);
   }
 
@@ -82,11 +84,13 @@ class OcrService {
 
   /// Baca teks dari file gambar, dikembalikan per baris visual.
   Future<List<String>> readLines(String path) async {
-    final TextRecognizer recognizer =
-        TextRecognizer(script: TextRecognitionScript.latin);
+    final TextRecognizer recognizer = TextRecognizer(
+      script: TextRecognitionScript.latin,
+    );
     try {
-      final RecognizedText text =
-          await recognizer.processImage(InputImage.fromFilePath(path));
+      final RecognizedText text = await recognizer.processImage(
+        InputImage.fromFilePath(path),
+      );
       final List<String> lines = _toVisualRows(text);
       if (kDebugMode) debugPrint('OCR raw lines: $lines');
       return lines;
@@ -111,7 +115,8 @@ class OcrService {
     Rect? reference;
     for (final line in all) {
       final Rect box = line.boundingBox;
-      final bool sameRow = rows.isNotEmpty &&
+      final bool sameRow =
+          rows.isNotEmpty &&
           reference != null &&
           box.center.dy >= reference.top &&
           box.center.dy <= reference.bottom;

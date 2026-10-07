@@ -19,6 +19,7 @@ Future<Map<OcrFieldType, String>?> runOcrScan(
   BuildContext context, {
   Set<OcrFieldType>? targets,
   Map<OcrFieldType, String> currentValues = const {},
+  String bidang = 'akomodasi',
 }) async {
   final OcrService service = OcrService();
   OcrImageSource? source = await _pickSource(context);
@@ -36,14 +37,20 @@ Future<Map<OcrFieldType, String>?> runOcrScan(
     }
     if (path == null || !context.mounted) return null; // dibatalkan
 
-    final OcrScanResult? scan =
-        await _scanWithLoading(context, service, path, targets);
+    final OcrScanResult? scan = await _scanWithLoading(
+      context,
+      service,
+      path,
+      targets,
+      bidang,
+    );
     if (scan == null || !context.mounted) return null;
 
     final OcrSheetResult? sheet = await showOcrResultSheet(
       context,
       results: scan.results,
       currentValues: currentValues,
+      bidang: bidang,
     );
     if (sheet == null) return null;
 
@@ -89,6 +96,7 @@ Future<OcrScanResult?> _scanWithLoading(
   OcrService service,
   String path,
   Set<OcrFieldType>? targets,
+  String bidang,
 ) async {
   unawaited(
     showDialog<void>(
@@ -118,7 +126,7 @@ Future<OcrScanResult?> _scanWithLoading(
   );
 
   try {
-    return await service.scanPath(path, targets: targets);
+    return await service.scanPath(path, targets: targets, bidang: bidang);
   } on OcrException catch (e) {
     if (context.mounted) _snack(context, e.message);
     return null;

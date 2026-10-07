@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:ipardasbor/app/app_theme.dart';
 import 'package:ipardasbor/core/constants/bidang_usaha_constants.dart';
+import '../../non_oss/non_oss_form_page.dart';
 
 import '../oss_proyek_page.dart';
 
 /// Tampilan visual satu bidang usaha (ikon dan warna kartu).
 typedef _Tampilan = ({IconData icon, Color warna});
+
+enum TujuanBidang { oss, nonOss }
 
 /// Pilih jenis usaha pariwisata sebelum masuk ke daftar proyek OSS.
 ///
@@ -13,7 +16,9 @@ typedef _Tampilan = ({IconData icon, Color warna});
 /// dengan key di config/bidang_usaha_pariwisata.php). Di sini hanya ikon
 /// dan warna yang didefinisikan, di-key dengan slug.
 class PilihBidangPage extends StatelessWidget {
-  const PilihBidangPage({super.key});
+  const PilihBidangPage({super.key, this.tujuan = TujuanBidang.oss});
+
+  final TujuanBidang tujuan;
 
   /// Dipakai kalau ada bidang baru di [BidangUsahaOpsi.daftar] yang belum
   /// didaftarkan di [_tampilan].
@@ -27,26 +32,17 @@ class PilihBidangPage extends StatelessWidget {
       icon: Icons.directions_bus_rounded,
       warna: Color(0xFF1E7BFF),
     ),
-    'akomodasi': (
-      icon: Icons.apartment_rounded,
-      warna: Color(0xFF0FA3B8),
-    ),
+    'akomodasi': (icon: Icons.apartment_rounded, warna: Color(0xFF0FA3B8)),
     'makanan-minuman': (
       icon: Icons.restaurant_rounded,
       warna: Color(0xFFF97316),
     ),
-    'kawasan-pariwisata': (
-      icon: Icons.map_outlined,
-      warna: Color(0xFF16A34A),
-    ),
+    'kawasan-pariwisata': (icon: Icons.map_outlined, warna: Color(0xFF16A34A)),
     'konsultan-pariwisata': (
       icon: Icons.work_outline_rounded,
       warna: Color(0xFF8B3CF0),
     ),
-    'perjalanan-wisata': (
-      icon: Icons.flight_rounded,
-      warna: Color(0xFFE11D48),
-    ),
+    'perjalanan-wisata': (icon: Icons.flight_rounded, warna: Color(0xFFE11D48)),
     'informasi-pariwisata': (
       icon: Icons.info_outline_rounded,
       warna: Color(0xFF0E94B0),
@@ -55,10 +51,7 @@ class PilihBidangPage extends StatelessWidget {
       icon: Icons.person_outline_rounded,
       warna: Color(0xFF4F46E5),
     ),
-    'mice-event': (
-      icon: Icons.event_rounded,
-      warna: Color(0xFFD08A00),
-    ),
+    'mice-event': (icon: Icons.event_rounded, warna: Color(0xFFD08A00)),
     'hiburan-rekreasi': (
       icon: Icons.sports_esports_rounded,
       warna: Color(0xFFDB2777),
@@ -67,22 +60,24 @@ class PilihBidangPage extends StatelessWidget {
       icon: Icons.photo_camera_outlined,
       warna: Color(0xFF0284C7),
     ),
-    'wisata-tirta': (
-      icon: Icons.water_drop_outlined,
-      warna: Color(0xFF0D9488),
-    ),
-    'spa': (
-      icon: Icons.spa_outlined,
-      warna: Color(0xFF9333EA),
-    ),
+    'wisata-tirta': (icon: Icons.water_drop_outlined, warna: Color(0xFF0D9488)),
+    'spa': (icon: Icons.spa_outlined, warna: Color(0xFF9333EA)),
   };
 
-  void _buka(BuildContext context, BidangUsahaOpsi b) {
-    Navigator.of(context).push(
-      MaterialPageRoute<void>(
-        builder: (_) => OssProyekPage(bidang: b.slug, namaBidang: b.nama),
-      ),
+  Future<void> _buka(BuildContext context, BidangUsahaOpsi b) async {
+    if (tujuan == TujuanBidang.oss) {
+      Navigator.of(context).push(
+        MaterialPageRoute<void>(
+          builder: (_) => OssProyekPage(bidang: b.slug, namaBidang: b.nama),
+        ),
+      );
+      return;
+    }
+
+    final bool? tersimpan = await Navigator.of(context).push<bool>(
+      MaterialPageRoute<bool>(builder: (_) => NonOssFormPage(bidang: b.slug)),
     );
+    if (tersimpan == true && context.mounted) Navigator.of(context).pop();
   }
 
   @override
@@ -94,13 +89,21 @@ class PilihBidangPage extends StatelessWidget {
       appBar: AppBar(
         backgroundColor: AppTheme.primaryDark,
         foregroundColor: Colors.white,
-        title: const Column(
+        title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Validasi OSS',
-                style: TextStyle(fontSize: 19, fontWeight: FontWeight.w800)),
-            Text('Pilih jenis usaha yang akan diverifikasi',
-                style: TextStyle(fontSize: 11, fontWeight: FontWeight.w400)),
+            Text(
+              tujuan == TujuanBidang.oss
+                  ? 'Validasi OSS'
+                  : 'Pengawasan Non-OSS',
+              style: const TextStyle(fontSize: 19, fontWeight: FontWeight.w800),
+            ),
+            Text(
+              tujuan == TujuanBidang.oss
+                  ? 'Pilih jenis usaha yang akan diverifikasi'
+                  : 'Pilih jenis usaha yang akan didata',
+              style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w400),
+            ),
           ],
         ),
       ),
@@ -149,7 +152,9 @@ class PilihBidangPage extends StatelessWidget {
                           ),
                           const SizedBox(height: 2),
                           Text(
-                            'Buka menu verifikasi',
+                            tujuan == TujuanBidang.oss
+                                ? 'Buka menu verifikasi'
+                                : 'Buka form pendataan',
                             style: TextStyle(
                               fontSize: 11.5,
                               color: AppTheme.textSecondary(context),

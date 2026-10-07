@@ -43,6 +43,21 @@ class _OssFormPageState extends State<OssFormPage>
   /// atau null kalau slug kosong/tidak dikenal.
   String? get _namaBidang => BidangUsahaOpsi.namaDari(widget.validasi.bidang);
 
+  /// Label field Jenis Produk yang terkunci (data tervalidasi): "kode - nama"
+  /// dari daftar opsi, atau nama langsung untuk Senior Living / Kos-kosan.
+  String get _labelJenisProdukTerkunci {
+    if (_isAkomodasiLainnya55900) return _data.kbliDesc;
+    for (final MapEntry<String, String> o in _jenisProdukOptions) {
+      if (o.key != _data.kbli) continue;
+      // Opsi akomodasi (statis) hanya berisi nama; opsi bidang lain dari API
+      // sudah berformat "kode - nama".
+      return o.value.startsWith('${o.key} ')
+          ? o.value
+          : '${o.key} - ${o.value}';
+    }
+    return _data.kbli; // fallback: kode saja
+  }
+
   bool get _isManajemenAkomodasi =>
       widget.validasi.bidang == 'akomodasi' &&
       (_data.kbliDesc == 'MANAJEMEN AKOMODASI' ||
@@ -805,8 +820,11 @@ class _OssFormPageState extends State<OssFormPage>
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: TextFormField(
+        key: ValueKey<String>(value), // rebuild saat label async tiba
         initialValue: value,
         readOnly: true,
+        minLines: 1,
+        maxLines: 2,
         style: TextStyle(color: AppTheme.textSecondary(context)),
         decoration: InputDecoration(
           labelText: label,
@@ -961,9 +979,7 @@ class _OssFormPageState extends State<OssFormPage>
                           _data.isValid
                               ? _lockedField(
                                   'Jenis Produk (dari KBLI)',
-                                  _isAkomodasiLainnya55900
-                                      ? _data.kbliDesc
-                                      : _data.kbli,
+                                  _labelJenisProdukTerkunci,
                                 )
                               : Padding(
                                   padding: const EdgeInsets.only(bottom: 12),
@@ -997,13 +1013,6 @@ class _OssFormPageState extends State<OssFormPage>
                                         v == null ? 'Wajib dipilih.' : null,
                                   ),
                                 ),
-                        _text(
-                          'NPWPD',
-                          _npwpdCtrl,
-                          (v) => _data.npwpd = v,
-                          required: false,
-                          icon: Icons.badge_outlined,
-                        ),
                       ],
                     ),
                   ),
@@ -1088,6 +1097,13 @@ class _OssFormPageState extends State<OssFormPage>
                     hasError: _sectionErrors.contains(_Section.kontak),
                     child: Column(
                       children: [
+                        _text(
+                          'NPWPD',
+                          _npwpdCtrl,
+                          (v) => _data.npwpd = v,
+                          required: false,
+                          icon: Icons.badge_outlined,
+                        ),
                         _text(
                           'Website',
                           _websiteCtrl,

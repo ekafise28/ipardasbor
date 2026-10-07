@@ -97,9 +97,9 @@ class _OssValidasiPageState extends State<OssValidasiPage> {
   bool get _isKbli55901 => _isAkomodasi && _kbliCtrl.text.trim() == '55901';
   bool get _isKbliAkomodasiKhusus => _isKbli55900 || _isKbli55901;
   bool get _kbliDiLuarDaftar {
-    if (!_isAkomodasi) return false; // daftar KbliConstants khusus akomodasi
     final String kbli = _kbliCtrl.text.trim();
-    return kbli.length == 5 && !KbliConstants.isDiizinkan(kbli);
+    return kbli.length == 5 &&
+        !KbliConstants.isDiizinkan(kbli, bidang: widget.bidang);
   }
 
   bool get _dariDaftar =>
@@ -448,7 +448,7 @@ class _OssValidasiPageState extends State<OssValidasiPage> {
                   prefixIcon: const Icon(Icons.category_outlined, size: 20),
                   // Petunjuk non-blokir: KBLI tetap diterima, hanya memberi tahu petugas.
                   helperText: _kbliDiLuarDaftar
-                      ? 'KBLI di luar daftar pengawasan, akan berstatus "KBLI tidak ada".'
+                      ? 'KBLI di luar daftar bidang ini, akan berstatus tidak valid.'
                       : null,
                   helperMaxLines: 2,
                   // OCR: ikon scan per field
