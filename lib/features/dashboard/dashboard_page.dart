@@ -1,20 +1,25 @@
 import 'dart:async';
+import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:ipardasbor/core/constants/bidang_usaha_constants.dart';
+import 'package:ipardasbor/features/dashboard/models/dashboard_insight.dart';
+import 'package:ipardasbor/shared/utils/count_up_text.dart';
+import 'package:ipardasbor/shared/utils/format_number.dart';
+import 'package:ipardasbor/shared/utils/skeleton.dart';
+import 'package:ipardasbor/shared/utils/staggered_entrance.dart';
 import 'package:ipardasbor/shared/widgets/connection_error_state.dart';
 import '../../core/api/api_exception.dart';
 import '../../app/app_theme.dart';
 
-import 'dashboard_colors.dart';
 import 'models/dashboard_data.dart';
-
 import 'models/chart_series.dart';
 import 'models/dashboard_map_model.dart';
 
 import 'widget/dashboard_chart_table_card.dart';
 import 'widget/dashboard_map_section.dart';
 import 'widget/dashboard_filter_panel.dart';
+import 'widget/dashboard_ranked_bar_chart.dart';
 
 import 'services/dashboard_service.dart';
 
@@ -25,8 +30,15 @@ class DashboardPage extends StatefulWidget {
   State<DashboardPage> createState() => _DashboardPageState();
 }
 
-class _DashboardPageState extends State<DashboardPage> {
+class _DashboardPageState extends State<DashboardPage>
+    with SingleTickerProviderStateMixin {
   final DashboardService _dashboardService = DashboardService();
+
+  // Animasi masuk bertahap, dijalankan sekali saat data pertama tiba.
+  late final AnimationController _entrance = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 1000),
+  );
 
   String get _labelBidang =>
       BidangUsahaOpsi.namaDari(_filterValues.bidangUsaha) ?? 'Usaha Pariwisata';
@@ -47,6 +59,7 @@ class _DashboardPageState extends State<DashboardPage> {
 
   @override
   void dispose() {
+    _entrance.dispose();
     _dashboardService.dispose();
     super.dispose();
   }
@@ -83,12 +96,16 @@ class _DashboardPageState extends State<DashboardPage> {
 
       if (!mounted) return;
 
+      final bool isFirstData = _dashboard == null;
+
       setState(() {
         _dashboard = result;
         _selectedProvince = result.province.slug;
         _isLoading = false;
         _errorMessage = null;
       });
+
+      if (isFirstData) _entrance.forward(from: 0);
     } on TimeoutException {
       if (!mounted) return;
 
@@ -209,7 +226,7 @@ class _DashboardPageState extends State<DashboardPage> {
 
   Widget _buildDashboardContent() {
     if (_isLoading && _dashboard == null) {
-      return const _DashboardLoading();
+      return const _DashboardSkeleton();
     }
 
     if (_errorMessage != null && _dashboard == null) {
@@ -234,165 +251,225 @@ class _DashboardPageState extends State<DashboardPage> {
 
     final points = parseMapPoints(dashboard.map.points);
     final config = MapConfigData.fromJson(dashboard.map.configuration);
+    final List<DashboardInsight> insights = buildDashboardInsights(dashboard);
+
+    // Urutan animasi masuk: tiap blok mendapat indeks berikutnya.
+    int order = 0;
+    Widget staggered(Widget child) {
+      return StaggeredEntrance(
+        animation: _entrance,
+        index: order++,
+        step: 0.06,
+        child: child,
+      );
+    }
+
+    final ChartSeriesData districtChart = ChartSeriesData.fromDynamic(
+      dashboard.charts.district,
+      seriesConfig: const [
+        MapEntry('total', AppTheme.categoryTotal),
+        MapEntry('oss', AppTheme.categoryOss),
+        MapEntry('non_oss', AppTheme.categoryNonOss),
+      ],
+      seriesLabelOverride: const {
+        'total': 'Total Pengawasan',
+        'oss': 'OSS',
+        'non_oss': 'Non OSS',
+      },
+    );
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _buildDashboardHeader(dashboard),
+        staggered(_buildKpiHeader(dashboard)),
         const SizedBox(height: 16),
 
         // Filter Dashboard (ringkas: chip filter aktif + bottom sheet)
         // =================================================
-        DashboardFilterPanel(
-          districtOptions: dashboard.filterOptions.districts,
-          dataSourceOptions: dashboard.filterOptions.dataSources,
-          initialValues: _filterValues,
-          isLoading: _isLoading,
-          onApply: _applyFilters,
-          onReset: _resetFilters,
+        staggered(
+          DashboardFilterPanel(
+            districtOptions: dashboard.filterOptions.districts,
+            dataSourceOptions: dashboard.filterOptions.dataSources,
+            initialValues: _filterValues,
+            isLoading: _isLoading,
+            onApply: _applyFilters,
+            onReset: _resetFilters,
+          ),
         ),
+
+        if (insights.isNotEmpty) ...[
+          const SizedBox(height: 22),
+          staggered(_buildInsightsPanel(insights)),
+        ],
 
         const SizedBox(height: 22),
-        _buildSectionTitle(
-          title: 'Ringkasan Pengawasan',
-          subtitle: 'Statistik data pengawasan pada periode terpilih.',
+        staggered(
+          _buildSectionTitle(
+            title: 'Ringkasan Pengawasan',
+            subtitle: 'Statistik data pengawasan pada periode terpilih.',
+          ),
         ),
         const SizedBox(height: 14),
-        _buildSummaryGrid(context, dashboard.summary),
+        staggered(_buildSummaryRow(dashboard.summary)),
         const SizedBox(height: 24),
-        _buildVerificationSection(dashboard.summary),
-        const SizedBox(height: 24),
-        _buildDataCompositionSection(dashboard.summary),
+        staggered(_buildDataCompositionSection(dashboard.summary)),
 
-        // SEBARAN PENGAWASAN PER KABUPATEN/KOTA (grafik | tabel)
+        // SEBARAN PENGAWASAN PER KABUPATEN/KOTA (Top 10 | tabel lengkap)
         // ============================================================
         const SizedBox(height: 24),
-        DashboardChartTableCard(
-          title: 'Sebaran Pengawasan per Kabupaten/Kota',
-          subtitle: 'Perbandingan data OSS, Non OSS, dan total pengawasan.',
-          chartData: ChartSeriesData.fromDynamic(
-            dashboard.charts.district,
-            seriesConfig: const [
-              MapEntry('total', DashboardColors.total),
-              MapEntry('oss', DashboardColors.oss),
-              MapEntry('non_oss', DashboardColors.nonOss),
+        staggered(
+          DashboardChartTableCard(
+            title: 'Sebaran Pengawasan per Kabupaten/Kota',
+            subtitle: 'Perbandingan data OSS, Non OSS, dan total pengawasan.',
+            chartData: districtChart,
+            chartBuilder: (context, showTable) => DashboardRankedBarChart(
+              data: districtChart,
+              rankSeriesIndex: 0,
+              topN: 10,
+              onShowAll: showTable,
+            ),
+            columns: const ['Kabupaten', 'OSS', 'Non OSS', 'Total'],
+            columnColors: const [
+              null,
+              AppTheme.categoryOss,
+              AppTheme.categoryNonOss,
+              AppTheme.categoryTotal,
             ],
-            seriesLabelOverride: const {
-              'total': 'Total Pengawasan',
-              'oss': 'OSS',
-              'non_oss': 'Non OSS',
-            },
+            rows: dashboard.districtRecap.map((row) {
+              return [
+                row['nama_kabupaten']?.toString() ?? '-',
+                row['oss']?.toString() ?? '0',
+                row['non_oss']?.toString() ?? '0',
+                row['total']?.toString() ?? '0',
+              ];
+            }).toList(),
           ),
-          columns: const ['Kabupaten', 'OSS', 'Non OSS', 'Total'],
-          rows: dashboard.districtRecap.map((row) {
-            return [
-              row['nama_kabupaten']?.toString() ?? '-',
-              row['oss']?.toString() ?? '0',
-              row['non_oss']?.toString() ?? '0',
-              row['total']?.toString() ?? '0',
-            ];
-          }).toList(),
         ),
 
         // LEGALITAS NIB (grafik | tabel)
         // ============================================================
         const SizedBox(height: 16),
-        DashboardChartTableCard(
-          title: 'Legalitas NIB $_labelBidang',
-          subtitle: 'Kepemilikan NIB berdasarkan Kabupaten/Kota.',
-          chartData: ChartSeriesData.fromDynamic(
-            dashboard
-                .charts
-                .district, // <-- sebelumnya: dashboard.charts.legalitasNib
-            seriesConfig: const [
-              MapEntry('nib_ya', DashboardColors.yes),
-              MapEntry('nib_tidak', DashboardColors.no),
-              MapEntry('nib_tidak_tahu', DashboardColors.unknown),
+        staggered(
+          DashboardChartTableCard(
+            title: 'Legalitas NIB $_labelBidang',
+            subtitle: 'Kepemilikan NIB berdasarkan Kabupaten/Kota.',
+            chartData: ChartSeriesData.fromDynamic(
+              dashboard
+                  .charts
+                  .district, // <-- sebelumnya: dashboard.charts.legalitasNib
+              seriesConfig: const [
+                MapEntry('nib_ya', AppTheme.answerYes),
+                MapEntry('nib_tidak', AppTheme.answerNo),
+                MapEntry('nib_tidak_tahu', AppTheme.answerUnknown),
+              ],
+              seriesLabelOverride: const {
+                'nib_ya': 'Memiliki NIB',
+                'nib_tidak': 'Tidak Memiliki',
+                'nib_tidak_tahu': 'Tidak Tahu',
+              },
+            ),
+            columns: const [
+              'Kabupaten',
+              'Memiliki NIB',
+              'Tidak Memiliki',
+              'Tidak Tahu',
+              'Total',
             ],
-            seriesLabelOverride: const {
-              'nib_ya': 'Memiliki NIB',
-              'nib_tidak': 'Tidak Memiliki',
-              'nib_tidak_tahu': 'Tidak Tahu',
-            },
+            columnColors: const [
+              null,
+              AppTheme.answerYes,
+              AppTheme.answerNo,
+              AppTheme.answerUnknown,
+              AppTheme.categoryTotal,
+            ],
+            rows: dashboard.districtRecap.map((row) {
+              // <-- sebelumnya: dashboard.legalitasNibRecap
+              return [
+                row['nama_kabupaten']?.toString() ?? '-',
+                row['nib_ya']?.toString() ?? '0',
+                row['nib_tidak']?.toString() ?? '0',
+                row['nib_tidak_tahu']?.toString() ?? '0',
+                row['total']?.toString() ?? '0',
+              ];
+            }).toList(),
           ),
-          columns: const [
-            'Kabupaten',
-            'Memiliki NIB',
-            'Tidak Memiliki',
-            'Tidak Tahu',
-            'Total',
-          ],
-          rows: dashboard.districtRecap.map((row) {
-            // <-- sebelumnya: dashboard.legalitasNibRecap
-            return [
-              row['nama_kabupaten']?.toString() ?? '-',
-              row['nib_ya']?.toString() ?? '0',
-              row['nib_tidak']?.toString() ?? '0',
-              row['nib_tidak_tahu']?.toString() ?? '0',
-              row['total']?.toString() ?? '0',
-            ];
-          }).toList(),
         ),
 
         // STATUS PENDAFTARAN PLATFORM OTA (grafik | tabel)
         // ============================================================
         const SizedBox(height: 16),
-        DashboardChartTableCard(
-          title: 'Status Pendaftaran Platform OTA',
-          subtitle: 'Perbandingan usaha terdaftar dan tidak terdaftar OTA.',
-          chartData: ChartSeriesData.fromDynamic(
-            dashboard
-                .charts
-                .district, // <-- sebelumnya: dashboard.charts.statusOta
-            seriesConfig: const [
-              MapEntry('ota_ya', DashboardColors.ota),
-              MapEntry('ota_tidak', DashboardColors.neutral),
+        staggered(
+          DashboardChartTableCard(
+            title: 'Status Pendaftaran Platform OTA',
+            subtitle: 'Perbandingan usaha terdaftar dan tidak terdaftar OTA.',
+            chartData: ChartSeriesData.fromDynamic(
+              dashboard
+                  .charts
+                  .district, // <-- sebelumnya: dashboard.charts.statusOta
+              seriesConfig: const [
+                MapEntry('ota_ya', AppTheme.categoryOta),
+                MapEntry('ota_tidak', AppTheme.answerNone),
+              ],
+              seriesLabelOverride: const {
+                'ota_ya': 'Terdaftar OTA',
+                'ota_tidak': 'Tidak Terdaftar',
+              },
+            ),
+            columns: const [
+              'Kabupaten',
+              'Terdaftar OTA',
+              'Tidak Terdaftar',
+              'Total',
             ],
-            seriesLabelOverride: const {
-              'ota_ya': 'Terdaftar OTA',
-              'ota_tidak': 'Tidak Terdaftar',
-            },
+            columnColors: const [
+              null,
+              AppTheme.categoryOta,
+              AppTheme.answerNone,
+              AppTheme.categoryTotal,
+            ],
+            rows: dashboard.districtRecap.map((row) {
+              return [
+                row['nama_kabupaten']?.toString() ??
+                    '-', // <-- perbaikan masalah 1
+                row['ota_ya']?.toString() ?? '0',
+                row['ota_tidak']?.toString() ?? '0',
+                row['total']?.toString() ?? '0',
+              ];
+            }).toList(),
           ),
-          columns: const [
-            'Kabupaten',
-            'Terdaftar OTA',
-            'Tidak Terdaftar',
-            'Total',
-          ],
-          rows: dashboard.districtRecap.map((row) {
-            return [
-              row['nama_kabupaten']?.toString() ??
-                  '-', // <-- perbaikan masalah 1
-              row['ota_ya']?.toString() ?? '0',
-              row['ota_tidak']?.toString() ?? '0',
-              row['total']?.toString() ?? '0',
-            ];
-          }).toList(),
         ),
 
         // JENIS PRODUK (grafik | tabel)
         // ============================================================
         const SizedBox(height: 16),
-        DashboardChartTableCard(
-          title: 'Jenis Produk',
-          subtitle: 'Komposisi jenis produk berdasarkan sumber data.',
-          chartData: ChartSeriesData.fromDynamic(
-            dashboard.charts.productType,
-            seriesConfig: const [
-              MapEntry('total', DashboardColors.total),
-              MapEntry('oss', DashboardColors.oss),
-              MapEntry('non_oss', DashboardColors.nonOss),
+        staggered(
+          DashboardChartTableCard(
+            title: 'Jenis Produk',
+            subtitle: 'Komposisi jenis produk berdasarkan sumber data.',
+            chartData: ChartSeriesData.fromDynamic(
+              dashboard.charts.productType,
+              seriesConfig: const [
+                MapEntry('total', AppTheme.categoryTotal),
+                MapEntry('oss', AppTheme.categoryOss),
+                MapEntry('non_oss', AppTheme.categoryNonOss),
+              ],
+            ),
+            columns: const ['Jenis Produk', 'OSS', 'Non OSS', 'Total'],
+            columnColors: const [
+              null,
+              AppTheme.categoryOss,
+              AppTheme.categoryNonOss,
+              AppTheme.categoryTotal,
             ],
+            rows: dashboard.productTypeRecap.map((row) {
+              return [
+                row['jenis_produk']?.toString() ?? '-',
+                row['oss']?.toString() ?? '0',
+                row['non_oss']?.toString() ?? '0',
+                row['total']?.toString() ?? '0',
+              ];
+            }).toList(),
           ),
-          columns: const ['Jenis Produk', 'OSS', 'Non OSS', 'Total'],
-          rows: dashboard.productTypeRecap.map((row) {
-            return [
-              row['jenis_produk']?.toString() ?? '-',
-              row['oss']?.toString() ?? '0',
-              row['non_oss']?.toString() ?? '0',
-              row['total']?.toString() ?? '0',
-            ];
-          }).toList(),
         ),
 
         if (_errorMessage != null) ...[
@@ -435,7 +512,10 @@ class _DashboardPageState extends State<DashboardPage> {
     );
   }
 
-  Widget _buildDashboardHeader(DashboardData dashboard) {
+  /// Header KPI: Total Pengawasan sebagai angka utama, cincin persentase
+  /// verifikasi selesai, jumlah selesai/draft, periode, dan pilihan provinsi.
+  Widget _buildKpiHeader(DashboardData dashboard) {
+    final DashboardSummary summary = dashboard.summary;
     final List<ProvinceOption> provinces = dashboard.filterOptions.provinces;
 
     final bool provinceExists = provinces.any(
@@ -464,37 +544,49 @@ class _DashboardPageState extends State<DashboardPage> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Container(
-                width: 50,
-                height: 50,
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.16),
-                  borderRadius: BorderRadius.circular(15),
-                ),
-                child: const Icon(
-                  Icons.analytics_rounded,
-                  color: Colors.white,
-                  size: 27,
-                ),
-              ),
-              const SizedBox(width: 14),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
-                      'Dashboard Pengawasan',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 20,
-                        fontWeight: FontWeight.w800,
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.analytics_rounded,
+                          color: Colors.white.withValues(alpha: 0.86),
+                          size: 18,
+                        ),
+                        const SizedBox(width: 6),
+                        Text(
+                          'Total Pengawasan',
+                          style: TextStyle(
+                            color: Colors.white.withValues(alpha: 0.86),
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 6),
+                    FittedBox(
+                      fit: BoxFit.scaleDown,
+                      alignment: Alignment.centerLeft,
+                      child: CountUpText(
+                        value: summary.total,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 40,
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: -1,
+                          height: 1.1,
+                        ),
                       ),
                     ),
                     const SizedBox(height: 4),
                     Text(
                       dashboard.province.name,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                       style: TextStyle(
                         color: Colors.white.withValues(alpha: 0.86),
                         fontSize: 14,
@@ -504,9 +596,31 @@ class _DashboardPageState extends State<DashboardPage> {
                   ],
                 ),
               ),
+              const SizedBox(width: 12),
+              _RingGauge(percentage: summary.completedPercentage),
             ],
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: 18),
+          Row(
+            children: [
+              Expanded(
+                child: _KpiPill(
+                  icon: Icons.check_circle_outline_rounded,
+                  label: 'Selesai',
+                  value: summary.completed,
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: _KpiPill(
+                  icon: Icons.edit_note_rounded,
+                  label: 'Draft',
+                  value: summary.draft,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 10),
             decoration: BoxDecoration(
@@ -617,6 +731,27 @@ class _DashboardPageState extends State<DashboardPage> {
     );
   }
 
+  Widget _buildInsightsPanel(List<DashboardInsight> insights) {
+    return _DashboardPanel(
+      title: 'Sorotan',
+      subtitle: 'Temuan otomatis dari data pada periode terpilih.',
+      icon: Icons.insights_rounded,
+      iconColor: AppTheme.primaryColor,
+      child: Column(
+        children: [
+          for (int i = 0; i < insights.length; i++) ...[
+            if (i > 0) ...[
+              const SizedBox(height: 14),
+              Divider(height: 1, color: AppTheme.border(context)),
+              const SizedBox(height: 14),
+            ],
+            _InsightTile(insight: insights[i]),
+          ],
+        ],
+      ),
+    );
+  }
+
   Widget _buildSectionTitle({required String title, required String subtitle}) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -642,92 +777,41 @@ class _DashboardPageState extends State<DashboardPage> {
     );
   }
 
-  Widget _buildSummaryGrid(BuildContext context, DashboardSummary summary) {
+  /// Tiga kartu ringkas (OSS, Non-OSS, OTA). Total sudah jadi angka utama
+  /// di header.
+  Widget _buildSummaryRow(DashboardSummary summary) {
     final List<_StatisticData> statistics = [
-      _StatisticData(
-        title: 'Total Pengawasan',
-        value: summary.total,
-        icon: Icons.assessment_rounded,
-        color: DashboardColors.total,
-        backgroundColor: DashboardColors.totalBg,
-      ),
       _StatisticData(
         title: 'Data OSS',
         value: summary.oss,
         icon: Icons.verified_outlined,
-        color: DashboardColors.oss,
-        backgroundColor: DashboardColors.ossBg,
+        color: AppTheme.categoryOss,
+        backgroundColor: AppTheme.categoryOssBg,
       ),
       _StatisticData(
         title: 'Data Non-OSS',
         value: summary.nonOss,
         icon: Icons.domain_add_outlined,
-        color: DashboardColors.nonOss,
-        backgroundColor: DashboardColors.nonOssBg,
+        color: AppTheme.categoryNonOss,
+        backgroundColor: AppTheme.categoryNonOssBg,
       ),
       _StatisticData(
         title: 'Terdaftar OTA',
         value: summary.ota,
         icon: Icons.travel_explore_rounded,
-        color: DashboardColors.ota,
-        backgroundColor: DashboardColors.otaBg,
+        color: AppTheme.categoryOta,
+        backgroundColor: AppTheme.categoryOtaBg,
       ),
     ];
 
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        int crossAxisCount = 2;
-        double childAspectRatio = 1.04;
-
-        if (constraints.maxWidth >= 900) {
-          crossAxisCount = 3;
-          childAspectRatio = 1.55;
-        } else if (constraints.maxWidth >= 600) {
-          crossAxisCount = 3;
-          childAspectRatio = 1.15;
-        } else if (constraints.maxWidth < 370) {
-          childAspectRatio = 0.88;
-        }
-
-        return GridView.builder(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          itemCount: statistics.length,
-          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: crossAxisCount,
-            mainAxisSpacing: 13,
-            crossAxisSpacing: 13,
-            childAspectRatio: childAspectRatio,
-          ),
-          itemBuilder: (context, index) {
-            return _StatisticCard(data: statistics[index]);
-          },
-        );
-      },
-    );
-  }
-
-  Widget _buildVerificationSection(DashboardSummary summary) {
-    return _DashboardPanel(
-      title: 'Progres Verifikasi',
-      subtitle: 'Perbandingan data selesai dan masih draft.',
-      icon: Icons.fact_check_outlined,
-      iconColor: AppTheme.primaryColor,
-      child: Column(
+    return SizedBox(
+      height: 128,
+      child: Row(
         children: [
-          _ProgressItem(
-            label: 'Verifikasi Selesai',
-            value: summary.completed,
-            percentage: summary.completedPercentage,
-            color: const Color(0xFF2E7D32),
-          ),
-          const SizedBox(height: 22),
-          _ProgressItem(
-            label: 'Masih Draft',
-            value: summary.draft,
-            percentage: summary.draftPercentage,
-            color: AppTheme.warning,
-          ),
+          for (int i = 0; i < statistics.length; i++) ...[
+            if (i > 0) const SizedBox(width: 12),
+            Expanded(child: _StatisticCard(data: statistics[i])),
+          ],
         ],
       ),
     );
@@ -744,28 +828,28 @@ class _DashboardPageState extends State<DashboardPage> {
       title: 'Komposisi Data',
       subtitle: 'Distribusi berdasarkan sumber data pengawasan.',
       icon: Icons.donut_large_rounded,
-      iconColor: DashboardColors.total,
+      iconColor: AppTheme.categoryTotal,
       child: Column(
         children: [
           _CompositionRow(
             label: 'OSS',
             value: summary.oss,
             percentage: ossPercentage,
-            color: DashboardColors.oss,
+            color: AppTheme.categoryOss,
           ),
           const SizedBox(height: 17),
           _CompositionRow(
             label: 'Non-OSS',
             value: summary.nonOss,
             percentage: nonOssPercentage,
-            color: DashboardColors.nonOss,
+            color: AppTheme.categoryNonOss,
           ),
           const SizedBox(height: 17),
           _CompositionRow(
             label: 'Terdaftar OTA',
             value: summary.ota,
             percentage: otaPercentage,
-            color: DashboardColors.ota,
+            color: AppTheme.categoryOta,
           ),
         ],
       ),
@@ -807,6 +891,221 @@ class _DashboardPageState extends State<DashboardPage> {
   }
 }
 
+// ======================================================================
+// Header KPI
+// ======================================================================
+
+/// Cincin persentase verifikasi selesai di header.
+class _RingGauge extends StatelessWidget {
+  const _RingGauge({required this.percentage});
+
+  final double percentage;
+
+  @override
+  Widget build(BuildContext context) {
+    final bool reduceMotion = MediaQuery.of(context).disableAnimations;
+
+    return Semantics(
+      label: 'Verifikasi selesai ${percentage.toStringAsFixed(1)} persen',
+      child: ExcludeSemantics(
+        child: TweenAnimationBuilder<double>(
+          tween: Tween<double>(
+            begin: 0,
+            end: (percentage / 100).clamp(0.0, 1.0),
+          ),
+          duration: reduceMotion
+              ? Duration.zero
+              : const Duration(milliseconds: 1100),
+          curve: Curves.easeOutCubic,
+          builder: (context, value, _) {
+            return SizedBox(
+              width: 94,
+              height: 94,
+              child: Stack(
+                alignment: Alignment.center,
+                children: [
+                  CustomPaint(
+                    size: const Size(94, 94),
+                    painter: _RingGaugePainter(value),
+                  ),
+                  Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        '${(value * 100).round()}%',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 20,
+                          fontWeight: FontWeight.w900,
+                          height: 1.1,
+                        ),
+                      ),
+                      Text(
+                        'Selesai',
+                        style: TextStyle(
+                          color: Colors.white.withValues(alpha: 0.8),
+                          fontSize: 10.5,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            );
+          },
+        ),
+      ),
+    );
+  }
+}
+
+class _RingGaugePainter extends CustomPainter {
+  _RingGaugePainter(this.progress);
+
+  final double progress;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    const double stroke = 9;
+    final Offset center = size.center(Offset.zero);
+    final double radius = size.width / 2 - stroke / 2;
+    final Rect rect = Rect.fromCircle(center: center, radius: radius);
+
+    canvas.drawCircle(
+      center,
+      radius,
+      Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = stroke
+        ..color = Colors.white.withValues(alpha: 0.18),
+    );
+
+    if (progress <= 0) return;
+
+    canvas.drawArc(
+      rect,
+      -math.pi / 2,
+      math.pi * 2 * progress,
+      false,
+      Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = stroke
+        ..strokeCap = StrokeCap.round
+        ..color = const Color(0xFF7CFFB2),
+    );
+  }
+
+  @override
+  bool shouldRepaint(_RingGaugePainter old) => old.progress != progress;
+}
+
+class _KpiPill extends StatelessWidget {
+  const _KpiPill({
+    required this.icon,
+    required this.label,
+    required this.value,
+  });
+
+  final IconData icon;
+  final String label;
+  final int value;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.13),
+        borderRadius: BorderRadius.circular(13),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.18)),
+      ),
+      child: Row(
+        children: [
+          Icon(icon, color: Colors.white, size: 17),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              label,
+              style: TextStyle(
+                color: Colors.white.withValues(alpha: 0.86),
+                fontSize: 12.5,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+          CountUpText(
+            value: value,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 14,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ======================================================================
+// Sorotan
+// ======================================================================
+
+class _InsightTile extends StatelessWidget {
+  const _InsightTile({required this.insight});
+
+  final DashboardInsight insight;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          width: 38,
+          height: 38,
+          decoration: BoxDecoration(
+            color: insight.color.withValues(alpha: 0.12),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Icon(insight.icon, color: insight.color, size: 20),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                insight.title,
+                style: TextStyle(
+                  color: AppTheme.textSecondary(context),
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                insight.body,
+                style: TextStyle(
+                  color: AppTheme.textColor(context),
+                  fontSize: 13.5,
+                  fontWeight: FontWeight.w600,
+                  height: 1.35,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+// ======================================================================
+// Kartu & panel
+// ======================================================================
+
 class _StatisticData {
   final String title;
   final int value;
@@ -831,7 +1130,7 @@ class _StatisticCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(15),
+      padding: const EdgeInsets.all(13),
       decoration: BoxDecoration(
         color: AppTheme.surface(context),
         borderRadius: BorderRadius.circular(18),
@@ -848,36 +1147,40 @@ class _StatisticCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Container(
-            width: 43,
-            height: 43,
+            width: 38,
+            height: 38,
             decoration: BoxDecoration(
-              color: data.backgroundColor,
-              borderRadius: BorderRadius.circular(13),
+              color: AppTheme.tintBackground(
+                context,
+                data.color,
+                data.backgroundColor,
+              ),
+              borderRadius: BorderRadius.circular(12),
             ),
-            child: Icon(data.icon, color: data.color, size: 23),
+            child: Icon(data.icon, color: data.color, size: 21),
           ),
           const Spacer(),
           FittedBox(
             fit: BoxFit.scaleDown,
             alignment: Alignment.centerLeft,
-            child: Text(
-              _formatNumber(data.value),
+            child: CountUpText(
+              value: data.value,
               style: TextStyle(
                 color: AppTheme.textColor(context),
-                fontSize: 23,
+                fontSize: 22,
                 fontWeight: FontWeight.w900,
                 letterSpacing: -0.5,
               ),
             ),
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: 3),
           Text(
             data.title,
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
             style: TextStyle(
               color: AppTheme.textSecondary(context),
-              fontSize: 12,
+              fontSize: 11.5,
               fontWeight: FontWeight.w600,
               height: 1.25,
             ),
@@ -970,78 +1273,6 @@ class _DashboardPanel extends StatelessWidget {
   }
 }
 
-class _ProgressItem extends StatelessWidget {
-  final String label;
-  final int value;
-  final double percentage;
-  final Color color;
-
-  const _ProgressItem({
-    required this.label,
-    required this.value,
-    required this.percentage,
-    required this.color,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final double safePercentage = percentage.clamp(0, 100).toDouble();
-
-    return Column(
-      children: [
-        Row(
-          children: [
-            Expanded(
-              child: Text(
-                label,
-                style: TextStyle(
-                  color: AppTheme.textColor(context),
-                  fontSize: 13,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-            ),
-            Text(
-              _formatNumber(value),
-              style: TextStyle(
-                color: color,
-                fontSize: 13,
-                fontWeight: FontWeight.w800,
-              ),
-            ),
-            const SizedBox(width: 9),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
-              decoration: BoxDecoration(
-                color: color.withValues(alpha: 0.10),
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: Text(
-                '${safePercentage.toStringAsFixed(1)}%',
-                style: TextStyle(
-                  color: color,
-                  fontSize: 11,
-                  fontWeight: FontWeight.w800,
-                ),
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 10),
-        ClipRRect(
-          borderRadius: BorderRadius.circular(20),
-          child: LinearProgressIndicator(
-            value: safePercentage / 100,
-            minHeight: 9,
-            backgroundColor: const Color(0xFFEDF0F5),
-            valueColor: AlwaysStoppedAnimation<Color>(color),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
 class _CompositionRow extends StatelessWidget {
   final String label;
   final int value;
@@ -1078,7 +1309,7 @@ class _CompositionRow extends StatelessWidget {
           ),
         ),
         Text(
-          _formatNumber(value),
+          formatNumber(value),
           style: TextStyle(
             color: AppTheme.textColor(context),
             fontSize: 13,
@@ -1103,54 +1334,45 @@ class _CompositionRow extends StatelessWidget {
   }
 }
 
-class _DashboardLoading extends StatelessWidget {
-  const _DashboardLoading();
+// ======================================================================
+// Skeleton (menggantikan spinner "Memuat dashboard...")
+// ======================================================================
+
+class _DashboardSkeleton extends StatelessWidget {
+  const _DashboardSkeleton();
 
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: Padding(
-        padding: EdgeInsets.all(32),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            SizedBox(
-              width: 42,
-              height: 42,
-              child: CircularProgressIndicator(
-                strokeWidth: 3,
-                color: AppTheme.primaryColor,
+    return Semantics(
+      label: 'Memuat dashboard',
+      child: ExcludeSemantics(
+        child: SkeletonShimmer(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const SkeletonBox(height: 250, radius: 22),
+              const SizedBox(height: 16),
+              const SkeletonBox(height: 56, radius: 16),
+              const SizedBox(height: 22),
+              const SkeletonBox(width: 170, height: 20, radius: 6),
+              const SizedBox(height: 14),
+              Row(
+                children: const [
+                  Expanded(child: SkeletonBox(height: 128, radius: 18)),
+                  SizedBox(width: 12),
+                  Expanded(child: SkeletonBox(height: 128, radius: 18)),
+                  SizedBox(width: 12),
+                  Expanded(child: SkeletonBox(height: 128, radius: 18)),
+                ],
               ),
-            ),
-            SizedBox(height: 18),
-            Text(
-              'Memuat dashboard...',
-              style: TextStyle(
-                color: AppTheme.textSecondary(context),
-                fontSize: 14,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ],
+              const SizedBox(height: 24),
+              const SkeletonBox(height: 190, radius: 20),
+              const SizedBox(height: 24),
+              const SkeletonBox(height: 340, radius: 20),
+            ],
+          ),
         ),
       ),
     );
   }
-}
-
-String _formatNumber(int value) {
-  final String source = value.toString();
-  final StringBuffer result = StringBuffer();
-
-  for (int index = 0; index < source.length; index++) {
-    final int remaining = source.length - index;
-
-    result.write(source[index]);
-
-    if (remaining > 1 && remaining % 3 == 1) {
-      result.write('.');
-    }
-  }
-
-  return result.toString();
 }

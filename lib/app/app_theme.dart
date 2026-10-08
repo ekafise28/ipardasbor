@@ -56,6 +56,18 @@ class AppTheme {
     return isDark ? const Color(0xFF3A3F4B) : const Color(0xFFDCE4EF);
   }
 
+  /// Latar kotak ikon berwarna: pastel [lightBackground] di mode terang,
+  /// warna [color] transparan di mode gelap (supaya tidak ada kotak pastel
+  /// terang yang mencolok).
+  static Color tintBackground(
+    BuildContext context,
+    Color color,
+    Color lightBackground,
+  ) {
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
+    return isDark ? color.withValues(alpha: 0.18) : lightBackground;
+  }
+
   // ---- Semantic ----
   static const Color danger = Color(0xFFD32F2F);
   static const Color dangerBackground = Color(0xFFFCE8E8);
@@ -115,6 +127,29 @@ class AppTheme {
 
   static const Color menuProfil = Color(0xFF455A64);
   static const Color menuProfilBg = Color(0xFFECEFF1);
+
+  // ---- Kategori sumber data (dashboard, grafik, peta) ----
+  // Satu kategori = satu warna di semua tempat. Mengikuti warna menu di
+  // Home: OSS biru, Non-OSS teal, OTA oranye. "Total" sengaja netral
+  // (abu-biru) supaya tidak bentrok dengan warna kategori mana pun.
+  static const Color categoryTotal = menuProfil;
+  static const Color categoryTotalBg = menuProfilBg;
+
+  static const Color categoryOss = primaryColor;
+  static const Color categoryOssBg = menuDashboardBg;
+
+  static const Color categoryNonOss = Color(0xFF00897B);
+  static const Color categoryNonOssBg = Color(0xFFE2F5F1);
+
+  static const Color categoryOta = menuOta;
+  static const Color categoryOtaBg = menuOtaBg;
+
+  // ---- Jawaban ya / tidak / tidak tahu (mis. kepemilikan NIB) ----
+  // Bersifat semantik, bukan kategori, jadi memakai hijau/merah/kuning.
+  static const Color answerYes = Color(0xFF16A66A);
+  static const Color answerNo = Color(0xFFE05C6E);
+  static const Color answerUnknown = Color(0xFFF2A93B);
+  static const Color answerNone = Color(0xFFB6BEC9);
 
   static ThemeData get lightTheme {
     return ThemeData(

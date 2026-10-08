@@ -1,20 +1,20 @@
 import 'package:flutter/material.dart';
 
-import '../dashboard_colors.dart';
+import 'package:ipardasbor/app/app_theme.dart';
 
 /// Kategori titik pada peta sebaran pengawasan.
 enum MapPointType { oss, nonOss, ota }
 
 extension MapPointTypeX on MapPointType {
-  /// Warna sesuai palet dashboard: OSS = Biru, Non-OSS = Teal, OTA = Oranye.
+  /// Warna sesuai palet di AppTheme: OSS = Biru, Non-OSS = Teal, OTA = Oranye.
   Color get color {
     switch (this) {
       case MapPointType.oss:
-        return DashboardColors.oss;
+        return AppTheme.categoryOss;
       case MapPointType.nonOss:
-        return DashboardColors.nonOss;
+        return AppTheme.categoryNonOss;
       case MapPointType.ota:
-        return DashboardColors.ota;
+        return AppTheme.categoryOta;
     }
   }
 

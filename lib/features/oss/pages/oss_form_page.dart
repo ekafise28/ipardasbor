@@ -1,10 +1,5 @@
-import 'dart:io';
-import 'dart:ui' as ui;
 import 'package:ipardasbor/shared/screenshot/screenshot_service.dart';
-import 'package:path_provider/path_provider.dart';
-import 'package:share_plus/share_plus.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import 'package:ipardasbor/app/app_theme.dart';

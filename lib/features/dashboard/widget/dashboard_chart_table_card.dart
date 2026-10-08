@@ -7,13 +7,12 @@ import 'dashboard_data_table.dart';
 
 /// Satu kartu per topik: judul + toggle **Grafik | Tabel**.
 ///
-/// Menggantikan pasangan [DashboardBarChart] + [DashboardDataTable] yang
-/// sebelumnya ditumpuk berurutan, sehingga halaman dashboard jauh lebih
-/// pendek tanpa menghilangkan data apa pun.
-///
 /// - Kalau hanya salah satu (grafik/tabel) yang punya data, toggle tidak
 ///   ditampilkan dan konten yang ada langsung dipakai.
 /// - Kalau keduanya kosong, widget tidak menggambar apa-apa.
+/// - [chartBuilder] (opsional) menggantikan grafik batang vertikal bawaan,
+///   mis. dengan peringkat Top N. Callback kedua yang diterimanya akan
+///   memindahkan kartu ke tampilan tabel ("Lihat semua").
 class DashboardChartTableCard extends StatefulWidget {
   final String title;
   final String subtitle;
@@ -21,6 +20,12 @@ class DashboardChartTableCard extends StatefulWidget {
   final List<String> columns;
   final List<List<String>> rows;
   final double chartHeight;
+
+  /// Warna batang mini di tabel per kolom (lihat [DashboardDataTable]).
+  final List<Color?>? columnColors;
+
+  final Widget Function(BuildContext context, VoidCallback showTable)?
+  chartBuilder;
 
   const DashboardChartTableCard({
     super.key,
@@ -30,6 +35,8 @@ class DashboardChartTableCard extends StatefulWidget {
     required this.columns,
     required this.rows,
     this.chartHeight = 280,
+    this.columnColors,
+    this.chartBuilder,
   });
 
   @override
@@ -43,7 +50,8 @@ class _DashboardChartTableCardState extends State<DashboardChartTableCard> {
   @override
   Widget build(BuildContext context) {
     final bool hasChart =
-        widget.chartData.labels.isNotEmpty && widget.chartData.series.isNotEmpty;
+        widget.chartData.labels.isNotEmpty &&
+        widget.chartData.series.isNotEmpty;
     final bool hasTable = widget.rows.isNotEmpty;
 
     if (!hasChart && !hasTable) return const SizedBox.shrink();
@@ -105,25 +113,39 @@ class _DashboardChartTableCardState extends State<DashboardChartTableCard> {
               ),
               child: KeyedSubtree(
                 key: ValueKey<bool>(showTable),
-                child: showTable
-                    ? DashboardDataTable(
-                        embedded: true,
-                        title: widget.title,
-                        columns: widget.columns,
-                        rows: widget.rows,
-                      )
-                    : DashboardBarChart(
-                        embedded: true,
-                        title: widget.title,
-                        subtitle: widget.subtitle,
-                        data: widget.chartData,
-                        height: widget.chartHeight,
-                      ),
+                child: showTable ? _buildTable() : _buildChart(context),
               ),
             ),
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildTable() {
+    return DashboardDataTable(
+      embedded: true,
+      title: widget.title,
+      columns: widget.columns,
+      rows: widget.rows,
+      columnColors: widget.columnColors,
+    );
+  }
+
+  Widget _buildChart(BuildContext context) {
+    final Widget Function(BuildContext, VoidCallback)? builder =
+        widget.chartBuilder;
+
+    if (builder != null) {
+      return builder(context, () => setState(() => _showTable = true));
+    }
+
+    return DashboardBarChart(
+      embedded: true,
+      title: widget.title,
+      subtitle: widget.subtitle,
+      data: widget.chartData,
+      height: widget.chartHeight,
     );
   }
 }
