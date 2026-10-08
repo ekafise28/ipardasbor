@@ -35,6 +35,7 @@ class AkomodasiReviewPage extends StatefulWidget {
 class _AkomodasiReviewPageState extends State<AkomodasiReviewPage> {
   final RegionService _regions = RegionService();
   late final AkomodasiService _service;
+  late final ApiClient _api;
 
   bool _loadingWilayah = true;
   bool _saving = false;
@@ -45,7 +46,8 @@ class _AkomodasiReviewPageState extends State<AkomodasiReviewPage> {
   @override
   void initState() {
     super.initState();
-    _service = AkomodasiService(ApiClient());
+    _api = ApiClient();
+    _service = AkomodasiService(_api);
     _muatSemuaWilayah();
   }
 
@@ -161,6 +163,12 @@ class _AkomodasiReviewPageState extends State<AkomodasiReviewPage> {
     } finally {
       if (mounted) setState(() => _saving = false);
     }
+  }
+
+  @override
+  void dispose() {
+    _api.close();
+    super.dispose();
   }
 
   @override

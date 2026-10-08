@@ -26,17 +26,18 @@ class AkomodasiFormPage extends StatefulWidget {
 }
 
 class _AkomodasiFormPageState extends State<AkomodasiFormPage> {
-
   final _key = GlobalKey<FormState>();
   final RegionService _regions = RegionService();
   late final AkomodasiService _service;
+  late final ApiClient _api;
 
   final List<AkomodasiItemData> _items = [AkomodasiItemData()];
 
   @override
   void initState() {
     super.initState();
-    _service = AkomodasiService(ApiClient());
+    _api = ApiClient();
+    _service = AkomodasiService(_api);
   }
 
   void _tambahAkomodasi() => setState(() => _items.add(AkomodasiItemData()));
@@ -49,6 +50,12 @@ class _AkomodasiFormPageState extends State<AkomodasiFormPage> {
       return;
     }
     setState(() => _items.removeAt(index));
+  }
+
+  @override
+  void dispose() {
+    _api.close();
+    super.dispose();
   }
 
   Future<void> _cekValidasi(AkomodasiItemData item) async {

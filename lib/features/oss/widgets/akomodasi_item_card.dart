@@ -1,7 +1,9 @@
 // lib/features/oss/widgets/akomodasi_item_card.dart
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:ipardasbor/app/app_theme.dart';
 import 'package:ipardasbor/shared/gps/gps_capture_mixin.dart';
+import 'package:ipardasbor/shared/validators/form_validators.dart';
 
 import '../../non_oss/models/region_option.dart';
 import '../../non_oss/services/region_service.dart';
@@ -584,7 +586,10 @@ class _AkomodasiItemCardState extends State<AkomodasiItemCard>
               .map(
                 (e) => DropdownMenuItem(
                   value: e.key,
-                  child: Text(e.value, overflow: TextOverflow.ellipsis),
+                  child: Text(
+                    '${e.key} - ${e.value}',
+                    overflow: TextOverflow.ellipsis,
+                  ),
                 ),
               )
               .toList(),
@@ -636,16 +641,27 @@ class _AkomodasiItemCardState extends State<AkomodasiItemCard>
         const SizedBox(height: 10),
         TextFormField(
           initialValue: _d.website,
-          decoration: const InputDecoration(labelText: 'Website'),
+          decoration: const InputDecoration(
+            labelText: 'Website',
+            hintText: 'https://www.example.com',
+          ),
           keyboardType: TextInputType.url,
+          validator: FormValidators.url,
           onChanged: (v) => _d.website = v,
         ),
         const SizedBox(height: 10),
         TextFormField(
           initialValue: _d.noHp,
-          decoration: const InputDecoration(labelText: 'No. HP *'),
+          decoration: const InputDecoration(
+            labelText: 'No. HP *',
+            hintText: '081234567890',
+          ),
           keyboardType: TextInputType.phone,
-          validator: _required,
+          inputFormatters: [
+            FilteringTextInputFormatter.digitsOnly,
+            LengthLimitingTextInputFormatter(FormValidators.phoneMax),
+          ],
+          validator: (v) => _required(v) ?? FormValidators.phone(v),
           onChanged: (v) => _d.noHp = v,
         ),
         const SizedBox(height: 10),
@@ -653,14 +669,7 @@ class _AkomodasiItemCardState extends State<AkomodasiItemCard>
           initialValue: _d.email,
           decoration: const InputDecoration(labelText: 'Email *'),
           keyboardType: TextInputType.emailAddress,
-          validator: (v) {
-            final value = v?.trim() ?? '';
-            if (value.isEmpty) return 'Wajib diisi.';
-            if (!RegExp(r'^[\w\.\-\+]+@[\w\-]+\.[\w\-\.]+$').hasMatch(value)) {
-              return 'Masukkan alamat email yang valid.';
-            }
-            return null;
-          },
+          validator: (v) => FormValidators.email(v, wajib: true),
           onChanged: (v) => _d.email = v,
         ),
       ],
