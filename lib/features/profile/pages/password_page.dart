@@ -32,10 +32,13 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
 
   final TextEditingController _passwordController = TextEditingController();
   final TextEditingController _confirmController = TextEditingController();
+  final FocusNode _passwordFocus = FocusNode();
+  final FocusNode _confirmFocus = FocusNode();
 
   bool _obscurePassword = true;
   bool _obscureConfirm = true;
   bool _isSubmitting = false;
+  static const int _maxPasswordLength = 32;
 
   // Aturan kekuatan password.
   bool get _hasMinLength => _passwordController.text.length >= 8;
@@ -58,7 +61,30 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
     _noSpaces,
   ].where((rule) => rule).length;
 
+  List<_RuleItem> get _rules => [
+    _RuleItem('8-32 karakter', _hasMinLength),
+    _RuleItem('1 huruf besar', _hasUppercase),
+    _RuleItem('1 huruf kecil', _hasLowercase),
+    _RuleItem('1 angka', _hasDigit),
+    _RuleItem('1 simbol', _hasSymbol),
+    _RuleItem('Tanpa spasi', _noSpaces),
+  ];
+
   bool get _isPasswordValid => _rulesMet == 6;
+
+  bool get _confirmMatches =>
+      _confirmController.text.isNotEmpty &&
+      _confirmController.text == _passwordController.text;
+
+  bool get _canSubmit => _isPasswordValid && _confirmMatches && !_isSubmitting;
+
+  String? get _submitHint {
+    if (_isSubmitting || _canSubmit) return null;
+    if (_passwordController.text.isEmpty) return null;
+    if (!_isPasswordValid) return 'Lengkapi semua persyaratan password.';
+    if (!_confirmMatches) return 'Konfirmasi password belum sama.';
+    return null;
+  }
 
   double get _strengthRatio =>
       _passwordController.text.isEmpty ? 0 : _rulesMet / 6;
@@ -66,8 +92,8 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
   Color get _strengthColor {
     if (_passwordController.text.isEmpty) return AppTheme.border(context);
     if (_rulesMet <= 2) return AppTheme.danger;
-    if (_rulesMet <= 4) return Colors.orange;
-    return Colors.green;
+    if (_rulesMet <= 4) return AppTheme.warning;
+    return AppTheme.success;
   }
 
   String get _strengthLabel {
@@ -88,24 +114,92 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
   void dispose() {
     _passwordController.dispose();
     _confirmController.dispose();
+    _passwordFocus.dispose();
+    _confirmFocus.dispose();
     _profileService.dispose();
     super.dispose();
   }
 
+  bool get _isDirty =>
+      !_isSubmitting &&
+      (_passwordController.text.isNotEmpty ||
+          _confirmController.text.isNotEmpty);
+
+  Future<void> _confirmDiscard() async {
+    final bool? discard = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          backgroundColor: AppTheme.surface(context),
+          surfaceTintColor: AppTheme.surface(context),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          title: Text(
+            'Batalkan perubahan?',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 17,
+              fontWeight: FontWeight.w800,
+              color: AppTheme.textColor(context),
+            ),
+          ),
+          content: Text(
+            'Password yang sudah Anda isi tidak akan disimpan.',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 13.5,
+              height: 1.4,
+              color: AppTheme.textSecondary(context),
+            ),
+          ),
+          actionsPadding: const EdgeInsets.fromLTRB(20, 8, 20, 18),
+          actions: [
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: () => Navigator.pop(dialogContext, false),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: AppTheme.textColor(context),
+                      side: BorderSide(color: AppTheme.border(context)),
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    child: const Text('Lanjut mengisi'),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: FilledButton(
+                    onPressed: () => Navigator.pop(dialogContext, true),
+                    style: FilledButton.styleFrom(
+                      backgroundColor: AppTheme.danger,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    child: const Text('Keluar'),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        );
+      },
+    );
+
+    if (discard == true && mounted) {
+      Navigator.pop(context);
+    }
+  }
+
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
-    if (!_isPasswordValid) {
-      _showSnackBar(
-        'Password belum memenuhi seluruh persyaratan keamanan.',
-        isError: true,
-      );
-      return;
-    }
-    if (_passwordController.text != _confirmController.text) {
-      _showSnackBar('Konfirmasi password tidak sama.', isError: true);
-      return;
-    }
-
     setState(() => _isSubmitting = true);
     try {
       await _profileService.changePassword(
@@ -113,7 +207,6 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
         passwordConfirmation: _confirmController.text,
       );
       if (!mounted) return;
-      _showSnackBar('Password berhasil diubah.');
       Navigator.pop(context, true);
     } on ApiException catch (e) {
       if (!mounted) return;
@@ -143,437 +236,478 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(message),
-        backgroundColor: isError ? AppTheme.danger : Colors.green,
+        backgroundColor: isError ? AppTheme.danger : AppTheme.success,
       ),
+    );
+  }
+
+  Widget _buildStrengthBox() {
+    final bool empty = _passwordController.text.isEmpty;
+    final List<_RuleItem> unmet = _rules
+        .where((_RuleItem r) => !r.isMet)
+        .toList();
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: AppTheme.surfaceMuted(context),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: AppTheme.border(context)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'Kekuatan password',
+                style: TextStyle(
+                  color: AppTheme.textColor(context),
+                  fontSize: 12.5,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              Text(
+                _strengthLabel,
+                style: TextStyle(
+                  color: _strengthColor,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Row(
+            children: [
+              for (int i = 0; i < 6; i++)
+                Expanded(
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 220),
+                    height: 6,
+                    margin: EdgeInsets.only(right: i == 5 ? 0 : 4),
+                    decoration: BoxDecoration(
+                      color: (!empty && i < _rulesMet)
+                          ? _strengthColor
+                          : AppTheme.border(context),
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                  ),
+                ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          if (!empty && unmet.isEmpty)
+            Row(
+              children: [
+                const Icon(
+                  Icons.check_circle_rounded,
+                  size: 16,
+                  color: AppTheme.success,
+                ),
+                const SizedBox(width: 6),
+                Text(
+                  'Semua persyaratan terpenuhi',
+                  style: TextStyle(
+                    color: AppTheme.success,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            )
+          else
+            Wrap(
+              spacing: 6,
+              runSpacing: 6,
+              children: unmet.map(_buildRuleChip).toList(),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildRuleChip(_RuleItem item) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 6),
+      decoration: BoxDecoration(
+        color: AppTheme.surface(context),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: AppTheme.border(context)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.circle_outlined, size: 12, color: AppTheme.textMuted),
+          const SizedBox(width: 5),
+          Text(
+            item.label,
+            style: TextStyle(
+              fontSize: 11.5,
+              color: AppTheme.textSecondary(context),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMatchIndicator() {
+    if (_confirmController.text.isEmpty) {
+      return Row(
+        children: [
+          Icon(Icons.info_outline_rounded, size: 14, color: AppTheme.textMuted),
+          const SizedBox(width: 6),
+          Text(
+            'Masukkan kembali password yang sama.',
+            style: TextStyle(color: AppTheme.textMuted, fontSize: 11.5),
+          ),
+        ],
+      );
+    }
+
+    final bool match = _confirmMatches;
+    final Color color = match ? AppTheme.success : AppTheme.danger;
+
+    return Row(
+      children: [
+        Icon(
+          match ? Icons.check_circle_rounded : Icons.cancel_rounded,
+          size: 14,
+          color: color,
+        ),
+        const SizedBox(width: 6),
+        Text(
+          match ? 'Password cocok' : 'Password belum sama',
+          style: TextStyle(
+            color: color,
+            fontSize: 11.5,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ],
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppTheme.scaffoldColorDynamic(context),
-      appBar: AppBar(
-        backgroundColor: AppTheme.surface(context),
-        elevation: 0,
-        leading: IconButton(
-          icon: Icon(Icons.close_rounded, color: AppTheme.textColor(context)),
-          onPressed: () => Navigator.pop(context),
-        ),
-        title: Text(
-          'Ubah Password',
-          style: TextStyle(
-            color: AppTheme.textColor(context),
-            fontSize: 17,
-            fontWeight: FontWeight.w800,
+    return PopScope(
+      canPop: !_isDirty,
+      onPopInvokedWithResult: (bool didPop, Object? result) {
+        if (didPop) return;
+        _confirmDiscard();
+      },
+      child: Scaffold(
+        backgroundColor: AppTheme.scaffoldColorDynamic(context),
+        appBar: AppBar(
+          backgroundColor: AppTheme.primaryDark,
+          foregroundColor: Colors.white,
+          elevation: 0,
+          scrolledUnderElevation: 0,
+          leading: IconButton(
+            icon: const Icon(Icons.close_rounded),
+            onPressed: () => Navigator.maybePop(context),
+          ),
+          title: const Text(
+            'Ubah Password',
+            style: TextStyle(fontSize: 17, fontWeight: FontWeight.w800),
           ),
         ),
-        actions: [
-          Padding(
-            padding: const EdgeInsets.only(right: 12),
-            child: ElevatedButton.icon(
-              onPressed: _isSubmitting ? null : _submit,
-              icon: _isSubmitting
-                  ? const SizedBox(
-                      width: 14,
-                      height: 14,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        color: Colors.white,
+        bottomNavigationBar: Container(
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+          decoration: BoxDecoration(
+            color: AppTheme.surface(context),
+            border: Border(top: BorderSide(color: AppTheme.border(context))),
+          ),
+          child: SafeArea(
+            top: false,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (_submitHint != null) ...[
+                  Text(
+                    _submitHint!,
+                    style: TextStyle(
+                      color: AppTheme.textSecondary(context),
+                      fontSize: 12,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                ],
+                SizedBox(
+                  width: double.infinity,
+                  height: 50,
+                  child: FilledButton.icon(
+                    onPressed: _canSubmit ? _submit : null,
+                    icon: _isSubmitting
+                        ? const SizedBox(
+                            width: 18,
+                            height: 18,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: Colors.white,
+                            ),
+                          )
+                        : const Icon(
+                            Icons.check_circle_outline_rounded,
+                            size: 20,
+                          ),
+                    label: Text(
+                      _isSubmitting ? 'Menyimpan...' : 'Simpan Password',
+                    ),
+                    style: FilledButton.styleFrom(
+                      backgroundColor: AppTheme.primaryColor,
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
                       ),
-                    )
-                  : const Icon(Icons.check_circle_outline_rounded, size: 18),
-              label: const Text('Simpan'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppTheme.primaryColor,
-                foregroundColor: Colors.white,
-                elevation: 0,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10),
+                      textStyle: const TextStyle(
+                        fontSize: 14.5,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
                 ),
+              ],
+            ),
+          ),
+        ),
+        body: SafeArea(
+          bottom: false,
+          child: Form(
+            key: _formKey,
+            child: AutofillGroup(
+              child: ListView(
+                keyboardDismissBehavior:
+                    ScrollViewKeyboardDismissBehavior.onDrag,
+                padding: const EdgeInsets.fromLTRB(16, 16, 16, 28),
+                children: [
+                  // Keterangan singkat (pengganti header gradient)
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(4, 0, 4, 12),
+                    child: Text(
+                      'Gunakan kombinasi password yang kuat untuk menjaga keamanan akun.',
+                      style: TextStyle(
+                        color: AppTheme.textSecondary(context),
+                        fontSize: 12.5,
+                        height: 1.4,
+                      ),
+                    ),
+                  ),
+
+                  // Kartu utama
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: AppTheme.surface(context),
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: AppTheme.border(context)),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _buildAccountTile(),
+                        const SizedBox(height: 18),
+
+                        // Password baru
+                        _buildFieldLabel('Password Baru', required: true),
+                        const SizedBox(height: 6),
+                        TextFormField(
+                          focusNode: _passwordFocus,
+                          autofocus: true,
+                          textInputAction: TextInputAction.next,
+                          autofillHints: const [AutofillHints.newPassword],
+                          onFieldSubmitted: (_) => _confirmFocus.requestFocus(),
+                          controller: _passwordController,
+                          obscureText: _obscurePassword,
+                          inputFormatters: [
+                            FilteringTextInputFormatter.deny(RegExp(r'\s')),
+                            LengthLimitingTextInputFormatter(_maxPasswordLength),
+                          ],
+                          decoration: InputDecoration(
+                            hintText: 'Masukkan password baru',
+                            prefixIcon: const Icon(
+                              Icons.lock_outline_rounded,
+                              size: 20,
+                            ),
+                            suffixIcon: IconButton(
+                              icon: Icon(
+                                _obscurePassword
+                                    ? Icons.visibility_outlined
+                                    : Icons.visibility_off_outlined,
+                                size: 20,
+                                color: AppTheme.textMuted,
+                              ),
+                              onPressed: () => setState(
+                                () => _obscurePassword = !_obscurePassword,
+                              ),
+                            ),
+                          ),
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return 'Password baru wajib diisi';
+                            }
+                            return null;
+                          },
+                        ),
+                        const SizedBox(height: 14),
+
+                        // Kekuatan password
+                        _buildStrengthBox(),
+                        const SizedBox(height: 18),
+
+                        // Konfirmasi password
+                        _buildFieldLabel(
+                          'Konfirmasi Password Baru',
+                          required: true,
+                        ),
+                        const SizedBox(height: 6),
+                        TextFormField(
+                          focusNode: _confirmFocus,
+                          textInputAction: TextInputAction.done,
+                          autofillHints: const [AutofillHints.newPassword],
+                          onFieldSubmitted: (_) {
+                            if (_canSubmit) _submit();
+                          },
+                          controller: _confirmController,
+                          obscureText: _obscureConfirm,
+                          inputFormatters: [
+                            FilteringTextInputFormatter.deny(RegExp(r'\s')),LengthLimitingTextInputFormatter(_maxPasswordLength),
+                          ],
+                          decoration: InputDecoration(
+                            hintText: 'Masukkan kembali password baru',
+                            prefixIcon: const Icon(
+                              Icons.verified_user_outlined,
+                              size: 20,
+                            ),
+                            suffixIcon: IconButton(
+                              icon: Icon(
+                                _obscureConfirm
+                                    ? Icons.visibility_outlined
+                                    : Icons.visibility_off_outlined,
+                                size: 20,
+                                color: AppTheme.textMuted,
+                              ),
+                              onPressed: () => setState(
+                                () => _obscureConfirm = !_obscureConfirm,
+                              ),
+                            ),
+                          ),
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return 'Konfirmasi password wajib diisi';
+                            }
+                            if (value != _passwordController.text) {
+                              return 'Password tidak sama';
+                            }
+                            return null;
+                          },
+                        ),
+                        const SizedBox(height: 6),
+                        _buildMatchIndicator(),
+                      ],
+                    ),
+                  ),
+
+                  // Catatan keamanan (di luar kartu)
+                  const SizedBox(height: 14),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 4),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Icon(
+                          Icons.shield_outlined,
+                          size: 15,
+                          color: AppTheme.textMuted,
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            'Gunakan password yang berbeda dari akun lain. Jangan '
+                            'membagikan password kepada siapa pun, termasuk petugas '
+                            'atau administrator aplikasi.',
+                            style: TextStyle(
+                              color: AppTheme.textSecondary(context),
+                              fontSize: 11.5,
+                              height: 1.4,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
               ),
             ),
           ),
-        ],
-      ),
-      body: SafeArea(
-        child: Form(
-          key: _formKey,
-          child: ListView(
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 28),
-            children: [
-              // Header gradient mirip desain
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(18),
-                decoration: BoxDecoration(
-                  gradient: AppTheme.brandGradient,
-                  borderRadius: BorderRadius.circular(18),
-                ),
-                child: Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(10),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.18),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: const Icon(
-                        Icons.shield_outlined,
-                        color: Colors.white,
-                        size: 24,
-                      ),
-                    ),
-                    const SizedBox(width: 14),
-                    const Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'UBAH PASSWORD',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 16,
-                              fontWeight: FontWeight.w800,
-                              letterSpacing: 0.3,
-                            ),
-                          ),
-                          SizedBox(height: 3),
-                          Text(
-                            'Gunakan kombinasi password yang kuat untuk menjaga keamanan akun.',
-                            style: TextStyle(color: Colors.white, fontSize: 12),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 16),
-
-              // Kartu utama
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: AppTheme.surface(context),
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: AppTheme.border(context)),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.all(9),
-                          decoration: BoxDecoration(
-                            color: AppTheme.primaryColor.withValues(alpha: 0.1),
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          child: const Icon(
-                            Icons.vpn_key_rounded,
-                            color: AppTheme.primaryColor,
-                            size: 20,
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'Password Baru',
-                                style: TextStyle(
-                                  color: AppTheme.textColor(context),
-                                  fontSize: 15,
-                                  fontWeight: FontWeight.w800,
-                                ),
-                              ),
-                              SizedBox(height: 2),
-                              Text(
-                                'Password harus memenuhi seluruh persyaratan keamanan.',
-                                style: TextStyle(
-                                  color: AppTheme.textSecondary(context),
-                                  fontSize: 12,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 16),
-                    Divider(height: 1, color: AppTheme.border(context)),
-                    const SizedBox(height: 16),
-
-                    // Akun pengguna
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: AppTheme.primaryColor.withValues(alpha: 0.05),
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(
-                          color: AppTheme.primaryColor.withValues(alpha: 0.15),
-                        ),
-                      ),
-                      child: Row(
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.all(8),
-                            decoration: BoxDecoration(
-                              color: AppTheme.primaryColor.withValues(
-                                alpha: 0.12,
-                              ),
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            child: const Icon(
-                              Icons.person_outline_rounded,
-                              color: AppTheme.primaryColor,
-                              size: 20,
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  'AKUN PENGGUNA',
-                                  style: TextStyle(
-                                    color: AppTheme.textSecondary(context),
-                                    fontSize: 10.5,
-                                    fontWeight: FontWeight.w700,
-                                    letterSpacing: 0.4,
-                                  ),
-                                ),
-                                const SizedBox(height: 2),
-                                Text(
-                                  widget.user.nama,
-                                  style: TextStyle(
-                                    color: AppTheme.textColor(context),
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w800,
-                                  ),
-                                ),
-                                const SizedBox(height: 2),
-                                Text(
-                                  'Kode: ${widget.user.kodeUser}',
-                                  style: const TextStyle(
-                                    color: AppTheme.textMuted,
-                                    fontSize: 11.5,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 18),
-
-                    // Password baru
-                    _buildFieldLabel('Password Baru', required: true),
-                    const SizedBox(height: 6),
-                    TextFormField(
-                      controller: _passwordController,
-                      obscureText: _obscurePassword,
-                      inputFormatters: [
-                        FilteringTextInputFormatter.deny(RegExp(r'\s')),
-                      ],
-                      decoration: InputDecoration(
-                        hintText: 'Masukkan password baru',
-                        prefixIcon: const Icon(
-                          Icons.lock_outline_rounded,
-                          size: 20,
-                        ),
-                        suffixIcon: IconButton(
-                          icon: Icon(
-                            _obscurePassword
-                                ? Icons.visibility_outlined
-                                : Icons.visibility_off_outlined,
-                            size: 20,
-                            color: AppTheme.textMuted,
-                          ),
-                          onPressed: () => setState(
-                            () => _obscurePassword = !_obscurePassword,
-                          ),
-                        ),
-                      ),
-                      validator: (value) {
-                        if (value == null || value.isEmpty)
-                          return 'Password baru wajib diisi';
-                        return null;
-                      },
-                    ),
-                    const SizedBox(height: 14),
-
-                    // Kekuatan password
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.all(14),
-                      decoration: BoxDecoration(
-                        color: AppTheme.surfaceMuted(context),
-                        borderRadius: BorderRadius.circular(14),
-                        border: Border.all(color: AppTheme.border(context)),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Text(
-                                'Tingkat kekuatan password',
-                                style: TextStyle(
-                                  color: AppTheme.textColor(context),
-                                  fontSize: 12.5,
-                                  fontWeight: FontWeight.w700,
-                                ),
-                              ),
-                              Text(
-                                _strengthLabel,
-                                style: TextStyle(
-                                  color: _strengthColor,
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w700,
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 10),
-                          ClipRRect(
-                            borderRadius: BorderRadius.circular(8),
-                            child: LinearProgressIndicator(
-                              value: _strengthRatio,
-                              minHeight: 7,
-                              backgroundColor: AppTheme.border(context),
-                              valueColor: AlwaysStoppedAnimation(
-                                _strengthColor,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 14),
-                          _buildRuleRow(
-                            _RuleItem('Minimal 8 karakter', _hasMinLength),
-                            _RuleItem('Minimal 1 huruf besar', _hasUppercase),
-                          ),
-                          const SizedBox(height: 8),
-                          _buildRuleRow(
-                            _RuleItem('Minimal 1 huruf kecil', _hasLowercase),
-                            _RuleItem('Minimal 1 angka', _hasDigit),
-                          ),
-                          const SizedBox(height: 8),
-                          _buildRuleRow(
-                            _RuleItem('Minimal 1 simbol', _hasSymbol),
-                            _RuleItem('Tidak mengandung spasi', _noSpaces),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 18),
-
-                    // Konfirmasi password
-                    _buildFieldLabel(
-                      'Konfirmasi Password Baru',
-                      required: true,
-                    ),
-                    const SizedBox(height: 6),
-                    TextFormField(
-                      controller: _confirmController,
-                      obscureText: _obscureConfirm,
-                      inputFormatters: [
-                        FilteringTextInputFormatter.deny(RegExp(r'\s')),
-                      ],
-                      decoration: InputDecoration(
-                        hintText: 'Masukkan kembali password baru',
-                        prefixIcon: const Icon(
-                          Icons.verified_user_outlined,
-                          size: 20,
-                        ),
-                        suffixIcon: IconButton(
-                          icon: Icon(
-                            _obscureConfirm
-                                ? Icons.visibility_outlined
-                                : Icons.visibility_off_outlined,
-                            size: 20,
-                            color: AppTheme.textMuted,
-                          ),
-                          onPressed: () => setState(
-                            () => _obscureConfirm = !_obscureConfirm,
-                          ),
-                        ),
-                      ),
-                      validator: (value) {
-                        if (value == null || value.isEmpty)
-                          return 'Konfirmasi password wajib diisi';
-                        if (value != _passwordController.text)
-                          return 'Password tidak sama';
-                        return null;
-                      },
-                    ),
-                    const SizedBox(height: 6),
-                    const Row(
-                      children: [
-                        Icon(
-                          Icons.info_outline_rounded,
-                          size: 14,
-                          color: AppTheme.textMuted,
-                        ),
-                        SizedBox(width: 6),
-                        Text(
-                          'Masukkan kembali password yang sama.',
-                          style: TextStyle(
-                            color: AppTheme.textMuted,
-                            fontSize: 11.5,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 18),
-
-                    // Catatan keamanan
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: AppTheme.primaryColor.withValues(alpha: 0.06),
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(
-                          color: AppTheme.primaryColor.withValues(alpha: 0.15),
-                        ),
-                      ),
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Icon(
-                            Icons.shield_outlined,
-                            size: 18,
-                            color: AppTheme.primaryColor,
-                          ),
-                          const SizedBox(width: 10),
-                          Expanded(
-                            child: Text(
-                              'Gunakan password yang berbeda dari akun lain. '
-                              'Jangan membagikan password kepada siapa pun, termasuk petugas atau administrator aplikasi.',
-                              style: TextStyle(
-                                color: AppTheme.textColor(
-                                  context,
-                                ).withValues(alpha: 0.85),
-                                fontSize: 11.5,
-                                height: 1.4,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
         ),
+      ),
+    );
+  }
+
+  String get _initials {
+    final List<String> parts = widget.user.nama
+        .trim()
+        .split(RegExp(r'\s+'))
+        .where((String s) => s.isNotEmpty)
+        .toList();
+    if (parts.isEmpty) return '?';
+    if (parts.length == 1) return parts.first[0].toUpperCase();
+    return (parts.first[0] + parts[1][0]).toUpperCase();
+  }
+
+  Widget _buildAccountTile() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: AppTheme.surfaceMuted(context),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        children: [
+          CircleAvatar(
+            radius: 18,
+            backgroundColor: AppTheme.primaryColor,
+            child: Text(
+              _initials,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 13,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  widget.user.nama,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    color: AppTheme.textColor(context),
+                    fontSize: 13.5,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                Text(
+                  'Kode: ${widget.user.kodeUser}',
+                  style: TextStyle(
+                    color: AppTheme.textSecondary(context),
+                    fontSize: 11.5,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -593,54 +727,6 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
               text: ' *',
               style: TextStyle(color: AppTheme.danger),
             ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildRuleRow(_RuleItem left, _RuleItem right) {
-    return Row(
-      children: [
-        Expanded(child: _buildRuleChip(left)),
-        const SizedBox(width: 10),
-        Expanded(child: _buildRuleChip(right)),
-      ],
-    );
-  }
-
-  Widget _buildRuleChip(_RuleItem item) {
-    final bool active = item.isMet && _passwordController.text.isNotEmpty;
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 9),
-      decoration: BoxDecoration(
-        color: AppTheme.surface(context),
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(
-          color: active
-              ? Colors.green.withValues(alpha: 0.5)
-              : AppTheme.border(context),
-        ),
-      ),
-      child: Row(
-        children: [
-          Icon(
-            active ? Icons.check_circle_rounded : Icons.circle_outlined,
-            size: 15,
-            color: active ? Colors.green : AppTheme.textMuted,
-          ),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Text(
-              item.label,
-              style: TextStyle(
-                fontSize: 11,
-                color: active
-                    ? AppTheme.textColor(context)
-                    : AppTheme.textSecondary(context),
-                fontWeight: active ? FontWeight.w600 : FontWeight.w400,
-              ),
-            ),
-          ),
         ],
       ),
     );
