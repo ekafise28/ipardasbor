@@ -194,23 +194,6 @@ class _OssBaselineOtaFilterSheetState extends State<OssBaselineOtaFilterSheet> {
                   ? null
                   : (v) => setState(() => _draft.kelurahanId = v),
             ),
-            const SizedBox(height: 10),
-            Text('Status Verifikasi',
-                style: TextStyle(color: AppTheme.textColor(context), fontSize: 12.5, fontWeight: FontWeight.w700)),
-            const SizedBox(height: 8),
-            Wrap(
-              spacing: 8,
-              children: [
-                (null, 'Semua'), ('BELUM', 'Belum'), ('SUDAH', 'Sudah'),
-              ].map((e) {
-                final (value, label) = e;
-                return ChoiceChip(
-                  label: Text(label),
-                  selected: _draft.status == value,
-                  onSelected: (_) => setState(() => _draft.status = value),
-                );
-              }).toList(),
-            ),
             const SizedBox(height: 20),
             SizedBox(
               width: double.infinity,

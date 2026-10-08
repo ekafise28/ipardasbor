@@ -66,7 +66,6 @@ class BaselineOtaItem {
   final BaselineOtaVerifikasi? verifikasiAktif;
 
   bool get sudahDiverifikasi => statusVerifikasiRingkas == 'SUDAH';
-  bool get memilikiKoordinat => latitude != null && longitude != null;
 
   String get wilayahRingkas {
     final List<String> bagian = [kelurahan, kecamatan, kabupaten]
