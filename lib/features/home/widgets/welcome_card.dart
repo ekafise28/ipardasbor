@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 
 import '../../../core/storage/secure_storage.dart';
@@ -31,14 +33,39 @@ class WelcomeCard extends StatefulWidget {
   State<WelcomeCard> createState() => _WelcomeCardState();
 }
 
-class _WelcomeCardState extends State<WelcomeCard> {
+class _WelcomeCardState extends State<WelcomeCard>
+    with SingleTickerProviderStateMixin {
   String _userName = 'Petugas Pengawasan';
   String _userRole = '';
+
+  // Denyut tunggal untuk ring radar di latar + animasi ikon status.
+  late final AnimationController _pulse;
 
   @override
   void initState() {
     super.initState();
+    _pulse = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 3000),
+    );
     _loadUser();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Hormati pengaturan "kurangi animasi" di perangkat.
+    if (MediaQuery.of(context).disableAnimations) {
+      _pulse.stop();
+    } else if (!_pulse.isAnimating) {
+      _pulse.repeat();
+    }
+  }
+
+  @override
+  void dispose() {
+    _pulse.dispose();
+    super.dispose();
   }
 
   Future<void> _loadUser() async {
@@ -104,7 +131,17 @@ class _WelcomeCardState extends State<WelcomeCard> {
       clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(22),
-        gradient: AppTheme.brandGradient,
+        // Biru brand -> teal, senada dengan splash.
+        gradient: const LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            AppTheme.primaryDark,
+            AppTheme.primaryColor,
+            AppTheme.secondaryColor,
+          ],
+          stops: [0.0, 0.62, 1.0],
+        ),
         boxShadow: [
           BoxShadow(
             color: AppTheme.primaryColor.withValues(alpha: 0.25),
@@ -115,10 +152,18 @@ class _WelcomeCardState extends State<WelcomeCard> {
       ),
       child: Stack(
         children: [
-          const Positioned(
-            top: -38,
-            right: -25,
-            child: _DecorationCircle(size: 130, color: Color(0x16FFFFFF)),
+          // Ring radar yang memancar dari ikon status sinkronisasi.
+          Positioned.fill(
+            child: IgnorePointer(
+              child: RepaintBoundary(
+                child: AnimatedBuilder(
+                  animation: _pulse,
+                  builder: (_, __) => CustomPaint(
+                    painter: _PulseRingsPainter(_pulse.value),
+                  ),
+                ),
+              ),
+            ),
           ),
           const Positioned(
             bottom: -45,
@@ -243,6 +288,7 @@ class _WelcomeCardState extends State<WelcomeCard> {
                   status: widget.serverStatus,
                   offlineCount: widget.offlineCount,
                   onTap: widget.onTapSyncStatus,
+                  pulse: _pulse,
                 ),
               ],
             ),
@@ -253,70 +299,152 @@ class _WelcomeCardState extends State<WelcomeCard> {
   }
 }
 
-// ikon terhubung dengan internet
+/// Ring tipis yang memancar keluar dari posisi ikon status sinkronisasi
+/// (pojok kanan atas kartu), mengulang motif radar di splash.
+class _PulseRingsPainter extends CustomPainter {
+  _PulseRingsPainter(this.progress);
+  final double progress;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    // Perkiraan titik tengah ikon status: padding kanan 16 + setengah chip 20,
+    // padding atas 18 + setengah chip 20.
+    final Offset c = Offset(size.width - 36, 38);
+
+    for (int i = 0; i < 3; i++) {
+      final double phase = (progress + i / 3) % 1.0;
+      final double radius = 26 + phase * 110;
+      canvas.drawCircle(
+        c,
+        radius,
+        Paint()
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 1.4
+          ..color = Colors.white.withValues(alpha: (1 - phase) * 0.20),
+      );
+    }
+
+    canvas.drawCircle(
+      c,
+      26,
+      Paint()..color = Colors.white.withValues(alpha: 0.07),
+    );
+  }
+
+  @override
+  bool shouldRepaint(_PulseRingsPainter old) => old.progress != progress;
+}
+
 // ikon status koneksi server + jumlah data tersimpan offline
 class _SyncStatusChip extends StatelessWidget {
   const _SyncStatusChip({
     required this.status,
     required this.offlineCount,
+    required this.pulse,
     this.onTap,
   });
 
   final ServerConnectionStatus status;
   final int offlineCount;
+  final Animation<double> pulse;
   final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
     final _ChipStyle style = _resolveStyle();
+    final bool allGood =
+        status == ServerConnectionStatus.online && offlineCount == 0;
+    final bool checking = status == ServerConnectionStatus.checking;
 
-    return Stack(
-      clipBehavior: Clip.none,
-      children: [
-        Material(
-          color: Colors.white.withValues(alpha: 0.14),
-          borderRadius: BorderRadius.circular(13),
-          child: InkWell(
-            onTap: onTap,
-            borderRadius: BorderRadius.circular(13),
-            child: Container(
-              width: 40,
-              height: 40,
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(13),
-                border: Border.all(color: Colors.white.withValues(alpha: 0.18)),
-              ),
-              child: Icon(style.icon, color: style.iconColor, size: 21),
-            ),
-          ),
-        ),
-        if (offlineCount > 0)
-          Positioned(
-            top: -5,
-            right: -5,
-            child: IgnorePointer(
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
-                constraints: const BoxConstraints(minWidth: 18),
-                decoration: BoxDecoration(
-                  color: AppTheme.danger,
-                  borderRadius: BorderRadius.circular(9),
-                  border: Border.all(color: AppTheme.primaryColor, width: 1.5),
+    return AnimatedBuilder(
+      animation: pulse,
+      builder: (context, _) {
+        final double t = pulse.value;
+
+        // Checking: ikon berkedip lembut. Online & beres: ping hijau.
+        final double iconOpacity = checking
+            ? 0.45 + 0.55 * (0.5 + 0.5 * math.sin(t * math.pi * 2))
+            : 1.0;
+
+        return Stack(
+          clipBehavior: Clip.none,
+          children: [
+            if (allGood)
+              Positioned.fill(
+                child: IgnorePointer(
+                  child: Transform.scale(
+                    scale: 1 + 0.45 * t,
+                    child: Container(
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(13),
+                        border: Border.all(
+                          color: const Color(
+                            0xFFB9F6CA,
+                          ).withValues(alpha: (1 - t) * 0.55),
+                          width: 1.6,
+                        ),
+                      ),
+                    ),
+                  ),
                 ),
-                child: Text(
-                  offlineCount > 99 ? '99+' : '$offlineCount',
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 9,
-                    fontWeight: FontWeight.w800,
-                    height: 1.2,
+              ),
+            Material(
+              color: Colors.white.withValues(alpha: 0.14),
+              borderRadius: BorderRadius.circular(13),
+              child: InkWell(
+                onTap: onTap,
+                borderRadius: BorderRadius.circular(13),
+                child: Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(13),
+                    border: Border.all(
+                      color: Colors.white.withValues(alpha: 0.18),
+                    ),
+                  ),
+                  child: Opacity(
+                    opacity: iconOpacity,
+                    child: Icon(style.icon, color: style.iconColor, size: 21),
                   ),
                 ),
               ),
             ),
-          ),
-      ],
+            if (offlineCount > 0)
+              Positioned(
+                top: -5,
+                right: -5,
+                child: IgnorePointer(
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 5,
+                      vertical: 2,
+                    ),
+                    constraints: const BoxConstraints(minWidth: 18),
+                    decoration: BoxDecoration(
+                      color: AppTheme.danger,
+                      borderRadius: BorderRadius.circular(9),
+                      border: Border.all(
+                        color: AppTheme.primaryColor,
+                        width: 1.5,
+                      ),
+                    ),
+                    child: Text(
+                      offlineCount > 99 ? '99+' : '$offlineCount',
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 9,
+                        fontWeight: FontWeight.w800,
+                        height: 1.2,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+          ],
+        );
+      },
     );
   }
 

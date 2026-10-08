@@ -150,7 +150,12 @@ class _HomePageState extends State<HomePage>
   // 3 + 4 menu: pas mengisi grid 4 kolom tanpa baris yang timpang.
   static const List<_MenuGroup> _groups = [
     _MenuGroup('Pengawasan', [_mOss, _mNonOss, _mOta]),
-    _MenuGroup('Data & Akun', [_mDashboard, _mRiwayat, _mSinkronisasi, _mProfil]),
+    _MenuGroup('Data & Akun', [
+      _mDashboard,
+      _mRiwayat,
+      _mSinkronisasi,
+      _mProfil,
+    ]),
   ];
 
   /// Angka badge per menu. Saat ini hanya Sinkronisasi (data belum terkirim).
@@ -589,7 +594,11 @@ class _AppLogo extends StatelessWidget {
           ),
         ],
       ),
-      child: const Icon(Icons.apartment_rounded, color: Colors.white, size: 23),
+      child: const Icon(
+        Icons.location_on_rounded,
+        color: Colors.white,
+        size: 25,
+      ),
     );
   }
 }

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../app/app_theme.dart';
 import '../models/menu_data.dart';
 import 'count_badge.dart';
+import 'menu_icon_box.dart';
 
 class MenuListTile extends StatelessWidget {
   const MenuListTile({
@@ -48,15 +49,7 @@ class MenuListTile extends StatelessWidget {
                 Stack(
                   clipBehavior: Clip.none,
                   children: [
-                    Container(
-                      width: 46,
-                      height: 46,
-                      decoration: BoxDecoration(
-                        color: menu.backgroundColor,
-                        borderRadius: BorderRadius.circular(13),
-                      ),
-                      child: Icon(menu.icon, color: menu.color, size: 24),
-                    ),
+                    MenuIconBox(menu: menu, size: 46),
                     if (badgeCount > 0)
                       Positioned(
                         top: -5,
