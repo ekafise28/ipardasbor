@@ -1,4 +1,10 @@
+import 'dart:io';
+import 'dart:ui' as ui;
+import 'package:ipardasbor/shared/screenshot/screenshot_service.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:share_plus/share_plus.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import 'package:ipardasbor/app/app_theme.dart';
@@ -7,6 +13,7 @@ import 'package:ipardasbor/features/oss/models/jenis_produk_akomodasi.dart';
 import 'package:ipardasbor/features/oss/pages/akomodasi_form_page.dart';
 import 'package:ipardasbor/shared/gps/gps_capture_mixin.dart';
 import 'package:ipardasbor/core/constants/bidang_usaha_constants.dart';
+import 'package:ipardasbor/shared/validators/form_validators.dart';
 
 import '../../../core/api/api_client.dart';
 import '../../non_oss/models/region_option.dart';
@@ -140,6 +147,7 @@ class _OssFormPageState extends State<OssFormPage>
   @override
   void dispose() {
     disposeGpsCapture();
+    _api.close();
     _namaPemilikCtrl.dispose();
     _namaBrandCtrl.dispose();
     _npwpdCtrl.dispose();
@@ -354,37 +362,10 @@ class _OssFormPageState extends State<OssFormPage>
   String? _required(String? v) =>
       (v == null || v.trim().isEmpty) ? 'Wajib diisi.' : null;
 
-  String? _phoneValidator(String? v) {
-    final value = v?.trim() ?? '';
-    if (value.isEmpty) return null;
-    if (value.length < 10 || value.length > 15) {
-      return 'Nomor telepon harus 10-15 digit.';
-    }
-    return null;
-  }
+  String? _phoneValidator(String? v) => FormValidators.phone(v);
+  String? _urlValidator(String? v) => FormValidators.url(v);
 
-  String? _urlValidator(String? v) {
-    final value = v?.trim() ?? '';
-    if (value.isEmpty) return null;
-    final uri = Uri.tryParse(value);
-    final valid =
-        uri != null &&
-        uri.hasScheme &&
-        (uri.scheme == 'http' || uri.scheme == 'https') &&
-        uri.host.isNotEmpty;
-    return valid ? null : 'Masukkan URL yang valid, contoh: https://contoh.com';
-  }
-
-  static final RegExp _emailPattern = RegExp(
-    r'^[\w\.\-\+]+@[\w\-]+\.[\w\-\.]+$',
-  );
-  String? _emailValidator(String? v) {
-    final value = v?.trim() ?? '';
-    if (value.isEmpty) return null;
-    return _emailPattern.hasMatch(value)
-        ? null
-        : 'Masukkan alamat email yang valid.';
-  }
+  String? _emailValidator(String? v) => FormValidators.email(v);
 
   bool _hasInvalidOtaUrl() {
     if (_data.terdaftarOta != 'YA') return false;
@@ -940,356 +921,372 @@ class _OssFormPageState extends State<OssFormPage>
               ),
             ),
           ],
-        ),
+        ),        
       ),
       body: _loadingRegions
           ? const Center(child: CircularProgressIndicator())
           : Form(
               key: _key,
-              child: ListView(
+              child: SingleChildScrollView(
                 keyboardDismissBehavior:
                     ScrollViewKeyboardDismissBehavior.onDrag,
-                padding: const EdgeInsets.fromLTRB(16, 18, 16, 30),
-                children: [
-                  _statusBanner(),
-                  FormSectionOss(
-                    number: 1,
-                    title: 'Identitas Usaha',
-                    subtitle:
-                        'NIB, KBLI, dan NKU terkunci dari hasil validasi.',
-                    icon: Icons.store,
-                    hasError: _sectionErrors.contains(_Section.identitas),
+                child: FullPageCapture(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 18, 16, 30),
                     child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        _identityStrip(),
-                        _text(
-                          'Nama Pemilik',
-                          _namaPemilikCtrl,
-                          (v) => _data.namaPemilik = v,
-                          icon: Icons.person_outline_rounded,
-                          autofillKey: 'namaPemilik',
-                        ),
-                        _text(
-                          'Nama Brand',
-                          _namaBrandCtrl,
-                          (v) => _data.namaBrand = v,
-                          icon: Icons.storefront_outlined,
-                        ),
-                        if (!_isManajemenAkomodasi)
-                          _data.isValid
-                              ? _lockedField(
-                                  'Jenis Produk (dari KBLI)',
-                                  _labelJenisProdukTerkunci,
-                                )
-                              : Padding(
-                                  padding: const EdgeInsets.only(bottom: 12),
-                                  child: DropdownButtonFormField<String>(
-                                    initialValue: _data.jenisProduk.isEmpty
-                                        ? null
-                                        : _data.jenisProduk,
-                                    isExpanded: true,
-                                    decoration: const InputDecoration(
-                                      labelText: 'Jenis Produk *',
-                                      prefixIcon: Icon(
-                                        Icons.category_outlined,
-                                        size: 20,
-                                      ),
-                                    ),
-                                    items: _jenisProdukOptions
-                                        .map(
-                                          (e) => DropdownMenuItem(
-                                            value: e.key,
-                                            child: Text(
-                                              e.value,
-                                              overflow: TextOverflow.ellipsis,
+                        _statusBanner(),
+                        FormSectionOss(
+                          number: 1,
+                          title: 'Identitas Usaha',
+                          subtitle:
+                              'NIB, KBLI, dan NKU terkunci dari hasil validasi.',
+                          icon: Icons.store,
+                          hasError: _sectionErrors.contains(_Section.identitas),
+                          child: Column(
+                            children: [
+                              _identityStrip(),
+                              _text(
+                                'Nama Pemilik',
+                                _namaPemilikCtrl,
+                                (v) => _data.namaPemilik = v,
+                                icon: Icons.person_outline_rounded,
+                                autofillKey: 'namaPemilik',
+                              ),
+                              _text(
+                                'Nama Brand',
+                                _namaBrandCtrl,
+                                (v) => _data.namaBrand = v,
+                                icon: Icons.storefront_outlined,
+                              ),
+                              if (!_isManajemenAkomodasi)
+                                _data.isValid
+                                    ? _lockedField(
+                                        'Jenis Produk (dari KBLI)',
+                                        _labelJenisProdukTerkunci,
+                                      )
+                                    : Padding(
+                                        padding: const EdgeInsets.only(
+                                          bottom: 12,
+                                        ),
+                                        child: DropdownButtonFormField<String>(
+                                          initialValue:
+                                              _data.jenisProduk.isEmpty
+                                              ? null
+                                              : _data.jenisProduk,
+                                          isExpanded: true,
+                                          decoration: const InputDecoration(
+                                            labelText: 'Jenis Produk *',
+                                            prefixIcon: Icon(
+                                              Icons.category_outlined,
+                                              size: 20,
                                             ),
                                           ),
-                                        )
-                                        .toList(),
-                                    onChanged: (v) => setState(
-                                      () => _data.jenisProduk = v ?? '',
-                                    ),
-                                    validator: (v) =>
-                                        v == null ? 'Wajib dipilih.' : null,
-                                  ),
-                                ),
-                      ],
-                    ),
-                  ),
-                  FormSectionOss(
-                    number: 2,
-                    title: 'Wilayah dan Alamat',
-                    subtitle:
-                        'Pilih wilayah secara berurutan hingga kelurahan.',
-                    icon: Icons.location_city,
-                    hasError: _sectionErrors.contains(_Section.wilayah),
-                    child: Column(
-                      children: [
-                        _region(
-                          'Provinsi',
-                          _data.provinsiId,
-                          _provinces,
-                          _chooseProvince,
-                          hintNamaAsli: _hintWilayahAsli['provinsi'],
-                        ),
-                        _region(
-                          'Kabupaten/Kota',
-                          _data.kabupatenId,
-                          _regencies,
-                          _chooseRegency,
-                          hintNamaAsli: _hintWilayahAsli['kabupaten'],
-                        ),
-                        _region(
-                          'Kecamatan',
-                          _data.kecamatanId,
-                          _districts,
-                          _chooseDistrict,
-                          hintNamaAsli: _hintWilayahAsli['kecamatan'],
-                        ),
-                        _region(
-                          'Kelurahan/Desa',
-                          _data.kelurahanId,
-                          _villages,
-                          (v) => setState(() => _data.kelurahanId = v),
-                          hintNamaAsli: _hintWilayahAsli['kelurahan'],
-                        ),
-                        _text(
-                          'Alamat Lengkap',
-                          _alamatCtrl,
-                          (v) => _data.alamat = v,
-                          lines: 3,
-                          icon: Icons.home_work_outlined,
-                          autofillKey: 'alamat',
-                        ),
-                      ],
-                    ),
-                  ),
-                  FormSectionOss(
-                    number: 3,
-                    title: 'Lokasi dan Peta',
-                    subtitle:
-                        'Ambil koordinat langsung dari perangkat petugas.',
-                    icon: Icons.gps_fixed,
-                    hasError: _sectionErrors.contains(_Section.lokasi),
-                    child: LocationPicker(
-                      latitude: _data.latitude,
-                      longitude: _data.longitude,
-                      loading: gpsLoading,
-                      status: gpsStatus,
-                      sisaDetik: gpsCountdown,
-                      source: gpsSource,
-                      savedAt: gpsSavedAt,
-                      onGetLocation: () => ambilLokasiGps(
-                        onBerhasil: (hasil) => setState(() {
-                          _data.latitude = hasil.position.latitude
-                              .toStringAsFixed(8);
-                          _data.longitude = hasil.position.longitude
-                              .toStringAsFixed(8);
-                        }),
-                      ),
-                    ),
-                  ),
-                  FormSectionOss(
-                    number: 4,
-                    title: 'Kontak',
-                    subtitle: 'Data kontak aktif memudahkan proses verifikasi.',
-                    icon: Icons.contact_phone,
-                    hasError: _sectionErrors.contains(_Section.kontak),
-                    child: Column(
-                      children: [
-                        _text(
-                          'NPWPD',
-                          _npwpdCtrl,
-                          (v) => _data.npwpd = v,
-                          required: false,
-                          icon: Icons.badge_outlined,
-                        ),
-                        _text(
-                          'Website',
-                          _websiteCtrl,
-                          (v) => _data.website = v,
-                          required: false,
-                          type: TextInputType.url,
-                          hintText: 'https://www.example.com',
-                          validator: _urlValidator,
-                          icon: Icons.language_rounded,
-                        ),
-                        _text(
-                          'Telepon/WhatsApp',
-                          _noHpCtrl,
-                          (v) => _data.noHp = v,
-                          type: TextInputType.phone,
-                          hintText: '081234567890',
-                          inputFormatters: [
-                            FilteringTextInputFormatter.digitsOnly,
-                            LengthLimitingTextInputFormatter(15),
-                          ],
-                          validator: _phoneValidator,
-                          icon: Icons.phone_outlined,
-                          autofillKey: 'noHp',
-                        ),
-                        _text(
-                          'Email',
-                          _emailCtrl,
-                          (v) => _data.email = v,
-                          type: TextInputType.emailAddress,
-                          hintText: 'example@example.com',
-                          validator: _emailValidator,
-                          icon: Icons.email_outlined,
-                          autofillKey: 'email',
-                        ),
-                      ],
-                    ),
-                  ),
-                  if (!_isManajemenAkomodasi)
-                    FormSectionOss(
-                      number: 5,
-                      title: 'Platform OTA',
-                      subtitle: 'Catat platform dan URL listing usaha.',
-                      icon: Icons.travel_explore,
-                      hasError: _sectionErrors.contains(_Section.ota),
-                      child: Column(
-                        children: [
-                          _choice<String>(
-                            label: 'Apakah terdaftar di OTA? *',
-                            value: _data.terdaftarOta,
-                            choices: const {'YA': 'Ya', 'TIDAK': 'Tidak'},
-                            onChanged: (v) =>
-                                setState(() => _data.terdaftarOta = v),
+                                          items: _jenisProdukOptions
+                                              .map(
+                                                (e) => DropdownMenuItem(
+                                                  value: e.key,
+                                                  child: Text(
+                                                    e.value,
+                                                    overflow:
+                                                        TextOverflow.ellipsis,
+                                                  ),
+                                                ),
+                                              )
+                                              .toList(),
+                                          onChanged: (v) => setState(
+                                            () => _data.jenisProduk = v ?? '',
+                                          ),
+                                          validator: (v) => v == null
+                                              ? 'Wajib dipilih.'
+                                              : null,
+                                        ),
+                                      ),
+                            ],
                           ),
-                          if (_data.terdaftarOta == 'YA') ...[
-                            const SizedBox(height: 12),
-                            OtaPlatformSelector(
-                              urls: _data.otaUrls,
+                        ),
+                        FormSectionOss(
+                          number: 2,
+                          title: 'Wilayah dan Alamat',
+                          subtitle:
+                              'Pilih wilayah secara berurutan hingga kelurahan.',
+                          icon: Icons.location_city,
+                          hasError: _sectionErrors.contains(_Section.wilayah),
+                          child: Column(
+                            children: [
+                              _region(
+                                'Provinsi',
+                                _data.provinsiId,
+                                _provinces,
+                                _chooseProvince,
+                                hintNamaAsli: _hintWilayahAsli['provinsi'],
+                              ),
+                              _region(
+                                'Kabupaten/Kota',
+                                _data.kabupatenId,
+                                _regencies,
+                                _chooseRegency,
+                                hintNamaAsli: _hintWilayahAsli['kabupaten'],
+                              ),
+                              _region(
+                                'Kecamatan',
+                                _data.kecamatanId,
+                                _districts,
+                                _chooseDistrict,
+                                hintNamaAsli: _hintWilayahAsli['kecamatan'],
+                              ),
+                              _region(
+                                'Kelurahan/Desa',
+                                _data.kelurahanId,
+                                _villages,
+                                (v) => setState(() => _data.kelurahanId = v),
+                                hintNamaAsli: _hintWilayahAsli['kelurahan'],
+                              ),
+                              _text(
+                                'Alamat Lengkap',
+                                _alamatCtrl,
+                                (v) => _data.alamat = v,
+                                lines: 3,
+                                icon: Icons.home_work_outlined,
+                                autofillKey: 'alamat',
+                              ),
+                            ],
+                          ),
+                        ),
+                        FormSectionOss(
+                          number: 3,
+                          title: 'Lokasi dan Peta',
+                          subtitle:
+                              'Ambil koordinat langsung dari perangkat petugas.',
+                          icon: Icons.gps_fixed,
+                          hasError: _sectionErrors.contains(_Section.lokasi),
+                          child: LocationPicker(
+                            latitude: _data.latitude,
+                            longitude: _data.longitude,
+                            loading: gpsLoading,
+                            status: gpsStatus,
+                            sisaDetik: gpsCountdown,
+                            source: gpsSource,
+                            savedAt: gpsSavedAt,
+                            onGetLocation: () => ambilLokasiGps(
+                              onBerhasil: (hasil) => setState(() {
+                                _data.latitude = hasil.position.latitude
+                                    .toStringAsFixed(8);
+                                _data.longitude = hasil.position.longitude
+                                    .toStringAsFixed(8);
+                              }),
+                            ),
+                          ),
+                        ),
+                        FormSectionOss(
+                          number: 4,
+                          title: 'Kontak',
+                          subtitle:
+                              'Data kontak aktif memudahkan proses verifikasi.',
+                          icon: Icons.contact_phone,
+                          hasError: _sectionErrors.contains(_Section.kontak),
+                          child: Column(
+                            children: [
+                              _text(
+                                'NPWPD',
+                                _npwpdCtrl,
+                                (v) => _data.npwpd = v,
+                                required: false,
+                                icon: Icons.badge_outlined,
+                              ),
+                              _text(
+                                'Website',
+                                _websiteCtrl,
+                                (v) => _data.website = v,
+                                required: false,
+                                type: TextInputType.url,
+                                hintText: 'https://www.example.com',
+                                validator: _urlValidator,
+                                icon: Icons.language_rounded,
+                              ),
+                              _text(
+                                'Telepon/WhatsApp',
+                                _noHpCtrl,
+                                (v) => _data.noHp = v,
+                                type: TextInputType.phone,
+                                hintText: '081234567890',
+                                inputFormatters: [
+                                  FilteringTextInputFormatter.digitsOnly,
+                                  LengthLimitingTextInputFormatter(15),
+                                ],
+                                validator: _phoneValidator,
+                                icon: Icons.phone_outlined,
+                                autofillKey: 'noHp',
+                              ),
+                              _text(
+                                'Email',
+                                _emailCtrl,
+                                (v) => _data.email = v,
+                                type: TextInputType.emailAddress,
+                                hintText: 'example@example.com',
+                                validator: _emailValidator,
+                                icon: Icons.email_outlined,
+                                autofillKey: 'email',
+                              ),
+                            ],
+                          ),
+                        ),
+                        if (!_isManajemenAkomodasi)
+                          FormSectionOss(
+                            number: 5,
+                            title: 'Platform OTA',
+                            subtitle: 'Catat platform dan URL listing usaha.',
+                            icon: Icons.travel_explore,
+                            hasError: _sectionErrors.contains(_Section.ota),
+                            child: Column(
+                              children: [
+                                _choice<String>(
+                                  label: 'Apakah terdaftar di OTA? *',
+                                  value: _data.terdaftarOta,
+                                  choices: const {'YA': 'Ya', 'TIDAK': 'Tidak'},
+                                  onChanged: (v) =>
+                                      setState(() => _data.terdaftarOta = v),
+                                ),
+                                if (_data.terdaftarOta == 'YA') ...[
+                                  const SizedBox(height: 12),
+                                  OtaPlatformSelector(
+                                    urls: _data.otaUrls,
+                                    onChanged: (v) => setState(() {
+                                      _data.otaUrls
+                                        ..clear()
+                                        ..addAll(v);
+                                    }),
+                                  ),
+                                  if (_data.otaUrls.containsKey('lainnya'))
+                                    Padding(
+                                      padding: const EdgeInsets.only(top: 12),
+                                      child: _text(
+                                        'Nama OTA Lainnya',
+                                        _otaLainnyaCtrl,
+                                        (v) => _data.otaLainnyaNama = v,
+                                        icon: Icons.edit_outlined,
+                                      ),
+                                    ),
+                                ],
+                              ],
+                            ),
+                          ),
+                        if (!_data.isValid)
+                          FormSectionOss(
+                            number: 6,
+                            title: 'Status Hasil Pengawasan',
+                            subtitle:
+                                'Pilih kondisi yang ditemukan di lapangan.',
+                            icon: Icons.report_gmailerrorred_rounded,
+                            hasError: _sectionErrors.contains(
+                              _Section.ketidaksesuaian,
+                            ),
+                            child: StatusKetidaksesuaianSelector(
+                              options: StatusKetidaksesuaianSelector
+                                  .ossStatusHasilOptions,
+                              selected: _data.statusKetidaksesuaian,
                               onChanged: (v) => setState(() {
-                                _data.otaUrls
+                                _data.statusKetidaksesuaian
+                                  ..clear()
+                                  ..addAll(v);
+                              }),
+                              keteranganLainnya:
+                                  _data.keteranganKetidaksesuaian,
+                              onKeteranganChanged: (v) =>
+                                  _data.keteranganKetidaksesuaian = v,
+                            ),
+                          ),
+                        FormSectionOss(
+                          number: _data.isValid ? 6 : 7,
+                          title: 'Catatan dan Tanggal',
+                          icon: Icons.fact_check,
+                          hasError: _sectionErrors.contains(_Section.hasil),
+                          child: Column(
+                            children: [
+                              _text(
+                                'Catatan Petugas',
+                                _catatanPetugasCtrl,
+                                (v) => _data.catatanPetugas = v,
+                                required: false,
+                                lines: 3,
+                                icon: Icons.edit_note_rounded,
+                              ),
+                              ListTile(
+                                contentPadding: EdgeInsets.zero,
+                                title: const Text('Tanggal Pengawasan *'),
+                                subtitle: Text(
+                                  DateFormat(
+                                    'dd-MM-yyyy',
+                                  ).format(_data.tanggalPengawasan),
+                                ),
+                                trailing: const Icon(Icons.calendar_month),
+                                onTap: _date,
+                              ),
+                            ],
+                          ),
+                        ),
+                        if (!_isManajemenAkomodasi)
+                          FormSectionOss(
+                            number: _data.isValid ? 7 : 8,
+                            title: 'Foto Dokumentasi',
+                            subtitle:
+                                'Tambahkan 1–5 foto kondisi usaha di lapangan.',
+                            icon: Icons.photo_camera,
+                            hasError: _sectionErrors.contains(_Section.foto),
+                            child: PhotoPicker(
+                              photos: _data.photos,
+                              onChanged: (v) => setState(() {
+                                _data.photos
                                   ..clear()
                                   ..addAll(v);
                               }),
                             ),
-                            if (_data.otaUrls.containsKey('lainnya'))
-                              Padding(
-                                padding: const EdgeInsets.only(top: 12),
-                                child: _text(
-                                  'Nama OTA Lainnya',
-                                  _otaLainnyaCtrl,
-                                  (v) => _data.otaLainnyaNama = v,
-                                  icon: Icons.edit_outlined,
-                                ),
-                              ),
-                          ],
-                        ],
-                      ),
-                    ),
-                  if (!_data.isValid)
-                    FormSectionOss(
-                      number: 6,
-                      title: 'Status Hasil Pengawasan',
-                      subtitle: 'Pilih kondisi yang ditemukan di lapangan.',
-                      icon: Icons.report_gmailerrorred_rounded,
-                      hasError: _sectionErrors.contains(
-                        _Section.ketidaksesuaian,
-                      ),
-                      child: StatusKetidaksesuaianSelector(
-                        options:
-                            StatusKetidaksesuaianSelector.ossStatusHasilOptions,
-                        selected: _data.statusKetidaksesuaian,
-                        onChanged: (v) => setState(() {
-                          _data.statusKetidaksesuaian
-                            ..clear()
-                            ..addAll(v);
-                        }),
-                        keteranganLainnya: _data.keteranganKetidaksesuaian,
-                        onKeteranganChanged: (v) =>
-                            _data.keteranganKetidaksesuaian = v,
-                      ),
-                    ),
-                  FormSectionOss(
-                    number: _data.isValid ? 6 : 7,
-                    title: 'Catatan dan Tanggal',
-                    icon: Icons.fact_check,
-                    hasError: _sectionErrors.contains(_Section.hasil),
-                    child: Column(
-                      children: [
-                        _text(
-                          'Catatan Petugas',
-                          _catatanPetugasCtrl,
-                          (v) => _data.catatanPetugas = v,
-                          required: false,
-                          lines: 3,
-                          icon: Icons.edit_note_rounded,
-                        ),
-                        ListTile(
-                          contentPadding: EdgeInsets.zero,
-                          title: const Text('Tanggal Pengawasan *'),
-                          subtitle: Text(
-                            DateFormat(
-                              'dd-MM-yyyy',
-                            ).format(_data.tanggalPengawasan),
                           ),
-                          trailing: const Icon(Icons.calendar_month),
-                          onTap: _date,
+                        SizedBox(
+                          height: 54,
+                          child: FilledButton.icon(
+                            onPressed: _saving ? null : _submit,
+                            style: FilledButton.styleFrom(
+                              backgroundColor: AppTheme.primaryColor,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(15),
+                              ),
+                            ),
+                            icon: _saving
+                                ? const SizedBox(
+                                    width: 20,
+                                    height: 20,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      color: Colors.white,
+                                    ),
+                                  )
+                                : Icon(
+                                    _isManajemenAkomodasi
+                                        ? Icons.arrow_forward_rounded
+                                        : Icons.cloud_upload_rounded,
+                                    color: Colors.white,
+                                  ),
+                            label: Text(
+                              _saving
+                                  ? 'Menyimpan data...'
+                                  : (_isManajemenAkomodasi
+                                        ? 'Lanjut ke Tahap 2'
+                                        : 'Simpan Pengawasan'),
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w800,
+                                fontSize: 15,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ),
                         ),
+                        const SizedBox(height: 24),
                       ],
                     ),
                   ),
-                  if (!_isManajemenAkomodasi)
-                    FormSectionOss(
-                      number: _data.isValid ? 7 : 8,
-                      title: 'Foto Dokumentasi',
-                      subtitle: 'Tambahkan 1–5 foto kondisi usaha di lapangan.',
-                      icon: Icons.photo_camera,
-                      hasError: _sectionErrors.contains(_Section.foto),
-                      child: PhotoPicker(
-                        photos: _data.photos,
-                        onChanged: (v) => setState(() {
-                          _data.photos
-                            ..clear()
-                            ..addAll(v);
-                        }),
-                      ),
-                    ),
-                  SizedBox(
-                    height: 54,
-                    child: FilledButton.icon(
-                      onPressed: _saving ? null : _submit,
-                      style: FilledButton.styleFrom(
-                        backgroundColor: AppTheme.primaryColor,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(15),
-                        ),
-                      ),
-                      icon: _saving
-                          ? const SizedBox(
-                              width: 20,
-                              height: 20,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                color: Colors.white,
-                              ),
-                            )
-                          : Icon(
-                              _isManajemenAkomodasi
-                                  ? Icons.arrow_forward_rounded
-                                  : Icons.cloud_upload_rounded,
-                              color: Colors.white,
-                            ),
-                      label: Text(
-                        _saving
-                            ? 'Menyimpan data...'
-                            : (_isManajemenAkomodasi
-                                  ? 'Lanjut ke Tahap 2'
-                                  : 'Simpan Pengawasan'),
-                        style: const TextStyle(
-                          fontWeight: FontWeight.w800,
-                          fontSize: 15,
-                          color: Colors.white,
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 24),
-                ],
+                ),
               ),
             ),
     ),

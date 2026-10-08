@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import 'dart:async';
@@ -24,6 +25,7 @@ import 'widgets/ota_selector.dart';
 import 'widgets/photo_picker.dart';
 
 import 'offline/offline_queue_service.dart';
+import 'package:ipardasbor/shared/validators/form_validators.dart';
 
 class NonOssFormPage extends StatefulWidget {
   const NonOssFormPage({
@@ -463,49 +465,10 @@ class _NonOssFormPageState extends State<NonOssFormPage>
   String? _required(String? v) =>
       v == null || v.trim().isEmpty ? 'Wajib diisi.' : null;
 
-  // ---------------------------------------------------------------------
-  // Validator format nomor telepon.
-  // Pengecekan "wajib diisi" SENGAJA tidak dilakukan di sini karena sudah
-  // ditangani oleh _buildChecks (lihat _RequiredCheck) - supaya field ini
-  // tidak menampilkan dua peringatan sekaligus untuk kondisi kosong.
-  // Validator ini hanya memeriksa format saat field sudah terisi (panjang
-  // 9-15 digit; karakter non-angka sudah dicegah lewat inputFormatters
-  // sehingga tidak perlu dicek ulang di sini).
-  // ---------------------------------------------------------------------
-  String? _phoneValidator(String? v) {
-    final value = v?.trim() ?? '';
-    if (value.isEmpty) return null;
-    if (value.length < 9 || value.length > 15) {
-      return 'Nomor telepon harus 9-15 digit.';
-    }
-    return null;
-  }
+  String? _phoneValidator(String? v) => FormValidators.phone(v);
+  String? _urlValidator(String? v) => FormValidators.url(v);
 
-  // Validator URL. Field Website bersifat opsional, jadi hanya divalidasi
-  // formatnya ketika diisi.
-  String? _urlValidator(String? v) {
-    final value = v?.trim() ?? '';
-    if (value.isEmpty) return null;
-    final uri = Uri.tryParse(value);
-    final valid =
-        uri != null &&
-        uri.hasScheme &&
-        (uri.scheme == 'http' || uri.scheme == 'https') &&
-        uri.host.isNotEmpty;
-    return valid ? null : 'Masukkan URL yang valid, contoh: https://contoh.com';
-  }
-
-  // Validator email. Field Email
-  static final RegExp _emailPattern = RegExp(
-    r'^[\w\.\-\+]+@[\w\-]+\.[\w\-\.]+$',
-  );
-  String? _emailValidator(String? v) {
-    final value = v?.trim() ?? '';
-    if (value.isEmpty) return 'Wajib diisi.';
-    return _emailPattern.hasMatch(value)
-        ? null
-        : 'Masukkan alamat email yang valid.';
-  }
+  String? _emailValidator(String? v) => FormValidators.email(v, wajib: true);
 
   bool _hasInvalidOtaUrl() {
     if (_data.terdaftarOta != 'YA') return false;
@@ -969,6 +932,7 @@ class _NonOssFormPageState extends State<NonOssFormPage>
             : Form(
                 key: _key,
                 child: ListView(
+                  scrollCacheExtent: const ScrollCacheExtent.pixels(10000),
                   keyboardDismissBehavior:
                       ScrollViewKeyboardDismissBehavior.onDrag,
                   padding: const EdgeInsets.fromLTRB(16, 18, 16, 30),

@@ -89,6 +89,7 @@ class _OssValidasiPageState extends State<OssValidasiPage> {
     _nibCtrl.dispose();
     _kbliCtrl.dispose();
     _nkuCtrl.dispose();
+    _api.close();
     super.dispose();
   }
 
