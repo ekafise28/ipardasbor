@@ -6,13 +6,13 @@ import 'package:ipardasbor/shared/widgets/connection_error_state.dart';
 import '../../core/api/api_exception.dart';
 import '../../app/app_theme.dart';
 
+import 'dashboard_colors.dart';
 import 'models/dashboard_data.dart';
 
 import 'models/chart_series.dart';
 import 'models/dashboard_map_model.dart';
 
-import 'widget/dashboard_bar_chart.dart';
-import 'widget/dashboard_data_table.dart';
+import 'widget/dashboard_chart_table_card.dart';
 import 'widget/dashboard_map_section.dart';
 import 'widget/dashboard_filter_panel.dart';
 
@@ -135,6 +135,16 @@ class _DashboardPageState extends State<DashboardPage> {
     await _loadDashboard(showLoading: false);
   }
 
+  void _applyFilters(DashboardFilterValues values) {
+    setState(() => _filterValues = values);
+    _loadDashboard(); // showLoading: true (default)
+  }
+
+  void _resetFilters() {
+    setState(() => _filterValues = DashboardFilterValues.empty);
+    _loadDashboard(); // showLoading: true (default)
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -178,7 +188,22 @@ class _DashboardPageState extends State<DashboardPage> {
           const SizedBox(width: 8),
         ],
       ),
-      body: SafeArea(child: _buildBody()),
+      body: SafeArea(
+        child: Stack(
+          children: [
+            _buildBody(),
+            // Penanda tipis saat data sedang diperbarui (filter/muat ulang)
+            // sementara data lama masih tampil.
+            if (_isLoading && _dashboard != null)
+              const Positioned(
+                top: 0,
+                left: 0,
+                right: 0,
+                child: LinearProgressIndicator(minHeight: 3),
+              ),
+          ],
+        ),
+      ),
     );
   }
 
@@ -214,27 +239,19 @@ class _DashboardPageState extends State<DashboardPage> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _buildDashboardHeader(dashboard),
-        const SizedBox(height: 22),
+        const SizedBox(height: 16),
 
-        // Filter Dashboard
+        // Filter Dashboard (ringkas: chip filter aktif + bottom sheet)
         // =================================================
         DashboardFilterPanel(
           districtOptions: dashboard.filterOptions.districts,
           dataSourceOptions: dashboard.filterOptions.dataSources,
           initialValues: _filterValues,
           isLoading: _isLoading,
-          onApply: (values) {
-            setState(() => _filterValues = values);
-            _loadDashboard(); // showLoading: true (default)
-          },
-          onReset: () {
-            setState(() => _filterValues = DashboardFilterValues.empty);
-            _loadDashboard(); // showLoading: true (default)
-          },
+          onApply: _applyFilters,
+          onReset: _resetFilters,
         ),
 
-        // Filter Dashboard
-        // =================================================
         const SizedBox(height: 22),
         _buildSectionTitle(
           title: 'Ringkasan Pengawasan',
@@ -246,21 +263,19 @@ class _DashboardPageState extends State<DashboardPage> {
         _buildVerificationSection(dashboard.summary),
         const SizedBox(height: 24),
         _buildDataCompositionSection(dashboard.summary),
-        const SizedBox(height: 24),
-        _buildRecapSection(dashboard),
 
-        // Start SEBARAN PENGAWASAN PER KABUPATEN/KOTA
+        // SEBARAN PENGAWASAN PER KABUPATEN/KOTA (grafik | tabel)
         // ============================================================
         const SizedBox(height: 24),
-        DashboardBarChart(
+        DashboardChartTableCard(
           title: 'Sebaran Pengawasan per Kabupaten/Kota',
           subtitle: 'Perbandingan data OSS, Non OSS, dan total pengawasan.',
-          data: ChartSeriesData.fromDynamic(
+          chartData: ChartSeriesData.fromDynamic(
             dashboard.charts.district,
             seriesConfig: const [
-              MapEntry('total', AppTheme.primaryColor),
-              MapEntry('oss', Color(0xFF16A66A)),
-              MapEntry('non_oss', Color(0xFF7857E6)),
+              MapEntry('total', DashboardColors.total),
+              MapEntry('oss', DashboardColors.oss),
+              MapEntry('non_oss', DashboardColors.nonOss),
             ],
             seriesLabelOverride: const {
               'total': 'Total Pengawasan',
@@ -268,15 +283,6 @@ class _DashboardPageState extends State<DashboardPage> {
               'non_oss': 'Non OSS',
             },
           ),
-        ),
-        const SizedBox(height: 16),
-        // End SEBARAN PENGAWASAN PER KABUPATEN/KOTA
-        // ============================================================
-
-        // Start Tabel SEBARAN PENGAWASAN PER KABUPATEN/KOTA
-        // ============================================================
-        DashboardDataTable(
-          title: 'Rekap Kabupaten/Kota',
           columns: const ['Kabupaten', 'OSS', 'Non OSS', 'Total'],
           rows: dashboard.districtRecap.map((row) {
             return [
@@ -287,23 +293,21 @@ class _DashboardPageState extends State<DashboardPage> {
             ];
           }).toList(),
         ),
-        // End Tabel SEBARAN PENGAWASAN PER KABUPATEN/KOTA
-        // ============================================================
 
-        // Start LEGALITAS NIB USAHA AKOMODASI
+        // LEGALITAS NIB (grafik | tabel)
         // ============================================================
-        const SizedBox(height: 48),
-        DashboardBarChart(
+        const SizedBox(height: 16),
+        DashboardChartTableCard(
           title: 'Legalitas NIB $_labelBidang',
           subtitle: 'Kepemilikan NIB berdasarkan Kabupaten/Kota.',
-          data: ChartSeriesData.fromDynamic(
+          chartData: ChartSeriesData.fromDynamic(
             dashboard
                 .charts
                 .district, // <-- sebelumnya: dashboard.charts.legalitasNib
             seriesConfig: const [
-              MapEntry('nib_ya', Color(0xFF16A66A)),
-              MapEntry('nib_tidak', Color(0xFFE05C6E)),
-              MapEntry('nib_tidak_tahu', Color(0xFFF2A93B)),
+              MapEntry('nib_ya', DashboardColors.yes),
+              MapEntry('nib_tidak', DashboardColors.no),
+              MapEntry('nib_tidak_tahu', DashboardColors.unknown),
             ],
             seriesLabelOverride: const {
               'nib_ya': 'Memiliki NIB',
@@ -311,15 +315,6 @@ class _DashboardPageState extends State<DashboardPage> {
               'nib_tidak_tahu': 'Tidak Tahu',
             },
           ),
-        ),
-        const SizedBox(height: 16),
-        // End LEGALITAS NIB USAHA AKOMODASI
-        // ============================================================
-
-        // Start Tabel LEGALITAS NIB USAHA AKOMODASI
-        // ============================================================
-        DashboardDataTable(
-          title: 'Tabel Legalitas NIB',
           columns: const [
             'Kabupaten',
             'Memiliki NIB',
@@ -338,37 +333,26 @@ class _DashboardPageState extends State<DashboardPage> {
             ];
           }).toList(),
         ),
-        // End Tabel LEGALITAS NIB USAHA AKOMODASI
-        // ============================================================
 
-        // Start STATUS PENDAFTARAN PLATFORM OTA
+        // STATUS PENDAFTARAN PLATFORM OTA (grafik | tabel)
         // ============================================================
-        const SizedBox(height: 48),
-        DashboardBarChart(
+        const SizedBox(height: 16),
+        DashboardChartTableCard(
           title: 'Status Pendaftaran Platform OTA',
           subtitle: 'Perbandingan usaha terdaftar dan tidak terdaftar OTA.',
-          data: ChartSeriesData.fromDynamic(
+          chartData: ChartSeriesData.fromDynamic(
             dashboard
                 .charts
                 .district, // <-- sebelumnya: dashboard.charts.statusOta
             seriesConfig: const [
-              MapEntry('ota_ya', Color(0xFF2F86EB)),
-              MapEntry('ota_tidak', Color(0xFFB6BEC9)),
+              MapEntry('ota_ya', DashboardColors.ota),
+              MapEntry('ota_tidak', DashboardColors.neutral),
             ],
             seriesLabelOverride: const {
               'ota_ya': 'Terdaftar OTA',
               'ota_tidak': 'Tidak Terdaftar',
             },
           ),
-        ),
-        const SizedBox(height: 16),
-        // End STATUS PENDAFTARAN PLATFORM OTA
-        // ============================================================
-
-        // Start Tabel STATUS PENDAFTARAN PLATFORM OTA
-        // ============================================================
-        DashboardDataTable(
-          title: 'Tabel Status Pendaftaran OTA',
           columns: const [
             'Kabupaten',
             'Terdaftar OTA',
@@ -386,46 +370,20 @@ class _DashboardPageState extends State<DashboardPage> {
           }).toList(),
         ),
 
-        // End Tabel STATUS PENDAFTARAN PLATFORM OTA
+        // JENIS PRODUK (grafik | tabel)
         // ============================================================
-
-        // ============================================================
-        // Start JENIS PRODUK AKOMODASI (versi horizontal + tabel)
-        // ============================================================
-        // const SizedBox(height: 24),
-        // DashboardHorizontalBarChart(
-        //   title: 'Jenis Produk Akomodasi',
-        //   subtitle:
-        //       'Komposisi jenis produk berdasarkan sumber data.',
-        //   data: ChartSeriesData.fromDynamic(
-        //     dashboard.charts.productType,
-        //     seriesConfig: const [
-        //       MapEntry('total', AppTheme.primaryColor),
-        //       MapEntry('oss', Color(0xFF16A66A)),
-        //       MapEntry('non_oss', Color(0xFF7857E6)),
-        //     ],
-        //   ),
-        // ),
-        // const SizedBox(height: 16),
         const SizedBox(height: 16),
-
-        DashboardBarChart(
+        DashboardChartTableCard(
           title: 'Jenis Produk',
           subtitle: 'Komposisi jenis produk berdasarkan sumber data.',
-          data: ChartSeriesData.fromDynamic(
+          chartData: ChartSeriesData.fromDynamic(
             dashboard.charts.productType,
             seriesConfig: const [
-              MapEntry('total', AppTheme.primaryColor),
-              MapEntry('oss', Color(0xFF16A66A)),
-              MapEntry('non_oss', Color(0xFF7857E6)),
+              MapEntry('total', DashboardColors.total),
+              MapEntry('oss', DashboardColors.oss),
+              MapEntry('non_oss', DashboardColors.nonOss),
             ],
           ),
-        ),
-
-        const SizedBox(height: 16),
-
-        DashboardDataTable(
-          title: 'Tabel Jenis Produk',
           columns: const ['Jenis Produk', 'OSS', 'Non OSS', 'Total'],
           rows: dashboard.productTypeRecap.map((row) {
             return [
@@ -690,29 +648,29 @@ class _DashboardPageState extends State<DashboardPage> {
         title: 'Total Pengawasan',
         value: summary.total,
         icon: Icons.assessment_rounded,
-        color: const Color(0xFF7B1FA2),
-        backgroundColor: const Color(0xFFF3E5F5),
+        color: DashboardColors.total,
+        backgroundColor: DashboardColors.totalBg,
       ),
       _StatisticData(
         title: 'Data OSS',
         value: summary.oss,
         icon: Icons.verified_outlined,
-        color: AppTheme.primaryColor,
-        backgroundColor: AppTheme.menuDashboardBg,
+        color: DashboardColors.oss,
+        backgroundColor: DashboardColors.ossBg,
       ),
       _StatisticData(
         title: 'Data Non-OSS',
         value: summary.nonOss,
         icon: Icons.domain_add_outlined,
-        color: const Color(0xFF00897B),
-        backgroundColor: const Color(0xFFE2F5F1),
+        color: DashboardColors.nonOss,
+        backgroundColor: DashboardColors.nonOssBg,
       ),
       _StatisticData(
         title: 'Terdaftar OTA',
         value: summary.ota,
         icon: Icons.travel_explore_rounded,
-        color: AppTheme.menuOta,
-        backgroundColor: const Color(0xFFFBE9E7),
+        color: DashboardColors.ota,
+        backgroundColor: DashboardColors.otaBg,
       ),
     ];
 
@@ -786,67 +744,28 @@ class _DashboardPageState extends State<DashboardPage> {
       title: 'Komposisi Data',
       subtitle: 'Distribusi berdasarkan sumber data pengawasan.',
       icon: Icons.donut_large_rounded,
-      iconColor: const Color(0xFF7B1FA2),
+      iconColor: DashboardColors.total,
       child: Column(
         children: [
           _CompositionRow(
             label: 'OSS',
             value: summary.oss,
             percentage: ossPercentage,
-            color: AppTheme.primaryColor,
+            color: DashboardColors.oss,
           ),
           const SizedBox(height: 17),
           _CompositionRow(
             label: 'Non-OSS',
             value: summary.nonOss,
             percentage: nonOssPercentage,
-            color: const Color(0xFF00897B),
+            color: DashboardColors.nonOss,
           ),
           const SizedBox(height: 17),
           _CompositionRow(
             label: 'Terdaftar OTA',
             value: summary.ota,
             percentage: otaPercentage,
-            color: AppTheme.menuOta,
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildRecapSection(DashboardData dashboard) {
-    return _DashboardPanel(
-      title: 'Data Pendukung',
-      subtitle: 'Jumlah kategori pada hasil rekapitulasi.',
-      icon: Icons.table_chart_outlined,
-      iconColor: const Color(0xFF455A64),
-      child: Column(
-        children: [
-          _RecapTile(
-            icon: Icons.location_city_rounded,
-            title: 'Kabupaten/Kota',
-            value: dashboard
-                .districtRecap
-                .length, // sebelumnya: dashboard.totalDistrict
-            color: AppTheme.primaryColor,
-          ),
-          const Divider(height: 25),
-          _RecapTile(
-            icon: Icons.travel_explore_rounded,
-            title: 'Platform OTA',
-            value: dashboard
-                .platformRecap
-                .length, // sebelumnya: dashboard.totalPlatform
-            color: AppTheme.menuOta,
-          ),
-          const Divider(height: 25),
-          _RecapTile(
-            icon: Icons.hotel_rounded,
-            title: 'Jenis Produk',
-            value: dashboard
-                .productTypeRecap
-                .length, // sebelumnya: dashboard.totalProductType
-            color: const Color(0xFF7B1FA2),
+            color: DashboardColors.ota,
           ),
         ],
       ),
@@ -1177,56 +1096,6 @@ class _CompositionRow extends StatelessWidget {
               fontSize: 12,
               fontWeight: FontWeight.w800,
             ),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _RecapTile extends StatelessWidget {
-  final IconData icon;
-  final String title;
-  final int value;
-  final Color color;
-
-  const _RecapTile({
-    required this.icon,
-    required this.title,
-    required this.value,
-    required this.color,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Container(
-          width: 41,
-          height: 41,
-          decoration: BoxDecoration(
-            color: color.withValues(alpha: 0.10),
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Icon(icon, color: color, size: 21),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: Text(
-            title,
-            style: TextStyle(
-              color: AppTheme.textColor(context),
-              fontSize: 14,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-        ),
-        Text(
-          _formatNumber(value),
-          style: TextStyle(
-            color: color,
-            fontSize: 17,
-            fontWeight: FontWeight.w900,
           ),
         ),
       ],

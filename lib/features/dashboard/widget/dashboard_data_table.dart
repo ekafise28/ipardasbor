@@ -2,8 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:ipardasbor/app/app_theme.dart';
 
-/// Sama seperti DashboardDataTable sebelumnya, tapi sekarang pakai
-/// pagination next/prev (client-side) alih-alih expand/collapse.
+/// Tabel rekap dengan pagination next/prev (client-side).
 ///
 /// Cocok untuk tabel rekap yang jumlah barisnya puluhan (misal per
 /// kabupaten/kota) -- semua baris sudah ada di memori dari hasil fetch,
@@ -19,12 +18,17 @@ class DashboardDataTable extends StatefulWidget {
   final List<List<String>> rows;
   final int rowsPerPage;
 
+  /// Kalau true, widget hanya menggambar badge jumlah baris + tabel, tanpa
+  /// kartu dan judul. Dipakai di dalam [DashboardChartTableCard].
+  final bool embedded;
+
   const DashboardDataTable({
     super.key,
     required this.title,
     required this.columns,
     required this.rows,
     this.rowsPerPage = 10,
+    this.embedded = false,
   });
 
   @override
@@ -61,9 +65,87 @@ class _DashboardDataTableState extends State<DashboardDataTable> {
     setState(() => _page = page.clamp(0, _totalPages - 1));
   }
 
+  Widget _rowCountBadge(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
+      decoration: BoxDecoration(
+        color: AppTheme.surfaceMuted(context),
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Text(
+        '${widget.rows.length} baris',
+        style: TextStyle(
+          color: AppTheme.textSecondary(context),
+          fontSize: 11,
+          fontWeight: FontWeight.w700,
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     if (widget.rows.isEmpty) return const SizedBox.shrink();
+
+    final Widget table = Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: DataTable(
+            headingRowColor: WidgetStateProperty.all(
+              AppTheme.surfaceMuted(context),
+            ),
+            columns: widget.columns
+                .map(
+                  (c) => DataColumn(
+                    label: Text(
+                      c,
+                      style: TextStyle(
+                        fontWeight: FontWeight.w700,
+                        fontSize: 12,
+                        color: AppTheme.textColor(context),
+                      ),
+                    ),
+                  ),
+                )
+                .toList(),
+            rows: _visibleRows.map((r) {
+              return DataRow(
+                cells: r
+                    .map(
+                      (cell) => DataCell(
+                        Text(
+                          cell,
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: AppTheme.textColor(context),
+                          ),
+                        ),
+                      ),
+                    )
+                    .toList(),
+              );
+            }).toList(),
+          ),
+        ),
+        if (_needsPagination) ...[const SizedBox(height: 12), _buildPager()],
+      ],
+    );
+
+    if (widget.embedded) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Align(
+            alignment: Alignment.centerRight,
+            child: _rowCountBadge(context),
+          ),
+          const SizedBox(height: 10),
+          table,
+        ],
+      );
+    }
 
     return Container(
       width: double.infinity,
@@ -88,64 +170,11 @@ class _DashboardDataTableState extends State<DashboardDataTable> {
                   ),
                 ),
               ),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
-                decoration: BoxDecoration(
-                  color: AppTheme.surfaceMuted(context),
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Text(
-                  '${widget.rows.length} baris',
-                  style: TextStyle(
-                    color: AppTheme.textSecondary(context),
-                    fontSize: 11,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ),
+              _rowCountBadge(context),
             ],
           ),
           const SizedBox(height: 14),
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: DataTable(
-              headingRowColor: WidgetStateProperty.all(
-                AppTheme.surfaceMuted(context),
-              ),
-              columns: widget.columns
-                  .map(
-                    (c) => DataColumn(
-                      label: Text(
-                        c,
-                        style: TextStyle(
-                          fontWeight: FontWeight.w700,
-                          fontSize: 12,
-                          color: AppTheme.textColor(context),
-                        ),
-                      ),
-                    ),
-                  )
-                  .toList(),
-              rows: _visibleRows.map((r) {
-                return DataRow(
-                  cells: r
-                      .map(
-                        (cell) => DataCell(
-                          Text(
-                            cell,
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: AppTheme.textColor(context),
-                            ),
-                          ),
-                        ),
-                      )
-                      .toList(),
-                );
-              }).toList(),
-            ),
-          ),
-          if (_needsPagination) ...[const SizedBox(height: 12), _buildPager()],
+          table,
         ],
       ),
     );
