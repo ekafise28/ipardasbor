@@ -4,6 +4,7 @@ import 'package:ipardasbor/features/notifications/services/notification_category
 import 'package:ipardasbor/features/notifications/services/notification_local_service.dart';
 import 'package:ipardasbor/features/notifications/services/notification_retention_controller.dart';
 import 'package:ipardasbor/features/notifications/services/notification_statusbar_controller.dart';
+import 'package:ipardasbor/shared/screenshot/screenshot_button_controller.dart';
 
 import 'app/app.dart';
 import 'app/app_theme.dart';
@@ -16,5 +17,6 @@ void main() async {
   await NotificationCategoryPreferences.instance.loadSavedPreference();
   await NotificationStatusBarController.instance.loadSavedPreference();
   await NotificationLocalService.instance.init();
+  await ScreenshotButtonController.instance.loadSavedPreference();
   runApp(const IparApp());
 }

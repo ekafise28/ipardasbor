@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:ipardasbor/features/non_oss/offline/offline_database.dart';
 import 'package:ipardasbor/features/non_oss/services/wilayah_akses_service.dart';
 import 'package:ipardasbor/features/notifications/notification_settings_page.dart';
+import 'package:ipardasbor/shared/screenshot/screenshot_button_controller.dart';
 
 import '../../app/app_theme.dart';
 import '../authentication/models/auth_user.dart';
@@ -50,6 +51,70 @@ class _SettingsPageState extends State<SettingsPage> {
       backgroundColor: AppTheme.menuKeamananBg,
     ),
   ];
+
+  Widget _buildScreenshotTile() {
+    return ValueListenableBuilder<bool>(
+      valueListenable: ScreenshotButtonController.instance,
+      builder: (context, aktif, _) {
+        return Container(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+          decoration: BoxDecoration(
+            color: AppTheme.surface(context),
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: AppTheme.border(context)),
+          ),
+          child: Row(
+            children: [
+              Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                  color: AppTheme.menuTampilanBg,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(
+                  Icons.screenshot_rounded,
+                  color: AppTheme.menuTampilan,
+                ),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Tombol Screenshot',
+                      style: TextStyle(
+                        color: AppTheme.textColor(context),
+                        fontSize: 14.5,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      aktif
+                          ? 'Tombol mengambang tampil di semua halaman'
+                          : 'Tombol screenshot disembunyikan',
+                      style: TextStyle(
+                        color: AppTheme.textSecondary(context),
+                        fontSize: 12,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Switch(
+                value: aktif,
+                activeTrackColor: AppTheme.menuTampilan,
+                onChanged: (v) =>
+                    ScreenshotButtonController.instance.setEnabled(v),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
 
   Widget _buildDarkModeTile() {
     return ValueListenableBuilder<ThemeMode>(
@@ -141,7 +206,9 @@ class _SettingsPageState extends State<SettingsPage> {
   void _openMenu(MenuData menu) {
     if (menu.title == 'Notifikasi') {
       Navigator.of(context).push(
-        MaterialPageRoute<void>(builder: (_) => const NotificationSettingsPage()),
+        MaterialPageRoute<void>(
+          builder: (_) => const NotificationSettingsPage(),
+        ),
       );
       return;
     }
@@ -362,6 +429,8 @@ class _SettingsPageState extends State<SettingsPage> {
                 _buildDarkModeTile(),
                 const SizedBox(height: 10),
                 _buildAutoSyncTile(),
+                const SizedBox(height: 10),
+                _buildScreenshotTile(),
                 const SizedBox(height: 10),
                 for (final menu in _preferenceMenus) ...[
                   MenuListTile(menu: menu, onTap: () => _openMenu(menu)),
