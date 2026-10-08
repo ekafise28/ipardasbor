@@ -4,6 +4,8 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../../app/app_theme.dart';
 import '../models/baseline_ota_item.dart';
 
+import '../../../shared/widgets/distance_badge.dart';
+
 /// Satu kartu listing baseline OTA, padanan satu baris tabel di
 /// oss_baseline_ota.index (web). Tombol verifikasi disembunyikan dan
 /// diganti kotak info hijau kalau [item.sudahDiverifikasi].
@@ -88,7 +90,9 @@ class BaselineOtaCard extends StatelessWidget {
                           ),
                         ),
                         const SizedBox(width: 8),
-                        OtaStatusBadge(sudahDiverifikasi: item.sudahDiverifikasi),
+                        OtaStatusBadge(
+                          sudahDiverifikasi: item.sudahDiverifikasi,
+                        ),
                       ],
                     ),
                     const SizedBox(height: 8),
@@ -99,6 +103,8 @@ class BaselineOtaCard extends StatelessWidget {
                       runSpacing: 4,
                       children: [
                         OtaPlatformChip(platform: item.platformOta),
+                        if (item.jarakKm != null)
+                          DistanceBadge(km: item.jarakKm!),
                         if (item.scrapedAt != null)
                           Text(
                             'Scraping ${_tgl(item.scrapedAt!)}',

@@ -11,6 +11,8 @@ class BaselineOtaFilter {
     this.namaListing,
     this.status,
     this.perPage = 50,
+    this.lat,
+    this.lng,
   });
 
   int? provinsiId;
@@ -32,6 +34,12 @@ class BaselineOtaFilter {
       (namaListing ?? '').trim().isNotEmpty ||
       status != null;
 
+  double? lat;
+  double? lng;
+
+  /// true = mode "Dekat saya" aktif (server mengurutkan menurut jarak).
+  bool get urutJarak => lat != null && lng != null;
+
   BaselineOtaFilter copyWith({
     int? provinsiId,
     int? kabupatenId,
@@ -46,6 +54,7 @@ class BaselineOtaFilter {
     String? status,
     bool clearStatus = false,
     int? perPage,
+    double? lat, double? lng,
   }) {
     return BaselineOtaFilter(
       provinsiId: provinsiId ?? this.provinsiId,
@@ -56,10 +65,13 @@ class BaselineOtaFilter {
       namaListing: namaListing ?? this.namaListing,
       status: clearStatus ? null : (status ?? this.status),
       perPage: perPage ?? this.perPage,
+      lat: lat ?? this.lat,
+      lng: lng ?? this.lng,
     );
   }
 
-  BaselineOtaFilter reset() => BaselineOtaFilter(provinsiId: provinsiId, perPage: perPage);
+  BaselineOtaFilter reset() =>
+    BaselineOtaFilter(provinsiId: provinsiId, perPage: perPage, lat: lat, lng: lng);
 
   /// _buildUri() di ApiClient sudah otomatis membuang value null/kosong,
   /// jadi di sini tidak perlu filter manual.
@@ -74,6 +86,8 @@ class BaselineOtaFilter {
       'platform_ota': platformOta,
       'nama_listing': namaListing,
       'status': status,
+      'lat': lat,
+'lng': lng,
     };
   }
 }

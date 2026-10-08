@@ -46,6 +46,7 @@ class BaselineOtaItem {
     required this.scrapedAt,
     required this.statusVerifikasiRingkas,
     required this.verifikasiAktif,
+    this.jarakKm,
   });
 
   final int id;
@@ -64,6 +65,7 @@ class BaselineOtaItem {
   final DateTime? scrapedAt;
   final String statusVerifikasiRingkas;
   final BaselineOtaVerifikasi? verifikasiAktif;
+  final double? jarakKm;
 
   bool get sudahDiverifikasi => statusVerifikasiRingkas == 'SUDAH';
 
@@ -101,6 +103,7 @@ class BaselineOtaItem {
               Map<String, dynamic>.from(json['verifikasi_aktif'] as Map),
             )
           : null,
+      jarakKm: toDouble(json['jarak_km']),
     );
   }
 }

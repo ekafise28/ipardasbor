@@ -11,11 +11,13 @@ import '../../../core/api/api_exception.dart';
 import '../models/baseline_ota_filter.dart';
 import '../models/baseline_ota_item.dart';
 import '../models/baseline_ota_page_result.dart';
+import '../../non_oss/models/location_fetch_status.dart';
 
 import '../../non_oss/non_oss_form_page.dart';
 import 'baseline_ota_detail_page.dart';
 
 import '../../non_oss/services/region_service.dart';
+import '../../../shared/gps/gps_capture_mixin.dart';
 import '../services/baseline_ota_service.dart';
 
 import '../widgets/baseline_ota_filter_sheet.dart';
@@ -29,7 +31,8 @@ class BaselineOtaPage extends StatefulWidget {
   State<BaselineOtaPage> createState() => _BaselineOtaPageState();
 }
 
-class _BaselineOtaPageState extends State<BaselineOtaPage> {
+class _BaselineOtaPageState extends State<BaselineOtaPage>
+    with WidgetsBindingObserver, GpsCaptureMixin<BaselineOtaPage> {
   late final BaselineOtaService _service;
   final RegionService _regions = RegionService();
   final ScrollController _scroll = ScrollController();
@@ -53,6 +56,7 @@ class _BaselineOtaPageState extends State<BaselineOtaPage> {
   @override
   void initState() {
     super.initState();
+    initGpsCapture();
     _service = BaselineOtaService(ApiClient());
     _scroll.addListener(_onScroll);
     _muatHalamanPertama();
@@ -62,6 +66,7 @@ class _BaselineOtaPageState extends State<BaselineOtaPage> {
   void dispose() {
     _scroll.dispose();
     _searchCtrl.dispose();
+    disposeGpsCapture();
     super.dispose();
   }
 
@@ -143,6 +148,36 @@ class _BaselineOtaPageState extends State<BaselineOtaPage> {
     }
   }
 
+  /// Catatan kalau jarak dihitung dari lokasi tersimpan, bukan posisi sekarang.
+  String? _infoLokasi;
+
+  Future<void> _toggleDekatSaya() async {
+    if (_filter.urutJarak) {
+      setState(() {
+        _filter.lat = null;
+        _filter.lng = null;
+        _infoLokasi = null;
+      });
+      if (_scroll.hasClients) _scroll.jumpTo(0);
+      await _muatHalamanPertama();
+      return;
+    }
+
+    await ambilLokasiGps(
+      onBerhasil: (hasil) {
+        setState(() {
+          _filter.lat = hasil.position.latitude;
+          _filter.lng = hasil.position.longitude;
+          _infoLokasi = hasil.source == LocationSource.gpsLangsung
+              ? null
+              : 'Memakai lokasi tersimpan, bukan posisi Anda saat ini.';
+        });
+        if (_scroll.hasClients) _scroll.jumpTo(0);
+        _muatHalamanPertama();
+      },
+    );
+  }
+
   Future<void> _bukaFilter() async {
     if (_filterOptions == null) return;
     final BaselineOtaFilter? hasil =
@@ -192,6 +227,9 @@ class _BaselineOtaPageState extends State<BaselineOtaPage> {
     _searchCtrl.clear();
     setState(() {
       _filter = _filter.reset();
+      _filter.lat = null;
+      _filter.lng = null;
+      _infoLokasi = null;
       _namaKecamatan = null;
       _namaKelurahan = null;
     });
@@ -440,23 +478,41 @@ class _BaselineOtaPageState extends State<BaselineOtaPage> {
               alignment: Alignment.centerLeft,
               child: Wrap(
                 spacing: 8,
-                children:
-                    [
-                      (null, 'Semua'),
-                      ('BELUM', 'Belum diverifikasi'),
-                      ('SUDAH', 'Terverifikasi'),
-                    ].map((e) {
-                      final (String? value, String label) = e;
-                      return ChoiceChip(
-                        label: Text(
-                          label,
-                          style: const TextStyle(fontSize: 12.5),
-                        ),
-                        selected: _filter.status == value,
-                        visualDensity: VisualDensity.compact,
-                        onSelected: (_) => _setStatus(value),
-                      );
-                    }).toList(),
+                children: [
+                  ...[
+                    (null, 'Semua'),
+                    ('BELUM', 'Belum diverifikasi'),
+                    ('SUDAH', 'Terverifikasi'),
+                  ].map((e) {
+                    final (String? value, String label) = e;
+                    return ChoiceChip(
+                      label: Text(
+                        label,
+                        style: const TextStyle(fontSize: 12.5),
+                      ),
+                      selected: _filter.status == value,
+                      visualDensity: VisualDensity.compact,
+                      onSelected: (_) => _setStatus(value),
+                    );
+                  }),
+                  FilterChip(
+                    avatar: gpsLoading
+                        ? const SizedBox(
+                            width: 14,
+                            height: 14,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : const Icon(Icons.near_me_rounded, size: 16),
+                    label: const Text(
+                      'Dekat saya',
+                      style: TextStyle(fontSize: 12.5),
+                    ),
+                    selected: _filter.urutJarak,
+                    showCheckmark: false,
+                    visualDensity: VisualDensity.compact,
+                    onSelected: gpsLoading ? null : (_) => _toggleDekatSaya(),
+                  ),
+                ],
               ),
             ),
           ),
@@ -466,12 +522,29 @@ class _BaselineOtaPageState extends State<BaselineOtaPage> {
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
               child: Align(
                 alignment: Alignment.centerLeft,
-                child: Text(
-                  '$_provinsiNama · $_total data ditemukan',
-                  style: TextStyle(
-                    fontSize: 11.5,
-                    color: AppTheme.textSecondary(context),
-                  ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      '$_provinsiNama · $_total data ditemukan'
+                      '${_filter.urutJarak ? ' · terdekat dulu' : ''}',
+                      style: TextStyle(
+                        fontSize: 11.5,
+                        color: AppTheme.textSecondary(context),
+                      ),
+                    ),
+                    if (_filter.urutJarak && _infoLokasi != null)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 2),
+                        child: Text(
+                          _infoLokasi!,
+                          style: const TextStyle(
+                            fontSize: 11.5,
+                            color: Color(0xFFD08A00),
+                          ),
+                        ),
+                      ),
+                  ],
                 ),
               ),
             ),
@@ -511,7 +584,7 @@ class _BaselineOtaPageState extends State<BaselineOtaPage> {
     }
 
     if (_items.isEmpty) {
-      final bool adaFilter = _filter.isActive;
+      final bool adaFilter = _filter.isActive || _filter.urutJarak;
       return RefreshIndicator(
         onRefresh: () => _muatHalamanPertama(tampilkanLoading: false),
         child: ListView(
