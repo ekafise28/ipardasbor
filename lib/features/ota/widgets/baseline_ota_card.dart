@@ -11,12 +11,14 @@ class BaselineOtaCard extends StatelessWidget {
   const BaselineOtaCard({
     super.key,
     required this.item,
+    required this.onTap,
     required this.onAdaNib,
     required this.onTidakAda,
     required this.onTidakTahu,
   });
 
   final BaselineOtaItem item;
+  final VoidCallback onTap;
   final VoidCallback onAdaNib;
   final VoidCallback onTidakAda;
   final VoidCallback onTidakTahu;
@@ -44,140 +46,148 @@ class BaselineOtaCard extends StatelessWidget {
         : const Color(0xFFE0A100);
     final bool adaAlamat = (item.alamat ?? '').trim().isNotEmpty;
 
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      clipBehavior: Clip.antiAlias,
-      decoration: BoxDecoration(
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Material(
         color: AppTheme.surface(context),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppTheme.border(context)),
-      ),
-      child: Stack(
-        children: [
-          // Strip status di sisi kiri: hijau = terverifikasi, kuning = belum.
-          Positioned(
-            left: 0,
-            top: 0,
-            bottom: 0,
-            child: Container(width: 5, color: strip),
-          ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(19, 14, 14, 14),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
+        clipBehavior: Clip.antiAlias,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+          side: BorderSide(color: AppTheme.border(context)),
+        ),
+        child: InkWell(
+          onTap: onTap,
+          child: Stack(
+            children: [
+              // Strip status di sisi kiri: hijau = terverifikasi, kuning = belum.
+              Positioned(
+                left: 0,
+                top: 0,
+                bottom: 0,
+                child: Container(width: 5, color: strip),
+              ),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(19, 14, 14, 14),
+                child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Expanded(
-                      child: Text(
-                        item.namaListing?.trim().isNotEmpty == true
-                            ? item.namaListing!
-                            : '(Tanpa nama listing)',
-                        style: TextStyle(
-                          color: AppTheme.textColor(context),
-                          fontWeight: FontWeight.w800,
-                          fontSize: 15.5,
-                          height: 1.25,
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Expanded(
+                          child: Text(
+                            item.namaListing?.trim().isNotEmpty == true
+                                ? item.namaListing!
+                                : '(Tanpa nama listing)',
+                            style: TextStyle(
+                              color: AppTheme.textColor(context),
+                              fontWeight: FontWeight.w800,
+                              fontSize: 15.5,
+                              height: 1.25,
+                            ),
+                          ),
                         ),
-                      ),
+                        const SizedBox(width: 8),
+                        OtaStatusBadge(sudahDiverifikasi: item.sudahDiverifikasi),
+                      ],
                     ),
-                    const SizedBox(width: 8),
-                    _StatusBadge(sudahDiverifikasi: item.sudahDiverifikasi),
+                    const SizedBox(height: 8),
+                    // Baris meta: platform (chip berwarna) + tanggal scraping + ID.
+                    Wrap(
+                      crossAxisAlignment: WrapCrossAlignment.center,
+                      spacing: 8,
+                      runSpacing: 4,
+                      children: [
+                        OtaPlatformChip(platform: item.platformOta),
+                        if (item.scrapedAt != null)
+                          Text(
+                            'Scraping ${_tgl(item.scrapedAt!)}',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: AppTheme.textSecondary(context),
+                            ),
+                          ),
+                        Text(
+                          '#${item.id}',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: AppTheme.textMuted,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 10),
+                    if (adaAlamat)
+                      _InfoRow(
+                        icon: Icons.location_on_outlined,
+                        text: item.alamat!,
+                      ),
+                    _InfoRow(
+                      icon: Icons.map_outlined,
+                      text: item.wilayahRingkas,
+                      redup: adaAlamat,
+                    ),
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        _LinkButton(
+                          icon: Icons.open_in_new_rounded,
+                          enabled: (item.sourceUrl ?? '').trim().isNotEmpty,
+                          tooltip: 'Buka listing OTA',
+                          onTap: () => _buka(context, item.sourceUrl),
+                        ),
+                        const SizedBox(width: 8),
+                        _LinkButton(
+                          icon: Icons.map_rounded,
+                          enabled: (item.urlMaps ?? '').trim().isNotEmpty,
+                          tooltip: 'Buka di Maps',
+                          onTap: () => _buka(context, item.urlMaps),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    const Divider(height: 1),
+                    const SizedBox(height: 12),
+                    if (item.sudahDiverifikasi)
+                      OtaSudahDiverifikasiBox(verifikasi: item.verifikasiAktif)
+                    else
+                      Row(
+                        children: [
+                          Expanded(
+                            flex: 5,
+                            child: OtaVerifButton(
+                              label: 'Ada NIB',
+                              color: AppTheme.primaryColor,
+                              filled: true,
+                              onTap: onAdaNib,
+                            ),
+                          ),
+                          const SizedBox(width: 6),
+                          Expanded(
+                            flex: 4,
+                            child: OtaVerifButton(
+                              label: 'Tidak Ada',
+                              color: Colors.red.shade700,
+                              onTap: onTidakAda,
+                            ),
+                          ),
+                          const SizedBox(width: 6),
+                          Expanded(
+                            flex: 4,
+                            child: OtaVerifButton(
+                              label: 'Tidak Tahu',
+                              color: Colors.blueGrey.shade600,
+                              onTap: onTidakTahu,
+                            ),
+                          ),
+                        ],
+                      ),
                   ],
                 ),
-                const SizedBox(height: 8),
-                // Baris meta: platform (chip berwarna) + tanggal scraping + ID.
-                Wrap(
-                  crossAxisAlignment: WrapCrossAlignment.center,
-                  spacing: 8,
-                  runSpacing: 4,
-                  children: [
-                    _PlatformChip(platform: item.platformOta),
-                    if (item.scrapedAt != null)
-                      Text(
-                        'Scraping ${_tgl(item.scrapedAt!)}',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: AppTheme.textSecondary(context),
-                        ),
-                      ),
-                    Text(
-                      '#${item.id}',
-                      style: TextStyle(fontSize: 12, color: AppTheme.textMuted),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 10),
-                if (adaAlamat)
-                  _InfoRow(
-                    icon: Icons.location_on_outlined,
-                    text: item.alamat!,
-                  ),
-                _InfoRow(
-                  icon: Icons.map_outlined,
-                  text: item.wilayahRingkas,
-                  redup: adaAlamat,
-                ),
-                const SizedBox(height: 8),
-                Row(
-                  children: [
-                    _LinkButton(
-                      icon: Icons.open_in_new_rounded,
-                      enabled: (item.sourceUrl ?? '').trim().isNotEmpty,
-                      tooltip: 'Buka listing OTA',
-                      onTap: () => _buka(context, item.sourceUrl),
-                    ),
-                    const SizedBox(width: 8),
-                    _LinkButton(
-                      icon: Icons.map_rounded,
-                      enabled: (item.urlMaps ?? '').trim().isNotEmpty,
-                      tooltip: 'Buka di Maps',
-                      onTap: () => _buka(context, item.urlMaps),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                const Divider(height: 1),
-                const SizedBox(height: 12),
-                if (item.sudahDiverifikasi)
-                  _SudahDiverifikasiBox(verifikasi: item.verifikasiAktif)
-                else
-                  Row(
-                    children: [
-                      Expanded(
-                        flex: 5,
-                        child: _VerifButton(
-                          label: 'Ada NIB',
-                          color: AppTheme.primaryColor,
-                          filled: true,
-                          onTap: onAdaNib,
-                        ),
-                      ),
-                      const SizedBox(width: 6),
-                      Expanded(
-                        flex: 4,
-                        child: _VerifButton(
-                          label: 'Tidak Ada',
-                          color: Colors.red.shade700,
-                          onTap: onTidakAda,
-                        ),
-                      ),
-                      const SizedBox(width: 6),
-                      Expanded(
-                        flex: 4,
-                        child: _VerifButton(
-                          label: 'Tidak Tahu',
-                          color: Colors.blueGrey.shade600,
-                          onTap: onTidakTahu,
-                        ),
-                      ),
-                    ],
-                  ),
-              ],
-            ),
+              ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }
@@ -217,8 +227,8 @@ class _InfoRow extends StatelessWidget {
 
 /// Chip platform dengan warna identitas tiap OTA. Platform yang tidak
 /// dikenal memakai warna netral.
-class _PlatformChip extends StatelessWidget {
-  const _PlatformChip({required this.platform});
+class OtaPlatformChip extends StatelessWidget {
+  const OtaPlatformChip({required this.platform});
   final String? platform;
 
   Color _warna(BuildContext context) {
@@ -293,8 +303,8 @@ class _LinkButton extends StatelessWidget {
   }
 }
 
-class _VerifButton extends StatelessWidget {
-  const _VerifButton({
+class OtaVerifButton extends StatelessWidget {
+  const OtaVerifButton({
     required this.label,
     required this.color,
     required this.onTap,
@@ -346,8 +356,8 @@ class _VerifButton extends StatelessWidget {
   }
 }
 
-class _StatusBadge extends StatelessWidget {
-  const _StatusBadge({required this.sudahDiverifikasi});
+class OtaStatusBadge extends StatelessWidget {
+  const OtaStatusBadge({required this.sudahDiverifikasi});
   final bool sudahDiverifikasi;
 
   @override
@@ -387,8 +397,8 @@ class _StatusBadge extends StatelessWidget {
   }
 }
 
-class _SudahDiverifikasiBox extends StatelessWidget {
-  const _SudahDiverifikasiBox({required this.verifikasi});
+class OtaSudahDiverifikasiBox extends StatelessWidget {
+  const OtaSudahDiverifikasiBox({required this.verifikasi});
   final BaselineOtaVerifikasi? verifikasi;
 
   /// Menerjemahkan nilai status_verifikasi dari backend ke label + warna.

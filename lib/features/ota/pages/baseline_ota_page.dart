@@ -13,6 +13,7 @@ import '../models/baseline_ota_item.dart';
 import '../models/baseline_ota_page_result.dart';
 
 import '../../non_oss/non_oss_form_page.dart';
+import 'baseline_ota_detail_page.dart';
 
 import '../../non_oss/services/region_service.dart';
 import '../services/baseline_ota_service.dart';
@@ -320,6 +321,25 @@ class _BaselineOtaPageState extends State<BaselineOtaPage> {
     );
   }
 
+  Future<void> _bukaDetail(BaselineOtaItem item) async {
+    final BaselineOtaAksi? aksi = await Navigator.of(context)
+        .push<BaselineOtaAksi>(
+          MaterialPageRoute<BaselineOtaAksi>(
+            builder: (_) => BaselineOtaDetailPage(item: item),
+          ),
+        );
+    if (aksi == null || !mounted) return;
+
+    switch (aksi) {
+      case BaselineOtaAksi.adaNib:
+        await _bukaOssProyek(item);
+      case BaselineOtaAksi.tidakAda:
+        await _bukaNonOss(item, 'TIDAK');
+      case BaselineOtaAksi.tidakTahu:
+        await _bukaNonOss(item, 'TIDAK TAHU');
+    }
+  }
+
   Future<void> _bukaOssProyek(BaselineOtaItem item) async {
     final bool? tersimpan = await Navigator.of(context).push<bool>(
       MaterialPageRoute<bool>(
@@ -559,6 +579,7 @@ class _BaselineOtaPageState extends State<BaselineOtaPage> {
           final BaselineOtaItem item = _items[index];
           return BaselineOtaCard(
             item: item,
+            onTap: () => _bukaDetail(item),
             onAdaNib: () => _bukaOssProyek(item),
             onTidakAda: () => _bukaNonOss(item, 'TIDAK'),
             onTidakTahu: () => _bukaNonOss(item, 'TIDAK TAHU'),
