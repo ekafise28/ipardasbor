@@ -19,6 +19,7 @@ import '../settings/settings_page.dart';
 
 import 'widgets/menu_card.dart';
 import 'widgets/menu_list_tile.dart';
+import 'widgets/status_banner.dart';
 import 'widgets/welcome_card.dart';
 
 import '../../core/api/api_client.dart';
@@ -32,12 +33,16 @@ class HomePage extends StatefulWidget {
   State<HomePage> createState() => _HomePageState();
 }
 
-class _HomePageState extends State<HomePage> {
+class _HomePageState extends State<HomePage>
+    with SingleTickerProviderStateMixin {
   bool _isGridView = true;
 
   late final ApiClient _api;
   late final NonOssService _nonOssService;
   final OfflineDatabase _database = OfflineDatabase.instance;
+
+  // Animasi masuk bertahap (kartu sambutan + menu).
+  late final AnimationController _entrance;
 
   ServerConnectionStatus _serverStatus = ServerConnectionStatus.checking;
   int _offlineCount = 0;
@@ -49,11 +54,18 @@ class _HomePageState extends State<HomePage> {
     WilayahAksesService.instance.refresh(); // tanpa await, berjalan di latar
     _api = ApiClient();
     _nonOssService = NonOssService(_api);
+
+    _entrance = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 900),
+    )..forward();
+
     _refreshSyncStatus();
   }
 
   @override
   void dispose() {
+    _entrance.dispose();
     _api.close();
     super.dispose();
   }
@@ -78,57 +90,74 @@ class _HomePageState extends State<HomePage> {
     });
   }
 
-  static const List<MenuData> menus = [
-    MenuData(
-      title: 'Dashboard',
-      description: 'Ringkasan statistik pengawasan',
-      icon: Icons.bar_chart_rounded,
-      color: AppTheme.menuDashboard,
-      backgroundColor: AppTheme.menuDashboardBg,
-    ),
-    MenuData(
-      title: 'Validasi OSS',
-      description: 'Verifikasi proyek dan usaha OSS',
-      icon: Icons.fact_check_outlined,
-      color: AppTheme.menuOss,
-      backgroundColor: AppTheme.menuOssBg,
-    ),
-    MenuData(
-      title: 'Pengawasan Non-OSS',
-      description: 'Pencatatan usaha di luar OSS',
-      icon: Icons.domain_add_outlined,
-      color: AppTheme.menuNonOss,
-      backgroundColor: AppTheme.menuNonOssBg,
-    ),
-    MenuData(
-      title: 'Pengawasan OTA',
-      description: 'Verifikasi usaha dari platform OTA',
-      icon: Icons.travel_explore_rounded,
-      color: AppTheme.menuOta,
-      backgroundColor: AppTheme.menuOtaBg,
-    ),
-    MenuData(
-      title: 'Riwayat',
-      description: 'Data pengawasan yang telah dilakukan',
-      icon: Icons.history_rounded,
-      color: AppTheme.menuRiwayat,
-      backgroundColor: AppTheme.menuRiwayatBg,
-    ),
-    MenuData(
-      title: 'Sinkronisasi',
-      description: 'Perbarui dan kirim data aplikasi',
-      icon: Icons.sync_rounded,
-      color: AppTheme.menuSinkronisasi,
-      backgroundColor: AppTheme.menuSinkronisasiBg,
-    ),
-    MenuData(
-      title: 'Profil Petugas',
-      description: 'Informasi akun dan profil petugas',
-      icon: Icons.account_circle_outlined,
-      color: AppTheme.menuProfil,
-      backgroundColor: AppTheme.menuProfilBg,
-    ),
+  // ---- Definisi menu ----
+  static const MenuData _mDashboard = MenuData(
+    title: 'Dashboard',
+    description: 'Ringkasan statistik pengawasan',
+    icon: Icons.bar_chart_rounded,
+    color: AppTheme.menuDashboard,
+    backgroundColor: AppTheme.menuDashboardBg,
+  );
+
+  static const MenuData _mOss = MenuData(
+    title: 'Validasi OSS',
+    description: 'Verifikasi proyek dan usaha OSS',
+    icon: Icons.fact_check_outlined,
+    color: AppTheme.menuOss,
+    backgroundColor: AppTheme.menuOssBg,
+  );
+
+  static const MenuData _mNonOss = MenuData(
+    title: 'Pengawasan Non-OSS',
+    description: 'Pencatatan usaha di luar OSS',
+    icon: Icons.domain_add_outlined,
+    color: AppTheme.menuNonOss,
+    backgroundColor: AppTheme.menuNonOssBg,
+  );
+
+  static const MenuData _mOta = MenuData(
+    title: 'Pengawasan OTA',
+    description: 'Verifikasi usaha dari platform OTA',
+    icon: Icons.travel_explore_rounded,
+    color: AppTheme.menuOta,
+    backgroundColor: AppTheme.menuOtaBg,
+  );
+
+  static const MenuData _mRiwayat = MenuData(
+    title: 'Riwayat',
+    description: 'Data pengawasan yang telah dilakukan',
+    icon: Icons.history_rounded,
+    color: AppTheme.menuRiwayat,
+    backgroundColor: AppTheme.menuRiwayatBg,
+  );
+
+  static const MenuData _mSinkronisasi = MenuData(
+    title: 'Sinkronisasi',
+    description: 'Perbarui dan kirim data aplikasi',
+    icon: Icons.sync_rounded,
+    color: AppTheme.menuSinkronisasi,
+    backgroundColor: AppTheme.menuSinkronisasiBg,
+  );
+
+  static const MenuData _mProfil = MenuData(
+    title: 'Profil Petugas',
+    description: 'Informasi akun dan profil petugas',
+    icon: Icons.account_circle_outlined,
+    color: AppTheme.menuProfil,
+    backgroundColor: AppTheme.menuProfilBg,
+  );
+
+  // 3 + 4 menu: pas mengisi grid 4 kolom tanpa baris yang timpang.
+  static const List<_MenuGroup> _groups = [
+    _MenuGroup('Pengawasan', [_mOss, _mNonOss, _mOta]),
+    _MenuGroup('Data & Akun', [_mDashboard, _mRiwayat, _mSinkronisasi, _mProfil]),
   ];
+
+  /// Angka badge per menu. Saat ini hanya Sinkronisasi (data belum terkirim).
+  int _badgeFor(MenuData menu) {
+    if (menu.title == 'Sinkronisasi') return _offlineCount;
+    return 0;
+  }
 
   // Menu Fitur
   Future<void> _openMenu(BuildContext context, MenuData menu) async {
@@ -188,6 +217,13 @@ class _HomePageState extends State<HomePage> {
     await _refreshSyncStatus();
   }
 
+  Future<void> _openSync() async {
+    await Navigator.of(
+      context,
+    ).push<void>(MaterialPageRoute<void>(builder: (_) => const SyncPage()));
+    await _refreshSyncStatus();
+  }
+
   Future<void> _openNotifications(BuildContext context) async {
     await Navigator.of(
       context,
@@ -230,61 +266,26 @@ class _HomePageState extends State<HomePage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    WelcomeCard(
+                    _Staggered(
+                      animation: _entrance,
+                      index: 0,
+                      child: WelcomeCard(
+                        serverStatus: _serverStatus,
+                        offlineCount: _offlineCount,
+                        onTapSyncStatus: _openSync,
+                      ),
+                    ),
+                    StatusBanner(
                       serverStatus: _serverStatus,
                       offlineCount: _offlineCount,
-                      onTapSyncStatus: () async {
-                        await Navigator.of(context).push<void>(
-                          MaterialPageRoute<void>(
-                            builder: (_) => const SyncPage(),
-                          ),
-                        );
-                        await _refreshSyncStatus();
-                      },
+                      onTap: _openSync,
                     ),
                     const SizedBox(height: 22),
                     _buildSectionHeader(),
                     const SizedBox(height: 14),
                     AnimatedSwitcher(
                       duration: const Duration(milliseconds: 250),
-                      child: _isGridView
-                          ? GridView.builder(
-                              key: const ValueKey('grid'),
-                              shrinkWrap: true,
-                              physics: const NeverScrollableScrollPhysics(),
-                              itemCount: menus.length,
-                              gridDelegate:
-                                  SliverGridDelegateWithFixedCrossAxisCount(
-                                    crossAxisCount: crossAxisCount,
-                                    mainAxisExtent: 122,
-                                    mainAxisSpacing: 10,
-                                    crossAxisSpacing: 8,
-                                  ),
-                              itemBuilder: (context, index) {
-                                final MenuData menu = menus[index];
-
-                                return MenuCard(
-                                  menu: menu,
-                                  onTap: () => _openMenu(context, menu),
-                                );
-                              },
-                            )
-                          : ListView.separated(
-                              key: const ValueKey('list'),
-                              shrinkWrap: true,
-                              physics: const NeverScrollableScrollPhysics(),
-                              itemCount: menus.length,
-                              separatorBuilder: (context, index) =>
-                                  const SizedBox(height: 10),
-                              itemBuilder: (context, index) {
-                                final MenuData menu = menus[index];
-
-                                return MenuListTile(
-                                  menu: menu,
-                                  onTap: () => _openMenu(context, menu),
-                                );
-                              },
-                            ),
+                      child: _buildGroups(crossAxisCount),
                     ),
                   ],
                 ),
@@ -293,6 +294,84 @@ class _HomePageState extends State<HomePage> {
           },
         ),
       ),
+    );
+  }
+
+  /// Menu dikelompokkan per kategori. Indeks dihitung berurutan supaya
+  /// animasi masuk berjalan satu per satu dari atas ke bawah.
+  Widget _buildGroups(int crossAxisCount) {
+    int index = 1; // 0 dipakai kartu sambutan
+    final List<Widget> children = [];
+
+    for (final _MenuGroup group in _groups) {
+      final int startIndex = index;
+
+      children.add(
+        _Staggered(
+          animation: _entrance,
+          index: startIndex,
+          child: _GroupHeader(title: group.title),
+        ),
+      );
+
+      if (_isGridView) {
+        children.add(
+          GridView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: group.items.length,
+            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: crossAxisCount,
+              mainAxisExtent: 122,
+              mainAxisSpacing: 10,
+              crossAxisSpacing: 8,
+            ),
+            itemBuilder: (context, i) {
+              final MenuData menu = group.items[i];
+              return _Staggered(
+                animation: _entrance,
+                index: startIndex + i,
+                child: MenuCard(
+                  menu: menu,
+                  badgeCount: _badgeFor(menu),
+                  onTap: () => _openMenu(context, menu),
+                ),
+              );
+            },
+          ),
+        );
+      } else {
+        children.add(
+          Column(
+            children: List.generate(group.items.length, (i) {
+              final MenuData menu = group.items[i];
+              return Padding(
+                padding: EdgeInsets.only(
+                  bottom: i == group.items.length - 1 ? 0 : 10,
+                ),
+                child: _Staggered(
+                  animation: _entrance,
+                  index: startIndex + i,
+                  child: MenuListTile(
+                    menu: menu,
+                    badgeCount: _badgeFor(menu),
+                    onTap: () => _openMenu(context, menu),
+                  ),
+                ),
+              );
+            }),
+          ),
+        );
+      }
+
+      children.add(const SizedBox(height: 18));
+      index += group.items.length;
+    }
+
+    return Column(
+      key: ValueKey<bool>(_isGridView),
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: children,
     );
   }
 
@@ -408,6 +487,85 @@ class _HomePageState extends State<HomePage> {
           ),
         ),
       ],
+    );
+  }
+}
+
+// ======================================================================
+// Pendukung
+// ======================================================================
+
+class _MenuGroup {
+  const _MenuGroup(this.title, this.items);
+
+  final String title;
+  final List<MenuData> items;
+}
+
+/// Judul kecil per kelompok menu: label + garis tipis.
+class _GroupHeader extends StatelessWidget {
+  const _GroupHeader({required this.title});
+
+  final String title;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: Row(
+        children: [
+          Text(
+            title.toUpperCase(),
+            style: TextStyle(
+              color: AppTheme.textSecondary(context),
+              fontSize: 11,
+              fontWeight: FontWeight.w800,
+              letterSpacing: 0.9,
+            ),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Container(height: 1, color: AppTheme.border(context)),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Fade + geser sedikit ke atas, tertunda sesuai [index]. Dipakai bersama
+/// satu AnimationController supaya semua item bergerak berurutan.
+/// Dilewati jika pengguna mematikan animasi di pengaturan perangkat.
+class _Staggered extends StatelessWidget {
+  const _Staggered({
+    required this.animation,
+    required this.index,
+    required this.child,
+  });
+
+  final Animation<double> animation;
+  final int index;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    if (MediaQuery.of(context).disableAnimations) return child;
+
+    final double start = (index * 0.07).clamp(0.0, 0.55);
+    final double end = (start + 0.45).clamp(0.0, 1.0);
+
+    final Animation<double> eased = animation.drive(
+      CurveTween(curve: Interval(start, end, curve: Curves.easeOutCubic)),
+    );
+
+    return FadeTransition(
+      opacity: eased,
+      child: SlideTransition(
+        position: eased.drive(
+          Tween<Offset>(begin: const Offset(0, 0.12), end: Offset.zero),
+        ),
+        child: child,
+      ),
     );
   }
 }

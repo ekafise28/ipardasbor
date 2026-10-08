@@ -2,12 +2,21 @@ import 'package:flutter/material.dart';
 
 import '../../../app/app_theme.dart';
 import '../models/menu_data.dart';
+import 'count_badge.dart';
 
 class MenuListTile extends StatelessWidget {
-  const MenuListTile({super.key, required this.menu, required this.onTap});
+  const MenuListTile({
+    super.key,
+    required this.menu,
+    required this.onTap,
+    this.badgeCount = 0,
+  });
 
   final MenuData menu;
   final VoidCallback onTap;
+
+  /// Jumlah yang ditampilkan di pojok ikon. 0 = tidak ada badge.
+  final int badgeCount;
 
   @override
   Widget build(BuildContext context) {
@@ -36,14 +45,27 @@ class MenuListTile extends StatelessWidget {
             padding: const EdgeInsets.all(12),
             child: Row(
               children: [
-                Container(
-                  width: 46,
-                  height: 46,
-                  decoration: BoxDecoration(
-                    color: menu.backgroundColor,
-                    borderRadius: BorderRadius.circular(13),
-                  ),
-                  child: Icon(menu.icon, color: menu.color, size: 24),
+                Stack(
+                  clipBehavior: Clip.none,
+                  children: [
+                    Container(
+                      width: 46,
+                      height: 46,
+                      decoration: BoxDecoration(
+                        color: menu.backgroundColor,
+                        borderRadius: BorderRadius.circular(13),
+                      ),
+                      child: Icon(menu.icon, color: menu.color, size: 24),
+                    ),
+                    if (badgeCount > 0)
+                      Positioned(
+                        top: -5,
+                        right: -7,
+                        child: IgnorePointer(
+                          child: CountBadge(count: badgeCount),
+                        ),
+                      ),
+                  ],
                 ),
                 const SizedBox(width: 13),
                 Expanded(

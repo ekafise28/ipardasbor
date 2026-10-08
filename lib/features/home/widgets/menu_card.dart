@@ -2,12 +2,21 @@ import 'package:flutter/material.dart';
 
 import '../../../app/app_theme.dart';
 import '../models/menu_data.dart';
+import 'count_badge.dart';
 
 class MenuCard extends StatelessWidget {
-  const MenuCard({super.key, required this.menu, required this.onTap});
+  const MenuCard({
+    super.key,
+    required this.menu,
+    required this.onTap,
+    this.badgeCount = 0,
+  });
 
   final MenuData menu;
   final VoidCallback onTap;
+
+  /// Jumlah yang ditampilkan di pojok ikon. 0 = tidak ada badge.
+  final int badgeCount;
 
   @override
   Widget build(BuildContext context) {
@@ -53,14 +62,27 @@ class MenuCard extends StatelessWidget {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Container(
-                    width: 44,
-                    height: 44,
-                    decoration: BoxDecoration(
-                      color: menu.backgroundColor,
-                      borderRadius: BorderRadius.circular(13),
-                    ),
-                    child: Icon(menu.icon, color: menu.color, size: 24),
+                  Stack(
+                    clipBehavior: Clip.none,
+                    children: [
+                      Container(
+                        width: 44,
+                        height: 44,
+                        decoration: BoxDecoration(
+                          color: menu.backgroundColor,
+                          borderRadius: BorderRadius.circular(13),
+                        ),
+                        child: Icon(menu.icon, color: menu.color, size: 24),
+                      ),
+                      if (badgeCount > 0)
+                        Positioned(
+                          top: -5,
+                          right: -7,
+                          child: IgnorePointer(
+                            child: CountBadge(count: badgeCount),
+                          ),
+                        ),
+                    ],
                   ),
                   const SizedBox(height: 9),
                   Text(
