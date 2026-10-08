@@ -104,7 +104,16 @@ class BaselineOtaCard extends StatelessWidget {
                       children: [
                         OtaPlatformChip(platform: item.platformOta),
                         if (item.jarakKm != null)
-                          DistanceBadge(km: item.jarakKm!),
+                          DistanceBadge(km: item.jarakKm!)
+                        else if (item.latitude == null ||
+                            item.longitude == null)
+                          const Text(
+                            'Tanpa koordinat',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Color(0xFFD08A00),
+                            ),
+                          ),
                         if (item.scrapedAt != null)
                           Text(
                             'Scraping ${_tgl(item.scrapedAt!)}',
