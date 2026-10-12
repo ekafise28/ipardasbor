@@ -20,6 +20,7 @@ import '../../non_oss/services/region_service.dart';
 import '../../oss/widgets/oss_proyek_filter_chips.dart'
     show OssActiveFilterChips, OssFilterChipData;
 import '../../../shared/gps/gps_capture_mixin.dart';
+import '../../../shared/pagination/paginated_list_controller.dart';
 import '../../../shared/utils/skeleton.dart';
 import '../../../shared/widgets/connection_error_state.dart';
 import '../../../shared/widgets/list_states.dart';
@@ -38,6 +39,7 @@ class BaselineOtaPage extends StatefulWidget {
 class _BaselineOtaPageState extends State<BaselineOtaPage>
     with WidgetsBindingObserver, GpsCaptureMixin<BaselineOtaPage> {
   late final BaselineOtaService _service;
+  late final PaginatedListController<BaselineOtaItem> _ctrl;
   final RegionService _regions = RegionService();
   final ScrollController _scroll = ScrollController();
   final TextEditingController _searchCtrl = TextEditingController();
@@ -48,34 +50,73 @@ class _BaselineOtaPageState extends State<BaselineOtaPage>
   String? _namaKecamatan;
   String? _namaKelurahan;
 
-  final List<BaselineOtaItem> _items = [];
-  int _page = 1;
-  int _lastPage = 1;
-  int _total = 0;
-  bool _loadingFirst = true;
-  bool _loadingMore = false;
-  bool _loadMoreError = false;
-  String? _error;
+  /// Tombol "kembali ke atas" tampil setelah digulir cukup jauh.
+  bool _showBackToTop = false;
 
   @override
   void initState() {
     super.initState();
     initGpsCapture();
     _service = BaselineOtaService(ApiClient());
+    _ctrl = PaginatedListController<BaselineOtaItem>(
+      fetchPage: _ambilHalaman,
+      idOf: (BaselineOtaItem e) => e.id,
+      perPage: () => _filter.perPage,
+      onLoaded: _setelahDimuat,
+      onSilentError: _snack,
+      errorMessage: _pesanRamah,
+    )..addListener(_onCtrl);
     _scroll.addListener(_onScroll);
-    _muatHalamanPertama();
+    _ctrl.reload();
   }
 
   @override
   void dispose() {
+    _ctrl
+      ..removeListener(_onCtrl)
+      ..dispose();
     _scroll.dispose();
     _searchCtrl.dispose();
     disposeGpsCapture();
     super.dispose();
   }
 
-  /// Tombol "kembali ke atas" tampil setelah digulir cukup jauh.
-  bool _showBackToTop = false;
+  /// Membaca filter terbaru setiap kali dipanggil.
+  Future<PageChunk<BaselineOtaItem>> _ambilHalaman(int page) async {
+    final BaselineOtaPageResult hasil = await _service.list(
+      _filter,
+      page: page,
+    );
+    return PageChunk<BaselineOtaItem>(
+      items: hasil.items,
+      currentPage: hasil.currentPage,
+      hasNext: hasil.hasMore,
+      total: hasil.total,
+      meta: hasil,
+    );
+  }
+
+  /// Data tambahan dari respons; controller yang memberi tahu UI sesudahnya,
+  /// jadi tidak perlu setState di sini.
+  void _setelahDimuat(PageChunk<BaselineOtaItem> chunk) {
+    final BaselineOtaPageResult hasil = chunk.meta! as BaselineOtaPageResult;
+    _filterOptions = hasil.filterOptions;
+    _provinsiNama = hasil.provinsiNama;
+    _filter.provinsiId ??= hasil.provinsiId;
+  }
+
+  void _onCtrl() {
+    if (!mounted) return;
+    setState(() {
+      // Daftar diganti skeleton: posisi scroll akan kembali ke 0.
+      if (_ctrl.loadingFirst) _showBackToTop = false;
+    });
+  }
+
+  void _snack(String pesan) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(pesan)));
+  }
 
   void _onScroll() {
     if (!_scroll.hasClients) return;
@@ -86,9 +127,8 @@ class _BaselineOtaPageState extends State<BaselineOtaPage>
       setState(() => _showBackToTop = perluTampil);
     }
 
-    if (_loadingMore || _loadMoreError || _page >= _lastPage) return;
     if (pos.pixels >= pos.maxScrollExtent - 200) {
-      _muatHalamanBerikutnya();
+      _ctrl.loadMore();
     }
   }
 
@@ -99,78 +139,6 @@ class _BaselineOtaPageState extends State<BaselineOtaPage>
       duration: const Duration(milliseconds: 500),
       curve: Curves.easeOut,
     );
-  }
-
-  /// Naik setiap kali daftar dimuat ulang; respons lama diabaikan supaya
-  /// hasil yang terlambat tidak menimpa hasil yang lebih baru.
-  int _requestId = 0;
-
-  Future<void> _muatHalamanPertama({bool tampilkanLoading = true}) async {
-    final int id = ++_requestId;
-
-    if (tampilkanLoading) {
-      setState(() {
-        _loadingFirst = true;
-        _error = null;
-        _showBackToTop = false;
-      });
-    }
-
-    try {
-      final BaselineOtaPageResult hasil = await _service.list(_filter, page: 1);
-      if (!mounted || id != _requestId) return;
-      setState(() {
-        _items
-          ..clear()
-          ..addAll(hasil.items);
-        _page = hasil.currentPage;
-        _lastPage = hasil.lastPage;
-        _total = hasil.total;
-        _filterOptions = hasil.filterOptions;
-        _provinsiNama = hasil.provinsiNama;
-        _filter.provinsiId ??= hasil.provinsiId;
-        _error = null;
-        _loadMoreError = false;
-      });
-    } catch (e) {
-      if (!mounted || id != _requestId) return;
-      final String pesan = _pesanRamah(e);
-
-      if (!tampilkanLoading && _items.isNotEmpty) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text(pesan)));
-      } else {
-        setState(() => _error = pesan);
-      }
-    } finally {
-      if (mounted && id == _requestId) setState(() => _loadingFirst = false);
-    }
-  }
-
-  Future<void> _muatHalamanBerikutnya() async {
-    final int id = _requestId;
-    setState(() {
-      _loadingMore = true;
-      _loadMoreError = false;
-    });
-    try {
-      final BaselineOtaPageResult hasil = await _service.list(
-        _filter,
-        page: _page + 1,
-      );
-      if (!mounted || id != _requestId) return;
-      setState(() {
-        _items.addAll(hasil.items);
-        _page = hasil.currentPage;
-        _lastPage = hasil.lastPage;
-        _total = hasil.total;
-      });
-    } catch (_) {
-      if (mounted && id == _requestId) setState(() => _loadMoreError = true);
-    } finally {
-      if (mounted) setState(() => _loadingMore = false);
-    }
   }
 
   /// Catatan kalau jarak dihitung dari lokasi tersimpan, bukan posisi sekarang.
@@ -184,7 +152,7 @@ class _BaselineOtaPageState extends State<BaselineOtaPage>
         _infoLokasi = null;
       });
       if (_scroll.hasClients) _scroll.jumpTo(0);
-      await _muatHalamanPertama();
+      await _ctrl.reload();
       return;
     }
 
@@ -198,7 +166,7 @@ class _BaselineOtaPageState extends State<BaselineOtaPage>
               : 'Memakai lokasi tersimpan, bukan posisi Anda saat ini.';
         });
         if (_scroll.hasClients) _scroll.jumpTo(0);
-        _muatHalamanPertama();
+        _ctrl.reload();
       },
     );
   }
@@ -222,20 +190,20 @@ class _BaselineOtaPageState extends State<BaselineOtaPage>
       setState(() => _filter = hasil);
       _searchCtrl.text = hasil.namaListing ?? '';
       _muatNamaWilayah(); // sengaja tanpa await, jalan paralel dengan load daftar
-      await _muatHalamanPertama();
+      await _ctrl.reload();
     }
   }
 
   void _cari(String keyword) {
     FocusScope.of(context).unfocus();
     _filter.namaListing = keyword.trim().isEmpty ? null : keyword.trim();
-    _muatHalamanPertama();
+    _ctrl.reload();
   }
 
   void _setStatus(String? status) {
     if (_filter.status == status) return;
     setState(() => _filter.status = status);
-    _muatHalamanPertama();
+    _ctrl.reload();
   }
 
   /// Pesan dari server (ApiException) dipakai apa adanya; error teknis lain
@@ -260,7 +228,7 @@ class _BaselineOtaPageState extends State<BaselineOtaPage>
       _namaKecamatan = null;
       _namaKelurahan = null;
     });
-    _muatHalamanPertama();
+    _ctrl.reload();
   }
 
   /// Reset dari chip filter aktif ("Reset"): hanya filter dari sheet
@@ -278,7 +246,7 @@ class _BaselineOtaPageState extends State<BaselineOtaPage>
       _namaKecamatan = null;
       _namaKelurahan = null;
     });
-    _muatHalamanPertama();
+    _ctrl.reload();
   }
 
   Future<void> _setelahTersimpan(BaselineOtaItem item) async {
@@ -294,60 +262,7 @@ class _BaselineOtaPageState extends State<BaselineOtaPage>
           ),
         ),
       );
-    await _segarkanItem(item);
-  }
-
-  /// Memuat ulang HANYA halaman server yang memuat [item], lalu mengganti
-  /// irisan itu di daftar. Posisi scroll dan halaman lain tidak berubah.
-  ///
-  /// Muat ulang penuh (kembali ke halaman 1) dipakai kalau irisan tidak bisa
-  /// diganti dengan aman: item sudah tidak ada di hasil (mis. filter "BELUM"
-  /// aktif, jadi item yang baru diverifikasi tersaring keluar dan baris di
-  /// halaman-halaman setelahnya bergeser), atau jumlah barisnya berbeda.
-  Future<void> _segarkanItem(BaselineOtaItem item) async {
-    final int index = _items.indexWhere((BaselineOtaItem e) => e.id == item.id);
-    if (index < 0) {
-      await _muatHalamanPertama(tampilkanLoading: false);
-      return;
-    }
-
-    final int id = _requestId;
-    final int perPage = _filter.perPage;
-    final int halaman = index ~/ perPage + 1;
-    final int awal = (halaman - 1) * perPage;
-    final int akhir = awal + perPage < _items.length
-        ? awal + perPage
-        : _items.length;
-
-    try {
-      final BaselineOtaPageResult hasil = await _service.list(
-        _filter,
-        page: halaman,
-      );
-      if (!mounted || id != _requestId) return;
-
-      final bool masihAda = hasil.items.any(
-        (BaselineOtaItem e) => e.id == item.id,
-      );
-      if (!masihAda || hasil.items.length != akhir - awal) {
-        await _muatHalamanPertama(tampilkanLoading: false);
-        return;
-      }
-
-      setState(() {
-        _items.replaceRange(awal, akhir, hasil.items);
-        _total = hasil.total;
-      });
-    } catch (_) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            'Daftar belum diperbarui. Tarik ke bawah untuk menyegarkan.',
-          ),
-        ),
-      );
-    }
+    await _ctrl.refreshItem(item);
   }
 
   /// Jumlah filter yang tampil sebagai chip (status tidak dihitung karena
@@ -384,7 +299,7 @@ class _BaselineOtaPageState extends State<BaselineOtaPage>
 
   void _ubahFilter(void Function() ubah) {
     setState(ubah);
-    _muatHalamanPertama();
+    _ctrl.reload();
   }
 
   /// Data chip filter aktif dari sheet (platform + wilayah), dirender oleh
@@ -482,7 +397,10 @@ class _BaselineOtaPageState extends State<BaselineOtaPage>
     return Scaffold(
       backgroundColor: AppTheme.scaffoldColorDynamic(context),
       floatingActionButton:
-          _showBackToTop && !_loadingFirst && _error == null && _items.isNotEmpty
+          _showBackToTop &&
+              !_ctrl.loadingFirst &&
+              _ctrl.error == null &&
+              _ctrl.items.isNotEmpty
           ? FloatingActionButton.small(
               onPressed: _scrollKeAtas,
               backgroundColor: AppTheme.primaryColor,
@@ -570,7 +488,7 @@ class _BaselineOtaPageState extends State<BaselineOtaPage>
               );
             },
           ),
-          if (!_loadingFirst && _error == null)
+          if (!_ctrl.loadingFirst && _ctrl.error == null)
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
               child: Align(
@@ -579,7 +497,7 @@ class _BaselineOtaPageState extends State<BaselineOtaPage>
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      '$_provinsiNama · $_total data ditemukan'
+                      '$_provinsiNama · ${_ctrl.total} data ditemukan'
                       '${_filter.urutJarak ? ' · terdekat dulu' : ''}',
                       style: TextStyle(
                         fontSize: 11.5,
@@ -661,28 +579,32 @@ class _BaselineOtaPageState extends State<BaselineOtaPage>
   }
 
   Widget _buildBody() {
-    if (_loadingFirst) {
+    if (_ctrl.loadingFirst) {
       return const BaselineOtaSkeleton();
     }
 
+    Future<void> segarkan() => _ctrl.reload(showLoading: false);
+
     // Error dan kosong dibungkus scrollable supaya layar tetap bisa ditarik.
-    if (_error != null) {
+    if (_ctrl.error != null) {
       return RefreshIndicator(
-        onRefresh: () => _muatHalamanPertama(tampilkanLoading: false),
+        onRefresh: segarkan,
         child: ScrollableFill(
           child: ConnectionErrorState(
             title: 'Listing OTA gagal dimuat',
-            message: _error!,
-            onRetry: _muatHalamanPertama,
+            message: _ctrl.error!,
+            onRetry: _ctrl.reload,
           ),
         ),
       );
     }
 
-    if (_items.isEmpty) {
+    final List<BaselineOtaItem> items = _ctrl.items;
+
+    if (items.isEmpty) {
       final bool adaFilter = _filter.isActive || _filter.urutJarak;
       return RefreshIndicator(
-        onRefresh: () => _muatHalamanPertama(tampilkanLoading: false),
+        onRefresh: segarkan,
         child: ListView(
           physics: const AlwaysScrollableScrollPhysics(),
           children: [
@@ -706,20 +628,20 @@ class _BaselineOtaPageState extends State<BaselineOtaPage>
     }
 
     return RefreshIndicator(
-      onRefresh: () => _muatHalamanPertama(tampilkanLoading: false),
+      onRefresh: segarkan,
       child: ListView.builder(
         controller: _scroll,
         physics: const AlwaysScrollableScrollPhysics(),
         padding: const EdgeInsets.fromLTRB(16, 4, 16, 24),
-        itemCount: _items.length + (_page < _lastPage ? 1 : 0),
+        itemCount: items.length + (_ctrl.hasNext ? 1 : 0),
         itemBuilder: (context, index) {
-          if (index >= _items.length) {
+          if (index >= items.length) {
             return LoadMoreFooter(
-              gagal: _loadMoreError,
-              onCobaLagi: _muatHalamanBerikutnya,
+              gagal: _ctrl.loadMoreError,
+              onCobaLagi: _ctrl.retryLoadMore,
             );
           }
-          final BaselineOtaItem item = _items[index];
+          final BaselineOtaItem item = items[index];
           return BaselineOtaCard(
             item: item,
             onTap: () => _bukaDetail(item),
