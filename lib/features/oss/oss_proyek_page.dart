@@ -8,18 +8,26 @@ import 'package:ipardasbor/features/oss/oss_proyek_filter_sheet.dart';
 import '../../app/app_theme.dart';
 import '../../core/api/api_exception.dart';
 import '../non_oss/models/region_option.dart';
+
 import '../riwayat/models/riwayat_page_result.dart' show RiwayatPagination;
 import '../riwayat/pages/riwayat_detail_page.dart';
-import '../../shared/widgets/connection_error_state.dart';
+
+
 import 'models/oss_proyek_filter.dart';
 import 'models/oss_proyek_item.dart';
 import 'models/oss_proyek_page_result.dart';
+
 import 'pages/oss_validasi_page.dart';
+
 import 'services/oss_proyek_service.dart';
+
 import 'widgets/oss_proyek_card.dart';
 import 'widgets/oss_proyek_filter_chips.dart';
-import 'widgets/oss_proyek_skeleton.dart';
+
+import '../../shared/utils/skeleton.dart';
 import '../../shared/utils/staggered_entrance.dart';
+import '../../shared/widgets/list_states.dart';
+import '../../shared/widgets/connection_error_state.dart';
 
 import 'package:ipardasbor/shared/ocr/ocr_field_type.dart';
 import 'package:ipardasbor/shared/ocr/ocr_paste_cleaner.dart';
@@ -827,6 +835,33 @@ class _OssProyekPageState extends State<OssProyekPage>
     );
   }
 
+  Widget _buildKosong() {
+  final bool adaPencarian = _filter.nibNku.trim().isNotEmpty;
+  final bool hasFilter = _filter.hasActiveFilter;
+
+  final String judul;
+  final String isi;
+  if (adaPencarian) {
+    judul = 'Usaha tidak ditemukan';
+    isi = 'Pastikan NIB atau NKU diketik lengkap. Kalau usahanya memang '
+        'belum ada di daftar, gunakan "Cek Data OSS" di atas.';
+  } else if (hasFilter) {
+    judul = 'Tidak ada yang cocok';
+    isi = 'Tidak ada usaha yang sesuai dengan filter yang dipilih.';
+  } else {
+    judul = 'Belum ada data';
+    isi = 'Belum ada data usaha pada wilayah ini.';
+  }
+
+  return EmptyListState(
+    icon: hasFilter ? Icons.search_off_rounded : Icons.inbox_outlined,
+    title: judul,
+    message: isi,
+    actionLabel: hasFilter ? 'Hapus semua filter' : null,
+    onAction: hasFilter ? _hapusSemuaFilter : null,
+  );
+}
+
   Widget _buildBody(BuildContext context) {
     if (_loadingAwal) {
       return const OssProyekSkeleton();
@@ -857,20 +892,15 @@ class _OssProyekPageState extends State<OssProyekPage>
           }
 
           if (_items.isEmpty) {
-            return _EmptyState(
-              hasFilter: _filter.hasActiveFilter,
-              adaPencarian: _filter.nibNku.trim().isNotEmpty,
-              onHapusFilter: _hapusSemuaFilter,
-            );
+            return _buildKosong();
           }
 
           final int i = index - 1;
 
           if (i >= _items.length) {
-            return _FooterBerikutnya(
-              gagal: _gagalBerikutnya,
-              pesan: _pesanBerikutnya,
-              onCobaLagi: _cobaLagiBerikutnya,
+            return LoadMoreFooter(gagal: _gagalBerikutnya, 
+            pesan: _pesanBerikutnya, 
+            onCobaLagi: _cobaLagiBerikutnya
             );
           }
 
@@ -955,124 +985,6 @@ class _KartuCekManual extends StatelessWidget {
             ],
           ),
         ),
-      ),
-    );
-  }
-}
-
-class _EmptyState extends StatelessWidget {
-  const _EmptyState({
-    required this.hasFilter,
-    required this.adaPencarian,
-    required this.onHapusFilter,
-  });
-
-  final bool hasFilter;
-  final bool adaPencarian;
-  final VoidCallback onHapusFilter;
-
-  @override
-  Widget build(BuildContext context) {
-    final String judul;
-    final String isi;
-
-    if (adaPencarian) {
-      judul = 'Usaha tidak ditemukan';
-      isi =
-          'Pastikan NIB atau NKU diketik lengkap. Kalau usahanya memang '
-          'belum ada di daftar, gunakan "Cek Data OSS" di atas.';
-    } else if (hasFilter) {
-      judul = 'Tidak ada yang cocok';
-      isi = 'Tidak ada usaha yang sesuai dengan filter yang dipilih.';
-    } else {
-      judul = 'Belum ada data';
-      isi = 'Belum ada data usaha pada wilayah ini.';
-    }
-
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(32, 40, 32, 32),
-      child: Column(
-        children: <Widget>[
-          Icon(
-            hasFilter ? Icons.search_off_rounded : Icons.inbox_outlined,
-            size: 56,
-            color: AppTheme.textSecondary(context),
-          ),
-          const SizedBox(height: 12),
-          Text(
-            judul,
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: 15,
-              fontWeight: FontWeight.w800,
-              color: AppTheme.textColor(context),
-            ),
-          ),
-          const SizedBox(height: 6),
-          Text(
-            isi,
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: 13,
-              height: 1.4,
-              color: AppTheme.textSecondary(context),
-            ),
-          ),
-          if (hasFilter) ...<Widget>[
-            const SizedBox(height: 16),
-            FilledButton.tonalIcon(
-              onPressed: onHapusFilter,
-              icon: const Icon(Icons.filter_alt_off_rounded, size: 18),
-              label: const Text('Hapus semua filter'),
-            ),
-          ],
-        ],
-      ),
-    );
-  }
-}
-
-/// Footer infinite scroll: spinner saat memuat, atau pesan + tombol
-/// "Coba lagi" kalau halaman berikutnya gagal dimuat.
-class _FooterBerikutnya extends StatelessWidget {
-  const _FooterBerikutnya({
-    required this.gagal,
-    required this.pesan,
-    required this.onCobaLagi,
-  });
-
-  final bool gagal;
-  final String? pesan;
-  final VoidCallback onCobaLagi;
-
-  @override
-  Widget build(BuildContext context) {
-    if (!gagal) {
-      return const Padding(
-        padding: EdgeInsets.symmetric(vertical: 20),
-        child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
-      );
-    }
-
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(32, 12, 32, 12),
-      child: Column(
-        children: <Widget>[
-          Text(
-            pesan ?? 'Gagal memuat data berikutnya.',
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: 12.5,
-              color: AppTheme.textSecondary(context),
-            ),
-          ),
-          const SizedBox(height: 4),
-          TextButton.icon(
-            onPressed: onCobaLagi,
-            icon: const Icon(Icons.refresh_rounded, size: 18),
-            label: const Text('Coba lagi'),
-          ),
-        ],
       ),
     );
   }

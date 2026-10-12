@@ -4,6 +4,7 @@ import 'package:package_info_plus/package_info_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:ipardasbor/features/non_oss/services/wilayah_akses_service.dart';
 import 'package:ipardasbor/shared/widgets/connection_error_state.dart';
+import '../../shared/utils/skeleton.dart';
 
 import '../../app/app_theme.dart';
 import '../authentication/models/auth_user.dart';
@@ -192,7 +193,7 @@ class _ProfilePageState extends State<ProfilePage> {
           future: _profileFuture,
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.waiting) {
-              return const _ProfileSkeleton();
+              return const ProfileSkeleton();
             }
 
             if (snapshot.hasError) {
@@ -379,7 +380,7 @@ class _ProfileHeader extends StatelessWidget {
               radius: 38,
               backgroundColor: Colors.white.withValues(alpha: 0.2),
               foregroundImage: hasPhoto ? NetworkImage(user.fotoUser!) : null,
-              onForegroundImageError: hasPhoto ? (_, __) {} : null,
+              onForegroundImageError: hasPhoto ? (_, _) {} : null,
               child: Text(
                 _initials,
                 style: const TextStyle(
@@ -737,160 +738,6 @@ class _ActionTile extends StatelessWidget {
             ],
           ),
         ),
-      ),
-    );
-  }
-}
-
-class _ProfileSkeleton extends StatefulWidget {
-  const _ProfileSkeleton();
-
-  @override
-  State<_ProfileSkeleton> createState() => _ProfileSkeletonState();
-}
-
-class _ProfileSkeletonState extends State<_ProfileSkeleton>
-    with SingleTickerProviderStateMixin {
-  late final AnimationController _controller = AnimationController(
-    vsync: this,
-    duration: const Duration(milliseconds: 1100),
-  )..repeat(reverse: true);
-
-  late final Animation<double> _opacity = Tween<double>(
-    begin: 0.45,
-    end: 1.0,
-  ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut));
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-
-    return FadeTransition(
-      opacity: _opacity,
-      child: SingleChildScrollView(
-        physics: const NeverScrollableScrollPhysics(),
-        child: Column(
-          children: [
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.fromLTRB(20, 8, 20, 52),
-              decoration: const BoxDecoration(
-                gradient: AppTheme.brandGradient,
-                borderRadius: BorderRadius.only(
-                  bottomLeft: Radius.circular(28),
-                  bottomRight: Radius.circular(28),
-                ),
-              ),
-              child: Column(
-                children: [
-                  Container(
-                    width: 82,
-                    height: 82,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: Colors.white.withValues(alpha: 0.25),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  _Bone(width: 160, height: 18, color: Colors.white24),
-                  const SizedBox(height: 8),
-                  _Bone(width: 110, height: 12, color: Colors.white24),
-                  const SizedBox(height: 14),
-                  _Bone(width: 200, height: 22, color: Colors.white24),
-                ],
-              ),
-            ),
-            Transform.translate(
-              offset: const Offset(0, -28),
-              child: const Padding(
-                padding: EdgeInsets.symmetric(horizontal: 16),
-                child: Column(
-                  children: [
-                    _SkeletonCard(rows: 4),
-                    SizedBox(height: 14),
-                    _SkeletonCard(rows: 3),
-                  ],
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _SkeletonCard extends StatelessWidget {
-  const _SkeletonCard({required this.rows});
-
-  final int rows;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: AppTheme.surface(context),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppTheme.border(context)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const _Bone(width: 110, height: 14),
-          const SizedBox(height: 16),
-          for (int i = 0; i < rows; i++) ...[
-            const Row(
-              children: [
-                _Bone(width: 19, height: 19, radius: 6),
-                SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      _Bone(width: 70, height: 10),
-                      SizedBox(height: 6),
-                      _Bone(width: 150, height: 13),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-            if (i != rows - 1) const SizedBox(height: 18),
-          ],
-        ],
-      ),
-    );
-  }
-}
-
-class _Bone extends StatelessWidget {
-  const _Bone({
-    required this.width,
-    required this.height,
-    this.radius = 6,
-    this.color,
-  });
-
-  final double width;
-  final double height;
-  final double radius;
-  final Color? color;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: width,
-      height: height,
-      decoration: BoxDecoration(
-        color: color ?? AppTheme.surfaceMuted(context),
-        borderRadius: BorderRadius.circular(radius),
       ),
     );
   }

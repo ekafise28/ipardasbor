@@ -226,7 +226,7 @@ class _DashboardPageState extends State<DashboardPage>
 
   Widget _buildDashboardContent() {
     if (_isLoading && _dashboard == null) {
-      return const _DashboardSkeleton();
+      return const DashboardSkeleton();
     }
 
     if (_errorMessage != null && _dashboard == null) {
@@ -1330,49 +1330,6 @@ class _CompositionRow extends StatelessWidget {
           ),
         ),
       ],
-    );
-  }
-}
-
-// ======================================================================
-// Skeleton (menggantikan spinner "Memuat dashboard...")
-// ======================================================================
-
-class _DashboardSkeleton extends StatelessWidget {
-  const _DashboardSkeleton();
-
-  @override
-  Widget build(BuildContext context) {
-    return Semantics(
-      label: 'Memuat dashboard',
-      child: ExcludeSemantics(
-        child: SkeletonShimmer(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const SkeletonBox(height: 250, radius: 22),
-              const SizedBox(height: 16),
-              const SkeletonBox(height: 56, radius: 16),
-              const SizedBox(height: 22),
-              const SkeletonBox(width: 170, height: 20, radius: 6),
-              const SizedBox(height: 14),
-              Row(
-                children: const [
-                  Expanded(child: SkeletonBox(height: 128, radius: 18)),
-                  SizedBox(width: 12),
-                  Expanded(child: SkeletonBox(height: 128, radius: 18)),
-                  SizedBox(width: 12),
-                  Expanded(child: SkeletonBox(height: 128, radius: 18)),
-                ],
-              ),
-              const SizedBox(height: 24),
-              const SkeletonBox(height: 190, radius: 20),
-              const SizedBox(height: 24),
-              const SkeletonBox(height: 340, radius: 20),
-            ],
-          ),
-        ),
-      ),
     );
   }
 }
