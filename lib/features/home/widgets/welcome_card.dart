@@ -158,7 +158,7 @@ class _WelcomeCardState extends State<WelcomeCard>
               child: RepaintBoundary(
                 child: AnimatedBuilder(
                   animation: _pulse,
-                  builder: (_, __) => CustomPaint(
+                  builder: (_, _) => CustomPaint(
                     painter: _PulseRingsPainter(_pulse.value),
                   ),
                 ),

@@ -37,7 +37,7 @@ class NotificationItem {
   final String title;
   final String body;
 
-  /// Identitas unik kejadian per akun (mis. 'sync_failed:<clientUuid>').
+  /// Identitas unik kejadian per akun (mis. `sync_failed:<clientUuid>`).
   /// Dua notifikasi dengan dedupeKey sama akan saling menimpa, bukan
   /// menumpuk (lihat UNIQUE INDEX di migrasi).
   final String dedupeKey;

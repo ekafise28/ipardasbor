@@ -110,7 +110,7 @@ class PilihBidangPage extends StatelessWidget {
       body: ListView.separated(
         padding: const EdgeInsets.fromLTRB(16, 16, 16, 28),
         itemCount: daftar.length,
-        separatorBuilder: (_, __) => const SizedBox(height: 10),
+        separatorBuilder: (_, _) => const SizedBox(height: 10),
         itemBuilder: (context, i) {
           final BidangUsahaOpsi b = daftar[i];
           final _Tampilan t = _tampilan[b.slug] ?? _fallback;

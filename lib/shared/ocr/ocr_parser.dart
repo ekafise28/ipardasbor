@@ -204,8 +204,9 @@ class OcrParser {
 
       if (compact.length != raw.length) {
         for (final token in raw.split(_separators)) {
-          if (token.isNotEmpty && _looksNumeric(token))
+          if (token.isNotEmpty && _looksNumeric(token)) {
             out.add(_correct(token));
+          }
         }
       }
     }

@@ -41,7 +41,7 @@ class RiwayatCard extends StatelessWidget {
       color: AppTheme.surface(context),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(14),
-        side: BorderSide(color: Colors.black.withOpacity(0.06)),
+        side: BorderSide(color: Colors.black.withValues(alpha:0.06)),
       ),
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
       child: InkWell(
@@ -182,7 +182,7 @@ class _Badge extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.12),
+        color: color.withValues(alpha:0.12),
         borderRadius: BorderRadius.circular(20),
       ),
       child: Text(
@@ -210,7 +210,7 @@ class _StatusBadge extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
-        color: warna.withOpacity(0.12),
+        color: warna.withValues(alpha:0.12),
         borderRadius: BorderRadius.circular(20),
       ),
       child: Row(
@@ -246,7 +246,7 @@ class _TidakValidBadge extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
-        color: Colors.red.withOpacity(0.12),
+        color: Colors.red.withValues(alpha:0.12),
         borderRadius: BorderRadius.circular(20),
       ),
       child: const Row(

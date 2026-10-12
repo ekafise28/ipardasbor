@@ -488,7 +488,7 @@ class _OssValidasiPageState extends State<OssValidasiPage> {
                     color: AppTheme.scaffoldColorDynamic(context),
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(
-                      color: AppTheme.primaryColor.withOpacity(0.4),
+                      color: AppTheme.primaryColor.withValues(alpha:0.4),
                     ),
                   ),
                   child: Row(
@@ -537,7 +537,7 @@ class _OssValidasiPageState extends State<OssValidasiPage> {
                 ),
                 const SizedBox(height: 8),
                 DropdownButtonFormField<String>(
-                  value: _kbliDesc,
+                  initialValue: _kbliDesc,
                   isExpanded:
                       true, // <- ini yang biasanya hilang & bikin overflow
                   decoration: const InputDecoration(

@@ -689,7 +689,7 @@ class _SubmissionOtaSection extends StatelessWidget {
       color: AppTheme.surface(context),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(14),
-        side: BorderSide(color: Colors.black.withOpacity(0.06)),
+        side: BorderSide(color: Colors.black.withValues(alpha:0.06)),
       ),
       margin: EdgeInsets.zero,
       child: Padding(
@@ -800,7 +800,7 @@ class _DraftChecklistCard extends StatelessWidget {
       color: AppTheme.surface(context),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(14),
-        side: BorderSide(color: Colors.black.withOpacity(0.06)),
+        side: BorderSide(color: Colors.black.withValues(alpha:0.06)),
       ),
       margin: EdgeInsets.zero,
       child: Padding(
@@ -934,7 +934,7 @@ class _LinkButtonSubmission extends StatelessWidget {
         minimumSize: Size.zero,
         tapTargetSize: MaterialTapTargetSize.shrinkWrap,
         foregroundColor: AppTheme.menuDashboard,
-        side: BorderSide(color: AppTheme.menuDashboard.withOpacity(0.4)),
+        side: BorderSide(color: AppTheme.menuDashboard.withValues(alpha:0.4)),
       ),
     );
   }

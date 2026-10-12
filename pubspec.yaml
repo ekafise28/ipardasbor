@@ -2,7 +2,7 @@ name: ipardasbor
 description: "Aplikasi I-PAR untuk kepentingan industri pariwisata"
 
 publish_to: 'none'
-version: 1.1.1+2
+version: 1.2.0+1
 
 environment:
   sdk: ^3.12.2

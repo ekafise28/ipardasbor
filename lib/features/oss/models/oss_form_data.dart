@@ -14,11 +14,11 @@ class OssFormData {
     required this.kbli,
     required this.nku,
     required this.isValid,
-    String kbliDesc = '',
+    this.kbliDesc = '',
     this.baselineOtaId,
     this.bidang = 'akomodasi',
     this.dariDaftar = true,
-  }) : kbliDesc = kbliDesc;
+  });
 
   final bool dariDaftar;
 

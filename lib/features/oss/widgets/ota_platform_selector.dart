@@ -4,7 +4,7 @@ import 'package:ipardasbor/app/app_theme.dart';
 /// Selector platform OTA bergaya checkbox grid + URL inline, mengikuti
 /// tampilan form Laravel OSS (form blade 2) - beda gaya dari OtaSelector
 /// milik Non-OSS (ListTile vertikal), tapi struktur datanya sama:
-/// Map<String, List<String>> key platform -> daftar URL.
+/// `Map<String, List<String>>` key platform -> daftar URL.
 class OtaPlatformSelector extends StatelessWidget {
   const OtaPlatformSelector({
     super.key,
@@ -32,7 +32,8 @@ class OtaPlatformSelector extends StatelessWidget {
     final value = v?.trim() ?? '';
     if (value.isEmpty) return 'URL listing wajib diisi.';
     final uri = Uri.tryParse(value);
-    final valid = uri != null &&
+    final valid =
+        uri != null &&
         uri.hasScheme &&
         (uri.scheme == 'http' || uri.scheme == 'https') &&
         uri.host.isNotEmpty;

@@ -243,7 +243,7 @@ class _InfoRow extends StatelessWidget {
 /// Chip platform dengan warna identitas tiap OTA. Platform yang tidak
 /// dikenal memakai warna netral.
 class OtaPlatformChip extends StatelessWidget {
-  const OtaPlatformChip({required this.platform});
+  const OtaPlatformChip({super.key, required this.platform});
   final String? platform;
 
   Color _warna(BuildContext context) {
@@ -320,6 +320,7 @@ class _LinkButton extends StatelessWidget {
 
 class OtaVerifButton extends StatelessWidget {
   const OtaVerifButton({
+    super.key,
     required this.label,
     required this.color,
     required this.onTap,
@@ -372,7 +373,7 @@ class OtaVerifButton extends StatelessWidget {
 }
 
 class OtaStatusBadge extends StatelessWidget {
-  const OtaStatusBadge({required this.sudahDiverifikasi});
+  const OtaStatusBadge({super.key, required this.sudahDiverifikasi});
   final bool sudahDiverifikasi;
 
   @override
@@ -413,7 +414,7 @@ class OtaStatusBadge extends StatelessWidget {
 }
 
 class OtaSudahDiverifikasiBox extends StatelessWidget {
-  const OtaSudahDiverifikasiBox({required this.verifikasi});
+  const OtaSudahDiverifikasiBox({super.key, required this.verifikasi});
   final BaselineOtaVerifikasi? verifikasi;
 
   /// Menerjemahkan nilai status_verifikasi dari backend ke label + warna.

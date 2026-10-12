@@ -47,7 +47,7 @@ class OcrScanMainButton extends StatelessWidget {
         ),
         style: OutlinedButton.styleFrom(
           foregroundColor: AppTheme.primaryColor,
-          side: BorderSide(color: AppTheme.primaryColor.withOpacity(0.6)),
+          side: BorderSide(color: AppTheme.primaryColor.withValues(alpha:0.6)),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(13),
           ),

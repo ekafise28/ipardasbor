@@ -364,7 +364,7 @@ class _AkomodasiReviewPageState extends State<AkomodasiReviewPage> {
             child: ListView.separated(
               scrollDirection: Axis.horizontal,
               itemCount: a.photos.length,
-              separatorBuilder: (_, __) => const SizedBox(width: 8),
+              separatorBuilder: (_, _) => const SizedBox(width: 8),
               itemBuilder: (_, i) => ClipRRect(
                 borderRadius: BorderRadius.circular(8),
                 child: Image.file(

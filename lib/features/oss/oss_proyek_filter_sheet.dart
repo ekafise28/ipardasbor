@@ -172,40 +172,6 @@ class _OssProyekFilterSheetState extends State<_OssProyekFilterSheet> {
     );
   }
 
-  Widget _dropdownTeks({
-    required String label,
-    required String? value,
-    required List<String> options,
-    required ValueChanged<String?> onChanged,
-    required String semuaLabel,
-  }) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 14),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: <Widget>[
-          _Label(label),
-          DropdownButtonFormField<String?>(
-            key: ValueKey<String>('$label-$value'),
-            initialValue: value,
-            isExpanded: true,
-            decoration: const InputDecoration(
-              border: OutlineInputBorder(),
-              contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-            ),
-            hint: Text(semuaLabel),
-            items: <DropdownMenuItem<String?>>[
-              DropdownMenuItem<String?>(value: null, child: Text(semuaLabel)),
-              for (final String o in options)
-                DropdownMenuItem<String?>(value: o, child: Text(o)),
-            ],
-            onChanged: onChanged,
-          ),
-        ],
-      ),
-    );
-  }
-
   /// Opsi dropdown sebagai pasangan (nilai, label) supaya satu method bisa
   /// dipakai untuk wilayah (int) maupun filter teks (String).
   List<(int, String)> _opsiRegion(List<RegionOption> daftar) => <(int, String)>[

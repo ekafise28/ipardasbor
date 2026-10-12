@@ -29,7 +29,7 @@ class FormSection extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.only(bottom: 14),
       decoration: BoxDecoration(
-        color: hasError ? Colors.red.withOpacity(0.05) : surface,
+        color: hasError ? Colors.red.withValues(alpha:0.05) : surface,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
           color: hasError ? Colors.red : border,

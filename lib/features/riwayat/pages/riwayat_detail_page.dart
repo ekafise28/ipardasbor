@@ -313,7 +313,7 @@ class _FotoSection extends StatelessWidget {
       color: AppTheme.surface(context),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(14),
-        side: BorderSide(color: Colors.black.withOpacity(0.06)),
+        side: BorderSide(color: Colors.black.withValues(alpha:0.06)),
       ),
       margin: EdgeInsets.zero,
       child: Padding(
@@ -381,7 +381,7 @@ class _FotoSection extends StatelessWidget {
                             ),
                           );
                         },
-                        errorBuilder: (_, __, ___) => const Center(
+                        errorBuilder: (_, _, _) => const Center(
                           child: Icon(
                             Icons.broken_image_outlined,
                             color: Colors.black38,
@@ -461,7 +461,7 @@ class _FotoViewerPageState extends State<_FotoViewerPage> {
                     child: Image.network(
                       widget.foto[index].url,
                       fit: BoxFit.contain,
-                      errorBuilder: (_, __, ___) => const Icon(
+                      errorBuilder: (_, _, _) => const Icon(
                         Icons.broken_image_outlined,
                         color: Colors.white54,
                         size: 48,
@@ -505,7 +505,7 @@ class _OtaSection extends StatelessWidget {
       color: AppTheme.surface(context),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(14),
-        side: BorderSide(color: Colors.black.withOpacity(0.06)),
+        side: BorderSide(color: Colors.black.withValues(alpha:0.06)),
       ),
       margin: EdgeInsets.zero,
       child: Padding(
@@ -590,7 +590,7 @@ class _OtaTile extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                 decoration: BoxDecoration(
-                  color: _warnaStatus().withOpacity(0.12),
+                  color: _warnaStatus().withValues(alpha:0.12),
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Text(
@@ -760,7 +760,7 @@ class _LinkButton extends StatelessWidget {
         minimumSize: Size.zero,
         tapTargetSize: MaterialTapTargetSize.shrinkWrap,
         foregroundColor: AppTheme.menuDashboard,
-        side: BorderSide(color: AppTheme.menuDashboard.withOpacity(0.4)),
+        side: BorderSide(color: AppTheme.menuDashboard.withValues(alpha:0.4)),
       ),
     );
   }

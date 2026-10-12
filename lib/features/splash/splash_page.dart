@@ -156,7 +156,7 @@ class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
               child: RepaintBoundary(
                 child: AnimatedBuilder(
                   animation: _loop,
-                  builder: (_, __) => CustomPaint(
+                  builder: (_, _) => CustomPaint(
                     painter: _DotsPainter(_dots, _loop.value),
                   ),
                 ),

@@ -109,7 +109,7 @@ class _DashboardChartTableCardState extends State<DashboardChartTableCard> {
               duration: const Duration(milliseconds: 200),
               layoutBuilder: (current, previous) => Stack(
                 alignment: Alignment.topCenter,
-                children: [...previous, if (current != null) current],
+                children: [...previous, ?current],
               ),
               child: KeyedSubtree(
                 key: ValueKey<bool>(showTable),

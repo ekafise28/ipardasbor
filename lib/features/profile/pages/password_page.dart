@@ -86,9 +86,6 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
     return null;
   }
 
-  double get _strengthRatio =>
-      _passwordController.text.isEmpty ? 0 : _rulesMet / 6;
-
   Color get _strengthColor {
     if (_passwordController.text.isEmpty) return AppTheme.border(context);
     if (_rulesMet <= 2) return AppTheme.danger;

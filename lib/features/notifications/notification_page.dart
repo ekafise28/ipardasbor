@@ -39,8 +39,8 @@ class _NotificationPageState extends State<NotificationPage> {
 
   Future<void> _muat() async {
     setState(() => _loading = true);
-    final List<NotificationItem> semua =
-        await NotificationService.instance.list(type: _filter, limit: 200);
+    final List<NotificationItem> semua = await NotificationService.instance
+        .list(type: _filter, limit: 200);
     if (!mounted) return;
     setState(() {
       _items = _bukaFilterBelumDibaca
@@ -60,32 +60,38 @@ class _NotificationPageState extends State<NotificationPage> {
       await NotificationService.instance.markRead(item.id!);
     }
 
+    if (!mounted) return;
+
     switch (item.targetType) {
       case 'submission_detail':
         await _bukaDetailAjuan(item.targetId);
         break;
       case 'sync_page':
-        await Navigator.of(context)
-            .push(MaterialPageRoute<void>(builder: (_) => const SyncPage()));
+        await Navigator.of(
+          context,
+        ).push(MaterialPageRoute<void>(builder: (_) => const SyncPage()));
         break;
       default:
         break;
     }
 
+    if (!mounted) return;
     await _muat();
   }
 
   Future<void> _bukaDetailAjuan(String? clientUuid) async {
     if (clientUuid == null) return;
 
-    final NonOssLocalData? data =
-        await OfflineDatabase.instance.getByClientUuid(clientUuid);
+    final NonOssLocalData? data = await OfflineDatabase.instance
+        .getByClientUuid(clientUuid);
 
     if (data == null) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Ajuan ini sudah tidak ada (mungkin sudah terkirim atau dihapus).'),
+          content: Text(
+            'Ajuan ini sudah tidak ada (mungkin sudah terkirim atau dihapus).',
+          ),
         ),
       );
       return;
@@ -123,18 +129,20 @@ class _NotificationPageState extends State<NotificationPage> {
             child: _loading
                 ? const Center(child: CircularProgressIndicator())
                 : _items.isEmpty
-                    ? _buildEmpty()
-                    : RefreshIndicator(
-                        onRefresh: _muat,
-                        child: ListView.separated(
-                          physics: const AlwaysScrollableScrollPhysics(),
-                          padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
-                          itemCount: _items.length,
-                          separatorBuilder: (_, __) => const SizedBox(height: 8),
-                          itemBuilder: (context, i) =>
-                              _NotificationTile(item: _items[i], onTap: () => _bukaNotifikasi(_items[i])),
-                        ),
+                ? _buildEmpty()
+                : RefreshIndicator(
+                    onRefresh: _muat,
+                    child: ListView.separated(
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+                      itemCount: _items.length,
+                      separatorBuilder: (_, _) => const SizedBox(height: 8),
+                      itemBuilder: (context, i) => _NotificationTile(
+                        item: _items[i],
+                        onTap: () => _bukaNotifikasi(_items[i]),
                       ),
+                    ),
+                  ),
           ),
         ],
       ),
@@ -184,7 +192,9 @@ class _NotificationPageState extends State<NotificationPage> {
       if (label == 'Semua') return _filter == null && !_bukaFilterBelumDibaca;
       if (label == 'Belum dibaca') return _bukaFilterBelumDibaca;
       if (label == 'Gagal Sync') return _filter == NotificationType.syncFailed;
-      if (label == 'Menunggu Lama') return _filter == NotificationType.waitingTooLong;
+      if (label == 'Menunggu Lama') {
+        return _filter == NotificationType.waitingTooLong;
+      }
       if (label == 'Draft') return _filter == NotificationType.draftLingering;
       return false;
     }
@@ -195,14 +205,16 @@ class _NotificationPageState extends State<NotificationPage> {
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
         children: chips.entries
-            .map((e) => Padding(
-                  padding: const EdgeInsets.only(right: 8),
-                  child: ChoiceChip(
-                    label: Text(e.key),
-                    selected: selected(e.key),
-                    onSelected: (_) => e.value(),
-                  ),
-                ))
+            .map(
+              (e) => Padding(
+                padding: const EdgeInsets.only(right: 8),
+                child: ChoiceChip(
+                  label: Text(e.key),
+                  selected: selected(e.key),
+                  onSelected: (_) => e.value(),
+                ),
+              ),
+            )
             .toList(),
       ),
     );
@@ -213,7 +225,11 @@ class _NotificationPageState extends State<NotificationPage> {
       physics: const AlwaysScrollableScrollPhysics(),
       children: [
         SizedBox(height: MediaQuery.of(context).size.height * 0.2),
-        Icon(Icons.notifications_none_rounded, size: 48, color: AppTheme.textMuted),
+        Icon(
+          Icons.notifications_none_rounded,
+          size: 48,
+          color: AppTheme.textMuted,
+        ),
         const SizedBox(height: 10),
         Center(
           child: Text(
@@ -233,18 +249,26 @@ class _NotificationTile extends StatelessWidget {
   final VoidCallback onTap;
 
   (IconData, Color) get _tampilan => switch (item.type) {
-        NotificationType.syncFailed => (Icons.error_outline_rounded, Colors.red),
-        NotificationType.syncSuccess => (Icons.check_circle_outline_rounded, Colors.green),
-        NotificationType.waitingTooLong => (Icons.cloud_off_rounded, Colors.orange),
-        NotificationType.draftLingering => (Icons.edit_note_rounded, Colors.blueGrey),
-      };
+    NotificationType.syncFailed => (Icons.error_outline_rounded, Colors.red),
+    NotificationType.syncSuccess => (
+      Icons.check_circle_outline_rounded,
+      Colors.green,
+    ),
+    NotificationType.waitingTooLong => (Icons.cloud_off_rounded, Colors.orange),
+    NotificationType.draftLingering => (
+      Icons.edit_note_rounded,
+      Colors.blueGrey,
+    ),
+  };
 
   @override
   Widget build(BuildContext context) {
     final (IconData icon, Color color) = _tampilan;
 
     return Material(
-      color: item.isRead ? AppTheme.surface(context) : color.withValues(alpha: 0.08),
+      color: item.isRead
+          ? AppTheme.surface(context)
+          : color.withValues(alpha: 0.08),
       borderRadius: BorderRadius.circular(14),
       child: InkWell(
         onTap: onTap,
@@ -267,7 +291,9 @@ class _NotificationTile extends StatelessWidget {
                     Text(
                       item.title,
                       style: TextStyle(
-                        fontWeight: item.isRead ? FontWeight.w600 : FontWeight.w800,
+                        fontWeight: item.isRead
+                            ? FontWeight.w600
+                            : FontWeight.w800,
                         fontSize: 13.5,
                         color: AppTheme.textColor(context),
                       ),
@@ -275,12 +301,20 @@ class _NotificationTile extends StatelessWidget {
                     const SizedBox(height: 3),
                     Text(
                       item.body,
-                      style: TextStyle(fontSize: 12, color: AppTheme.textSecondary(context)),
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: AppTheme.textSecondary(context),
+                      ),
                     ),
                     const SizedBox(height: 6),
                     Text(
-                      DateFormat('dd MMM yyyy, HH:mm').format(item.createdAt.toLocal()),
-                      style: TextStyle(fontSize: 10.5, color: AppTheme.textMuted),
+                      DateFormat(
+                        'dd MMM yyyy, HH:mm',
+                      ).format(item.createdAt.toLocal()),
+                      style: TextStyle(
+                        fontSize: 10.5,
+                        color: AppTheme.textMuted,
+                      ),
                     ),
                   ],
                 ),
@@ -290,7 +324,10 @@ class _NotificationTile extends StatelessWidget {
                   margin: const EdgeInsets.only(left: 6, top: 4),
                   width: 8,
                   height: 8,
-                  decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+                  decoration: BoxDecoration(
+                    color: color,
+                    shape: BoxShape.circle,
+                  ),
                 ),
             ],
           ),

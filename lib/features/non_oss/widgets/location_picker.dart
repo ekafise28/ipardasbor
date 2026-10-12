@@ -332,9 +332,9 @@ class _SumberBadge extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
       decoration: BoxDecoration(
-        color: warna.withOpacity(0.1),
+        color: warna.withValues(alpha:0.1),
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: warna.withOpacity(0.35)),
+        border: Border.all(color: warna.withValues(alpha:0.35)),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,

@@ -51,7 +51,7 @@ class SectionCard extends StatelessWidget {
       color: AppTheme.surface(context),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(14),
-        side: BorderSide(color: Colors.black.withOpacity(0.06)),
+        side: BorderSide(color: Colors.black.withValues(alpha:0.06)),
       ),
       margin: EdgeInsets.zero,
       child: Padding(

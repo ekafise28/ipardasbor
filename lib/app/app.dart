@@ -110,7 +110,7 @@ class _IparAppState extends State<IparApp> with WidgetsBindingObserver {
           themeMode: themeMode,
           builder: (context, child) => ValueListenableBuilder<bool>(
             valueListenable: ScreenshotButtonController.instance,
-            builder: (_, aktif, __) =>
+            builder: (_, aktif, _) =>
                 ScreenshotOverlay(enabled: aktif, child: child!),
           ),
           initialRoute: '/',

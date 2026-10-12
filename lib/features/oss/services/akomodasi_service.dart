@@ -107,21 +107,27 @@ class AkomodasiService {
       'sumber_data': tahap1.dariDaftar ? 'OSS' : 'NON OSS',
     };
 
-    if (tahap1.provinsiId != null)
+    if (tahap1.provinsiId != null) {
       fields['provinsi_id'] = tahap1.provinsiId.toString();
-    if (tahap1.kabupatenId != null)
+    }
+    if (tahap1.kabupatenId != null) {
       fields['kabupaten_id'] = tahap1.kabupatenId.toString();
-    if (tahap1.kecamatanId != null)
+    }
+    if (tahap1.kecamatanId != null) {
       fields['kecamatan_id'] = tahap1.kecamatanId.toString();
-    if (tahap1.kelurahanId != null)
+    }
+    if (tahap1.kelurahanId != null) {
       fields['kelurahan_id'] = tahap1.kelurahanId.toString();
+    }
 
     if (tahap1.npwpd.trim().isNotEmpty) fields['npwpd'] = tahap1.npwpd.trim();
-    if (tahap1.website.trim().isNotEmpty)
+    if (tahap1.website.trim().isNotEmpty) {
       fields['website'] = tahap1.website.trim();
+    }
     if (tahap1.email.trim().isNotEmpty) fields['email'] = tahap1.email.trim();
-    if (tahap1.baselineOtaId != null)
+    if (tahap1.baselineOtaId != null) {
       fields['baseline_ota_id'] = tahap1.baselineOtaId.toString();
+    }
 
     if (!tahap1.isValid) {
       for (int i = 0; i < tahap1.statusKetidaksesuaian.length; i++) {

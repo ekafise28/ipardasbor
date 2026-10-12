@@ -72,7 +72,7 @@ class StatusBanner extends StatelessWidget {
         duration: const Duration(milliseconds: 250),
         layoutBuilder: (current, previous) => Stack(
           alignment: Alignment.topCenter,
-          children: [...previous, if (current != null) current],
+          children: [...previous, ?current],
         ),
         child: spec == null
             ? const SizedBox(key: ValueKey('none'), width: double.infinity)

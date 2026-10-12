@@ -153,12 +153,15 @@ class AkomodasiItemData {
     };
 
     if (provinsiId != null) fields['$p[provinsi_id]'] = provinsiId.toString();
-    if (kabupatenId != null)
+    if (kabupatenId != null) {
       fields['$p[kabupaten_id]'] = kabupatenId.toString();
-    if (kecamatanId != null)
+    }
+    if (kecamatanId != null) {
       fields['$p[kecamatan_id]'] = kecamatanId.toString();
-    if (kelurahanId != null)
+    }
+    if (kelurahanId != null) {
       fields['$p[kelurahan_id]'] = kelurahanId.toString();
+    }
 
     if (npwpd.trim().isNotEmpty) fields['$p[npwpd]'] = npwpd.trim();
     if (website.trim().isNotEmpty) fields['$p[website]'] = website.trim();
