@@ -133,7 +133,11 @@ class _OcrResultSheetState extends State<_OcrResultSheet> {
     return w;
   }
 
-  static String _group(String s) {
+  static String _group(String s, OcrFieldType t) {
+    if (t == OcrFieldType.nku && s.length == 21) {
+      return '${s.substring(0, 6)}-${s.substring(6, 10)}-'
+          '${s.substring(10, 14)}-${s.substring(14, 18)}-${s.substring(18)}';
+    }
     if (s.length <= 6) return s;
     final StringBuffer b = StringBuffer();
     for (int i = 0; i < s.length; i++) {
@@ -383,7 +387,7 @@ class _OcrResultSheetState extends State<_OcrResultSheet> {
                     child: Text(
                       current == text
                           ? 'Sama dengan isi form saat ini.'
-                          : 'Isi form saat ini: ${_group(current)}. '
+                          : 'Isi form saat ini: ${_group(current, t)}. '
                                 'Centang untuk menimpa.',
                       style: TextStyle(
                         fontSize: 11.5,
@@ -426,7 +430,7 @@ class _OcrResultSheetState extends State<_OcrResultSheet> {
                   const SizedBox(height: 10),
                 ],
                 Text(
-                  text.isEmpty ? '-' : _group(text),
+                  text.isEmpty ? '-' : _group(text, t),
                   style: TextStyle(
                     fontSize: 21,
                     fontWeight: FontWeight.w800,

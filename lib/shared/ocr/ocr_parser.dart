@@ -14,10 +14,10 @@ class OcrParser {
   /// Deretan karakter yang "mirip angka". Boleh dipisah spasi/titik/strip.
   static final RegExp _numberRun = RegExp(
     r'(?<![A-Za-z])[0-9OoIlSsBZz|]'
-    r'(?:[0-9OoIlSsBZz|]|[ .\-](?=[0-9OoIlSsBZz|]))*'
+    r'(?:[0-9OoIlSsBZz|]|[ .\-–—_](?=[0-9OoIlSsBZz|]))*'
     r'(?![A-Za-z])',
   );
-  static final RegExp _separators = RegExp(r'[ .\-]+');
+  static final RegExp _separators = RegExp(r'[ .\-–—_]+');
   static final RegExp _digit = RegExp(r'[0-9]');
 
   static const Map<String, String> _fixes = {
@@ -32,6 +32,25 @@ class OcrParser {
     'Z': '2',
     'z': '2',
   };
+
+  static const String _c = r'[0-9OoIlSsBZz|]';
+  static const String _sep = r'[ .\-–—_]+';
+  static final RegExp _nkuGrouped = RegExp(
+    '(?<![0-9])($_c{6})$_sep($_c{4})$_sep($_c{4})$_sep($_c{4})$_sep($_c{3})(?![0-9])',
+  );
+
+  /// NKU yang tertulis persis berpola 6-4-4-4-3. Sinyal kuat, dipakai
+  /// sebagai bobot peringkat saja.
+  static Set<String> _groupedNku(List<String> lines) {
+    final Set<String> out = {};
+    for (final line in lines) {
+      for (final m in _nkuGrouped.allMatches(line)) {
+        final String joined = [for (int i = 1; i <= 5; i++) m.group(i)!].join();
+        if (_looksNumeric(joined)) out.add(_correct(joined));
+      }
+    }
+    return out;
+  }
 
   /// Versi praktis untuk teks satu blok (dipecah per baris).
   static Map<OcrFieldType, List<OcrResult>> parseText(
@@ -54,6 +73,8 @@ class OcrParser {
         .map((l) => l.trim())
         .where((l) => l.isNotEmpty)
         .toList();
+
+    final Set<String> grouped = _groupedNku(clean);
 
     // 1) Kandidat lewat label, per jenis.
     final Map<OcrFieldType, List<String>> byLabel = {
@@ -82,23 +103,19 @@ class OcrParser {
     final Map<OcrFieldType, List<OcrResult>> result = {};
     for (final t in wanted) {
       if (t == OcrFieldType.kbli) {
-        result[t] = _kbliResults(
-          clean,
-          byLabel[t]!.toSet(),
-          bidang,
-        );
+        result[t] = _kbliResults(clean, byLabel[t]!.toSet(), bidang);
         continue;
       }
       final List<String> labelValues = byLabel[t]!;
       if (labelValues.isNotEmpty) {
-        result[t] = _rank(t, labelValues)
-            .map(
-              (v) => _build(t, v, byLabel: true, bidang: bidang),
-            )
-            .toList();
+        result[t] = _rank(
+          t,
+          labelValues,
+          preferred: grouped,
+        ).map((v) => _build(t, v, byLabel: true, bidang: bidang)).toList();
       } else {
         final List<String> fallback = _byFallback(t, clean, claimed);
-        result[t] = _rank(t, fallback)
+        result[t] = _rank(t, fallback, preferred: grouped)
             .map(
               (v) => _build(t, v, byLabel: false, bidang: bidang),
             ) // <- tambah bidang
@@ -225,20 +242,35 @@ class OcrParser {
 
   static List<String> _dedupe(List<String> values) => values.toSet().toList();
 
-  static List<String> _rank(OcrFieldType type, List<String> values) {
+  static List<String> _rank(
+    OcrFieldType type,
+    List<String> values, {
+    Set<String> preferred = const {},
+  }) {
     if (type == OcrFieldType.kbli) return values;
     final entries = values.asMap().entries.toList();
     entries.sort((a, b) {
-      final int c = _score(type, b.value).compareTo(_score(type, a.value));
+      final int c = _score(
+        type,
+        b.value,
+        preferred,
+      ).compareTo(_score(type, a.value, preferred));
       return c != 0 ? c : a.key.compareTo(b.key);
     });
     return entries.map((e) => e.value).toList();
   }
 
-  static int _score(OcrFieldType type, String v) {
+  static int _score(OcrFieldType type, String v, Set<String> preferred) {
     int s = v.length;
     if (v.length == type.expectedLength) s += 100;
-    if (type == OcrFieldType.nku && _hasDatePrefix(v)) s += 50;
+    if (type == OcrFieldType.nku) {
+      if (preferred.contains(v)) {
+        s += 80;
+      }
+      else if (_hasDatePrefix(v)) {
+        s += 50; // format lama yyyyMMdd...
+      }
+    }
     return s;
   }
 

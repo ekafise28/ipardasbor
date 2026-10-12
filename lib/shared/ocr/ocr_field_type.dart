@@ -11,7 +11,7 @@ enum OcrFieldType {
   ),
   nku(
     displayName: 'NKU',
-    labelPattern: r'\bNKU\b',
+    labelPattern: r'(?:NOMOR\s*)?KEGIATAN\s*USAHA|\bNKU\b',
     expectedLength: 21,
     minLength: 10,
     maxLength: 30,
