@@ -34,11 +34,7 @@ class _DashboardPageState extends State<DashboardPage>
     with SingleTickerProviderStateMixin {
   final DashboardService _dashboardService = DashboardService();
 
-  // Animasi masuk bertahap, dijalankan sekali saat data pertama tiba.
-  late final AnimationController _entrance = AnimationController(
-    vsync: this,
-    duration: const Duration(milliseconds: 1000),
-  );
+  late final AnimationController _entrance;
 
   String get _labelBidang =>
       BidangUsahaOpsi.namaDari(_filterValues.bidangUsaha) ?? 'Usaha Pariwisata';
@@ -47,13 +43,17 @@ class _DashboardPageState extends State<DashboardPage>
   bool _isLoading = true;
   String? _errorMessage;
 
-  String _selectedProvince = 'jawa-timur';
+  String? _selectedProvince;
 
   DashboardFilterValues _filterValues = DashboardFilterValues.empty;
 
   @override
   void initState() {
     super.initState();
+    _entrance = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1000),
+    );
     _loadDashboard();
   }
 
@@ -145,6 +145,8 @@ class _DashboardPageState extends State<DashboardPage>
 
     setState(() {
       _selectedProvince = province;
+      // Kabupaten milik provinsi lama tidak berlaku di provinsi baru.
+      _filterValues = _filterValues.copyWith(clearDistrictId: true);
       _isLoading = true;
       _errorMessage = null;
     });
@@ -517,6 +519,11 @@ class _DashboardPageState extends State<DashboardPage>
   Widget _buildKpiHeader(DashboardData dashboard) {
     final DashboardSummary summary = dashboard.summary;
     final List<ProvinceOption> provinces = dashboard.filterOptions.provinces;
+    final List<DistrictOption> districts = dashboard.filterOptions.districts;
+    // Terisi hanya kalau akses user terkunci ke satu kabupaten/kota.
+    final String? kabupatenTerkunci = districts.length == 1
+        ? districts.first.name
+        : null;
 
     final bool provinceExists = provinces.any(
       (item) => item.slug == _selectedProvince,
@@ -593,6 +600,21 @@ class _DashboardPageState extends State<DashboardPage>
                         fontWeight: FontWeight.w500,
                       ),
                     ),
+                    if (kabupatenTerkunci != null)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 2),
+                        child: Text(
+                          kabupatenTerkunci,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            color: Colors.white.withValues(alpha: 0.72),
+                            fontSize: 12,
+                            fontWeight: FontWeight.w500,
+                            height: 1.25,
+                          ),
+                        ),
+                      ),
                   ],
                 ),
               ),

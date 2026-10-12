@@ -9,7 +9,7 @@ class DashboardService {
   final ApiClient _api;
 
   Future<DashboardData> getDashboard({
-    String province = 'jawa-timur',
+    String? province,
     String? startDate,
     String? endDate,
     int? districtId,
@@ -22,7 +22,7 @@ class DashboardService {
     final dynamic response = await _api.get(
       ApiEndpoints.dashboard,
       queryParameters: <String, dynamic>{
-        'provinsi': province,
+        'provinsi': province?.trim(),
         'include_map': includeMap ? '1' : '0',
         'tanggal_dari': startDate?.trim(),
         'tanggal_sampai': endDate?.trim(),
