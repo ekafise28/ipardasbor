@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:ipardasbor/core/network/network_status.dart';
 import 'package:ipardasbor/features/oss/pages/akomodasi_review_page.dart';
 
 import '../../../app/app_theme.dart';
@@ -59,6 +60,9 @@ class _AkomodasiFormPageState extends State<AkomodasiFormPage> {
   }
 
   Future<void> _cekValidasi(AkomodasiItemData item) async {
+    if (!await NetworkGuard.pastikanOnline(context)) return;
+    if (!mounted) return;
+
     try {
       final hasil = await _service.cek(
         nib: item.nib,

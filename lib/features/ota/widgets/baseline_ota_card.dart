@@ -4,6 +4,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../../app/app_theme.dart';
 import '../models/baseline_ota_item.dart';
 
+import '../../../core/network/network_status.dart';
 import '../../../shared/widgets/distance_badge.dart';
 
 /// Satu kartu listing baseline OTA, padanan satu baris tabel di
@@ -166,36 +167,55 @@ class BaselineOtaCard extends StatelessWidget {
                     if (item.sudahDiverifikasi)
                       OtaSudahDiverifikasiBox(verifikasi: item.verifikasiAktif)
                     else
-                      Row(
-                        children: [
-                          Expanded(
-                            flex: 5,
-                            child: OtaVerifButton(
-                              label: 'Ada NIB',
-                              color: AppTheme.primaryColor,
-                              filled: true,
-                              onTap: onAdaNib,
+                      ValueListenableBuilder<bool>(
+                        valueListenable: NetworkStatus.instance,
+                        builder: (context, offline, _) => Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                Expanded(
+                                  flex: 5,
+                                  child: OtaVerifButton(
+                                    label: 'Ada NIB',
+                                    color: AppTheme.primaryColor,
+                                    filled: true,
+                                    onTap: offline ? null : onAdaNib,
+                                  ),
+                                ),
+                                const SizedBox(width: 6),
+                                Expanded(
+                                  flex: 4,
+                                  child: OtaVerifButton(
+                                    label: 'Tidak Ada',
+                                    color: Colors.red.shade700,
+                                    onTap: offline ? null : onTidakAda,
+                                  ),
+                                ),
+                                const SizedBox(width: 6),
+                                Expanded(
+                                  flex: 4,
+                                  child: OtaVerifButton(
+                                    label: 'Tidak Tahu',
+                                    color: Colors.blueGrey.shade600,
+                                    onTap: offline ? null : onTidakTahu,
+                                  ),
+                                ),
+                              ],
                             ),
-                          ),
-                          const SizedBox(width: 6),
-                          Expanded(
-                            flex: 4,
-                            child: OtaVerifButton(
-                              label: 'Tidak Ada',
-                              color: Colors.red.shade700,
-                              onTap: onTidakAda,
-                            ),
-                          ),
-                          const SizedBox(width: 6),
-                          Expanded(
-                            flex: 4,
-                            child: OtaVerifButton(
-                              label: 'Tidak Tahu',
-                              color: Colors.blueGrey.shade600,
-                              onTap: onTidakTahu,
-                            ),
-                          ),
-                        ],
+                            if (offline)
+                              Padding(
+                                padding: const EdgeInsets.only(top: 6),
+                                child: Text(
+                                  'Perlu koneksi untuk verifikasi',
+                                  style: TextStyle(
+                                    fontSize: 11.5,
+                                    color: AppTheme.textSecondary(context),
+                                  ),
+                                ),
+                              ),
+                          ],
+                        ),
                       ),
                   ],
                 ),
@@ -328,7 +348,7 @@ class OtaVerifButton extends StatelessWidget {
   });
   final String label;
   final Color color;
-  final VoidCallback onTap;
+  final VoidCallback? onTap;
 
   /// true = tombol utama (solid), false = tombol sekunder (outline).
   final bool filled;

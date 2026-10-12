@@ -2,11 +2,13 @@ import 'dart:async';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:ipardasbor/features/oss/oss_proyek_page.dart';
+import 'package:ipardasbor/shared/widgets/offline_banner.dart';
 
 import '../../../app/app_theme.dart';
 
 import '../../../core/api/api_client.dart';
 import '../../../core/api/api_exception.dart';
+import '../../../core/network/network_status.dart';
 
 import '../models/baseline_ota_filter.dart';
 import '../models/baseline_ota_item.dart';
@@ -368,6 +370,8 @@ class _BaselineOtaPageState extends State<BaselineOtaPage>
   }
 
   Future<void> _bukaOssProyek(BaselineOtaItem item) async {
+    if (!await NetworkGuard.pastikanOnline(context)) return;
+    if (!mounted) return;
     final bool? tersimpan = await Navigator.of(context).push<bool>(
       MaterialPageRoute<bool>(
         builder: (_) => OssProyekPage(
@@ -381,6 +385,8 @@ class _BaselineOtaPageState extends State<BaselineOtaPage>
   }
 
   Future<void> _bukaNonOss(BaselineOtaItem item, String memilikiNib) async {
+    if (!await NetworkGuard.pastikanOnline(context)) return;
+    if (!mounted) return;
     final bool? tersimpan = await Navigator.of(context).push<bool>(
       MaterialPageRoute<bool>(
         builder: (_) => NonOssFormPage(
@@ -443,6 +449,7 @@ class _BaselineOtaPageState extends State<BaselineOtaPage>
       ),
       body: Column(
         children: [
+          const OfflineBanner(),
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
             child: TextField(

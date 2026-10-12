@@ -4,13 +4,19 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 import '../../../app/app_theme.dart';
+
 import '../../../core/api/api_client.dart';
 import '../../../core/api/api_exception.dart';
+import '../../../core/network/network_status.dart';
+import '../../../shared/widgets/offline_notice.dart';
+
 import '../../non_oss/models/region_option.dart';
 import '../../non_oss/services/region_service.dart';
+
 import '../models/akomodasi_item_data.dart';
 import '../models/jenis_produk_akomodasi.dart';
 import '../models/oss_form_data.dart';
+
 import '../services/akomodasi_service.dart';
 
 /// Halaman review sebelum submit final: menampilkan SELURUH isian
@@ -122,6 +128,13 @@ class _AkomodasiReviewPageState extends State<AkomodasiReviewPage> {
   }
 
   Future<void> _submit() async {
+    if (!await NetworkGuard.pastikanOnline(
+      context,
+      pesan: 'Perlu koneksi internet untuk menyimpan Manajemen Akomodasi.',
+    )) {
+      return;
+    }
+    if (!mounted) return;
     setState(() => _saving = true);
     try {
       await _service.submit(tahap1: widget.tahap1, akomodasi: widget.akomodasi);
@@ -189,6 +202,10 @@ class _AkomodasiReviewPageState extends State<AkomodasiReviewPage> {
           : ListView(
               padding: const EdgeInsets.all(16),
               children: [
+                const OfflineNotice(
+                  pesan:
+                      'Perlu koneksi internet untuk menyimpan. Data isian tetap aman di halaman ini.',
+                ),
                 _ReviewSection(
                   icon: Icons.assignment_ind_outlined,
                   title: 'Tahap 1 - Identitas Manajemen Akomodasi',
@@ -224,37 +241,44 @@ class _AkomodasiReviewPageState extends State<AkomodasiReviewPage> {
                   ),
                 ),
                 const SizedBox(height: 12),
-                SizedBox(
-                  height: 54,
-                  child: FilledButton.icon(
-                    onPressed: _saving ? null : _submit,
-                    style: FilledButton.styleFrom(
-                      backgroundColor: AppTheme.primaryColor,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(15),
+                ValueListenableBuilder<bool>(
+                  valueListenable: NetworkStatus.instance,
+                  builder: (context, offline, _) => SizedBox(
+                    height: 54,
+                    child: FilledButton.icon(
+                      onPressed: (_saving || offline) ? null : _submit,
+                      style: FilledButton.styleFrom(
+                        backgroundColor: AppTheme.primaryColor,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(15),
+                        ),
                       ),
-                    ),
-                    icon: _saving
-                        ? const SizedBox(
-                            width: 20,
-                            height: 20,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
+                      icon: _saving
+                          ? const SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: Colors.white,
+                              ),
+                            )
+                          : Icon(
+                              offline
+                                  ? Icons.cloud_off_rounded
+                                  : Icons.cloud_upload_rounded,
                               color: Colors.white,
                             ),
-                          )
-                        : const Icon(
-                            Icons.cloud_upload_rounded,
-                            color: Colors.white,
-                          ),
-                    label: Text(
-                      _saving
-                          ? 'Menyimpan data...'
-                          : 'Simpan Manajemen Akomodasi',
-                      style: const TextStyle(
-                        fontWeight: FontWeight.w800,
-                        fontSize: 15,
-                        color: Colors.white,
+                      label: Text(
+                        _saving
+                            ? 'Menyimpan data...'
+                            : (offline
+                                  ? 'Perlu koneksi internet'
+                                  : 'Simpan Manajemen Akomodasi'),
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w800,
+                          fontSize: 15,
+                          color: Colors.white,
+                        ),
                       ),
                     ),
                   ),

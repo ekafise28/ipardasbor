@@ -5,6 +5,9 @@ import 'package:ipardasbor/features/notifications/services/notification_local_se
 import 'package:ipardasbor/features/notifications/services/notification_retention_controller.dart';
 import 'package:ipardasbor/features/notifications/services/notification_statusbar_controller.dart';
 import 'package:ipardasbor/shared/screenshot/screenshot_button_controller.dart';
+import 'package:ipardasbor/core/cache/api_cache.dart';
+import 'package:ipardasbor/core/cache/cache_preferences.dart';
+import 'package:ipardasbor/core/network/network_status.dart';
 
 import 'app/app.dart';
 import 'app/app_theme.dart';
@@ -18,5 +21,8 @@ void main() async {
   await NotificationStatusBarController.instance.loadSavedPreference();
   await NotificationLocalService.instance.init();
   await ScreenshotButtonController.instance.loadSavedPreference();
+  await CachePreferences.instance.loadSavedPreference();
+  await NetworkStatus.instance.init();
+  ApiCache.instance.pruneExpired(); // tanpa await, jalan di latar belakang
   runApp(const IparApp());
 }

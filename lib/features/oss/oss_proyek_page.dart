@@ -4,14 +4,16 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:ipardasbor/features/oss/oss_proyek_filter_sheet.dart';
+import 'package:ipardasbor/shared/widgets/offline_banner.dart';
 
 import '../../app/app_theme.dart';
 import '../../core/api/api_exception.dart';
+import '../../core/network/network_status.dart';
+
 import '../non_oss/models/region_option.dart';
 
 import '../riwayat/models/riwayat_page_result.dart' show RiwayatPagination;
 import '../riwayat/pages/riwayat_detail_page.dart';
-
 
 import 'models/oss_proyek_filter.dart';
 import 'models/oss_proyek_item.dart';
@@ -278,10 +280,7 @@ class _OssProyekPageState extends State<OssProyekPage>
     _debounce?.cancel();
     _searchController.clear();
     _ubahFilter(
-      OssProyekFilter(
-        provinsiId: _filter.provinsiId,
-        perPage: _filter.perPage,
-      ),
+      OssProyekFilter(provinsiId: _filter.provinsiId, perPage: _filter.perPage),
     );
   }
 
@@ -507,6 +506,8 @@ class _OssProyekPageState extends State<OssProyekPage>
 
   /// Membuka halaman validasi dengan NIB, KBLI, dan NKU terisi dari baris ini.
   Future<void> _bukaVerifikasi(OssProyekItem item) async {
+    if (!await NetworkGuard.pastikanOnline(context)) return;
+    if (!mounted) return;
     final bool? tersimpan = await Navigator.of(context).push<bool>(
       MaterialPageRoute<bool>(
         builder: (_) => OssValidasiPage(
@@ -530,6 +531,8 @@ class _OssProyekPageState extends State<OssProyekPage>
 
   /// Verifikasi manual untuk usaha yang belum ada di daftar.
   Future<void> _bukaCekManual() async {
+    if (!await NetworkGuard.pastikanOnline(context)) return;
+    if (!mounted) return;
     final bool? tersimpan = await Navigator.of(context).push<bool>(
       MaterialPageRoute<bool>(
         builder: (_) => OssValidasiPage(
@@ -710,6 +713,7 @@ class _OssProyekPageState extends State<OssProyekPage>
       ),
       body: Column(
         children: <Widget>[
+          const OfflineBanner(),
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
             child: _buildSearchField(context),
@@ -836,31 +840,32 @@ class _OssProyekPageState extends State<OssProyekPage>
   }
 
   Widget _buildKosong() {
-  final bool adaPencarian = _filter.nibNku.trim().isNotEmpty;
-  final bool hasFilter = _filter.hasActiveFilter;
+    final bool adaPencarian = _filter.nibNku.trim().isNotEmpty;
+    final bool hasFilter = _filter.hasActiveFilter;
 
-  final String judul;
-  final String isi;
-  if (adaPencarian) {
-    judul = 'Usaha tidak ditemukan';
-    isi = 'Pastikan NIB atau NKU diketik lengkap. Kalau usahanya memang '
-        'belum ada di daftar, gunakan "Cek Data OSS" di atas.';
-  } else if (hasFilter) {
-    judul = 'Tidak ada yang cocok';
-    isi = 'Tidak ada usaha yang sesuai dengan filter yang dipilih.';
-  } else {
-    judul = 'Belum ada data';
-    isi = 'Belum ada data usaha pada wilayah ini.';
+    final String judul;
+    final String isi;
+    if (adaPencarian) {
+      judul = 'Usaha tidak ditemukan';
+      isi =
+          'Pastikan NIB atau NKU diketik lengkap. Kalau usahanya memang '
+          'belum ada di daftar, gunakan "Cek Data OSS" di atas.';
+    } else if (hasFilter) {
+      judul = 'Tidak ada yang cocok';
+      isi = 'Tidak ada usaha yang sesuai dengan filter yang dipilih.';
+    } else {
+      judul = 'Belum ada data';
+      isi = 'Belum ada data usaha pada wilayah ini.';
+    }
+
+    return EmptyListState(
+      icon: hasFilter ? Icons.search_off_rounded : Icons.inbox_outlined,
+      title: judul,
+      message: isi,
+      actionLabel: hasFilter ? 'Hapus semua filter' : null,
+      onAction: hasFilter ? _hapusSemuaFilter : null,
+    );
   }
-
-  return EmptyListState(
-    icon: hasFilter ? Icons.search_off_rounded : Icons.inbox_outlined,
-    title: judul,
-    message: isi,
-    actionLabel: hasFilter ? 'Hapus semua filter' : null,
-    onAction: hasFilter ? _hapusSemuaFilter : null,
-  );
-}
 
   Widget _buildBody(BuildContext context) {
     if (_loadingAwal) {
@@ -888,7 +893,11 @@ class _OssProyekPageState extends State<OssProyekPage>
         itemCount: 1 + jumlahBaris + (_pagination.hasNextPage ? 1 : 0),
         itemBuilder: (BuildContext context, int index) {
           if (index == 0) {
-            return _KartuCekManual(onTap: _bukaCekManual);
+            return ValueListenableBuilder<bool>(
+              valueListenable: NetworkStatus.instance,
+              builder: (_, offline, __) =>
+                  _KartuCekManual(onTap: _bukaCekManual, offline: offline),
+            );
           }
 
           if (_items.isEmpty) {
@@ -898,9 +907,10 @@ class _OssProyekPageState extends State<OssProyekPage>
           final int i = index - 1;
 
           if (i >= _items.length) {
-            return LoadMoreFooter(gagal: _gagalBerikutnya, 
-            pesan: _pesanBerikutnya, 
-            onCobaLagi: _cobaLagiBerikutnya
+            return LoadMoreFooter(
+              gagal: _gagalBerikutnya,
+              pesan: _pesanBerikutnya,
+              onCobaLagi: _cobaLagiBerikutnya,
             );
           }
 
@@ -931,58 +941,64 @@ class _OssProyekPageState extends State<OssProyekPage>
 /// Padanan baris "Cek Data OSS" di web. Sengaja ringkas (satu baris) supaya
 /// tidak memakan ruang kartu pertama setiap kali daftar dibuka.
 class _KartuCekManual extends StatelessWidget {
-  const _KartuCekManual({required this.onTap});
+  const _KartuCekManual({required this.onTap, this.offline = false});
 
   final VoidCallback onTap;
+  final bool offline;
 
   @override
   Widget build(BuildContext context) {
     const Color aksen = AppTheme.secondaryColor;
 
-    return Card(
-      elevation: 0,
-      clipBehavior: Clip.antiAlias,
-      color: aksen.withValues(alpha: 0.08),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-        side: BorderSide(color: aksen.withValues(alpha: 0.30)),
-      ),
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-      child: InkWell(
-        onTap: onTap,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-          child: Row(
-            children: <Widget>[
-              const Icon(Icons.edit_note_rounded, color: aksen, size: 24),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Text.rich(
-                  TextSpan(
-                    children: <InlineSpan>[
-                      TextSpan(
-                        text: 'Usaha tidak ada di daftar? ',
-                        style: TextStyle(
-                          color: AppTheme.textSecondary(context),
+    return Opacity(
+      opacity: offline ? 0.5 : 1,
+      child: Card(
+        elevation: 0,
+        clipBehavior: Clip.antiAlias,
+        color: aksen.withValues(alpha: 0.08),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+          side: BorderSide(color: aksen.withValues(alpha: 0.30)),
+        ),
+        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+        child: InkWell(
+          onTap: offline ? null : onTap,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            child: Row(
+              children: <Widget>[
+                const Icon(Icons.edit_note_rounded, color: aksen, size: 24),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text.rich(
+                    TextSpan(
+                      children: <InlineSpan>[
+                        TextSpan(
+                          text: 'Usaha tidak ada di daftar? ',
+                          style: TextStyle(
+                            color: AppTheme.textSecondary(context),
+                          ),
                         ),
-                      ),
-                      TextSpan(
-                        text: 'Cek Data OSS',
-                        style: TextStyle(
-                          fontWeight: FontWeight.w800,
-                          color: AppTheme.textColor(context),
+                        TextSpan(
+                          text: offline
+                              ? 'Cek Data OSS (perlu koneksi)'
+                              : 'Cek Data OSS',
+                          style: TextStyle(
+                            fontWeight: FontWeight.w800,
+                            color: AppTheme.textColor(context),
+                          ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
+                    style: const TextStyle(fontSize: 12.5, height: 1.3),
                   ),
-                  style: const TextStyle(fontSize: 12.5, height: 1.3),
                 ),
-              ),
-              Icon(
-                Icons.chevron_right_rounded,
-                color: AppTheme.textSecondary(context),
-              ),
-            ],
+                Icon(
+                  Icons.chevron_right_rounded,
+                  color: AppTheme.textSecondary(context),
+                ),
+              ],
+            ),
           ),
         ),
       ),

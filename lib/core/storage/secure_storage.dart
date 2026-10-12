@@ -1,3 +1,6 @@
+import 'dart:convert';
+import 'dart:math';
+
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 class SecureStorage {
@@ -10,6 +13,26 @@ class SecureStorage {
   static const String _userNameKey = 'user_name';
   static const String _userEmailKey = 'user_email';
   static const String _userRoleKey = 'user_role';
+
+  static const String _cacheKeyPrefix = 'cache_key_';
+
+  /// Kunci AES-256 acak per akun. Dibuat sekali, disimpan di Keystore/Keychain.
+  static Future<List<int>> getOrCreateCacheKey(String userId) async {
+    final String name = '$_cacheKeyPrefix$userId';
+    final String? existing = await _storage.read(key: name);
+    if (existing != null && existing.isNotEmpty) {
+      return base64Decode(existing);
+    }
+
+    final Random rnd = Random.secure();
+    final List<int> bytes = List<int>.generate(32, (_) => rnd.nextInt(256));
+    await _storage.write(key: name, value: base64Encode(bytes));
+    return bytes;
+  }
+
+  static Future<void> deleteCacheKey(String userId) {
+    return _storage.delete(key: '$_cacheKeyPrefix$userId');
+  }
 
   static Future<void> saveAccessToken(String token) async {
     await _storage.write(key: _accessTokenKey, value: token);
@@ -66,6 +89,11 @@ class SecureStorage {
   }
 
   static Future<void> clearAll() async {
-    await _storage.deleteAll();
+    final Map<String, String> semua = await _storage.readAll();
+    for (final String key in semua.keys) {
+      if (!key.startsWith(_cacheKeyPrefix)) {
+        await _storage.delete(key: key);
+      }
+    }
   }
 }

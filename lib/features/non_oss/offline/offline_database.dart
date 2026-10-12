@@ -20,7 +20,7 @@ class OfflineDatabase {
 
   static final OfflineDatabase instance = OfflineDatabase._();
   static const String table = 'non_oss_sync_queue';
-  static const int _schemaVersion = 3;
+  static const int _schemaVersion = 4;
   Database? _database;
 
   Future<Database> get database async => _database ??= await _open();
@@ -62,10 +62,10 @@ class OfflineDatabase {
         await db.execute(
           'CREATE INDEX idx_non_oss_sync_status ON $table(sync_status)',
         );
-        await db.execute(
-          'CREATE INDEX idx_non_oss_user_id ON $table(user_id)',
-        );
+        await db.execute('CREATE INDEX idx_non_oss_user_id ON $table(user_id)');
         await _createNotificationsTable(db);
+
+        await _createApiCacheTable(db);
       },
       onUpgrade: (Database db, int oldVersion, int newVersion) async {
         if (oldVersion < 2) {
@@ -80,18 +80,36 @@ class OfflineDatabase {
           // akun pertama yang login (lihat claimUnownedRows).
           final String? uid = await _currentUserId();
           if (uid != null) {
-            await db.update(
-              table,
-              <String, Object?>{'user_id': uid},
-              where: 'user_id IS NULL',
-            );
+            await db.update(table, <String, Object?>{
+              'user_id': uid,
+            }, where: 'user_id IS NULL');
           }
         }
 
         if (oldVersion < 3) {
           await _createNotificationsTable(db);
         }
+        if (oldVersion < 4) {
+          await _createApiCacheTable(db);
+        }
       },
+    );
+  }
+
+  Future<void> _createApiCacheTable(Database db) async {
+    await db.execute('''
+    CREATE TABLE api_cache (
+      user_id TEXT NOT NULL,
+      cache_key TEXT NOT NULL,
+      data BLOB NOT NULL,
+      size_bytes INTEGER NOT NULL,
+      saved_at TEXT NOT NULL,
+      last_access TEXT NOT NULL,
+      PRIMARY KEY (user_id, cache_key)
+    )
+  ''');
+    await db.execute(
+      'CREATE INDEX idx_api_cache_access ON api_cache(user_id, last_access)',
     );
   }
 
@@ -127,25 +145,24 @@ class OfflineDatabase {
     }
 
     final Database db = await database;
-    await db.update(
-      table,
-      <String, Object?>{'user_id': uid},
-      where: 'user_id IS NULL',
-    );
+    await db.update(table, <String, Object?>{
+      'user_id': uid,
+    }, where: 'user_id IS NULL');
   }
 
   Future<int> insert(NonOssLocalData data) async {
     final String? uid = await _currentUserId();
     if (uid == null) {
-      throw Exception('Sesi login berakhir. Masuk kembali untuk menyimpan data.');
+      throw Exception(
+        'Sesi login berakhir. Masuk kembali untuk menyimpan data.',
+      );
     }
 
     final Database db = await database;
-    return db.insert(
-      table,
-      <String, Object?>{...data.toDatabase(), 'user_id': uid},
-      conflictAlgorithm: ConflictAlgorithm.abort,
-    );
+    return db.insert(table, <String, Object?>{
+      ...data.toDatabase(),
+      'user_id': uid,
+    }, conflictAlgorithm: ConflictAlgorithm.abort);
   }
 
   Future<List<NonOssLocalData>> getAll() async {

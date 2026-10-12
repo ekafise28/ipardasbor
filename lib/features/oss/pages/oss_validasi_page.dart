@@ -9,6 +9,8 @@ import 'package:ipardasbor/shared/widgets/ocr_field_actions.dart';
 import 'package:ipardasbor/shared/widgets/ocr_scan_button.dart';
 
 import '../../../core/api/api_client.dart';
+import '../../../core/network/network_status.dart';
+import '../../../shared/widgets/offline_notice.dart';
 import '../models/oss_validasi_result.dart';
 import 'oss_form_page.dart';
 import '../services/oss_service.dart';
@@ -202,6 +204,8 @@ class _OssValidasiPageState extends State<OssValidasiPage> {
       return;
     }
 
+    if (!await NetworkGuard.pastikanOnline(context)) return;
+    if (!mounted) return;
     setState(() => _submitting = true);
 
     try {
@@ -311,6 +315,7 @@ class _OssValidasiPageState extends State<OssValidasiPage> {
             keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
             padding: const EdgeInsets.fromLTRB(16, 18, 16, 30),
             children: [
+              const OfflineNotice(),
               Container(
                 padding: const EdgeInsets.all(16),
                 margin: const EdgeInsets.only(bottom: 16),
@@ -488,7 +493,7 @@ class _OssValidasiPageState extends State<OssValidasiPage> {
                     color: AppTheme.scaffoldColorDynamic(context),
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(
-                      color: AppTheme.primaryColor.withValues(alpha:0.4),
+                      color: AppTheme.primaryColor.withValues(alpha: 0.4),
                     ),
                   ),
                   child: Row(
@@ -557,32 +562,44 @@ class _OssValidasiPageState extends State<OssValidasiPage> {
                 ),
               ],
               const SizedBox(height: 20),
-              SizedBox(
-                height: 54,
-                child: FilledButton.icon(
-                  onPressed: _submitting ? null : _submit,
-                  style: FilledButton.styleFrom(
-                    backgroundColor: AppTheme.primaryColor,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(15),
+              ValueListenableBuilder<bool>(
+                valueListenable: NetworkStatus.instance,
+                builder: (context, offline, _) => SizedBox(
+                  height: 54,
+                  child: FilledButton.icon(
+                    onPressed: (_submitting || offline) ? null : _submit,
+                    style: FilledButton.styleFrom(
+                      backgroundColor: AppTheme.primaryColor,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(15),
+                      ),
                     ),
-                  ),
-                  icon: _submitting
-                      ? const SizedBox(
-                          width: 20,
-                          height: 20,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
+                    icon: _submitting
+                        ? const SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: Colors.white,
+                            ),
+                          )
+                        : Icon(
+                            offline
+                                ? Icons.cloud_off_rounded
+                                : Icons.shield_outlined,
                             color: Colors.white,
                           ),
-                        )
-                      : const Icon(Icons.shield_outlined, color: Colors.white),
-                  label: Text(
-                    _submitting ? 'Memeriksa...' : 'Cek Validasi',
-                    style: const TextStyle(
-                      fontWeight: FontWeight.w800,
-                      fontSize: 15,
-                      color: Colors.white,
+                    label: Text(
+                      _submitting
+                          ? 'Memeriksa...'
+                          : (offline
+                                ? 'Perlu koneksi internet'
+                                : 'Cek Validasi'),
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w800,
+                        fontSize: 15,
+                        color: Colors.white,
+                      ),
                     ),
                   ),
                 ),

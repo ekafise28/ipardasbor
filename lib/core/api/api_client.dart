@@ -8,12 +8,17 @@ import '../storage/secure_storage.dart';
 import 'api_endpoints.dart';
 import 'api_exception.dart';
 
+import '../cache/api_cache.dart';
+import '../cache/cache_status.dart';
+
 class ApiClient {
   ApiClient({http.Client? client}) : _client = client ?? http.Client();
 
   final http.Client _client;
 
   static const Duration _timeout = Duration(seconds: 30);
+
+  static const Duration _timeoutDenganCache = Duration(seconds: 8);
 
   Uri _buildUri(String endpoint, [Map<String, dynamic>? queryParameters]) {
     final Uri uri = Uri.parse('${ApiEndpoints.baseUrl}$endpoint');
@@ -56,24 +61,51 @@ class ApiClient {
     Map<String, dynamic>? queryParameters,
     bool useToken = true,
   }) async {
+    final Uri uri = _buildUri(endpoint, queryParameters);
+    final String? kunciCache = useToken
+        ? ApiCache.instance.keyFor(endpoint, uri)
+        : null;
+    final bool adaCadangan =
+        kunciCache != null && await ApiCache.instance.has(kunciCache);
+
+    ApiException? gagalJaringan;
+
     try {
       final http.Response response = await _client
-          .get(
-            _buildUri(endpoint, queryParameters),
-            headers: await _headers(useToken: useToken),
-          )
-          .timeout(_timeout);
+          .get(uri, headers: await _headers(useToken: useToken))
+          .timeout(adaCadangan ? _timeoutDenganCache : _timeout);
 
-      return await _processResponse(response, handleSessionExpired: useToken);
+      final dynamic data = await _processResponse(
+        response,
+        handleSessionExpired: useToken,
+      );
+
+      if (kunciCache != null) {
+        CacheStatus.instance.markLive();
+        unawaited(ApiCache.instance.put(kunciCache, data));
+      }
+      return data;
     } on TimeoutException {
-      throw const ApiException(
+      gagalJaringan = const ApiException(
         message: 'Waktu koneksi habis. Silakan periksa koneksi internet.',
       );
     } on http.ClientException {
-      throw const ApiException(
+      gagalJaringan = const ApiException(
         message: 'Tidak dapat terhubung ke server. Periksa koneksi internet.',
       );
     }
+
+    // Sampai sini berarti gagal jaringan (tanpa status code). Error server
+    // (401/403/422/5xx) sudah dilempar di atas dan tidak pernah memakai cache.
+    if (kunciCache != null) {
+      final CachedEntry? cadangan = await ApiCache.instance.read(kunciCache);
+      if (cadangan != null) {
+        CacheStatus.instance.markFromCache(cadangan.savedAt);
+        return cadangan.data;
+      }
+    }
+
+    throw gagalJaringan;
   }
 
   Future<dynamic> post(

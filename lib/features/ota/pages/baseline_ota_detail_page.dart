@@ -5,6 +5,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../../app/app_theme.dart';
 import '../models/baseline_ota_item.dart';
 import '../widgets/baseline_ota_card.dart';
+import '../../../core/network/network_status.dart';
 
 /// Pilihan verifikasi yang dikembalikan halaman detail ke halaman daftar.
 enum BaselineOtaAksi { adaNib, tidakAda, tidakTahu }
@@ -181,50 +182,81 @@ class BaselineOtaDetailPage extends StatelessWidget {
       // Aksi verifikasi menempel di bawah layar, hanya kalau belum diverifikasi.
       bottomNavigationBar: item.sudahDiverifikasi
           ? null
-          : Container(
-              decoration: BoxDecoration(
-                color: AppTheme.surface(context),
-                border: Border(
-                  top: BorderSide(color: AppTheme.border(context)),
+          : ValueListenableBuilder<bool>(
+              valueListenable: NetworkStatus.instance,
+              builder: (context, offline, _) => Container(
+                decoration: BoxDecoration(
+                  color: AppTheme.surface(context),
+                  border: Border(
+                    top: BorderSide(color: AppTheme.border(context)),
+                  ),
                 ),
-              ),
-              child: SafeArea(
-                top: false,
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        flex: 5,
-                        child: OtaVerifButton(
-                          label: 'Ada NIB',
-                          color: AppTheme.primaryColor,
-                          filled: true,
-                          onTap: () =>
-                              Navigator.pop(context, BaselineOtaAksi.adaNib),
+                child: SafeArea(
+                  top: false,
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        if (offline)
+                          Padding(
+                            padding: const EdgeInsets.only(bottom: 8),
+                            child: Text(
+                              'Perlu koneksi internet untuk verifikasi.',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: AppTheme.textSecondary(context),
+                              ),
+                            ),
+                          ),
+                        Row(
+                          children: [
+                            Expanded(
+                              flex: 5,
+                              child: OtaVerifButton(
+                                label: 'Ada NIB',
+                                color: AppTheme.primaryColor,
+                                filled: true,
+                                onTap: offline
+                                    ? null
+                                    : () => Navigator.pop(
+                                        context,
+                                        BaselineOtaAksi.adaNib,
+                                      ),
+                              ),
+                            ),
+                            const SizedBox(width: 6),
+                            Expanded(
+                              flex: 4,
+                              child: OtaVerifButton(
+                                label: 'Tidak Ada',
+                                color: Colors.red.shade700,
+                                onTap: offline
+                                    ? null
+                                    : () => Navigator.pop(
+                                        context,
+                                        BaselineOtaAksi.tidakAda,
+                                      ),
+                              ),
+                            ),
+                            const SizedBox(width: 6),
+                            Expanded(
+                              flex: 4,
+                              child: OtaVerifButton(
+                                label: 'Tidak Tahu',
+                                color: Colors.blueGrey.shade600,
+                                onTap: offline
+                                    ? null
+                                    : () => Navigator.pop(
+                                        context,
+                                        BaselineOtaAksi.tidakTahu,
+                                      ),
+                              ),
+                            ),
+                          ],
                         ),
-                      ),
-                      const SizedBox(width: 6),
-                      Expanded(
-                        flex: 4,
-                        child: OtaVerifButton(
-                          label: 'Tidak Ada',
-                          color: Colors.red.shade700,
-                          onTap: () =>
-                              Navigator.pop(context, BaselineOtaAksi.tidakAda),
-                        ),
-                      ),
-                      const SizedBox(width: 6),
-                      Expanded(
-                        flex: 4,
-                        child: OtaVerifButton(
-                          label: 'Tidak Tahu',
-                          color: Colors.blueGrey.shade600,
-                          onTap: () =>
-                              Navigator.pop(context, BaselineOtaAksi.tidakTahu),
-                        ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
               ),

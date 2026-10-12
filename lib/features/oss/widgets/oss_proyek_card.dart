@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../../../core/network/network_status.dart';
+
 import '../../../app/app_theme.dart';
 import '../models/oss_proyek_item.dart';
 
@@ -29,8 +31,8 @@ class OssProyekCard extends StatelessWidget {
   final VoidCallback onDetail;
 
   /// Aksi utama kartu. Null = kartu tidak bisa ditekan.
-  VoidCallback? get _aksiUtama {
-    if (!item.sudahDiverifikasi) return onVerifikasi;
+  VoidCallback? _aksiUtama(bool offline) {
+    if (!item.sudahDiverifikasi) return offline ? null : onVerifikasi;
     return item.pengawasanId == null ? null : onDetail;
   }
 
@@ -66,102 +68,109 @@ class OssProyekCard extends StatelessWidget {
       item.uraianRisiko,
     ].whereType<String>().join(' · ');
 
-    return Card(
-      elevation: 0,
-      clipBehavior: Clip.antiAlias,
-      color: highlight
-          ? Color.alphaBlend(
-              status.color.withValues(alpha: 0.12),
-              AppTheme.surface(context),
-            )
-          : AppTheme.surface(context),
-      shape: RoundedRectangleBorder(
-        borderRadius: radius,
-        side: BorderSide(color: AppTheme.border(context)),
-      ),
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-      child: InkWell(
-        onTap: _aksiUtama,
-        child: IntrinsicHeight(
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: <Widget>[
-              // Strip status di sisi kiri.
-              Container(width: 4, color: status.color),
-              Expanded(
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(14, 14, 14, 12),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: <Widget>[
-                      Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: <Widget>[
-                          Expanded(
-                            child: Text(
-                              item.namaPerusahaan,
-                              maxLines: 2,
-                              overflow: TextOverflow.ellipsis,
-                              style: TextStyle(
-                                fontSize: 15,
-                                fontWeight: FontWeight.w800,
-                                height: 1.25,
-                                color: AppTheme.textColor(context),
+    return ValueListenableBuilder<bool>(
+      valueListenable: NetworkStatus.instance,
+      builder: (context, offline, _) => Card(
+        elevation: 0,
+        clipBehavior: Clip.antiAlias,
+        color: highlight
+            ? Color.alphaBlend(
+                status.color.withValues(alpha: 0.12),
+                AppTheme.surface(context),
+              )
+            : AppTheme.surface(context),
+        shape: RoundedRectangleBorder(
+          borderRadius: radius,
+          side: BorderSide(color: AppTheme.border(context)),
+        ),
+        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+        child: InkWell(
+          onTap: _aksiUtama(offline),
+          child: IntrinsicHeight(
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: <Widget>[
+                // Strip status di sisi kiri.
+                Container(width: 4, color: status.color),
+                Expanded(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(14, 14, 14, 12),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: <Widget>[
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: <Widget>[
+                            Expanded(
+                              child: Text(
+                                item.namaPerusahaan,
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w800,
+                                  height: 1.25,
+                                  color: AppTheme.textColor(context),
+                                ),
                               ),
                             ),
-                          ),
-                          const SizedBox(width: 8),
-                          _StatusChip(status: status),
-                        ],
-                      ),
-                      const SizedBox(height: 10),
-                      _KodeBlock(nib: item.nib, nku: item.nku),
-                      const SizedBox(height: 10),
-                      if (modalRisiko.isNotEmpty)
-                        _InfoRow(
-                          icon: Icons.shield_outlined,
-                          text: modalRisiko,
+                            const SizedBox(width: 8),
+                            _StatusChip(status: status),
+                          ],
                         ),
-                      _InfoRow(
-                        icon: Icons.location_on_outlined,
-                        text: item.lokasiRingkas,
-                        maxLines: 2,
-                      ),
-                      if (item.alamat.isNotEmpty)
+                        const SizedBox(height: 10),
+                        _KodeBlock(nib: item.nib, nku: item.nku),
+                        const SizedBox(height: 10),
+                        if (modalRisiko.isNotEmpty)
+                          _InfoRow(
+                            icon: Icons.shield_outlined,
+                            text: modalRisiko,
+                          ),
                         _InfoRow(
-                          icon: Icons.home_work_outlined,
-                          text: item.alamat,
+                          icon: Icons.location_on_outlined,
+                          text: item.lokasiRingkas,
                           maxLines: 2,
                         ),
-                      const SizedBox(height: 10),
-                      SizedBox(
-                        width: double.infinity,
-                        height: 40,
-                        child: item.sudahDiverifikasi
-                            ? OutlinedButton.icon(
-                                onPressed: item.pengawasanId == null
-                                    ? null
-                                    : onDetail,
-                                icon: const Icon(
-                                  Icons.visibility_outlined,
-                                  size: 18,
+                        if (item.alamat.isNotEmpty)
+                          _InfoRow(
+                            icon: Icons.home_work_outlined,
+                            text: item.alamat,
+                            maxLines: 2,
+                          ),
+                        const SizedBox(height: 10),
+                        SizedBox(
+                          width: double.infinity,
+                          height: 40,
+                          child: item.sudahDiverifikasi
+                              ? OutlinedButton.icon(
+                                  onPressed: item.pengawasanId == null
+                                      ? null
+                                      : onDetail,
+                                  icon: const Icon(
+                                    Icons.visibility_outlined,
+                                    size: 18,
+                                  ),
+                                  label: const Text('Lihat Detail'),
+                                )
+                              : FilledButton.icon(
+                                  onPressed: offline ? null : onVerifikasi,
+                                  icon: Icon(
+                                    offline
+                                        ? Icons.cloud_off_rounded
+                                        : Icons.verified_user_outlined,
+                                    size: 18,
+                                  ),
+                                  label: Text(
+                                    offline ? 'Perlu koneksi' : 'Verifikasi',
+                                  ),
                                 ),
-                                label: const Text('Lihat Detail'),
-                              )
-                            : FilledButton.icon(
-                                onPressed: onVerifikasi,
-                                icon: const Icon(
-                                  Icons.verified_user_outlined,
-                                  size: 18,
-                                ),
-                                label: const Text('Verifikasi'),
-                              ),
-                      ),
-                    ],
+                        ),
+                      ],
+                    ),
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),

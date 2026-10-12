@@ -1,3 +1,4 @@
+import 'package:ipardasbor/core/network/network_status.dart';
 import 'package:ipardasbor/shared/screenshot/screenshot_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -469,6 +470,14 @@ class _OssFormPageState extends State<OssFormPage>
       return;
     }
 
+    if (!await NetworkGuard.pastikanOnline(
+      context,
+      pesan: 'Perlu koneksi internet untuk menyimpan pengawasan OSS.',
+    )) {
+      return;
+    }
+    if (!mounted) return;
+
     setState(() => _saving = true);
 
     try {
@@ -707,7 +716,7 @@ class _OssFormPageState extends State<OssFormPage>
             width: 52,
             height: 52,
             decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha:0.2),
+              color: Colors.white.withValues(alpha: 0.2),
               shape: BoxShape.circle,
             ),
             child: Icon(
@@ -916,7 +925,7 @@ class _OssFormPageState extends State<OssFormPage>
               ),
             ),
           ],
-        ),        
+        ),
       ),
       body: _loadingRegions
           ? const Center(child: CircularProgressIndicator())
@@ -1319,7 +1328,7 @@ class FormSectionOss extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.only(bottom: 14),
       decoration: BoxDecoration(
-        color: hasError ? Colors.red.withValues(alpha:0.05) : surface,
+        color: hasError ? Colors.red.withValues(alpha: 0.05) : surface,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
           color: hasError ? Colors.red : border,

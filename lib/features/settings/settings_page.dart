@@ -14,6 +14,7 @@ import '../profile/services/profile_services.dart';
 
 import '../home/models/menu_data.dart';
 import '../home/pages/feature_placeholder_page.dart';
+import 'pages/data_offline_page.dart';
 import '../home/widgets/menu_list_tile.dart';
 
 import 'widgets/profile_preview_card.dart';
@@ -42,6 +43,13 @@ class _SettingsPageState extends State<SettingsPage> {
       icon: Icons.notifications_none_rounded,
       color: AppTheme.menuNotifikasi,
       backgroundColor: AppTheme.menuNotifikasiBg,
+    ),
+    MenuData(
+      title: 'Data Offline',
+      description: 'Cache, batas ukuran, dan hapus data offline',
+      icon: Icons.cloud_download_outlined,
+      color: AppTheme.menuSinkronisasi,
+      backgroundColor: AppTheme.menuSinkronisasiBg,
     ),
     MenuData(
       title: 'Keamanan',
@@ -212,6 +220,12 @@ class _SettingsPageState extends State<SettingsPage> {
       );
       return;
     }
+    if (menu.title == 'Data Offline') {
+      Navigator.of(
+        context,
+      ).push(MaterialPageRoute<void>(builder: (_) => const DataOfflinePage()));
+      return;
+    }
 
     Navigator.of(context).push(
       MaterialPageRoute<void>(
@@ -258,7 +272,8 @@ class _SettingsPageState extends State<SettingsPage> {
                 ? '$belumTerkirim data belum terkirim ke server. Data tetap '
                       'tersimpan di perangkat ini dan hanya bisa dilihat '
                       'akun ini saat masuk kembali.'
-                : 'Anda perlu masuk kembali untuk mengakses aplikasi.',
+                : 'Anda perlu masuk kembali untuk mengakses aplikasi. Data offline '
+                      'tetap tersimpan terenkripsi di perangkat ini.',
             textAlign: TextAlign.center,
             style: TextStyle(
               fontSize: 13.5,

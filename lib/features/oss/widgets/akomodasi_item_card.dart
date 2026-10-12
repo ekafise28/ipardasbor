@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:ipardasbor/app/app_theme.dart';
+import 'package:ipardasbor/core/network/network_status.dart';
 import 'package:ipardasbor/shared/gps/gps_capture_mixin.dart';
 import 'package:ipardasbor/shared/validators/form_validators.dart';
 
@@ -164,6 +165,15 @@ class _AkomodasiItemCardState extends State<AkomodasiItemCard>
   }
 
   Future<void> _cekValidasi() async {
+    Future<void> _cekValidasi() async {
+      if (!await NetworkGuard.pastikanOnline(context)) return;
+      if (!mounted) return;
+      setState(() => _cekLoading = true);
+      await widget.onCekValidasi(_d);
+      if (!mounted) return;
+      setState(() => _cekLoading = false);
+    }
+
     setState(() => _cekLoading = true);
     await widget.onCekValidasi(_d);
     if (!mounted) return;
@@ -453,24 +463,35 @@ class _AkomodasiItemCardState extends State<AkomodasiItemCard>
             }),
           ),
           const SizedBox(height: 10),
-          SizedBox(
-            width: double.infinity,
-            child: OutlinedButton.icon(
-              style: OutlinedButton.styleFrom(
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(15),
+          ValueListenableBuilder<bool>(
+            valueListenable: NetworkStatus.instance,
+            builder: (context, offline, _) => SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                style: OutlinedButton.styleFrom(
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(15),
+                  ),
                 ),
-              ),
-              onPressed: _cekLoading ? null : _cekValidasi,
-              icon: _cekLoading
-                  ? const SizedBox(
-                      width: 16,
-                      height: 16,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    )
-                  : const Icon(Icons.fact_check_outlined),
-              label: Text(
-                _cekLoading ? 'Memeriksa...' : 'Cek Validasi NIB/KBLI/NKU',
+                onPressed: (_cekLoading || offline) ? null : _cekValidasi,
+                icon: _cekLoading
+                    ? const SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : Icon(
+                        offline
+                            ? Icons.cloud_off_rounded
+                            : Icons.fact_check_outlined,
+                      ),
+                label: Text(
+                  _cekLoading
+                      ? 'Memeriksa...'
+                      : (offline
+                            ? 'Perlu koneksi internet'
+                            : 'Cek Validasi NIB/KBLI/NKU'),
+                ),
               ),
             ),
           ),

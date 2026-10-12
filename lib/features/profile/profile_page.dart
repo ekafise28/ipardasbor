@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:ipardasbor/shared/widgets/offline_banner.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:ipardasbor/features/non_oss/services/wilayah_akses_service.dart';
@@ -186,150 +187,166 @@ class _ProfilePageState extends State<ProfilePage> {
           style: TextStyle(fontSize: 17, fontWeight: FontWeight.w800),
         ),
       ),
-      body: RefreshIndicator(
-        color: AppTheme.primaryColor,
-        onRefresh: _refresh,
-        child: FutureBuilder<AuthUser>(
-          future: _profileFuture,
-          builder: (context, snapshot) {
-            if (snapshot.connectionState == ConnectionState.waiting) {
-              return const ProfileSkeleton();
-            }
+      body: Column(
+        children: [
+          const OfflineBanner(),
+          Expanded(
+            child: RefreshIndicator(
+              color: AppTheme.primaryColor,
+              onRefresh: _refresh,
+              child: FutureBuilder<AuthUser>(
+                future: _profileFuture,
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return const ProfileSkeleton();
+                  }
 
-            if (snapshot.hasError) {
-              final String message = snapshot.error is Exception
-                  ? snapshot.error.toString()
-                  : 'Gagal memuat data profil.';
+                  if (snapshot.hasError) {
+                    final String message = snapshot.error is Exception
+                        ? snapshot.error.toString()
+                        : 'Gagal memuat data profil.';
 
-              return LayoutBuilder(
-                builder: (context, constraints) {
-                  return SingleChildScrollView(
-                    physics: const AlwaysScrollableScrollPhysics(),
-                    child: ConstrainedBox(
-                      constraints: BoxConstraints(
-                        minHeight: constraints.maxHeight,
-                      ),
-                      child: ConnectionErrorState(
-                        title: 'Profil gagal dimuat',
-                        message: message,
-                        onRetry: () => _refresh(),
-                      ),
-                    ),
-                  );
-                },
-              );
-            }
-
-            final AuthUser user = snapshot.data!;
-
-            return ListView(
-              physics: const AlwaysScrollableScrollPhysics(),
-              padding: EdgeInsets.zero,
-              children: [
-                _ProfileHeader(user: user),
-                Transform.translate(
-                  offset: const Offset(0, -28),
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    child: Column(
-                      children: [
-                        _FadeSlideIn(
-                          child: _InfoSection(
-                            title: 'Informasi Akun',
-                            items: [
-                              _InfoItem(
-                                icon: Icons.badge_outlined,
-                                label: 'Kode Petugas',
-                                value: user.kodeUser,
-                              ),
-                              _InfoItem(
-                                icon: Icons.fingerprint_rounded,
-                                label: 'NIK',
-                                value: user.nik,
-                                masked: true,
-                              ),
-                              _InfoItem(
-                                icon: Icons.mail_outline_rounded,
-                                label: 'Email',
-                                value: user.email,
-                                launchUri: _uriOrNull('mailto', user.email),
-                              ),
-                              _InfoItem(
-                                icon: Icons.phone_outlined,
-                                label: 'No. HP',
-                                value: user.nohp,
-                                launchUri: _uriOrNull('tel', user.nohp),
-                              ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(height: 14),
-                        _FadeSlideIn(
-                          delay: const Duration(milliseconds: 80),
-                          child: _InfoSection(
-                            title: 'Informasi Tugas',
-                            items: [
-                              _InfoItem(
-                                icon: Icons.work_outline_rounded,
-                                label: 'Jabatan',
-                                value: user.jabatan,
-                              ),
-                              _InfoItem(
-                                icon: Icons.apartment_rounded,
-                                label: 'Unit Kerja',
-                                value: user.unitkerja,
-                              ),
-                              _InfoItem(
-                                icon: Icons.map_outlined,
-                                label: 'Distrik',
-                                value: user.distrik,
-                              ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(height: 14),
-                        _FadeSlideIn(
-                          delay: const Duration(milliseconds: 160),
-                          child: _ActionTile(
-                            icon: Icons.lock_outline_rounded,
-                            title: 'Ubah Password',
-                            subtitle: 'Perbarui kata sandi akun Anda',
-                            onTap: () => _openChangePassword(context, user),
-                          ),
-                        ),
-                        const SizedBox(height: 20),
-                        _FadeSlideIn(
-                          delay: const Duration(milliseconds: 240),
-                          child: SizedBox(
-                            width: double.infinity,
-                            child: OutlinedButton.icon(
-                              onPressed: () => _logout(context),
-                              icon: const Icon(Icons.logout_rounded, size: 19),
-                              label: const Text('Keluar'),
-                              style: OutlinedButton.styleFrom(
-                                foregroundColor: AppTheme.danger,
-                                side: BorderSide(
-                                  color: AppTheme.danger.withValues(alpha: 0.6),
-                                ),
-                                padding: const EdgeInsets.symmetric(
-                                  vertical: 13,
-                                ),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                              ),
+                    return LayoutBuilder(
+                      builder: (context, constraints) {
+                        return SingleChildScrollView(
+                          physics: const AlwaysScrollableScrollPhysics(),
+                          child: ConstrainedBox(
+                            constraints: BoxConstraints(
+                              minHeight: constraints.maxHeight,
+                            ),
+                            child: ConnectionErrorState(
+                              title: 'Profil gagal dimuat',
+                              message: message,
+                              onRetry: () => _refresh(),
                             ),
                           ),
+                        );
+                      },
+                    );
+                  }
+
+                  final AuthUser user = snapshot.data!;
+
+                  return ListView(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    padding: EdgeInsets.zero,
+                    children: [
+                      _ProfileHeader(user: user),
+                      Transform.translate(
+                        offset: const Offset(0, -28),
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          child: Column(
+                            children: [
+                              _FadeSlideIn(
+                                child: _InfoSection(
+                                  title: 'Informasi Akun',
+                                  items: [
+                                    _InfoItem(
+                                      icon: Icons.badge_outlined,
+                                      label: 'Kode Petugas',
+                                      value: user.kodeUser,
+                                    ),
+                                    _InfoItem(
+                                      icon: Icons.fingerprint_rounded,
+                                      label: 'NIK',
+                                      value: user.nik,
+                                      masked: true,
+                                    ),
+                                    _InfoItem(
+                                      icon: Icons.mail_outline_rounded,
+                                      label: 'Email',
+                                      value: user.email,
+                                      launchUri: _uriOrNull(
+                                        'mailto',
+                                        user.email,
+                                      ),
+                                    ),
+                                    _InfoItem(
+                                      icon: Icons.phone_outlined,
+                                      label: 'No. HP',
+                                      value: user.nohp,
+                                      launchUri: _uriOrNull('tel', user.nohp),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              const SizedBox(height: 14),
+                              _FadeSlideIn(
+                                delay: const Duration(milliseconds: 80),
+                                child: _InfoSection(
+                                  title: 'Informasi Tugas',
+                                  items: [
+                                    _InfoItem(
+                                      icon: Icons.work_outline_rounded,
+                                      label: 'Jabatan',
+                                      value: user.jabatan,
+                                    ),
+                                    _InfoItem(
+                                      icon: Icons.apartment_rounded,
+                                      label: 'Unit Kerja',
+                                      value: user.unitkerja,
+                                    ),
+                                    _InfoItem(
+                                      icon: Icons.map_outlined,
+                                      label: 'Distrik',
+                                      value: user.distrik,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              const SizedBox(height: 14),
+                              _FadeSlideIn(
+                                delay: const Duration(milliseconds: 160),
+                                child: _ActionTile(
+                                  icon: Icons.lock_outline_rounded,
+                                  title: 'Ubah Password',
+                                  subtitle: 'Perbarui kata sandi akun Anda',
+                                  onTap: () =>
+                                      _openChangePassword(context, user),
+                                ),
+                              ),
+                              const SizedBox(height: 20),
+                              _FadeSlideIn(
+                                delay: const Duration(milliseconds: 240),
+                                child: SizedBox(
+                                  width: double.infinity,
+                                  child: OutlinedButton.icon(
+                                    onPressed: () => _logout(context),
+                                    icon: const Icon(
+                                      Icons.logout_rounded,
+                                      size: 19,
+                                    ),
+                                    label: const Text('Keluar'),
+                                    style: OutlinedButton.styleFrom(
+                                      foregroundColor: AppTheme.danger,
+                                      side: BorderSide(
+                                        color: AppTheme.danger.withValues(
+                                          alpha: 0.6,
+                                        ),
+                                      ),
+                                      padding: const EdgeInsets.symmetric(
+                                        vertical: 13,
+                                      ),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              const _VersionFooter(),
+                            ],
+                          ),
                         ),
-                        const _VersionFooter(),
-                      ],
-                    ),
-                  ),
-                ),
-              ],
-            );
-          },
-        ),
+                      ),
+                    ],
+                  );
+                },
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

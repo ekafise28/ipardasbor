@@ -9,6 +9,7 @@ import 'package:ipardasbor/shared/utils/format_number.dart';
 import 'package:ipardasbor/shared/utils/skeleton.dart';
 import 'package:ipardasbor/shared/utils/staggered_entrance.dart';
 import 'package:ipardasbor/shared/widgets/connection_error_state.dart';
+import 'package:ipardasbor/shared/widgets/offline_banner.dart';
 import '../../core/api/api_exception.dart';
 import '../../app/app_theme.dart';
 
@@ -208,18 +209,25 @@ class _DashboardPageState extends State<DashboardPage>
         ],
       ),
       body: SafeArea(
-        child: Stack(
+        child: Column(
           children: [
-            _buildBody(),
-            // Penanda tipis saat data sedang diperbarui (filter/muat ulang)
-            // sementara data lama masih tampil.
-            if (_isLoading && _dashboard != null)
-              const Positioned(
-                top: 0,
-                left: 0,
-                right: 0,
-                child: LinearProgressIndicator(minHeight: 3),
+            const OfflineBanner(),
+            Expanded(
+              child: Stack(
+                children: [
+                  _buildBody(),
+                  // Penanda tipis saat data sedang diperbarui (filter/muat ulang)
+                  // sementara data lama masih tampil.
+                  if (_isLoading && _dashboard != null)
+                    const Positioned(
+                      top: 0,
+                      left: 0,
+                      right: 0,
+                      child: LinearProgressIndicator(minHeight: 3),
+                    ),
+                ],
               ),
+            ),
           ],
         ),
       ),

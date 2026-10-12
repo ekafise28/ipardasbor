@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:ipardasbor/shared/widgets/connection_error_state.dart';
+import 'package:ipardasbor/shared/widgets/offline_banner.dart';
 
 import '../../app/app_theme.dart';
 
@@ -233,6 +234,7 @@ class _RiwayatPageState extends State<RiwayatPage> {
       ),
       body: Column(
         children: <Widget>[
+          const OfflineBanner(), 
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
             child: TextField(
