@@ -648,7 +648,7 @@ class _InfoItemState extends State<_InfoItem> {
                   color: AppTheme.textMuted,
                 ),
               )
-            else if (_hasValue && widget.launchUri != null)
+            else if (_hasValue)
               IconButton(
                 onPressed: _copy,
                 tooltip: 'Salin',
