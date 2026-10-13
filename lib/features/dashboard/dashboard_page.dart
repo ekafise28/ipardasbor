@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import 'package:ipardasbor/app/app_banner.dart';
 import 'package:ipardasbor/core/constants/bidang_usaha_constants.dart';
 import 'package:ipardasbor/features/dashboard/models/dashboard_insight.dart';
 import 'package:ipardasbor/shared/utils/count_up_text.dart';
@@ -9,7 +10,6 @@ import 'package:ipardasbor/shared/utils/format_number.dart';
 import 'package:ipardasbor/shared/utils/skeleton.dart';
 import 'package:ipardasbor/shared/utils/staggered_entrance.dart';
 import 'package:ipardasbor/shared/widgets/connection_error_state.dart';
-import 'package:ipardasbor/shared/widgets/offline_banner.dart';
 import '../../core/api/api_exception.dart';
 import '../../app/app_theme.dart';
 

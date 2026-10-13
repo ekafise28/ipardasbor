@@ -1,11 +1,11 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:ipardasbor/app/app_banner.dart';
 import 'package:ipardasbor/features/oss/oss_proyek_page.dart';
 import 'package:ipardasbor/shared/scroll/back_to_top_mixin.dart';
 import 'package:ipardasbor/shared/widgets/app_bar_part.dart';
 import 'package:ipardasbor/shared/widgets/list_search_field.dart';
 import 'package:ipardasbor/shared/widgets/list_summary_line.dart';
-import 'package:ipardasbor/shared/widgets/offline_banner.dart';
 
 import '../../app/app_theme.dart';
 

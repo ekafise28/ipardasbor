@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:ipardasbor/app/app_banner.dart';
 import 'package:ipardasbor/app/app_theme.dart';
 // OCR: import baru
 import 'package:ipardasbor/core/constants/kbli_constants.dart';
@@ -6,7 +7,6 @@ import 'package:ipardasbor/shared/ocr/ocr.dart';
 
 import '../../../core/api/api_client.dart';
 import '../../../core/network/network_status.dart';
-import '../../../shared/widgets/offline_notice.dart';
 import '../models/oss_validasi_result.dart';
 import 'oss_form_page.dart';
 import '../services/oss_service.dart';

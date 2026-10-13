@@ -2,13 +2,13 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:ipardasbor/app/app_banner.dart';
 
 import '../../../app/app_theme.dart';
 
 import '../../../core/api/api_client.dart';
 import '../../../core/api/api_exception.dart';
 import '../../../core/network/network_status.dart';
-import '../../../shared/widgets/offline_notice.dart';
 
 import '../../../shared/region/models/region_option.dart';
 import '../../../shared/region/services/region_service.dart';

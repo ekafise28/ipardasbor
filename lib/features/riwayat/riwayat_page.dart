@@ -1,11 +1,11 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:ipardasbor/app/app_banner.dart';
 import 'package:ipardasbor/core/constants/bidang_usaha_constants.dart';
 import 'package:ipardasbor/shared/utils/skeleton.dart';
 import 'package:ipardasbor/shared/widgets/app_bar_part.dart';
 import 'package:ipardasbor/shared/widgets/connection_error_state.dart';
-import 'package:ipardasbor/shared/widgets/offline_banner.dart';
 
 import '../../app/app_theme.dart';
 
