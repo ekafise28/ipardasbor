@@ -38,7 +38,7 @@ class OcrResult {
             return 'Jumlah digit tidak biasa ($digitCount digit, '
                 'biasanya ${type.expectedLength}), periksa lagi.';
           case OcrWarning.notInAllowedList:
-            return 'KBLI tidak ada dalam daftar yang diizinkan.';
+            return 'KBLI tidak ada dalam daftar yang diizinkan atau KBLI di luar bidang usaha.';
           case OcrWarning.noLabel:
             return 'Ditemukan tanpa label, pastikan ini benar.';
         }
