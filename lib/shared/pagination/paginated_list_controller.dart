@@ -106,12 +106,7 @@ class PaginatedListController<T> extends ChangeNotifier {
     super.dispose();
   }
 
-  String _pesanMuat(Object e) {
-    final String Function(Object)? custom = errorMessage;
-    if (custom != null) return custom(e);
-    if (e is ApiException) return e.message;
-    return 'Terjadi kesalahan yang tidak terduga.';
-  }
+  String _pesanMuat(Object e) => (errorMessage ?? pesanErrorRamah)(e);
 
   void _terapkan(PageChunk<T> chunk) {
     _currentPage = chunk.currentPage;

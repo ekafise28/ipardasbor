@@ -4,6 +4,11 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:ipardasbor/features/oss/oss_proyek_filter_sheet.dart';
+import 'package:ipardasbor/shared/scroll/back_to_top_mixin.dart';
+import 'package:ipardasbor/shared/widgets/active_filter_chips.dart';
+import 'package:ipardasbor/shared/widgets/app_bar_part.dart';
+import 'package:ipardasbor/shared/widgets/list_search_field.dart';
+import 'package:ipardasbor/shared/widgets/list_summary_line.dart';
 import 'package:ipardasbor/shared/widgets/offline_banner.dart';
 
 import '../../app/app_theme.dart';
@@ -67,9 +72,8 @@ class OssProyekPage extends StatefulWidget {
 }
 
 class _OssProyekPageState extends State<OssProyekPage>
-    with SingleTickerProviderStateMixin {
+    with SingleTickerProviderStateMixin, BackToTopMixin<OssProyekPage> {
   final OssProyekService _service = OssProyekService();
-  final ScrollController _scrollController = ScrollController();
   final TextEditingController _searchController = TextEditingController();
   final FocusNode _searchFocus = FocusNode();
 
@@ -94,7 +98,7 @@ class _OssProyekPageState extends State<OssProyekPage>
 
   bool _loadingAwal = true;
   bool _loadingBerikutnya = false;
-  bool _showBackToTop = false;
+
   String? _pesanError;
 
   /// Gagal memuat halaman berikutnya (infinite scroll). Selama true, scroll
@@ -117,7 +121,7 @@ class _OssProyekPageState extends State<OssProyekPage>
       provinsiId: widget.provinsiIdAwal,
       kabupatenId: widget.kabupatenIdAwal,
     );
-    _scrollController.addListener(_onScroll);
+    initBackToTop();
     _muatUlang();
   }
 
@@ -126,35 +130,15 @@ class _OssProyekPageState extends State<OssProyekPage>
     _debounce?.cancel();
     _highlightTimer?.cancel();
     _entrance.dispose();
-    _scrollController.dispose();
+    disposeBackToTop();
     _searchController.dispose();
     _searchFocus.dispose();
     super.dispose();
   }
 
-  void _onScroll() {
-    if (!_scrollController.hasClients) return;
-
-    final bool dekatBawah =
-        _scrollController.position.pixels >=
-        _scrollController.position.maxScrollExtent - 200;
-
-    if (dekatBawah) _muatBerikutnya();
-
-    // Back to top: tampil setelah digulir cukup jauh.
-    final bool perluTampil = _scrollController.position.pixels > 400;
-    if (perluTampil != _showBackToTop) {
-      setState(() => _showBackToTop = perluTampil);
-    }
-  }
-
-  void _scrollKeAtas() {
-    if (!_scrollController.hasClients) return;
-    _scrollController.animateTo(
-      0,
-      duration: const Duration(milliseconds: 500),
-      curve: Curves.easeOut,
-    );
+  @override
+  void onNearBottom() {
+    _muatBerikutnya();
   }
 
   Future<void> _muatUlang({bool tampilkanLoading = true}) async {
@@ -194,13 +178,7 @@ class _OssProyekPageState extends State<OssProyekPage>
         _entrance.value = 1; // refresh diam-diam: tanpa animasi ulang.
       }
     } on ApiException catch (e) {
-      _tanganiError(id, e.message, tampilkanLoading);
-    } catch (_) {
-      _tanganiError(
-        id,
-        'Terjadi kesalahan yang tidak terduga.',
-        tampilkanLoading,
-      );
+      _tanganiError(id, pesanErrorRamah(e), tampilkanLoading);
     }
   }
 
@@ -338,9 +316,9 @@ class _OssProyekPageState extends State<OssProyekPage>
   /// Chip filter aktif dari sheet filter (tanpa status & pencarian, yang
   /// sudah punya kontrol sendiri). Kecamatan/kelurahan hanya punya ID di
   /// sini (namanya ada di SQLite lokal), jadi labelnya generik.
-  List<OssFilterChipData> _chipFilterAktif() {
+  List<FilterChipData> _chipFilterAktif() {
     final OssProyekFilter f = _filter;
-    final List<OssFilterChipData> chips = <OssFilterChipData>[];
+    final List<FilterChipData> chips = <FilterChipData>[];
 
     if (f.kabupatenId != null) {
       String nama = 'Kabupaten/Kota';
@@ -352,7 +330,7 @@ class _OssProyekPageState extends State<OssProyekPage>
         }
       }
       chips.add(
-        OssFilterChipData(
+        FilterChipData(
           label: nama,
           onRemove: () => _ubahFilter(
             f.copyWith(
@@ -366,7 +344,7 @@ class _OssProyekPageState extends State<OssProyekPage>
     }
     if (f.kecamatanId != null) {
       chips.add(
-        OssFilterChipData(
+        FilterChipData(
           label: 'Kecamatan dipilih',
           onRemove: () => _ubahFilter(
             f.copyWith(clearKecamatanId: true, clearKelurahanId: true),
@@ -376,7 +354,7 @@ class _OssProyekPageState extends State<OssProyekPage>
     }
     if (f.kelurahanId != null) {
       chips.add(
-        OssFilterChipData(
+        FilterChipData(
           label: 'Kelurahan dipilih',
           onRemove: () => _ubahFilter(f.copyWith(clearKelurahanId: true)),
         ),
@@ -384,7 +362,7 @@ class _OssProyekPageState extends State<OssProyekPage>
     }
     if (f.statusPenanamanModal != null) {
       chips.add(
-        OssFilterChipData(
+        FilterChipData(
           label: f.statusPenanamanModal!,
           onRemove: () =>
               _ubahFilter(f.copyWith(clearStatusPenanamanModal: true)),
@@ -393,7 +371,7 @@ class _OssProyekPageState extends State<OssProyekPage>
     }
     if (f.uraianSkalaUsaha != null) {
       chips.add(
-        OssFilterChipData(
+        FilterChipData(
           label: f.uraianSkalaUsaha!,
           onRemove: () => _ubahFilter(f.copyWith(clearUraianSkalaUsaha: true)),
         ),
@@ -401,7 +379,7 @@ class _OssProyekPageState extends State<OssProyekPage>
     }
     if (f.uraianRisiko != null) {
       chips.add(
-        OssFilterChipData(
+        FilterChipData(
           label: 'Risiko ${f.uraianRisiko!}',
           onRemove: () => _ubahFilter(f.copyWith(clearUraianRisiko: true)),
         ),
@@ -649,16 +627,6 @@ class _OssProyekPageState extends State<OssProyekPage>
     }
   }
 
-  static String _ribuan(int angka) {
-    final String s = angka.toString();
-    final StringBuffer buf = StringBuffer();
-    for (int i = 0; i < s.length; i++) {
-      if (i > 0 && (s.length - i) % 3 == 0) buf.write('.');
-      buf.write(s[i]);
-    }
-    return buf.toString();
-  }
-
   @override
   Widget build(BuildContext context) {
     final OssProyekPageResult? h = _hasil;
@@ -666,45 +634,16 @@ class _OssProyekPageState extends State<OssProyekPage>
 
     return Scaffold(
       backgroundColor: AppTheme.scaffoldColorDynamic(context),
-      floatingActionButton: _showBackToTop
-          ? FloatingActionButton.small(
-              onPressed: _scrollKeAtas,
-              backgroundColor: AppTheme.primaryColor,
-              foregroundColor: Colors.white,
-              tooltip: 'Kembali ke atas',
-              child: const Icon(Icons.keyboard_arrow_up_rounded),
-            )
-          : null,
+      floatingActionButton: buildBackToTopFab(),
       appBar: AppBar(
         backgroundColor: AppTheme.primaryDark,
         foregroundColor: Colors.white,
-        title: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              widget.namaBidang ?? 'Validasi OSS',
-              style: const TextStyle(fontSize: 19, fontWeight: FontWeight.w800),
-            ),
-            const Text(
-              'Verifikasi Proyek dan Usaha OSS',
-              style: TextStyle(fontSize: 11, fontWeight: FontWeight.w400),
-            ),
-          ],
+        title: TwoLineTitle(
+          title: widget.namaBidang ?? 'Validasi OSS',
+          subtitle: 'Verifikasi Proyek dan Usaha OSS',
         ),
         actions: <Widget>[
-          IconButton(
-            tooltip: jumlahFilter > 0
-                ? 'Filter ($jumlahFilter aktif)'
-                : 'Filter',
-            onPressed: _bukaFilter,
-            icon: Badge(
-              isLabelVisible: jumlahFilter > 0,
-              label: Text('$jumlahFilter'),
-              backgroundColor: AppTheme.warning,
-              textColor: Colors.white,
-              child: const Icon(Icons.filter_list_rounded),
-            ),
-          ),
+          FilterAction(onPressed: _bukaFilter, activeCount: jumlahFilter),
         ],
       ),
       body: Column(
@@ -721,11 +660,11 @@ class _OssProyekPageState extends State<OssProyekPage>
           ),
           Builder(
             builder: (BuildContext context) {
-              final List<OssFilterChipData> chips = _chipFilterAktif();
+              final List<FilterChipData> chips = _chipFilterAktif();
               if (chips.isEmpty) return const SizedBox.shrink();
               return Padding(
                 padding: const EdgeInsets.only(top: 6),
-                child: OssActiveFilterChips(
+                child: ActiveFilterChips(
                   chips: chips,
                   onResetAll: _resetFilterSheet,
                 ),
@@ -733,35 +672,15 @@ class _OssProyekPageState extends State<OssProyekPage>
             },
           ),
           if (h != null && _pesanError == null)
-            Padding(
-              padding: const EdgeInsets.fromLTRB(20, 8, 20, 4),
-              child: Align(
-                alignment: Alignment.centerLeft,
-                child: Text.rich(
-                  TextSpan(
-                    text:
-                        '${h.provinsiNama} · ${_ribuan(_pagination.total)} usaha',
-                    children: <InlineSpan>[
-                      // Sorot yang belum diverifikasi, kecuali daftar sedang
-                      // disaring per status (angkanya sudah ada di chip).
-                      if (_ringkasan != null &&
-                          _filter.statusVerifikasi == null)
-                        TextSpan(
-                          text:
-                              ' · ${_ribuan(_ringkasan!.belum)} belum diverifikasi',
-                          style: const TextStyle(
-                            color: AppTheme.warning,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                    ],
-                  ),
-                  style: TextStyle(
-                    fontSize: 12.5,
-                    color: AppTheme.textSecondary(context),
-                  ),
-                ),
-              ),
+            ListSummaryLine(
+              provinsi: h.provinsiNama,
+              total: _pagination.total,
+              satuan: 'usaha',
+              // Disembunyikan saat daftar disaring per status (angkanya
+              // sudah ada di chip).
+              belum: _ringkasan != null && _filter.statusVerifikasi == null
+                  ? _ringkasan!.belum
+                  : null,
             ),
           Expanded(child: _buildBody(context)),
         ],
@@ -769,69 +688,29 @@ class _OssProyekPageState extends State<OssProyekPage>
     );
   }
 
-  /// Kolom pencarian: tombol hapus muncul saat ada teks, contoh NIB/NKU
-  /// hanya tampil saat kolom difokuskan dan masih kosong.
+  /// Kolom pencarian NIB/NKU: hanya angka (maks. 21 digit), dengan tombol
+  /// tempel dan scan OCR di ujung.
   Widget _buildSearchField(BuildContext context) {
-    return AnimatedBuilder(
-      animation: Listenable.merge(<Listenable>[
-        _searchController,
-        _searchFocus,
-      ]),
-      builder: (BuildContext context, _) {
-        final bool adaTeks = _searchController.text.isNotEmpty;
-        final bool tampilContoh = _searchFocus.hasFocus && !adaTeks;
-
-        return TextField(
-          controller: _searchController,
-          focusNode: _searchFocus,
-          onChanged: _onSearchChanged,
-          onSubmitted: (String v) {
-            _debounce?.cancel();
-            _terapkanPencarian(v);
-          },
-          keyboardType: TextInputType.number,
-          inputFormatters: <TextInputFormatter>[
-            FilteringTextInputFormatter.digitsOnly, // dulu filter...
-            LengthLimitingTextInputFormatter(21), // ...baru batasi panjang
-          ],
-          textInputAction: TextInputAction.search,
-          decoration: InputDecoration(
-            hintText: 'Cari NIB atau NKU lengkap',
-            helperText: tampilContoh
-                ? 'NIB: 8120115082852 · NKU: 201912311521051085492'
-                : null,
-            helperMaxLines: 2,
-            helperStyle: TextStyle(
-              fontSize: 11.5,
-              color: AppTheme.textSecondary(context),
-            ),
-            prefixIcon: const Icon(Icons.search_rounded),
-            // Hapus + OCR: tempel & scan
-            suffixIcon: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: <Widget>[
-                if (adaTeks)
-                  IconButton(
-                    tooltip: 'Hapus pencarian',
-                    icon: const Icon(Icons.close_rounded, size: 20),
-                    onPressed: _hapusPencarian,
-                  ),
-                OcrFieldActions(
-                  onPaste: _loadingAwal ? null : _tempelPencarian,
-                  onScan: _loadingAwal ? null : _scanPencarian,
-                ),
-              ],
-            ),
-            filled: true,
-            fillColor: AppTheme.surface(context),
-            contentPadding: const EdgeInsets.symmetric(vertical: 0),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide.none,
-            ),
-          ),
-        );
+    return ListSearchField(
+      controller: _searchController,
+      focusNode: _searchFocus,
+      hintText: 'Cari NIB atau NKU lengkap',
+      contohSaatFokus: 'NIB: 8120115082852 · NKU: 201912311521051085492',
+      keyboardType: TextInputType.number,
+      inputFormatters: <TextInputFormatter>[
+        FilteringTextInputFormatter.digitsOnly, // dulu filter...
+        LengthLimitingTextInputFormatter(21), // ...baru batasi panjang
+      ],
+      onChanged: _onSearchChanged,
+      onSubmitted: (String v) {
+        _debounce?.cancel();
+        _terapkanPencarian(v);
       },
+      onClear: _hapusPencarian,
+      trailing: OcrFieldActions(
+        onPaste: _loadingAwal ? null : _tempelPencarian,
+        onScan: _loadingAwal ? null : _scanPencarian,
+      ),
     );
   }
 
@@ -882,7 +761,7 @@ class _OssProyekPageState extends State<OssProyekPage>
     return RefreshIndicator(
       onRefresh: () => _muatUlang(tampilkanLoading: false),
       child: ListView.builder(
-        controller: _scrollController,
+        controller: scroll,
         physics: const AlwaysScrollableScrollPhysics(),
         keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
         padding: const EdgeInsets.only(top: 4, bottom: 24),

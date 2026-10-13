@@ -1,26 +1,29 @@
 import 'dart:async';
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:ipardasbor/features/oss/oss_proyek_page.dart';
+import 'package:ipardasbor/shared/scroll/back_to_top_mixin.dart';
+import 'package:ipardasbor/shared/widgets/app_bar_part.dart';
+import 'package:ipardasbor/shared/widgets/list_search_field.dart';
+import 'package:ipardasbor/shared/widgets/list_summary_line.dart';
 import 'package:ipardasbor/shared/widgets/offline_banner.dart';
 
 import '../../../app/app_theme.dart';
 
 import '../../../core/api/api_client.dart';
-import '../../../core/api/api_exception.dart';
 import '../../../core/network/network_status.dart';
 
 import '../models/baseline_ota_filter.dart';
 import '../models/baseline_ota_item.dart';
 import '../models/baseline_ota_page_result.dart';
 import '../../non_oss/models/location_fetch_status.dart';
+import '../models/baseline_ota_ringkasan.dart';
+import '../../../shared/widgets/status_filter_bar.dart';
 
 import '../../non_oss/non_oss_form_page.dart';
 import 'baseline_ota_detail_page.dart';
 
 import '../../non_oss/services/region_service.dart';
-import '../../oss/widgets/oss_proyek_filter_chips.dart'
-    show OssActiveFilterChips, OssFilterChipData;
+import '../../../shared/widgets/active_filter_chips.dart';
 import '../../../shared/gps/gps_capture_mixin.dart';
 import '../../../shared/pagination/paginated_list_controller.dart';
 import '../../../shared/utils/skeleton.dart';
@@ -39,11 +42,14 @@ class BaselineOtaPage extends StatefulWidget {
 }
 
 class _BaselineOtaPageState extends State<BaselineOtaPage>
-    with WidgetsBindingObserver, GpsCaptureMixin<BaselineOtaPage> {
+    with
+        WidgetsBindingObserver,
+        GpsCaptureMixin<BaselineOtaPage>,
+        BackToTopMixin<BaselineOtaPage> {
   late final BaselineOtaService _service;
   late final PaginatedListController<BaselineOtaItem> _ctrl;
   final RegionService _regions = RegionService();
-  final ScrollController _scroll = ScrollController();
+
   final TextEditingController _searchCtrl = TextEditingController();
 
   BaselineOtaFilter _filter = BaselineOtaFilter();
@@ -52,8 +58,8 @@ class _BaselineOtaPageState extends State<BaselineOtaPage>
   String? _namaKecamatan;
   String? _namaKelurahan;
 
-  /// Tombol "kembali ke atas" tampil setelah digulir cukup jauh.
-  bool _showBackToTop = false;
+  /// Hitungan per status untuk chip filter cepat dan keterangan jumlah.
+  BaselineOtaRingkasan? _ringkasan;
 
   @override
   void initState() {
@@ -66,9 +72,8 @@ class _BaselineOtaPageState extends State<BaselineOtaPage>
       perPage: () => _filter.perPage,
       onLoaded: _setelahDimuat,
       onSilentError: _snack,
-      errorMessage: _pesanRamah,
     )..addListener(_onCtrl);
-    _scroll.addListener(_onScroll);
+    initBackToTop();
     _ctrl.reload();
   }
 
@@ -77,7 +82,7 @@ class _BaselineOtaPageState extends State<BaselineOtaPage>
     _ctrl
       ..removeListener(_onCtrl)
       ..dispose();
-    _scroll.dispose();
+    disposeBackToTop();
     _searchCtrl.dispose();
     disposeGpsCapture();
     super.dispose();
@@ -105,13 +110,14 @@ class _BaselineOtaPageState extends State<BaselineOtaPage>
     _filterOptions = hasil.filterOptions;
     _provinsiNama = hasil.provinsiNama;
     _filter.provinsiId ??= hasil.provinsiId;
+    _ringkasan = hasil.ringkasan ?? _ringkasan;
   }
 
   void _onCtrl() {
     if (!mounted) return;
     setState(() {
       // Daftar diganti skeleton: posisi scroll akan kembali ke 0.
-      if (_ctrl.loadingFirst) _showBackToTop = false;
+      if (_ctrl.loadingFirst) hideBackToTop();
     });
   }
 
@@ -120,27 +126,9 @@ class _BaselineOtaPageState extends State<BaselineOtaPage>
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(pesan)));
   }
 
-  void _onScroll() {
-    if (!_scroll.hasClients) return;
-    final ScrollPosition pos = _scroll.position;
-
-    final bool perluTampil = pos.pixels > 400;
-    if (perluTampil != _showBackToTop) {
-      setState(() => _showBackToTop = perluTampil);
-    }
-
-    if (pos.pixels >= pos.maxScrollExtent - 200) {
-      _ctrl.loadMore();
-    }
-  }
-
-  void _scrollKeAtas() {
-    if (!_scroll.hasClients) return;
-    _scroll.animateTo(
-      0,
-      duration: const Duration(milliseconds: 500),
-      curve: Curves.easeOut,
-    );
+  @override
+  void onNearBottom() {
+    _ctrl.loadMore();
   }
 
   /// Catatan kalau jarak dihitung dari lokasi tersimpan, bukan posisi sekarang.
@@ -153,7 +141,7 @@ class _BaselineOtaPageState extends State<BaselineOtaPage>
         _filter.lng = null;
         _infoLokasi = null;
       });
-      if (_scroll.hasClients) _scroll.jumpTo(0);
+      jumpKeAtas();
       await _ctrl.reload();
       return;
     }
@@ -167,7 +155,7 @@ class _BaselineOtaPageState extends State<BaselineOtaPage>
               ? null
               : 'Memakai lokasi tersimpan, bukan posisi Anda saat ini.';
         });
-        if (_scroll.hasClients) _scroll.jumpTo(0);
+        jumpKeAtas();
         _ctrl.reload();
       },
     );
@@ -206,16 +194,6 @@ class _BaselineOtaPageState extends State<BaselineOtaPage>
     if (_filter.status == status) return;
     setState(() => _filter.status = status);
     _ctrl.reload();
-  }
-
-  /// Pesan dari server (ApiException) dipakai apa adanya; error teknis lain
-  /// diganti pesan yang dimengerti pengguna.
-  String _pesanRamah(Object e) {
-    if (e is ApiException) return e.message;
-    if (e is SocketException || e is TimeoutException) {
-      return 'Tidak dapat terhubung ke server. Periksa koneksi internet Anda lalu coba lagi.';
-    }
-    return 'Terjadi kesalahan saat memuat data. Silakan coba lagi.';
   }
 
   /// Menghapus SEMUA filter: pencarian, status, wilayah, platform, dan
@@ -305,21 +283,21 @@ class _BaselineOtaPageState extends State<BaselineOtaPage>
   }
 
   /// Data chip filter aktif dari sheet (platform + wilayah), dirender oleh
-  /// OssActiveFilterChips yang sama dengan halaman OSS.
-  List<OssFilterChipData> _chipFilterAktif() {
+  /// ActiveFilterChips yang sama dengan halaman OSS.
+  List<FilterChipData> _chipFilterAktif() {
     final String? namaKab = _filterOptions?.kabupaten
         .where((e) => e.id == _filter.kabupatenId)
         .firstOrNull
         ?.name;
 
-    return <OssFilterChipData>[
+    return <FilterChipData>[
       if ((_filter.platformOta ?? '').trim().isNotEmpty)
-        OssFilterChipData(
+        FilterChipData(
           label: _filter.platformOta!,
           onRemove: () => _ubahFilter(() => _filter.platformOta = null),
         ),
       if (_filter.kabupatenId != null)
-        OssFilterChipData(
+        FilterChipData(
           label: namaKab ?? 'Kabupaten/Kota',
           onRemove: () => _ubahFilter(() {
             _filter.kabupatenId = null;
@@ -330,7 +308,7 @@ class _BaselineOtaPageState extends State<BaselineOtaPage>
           }),
         ),
       if (_filter.kecamatanId != null)
-        OssFilterChipData(
+        FilterChipData(
           label: _namaKecamatan ?? 'Kecamatan',
           onRemove: () => _ubahFilter(() {
             _filter.kecamatanId = null;
@@ -340,7 +318,7 @@ class _BaselineOtaPageState extends State<BaselineOtaPage>
           }),
         ),
       if (_filter.kelurahanId != null)
-        OssFilterChipData(
+        FilterChipData(
           label: _namaKelurahan ?? 'Kelurahan/Desa',
           onRemove: () => _ubahFilter(() {
             _filter.kelurahanId = null;
@@ -402,49 +380,23 @@ class _BaselineOtaPageState extends State<BaselineOtaPage>
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppTheme.scaffoldColorDynamic(context),
-      floatingActionButton:
-          _showBackToTop &&
-              !_ctrl.loadingFirst &&
-              _ctrl.error == null &&
-              _ctrl.items.isNotEmpty
-          ? FloatingActionButton.small(
-              onPressed: _scrollKeAtas,
-              backgroundColor: AppTheme.primaryColor,
-              foregroundColor: Colors.white,
-              tooltip: 'Kembali ke atas',
-              child: const Icon(Icons.keyboard_arrow_up_rounded),
-            )
-          : null,
+      floatingActionButton: buildBackToTopFab(
+        enabled:
+            !_ctrl.loadingFirst &&
+            _ctrl.error == null &&
+            _ctrl.items.isNotEmpty,
+      ),
       appBar: AppBar(
         elevation: 0,
         backgroundColor: AppTheme.primaryDark,
         foregroundColor: Colors.white,
         titleSpacing: 4,
-        title: const Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Pengawasan OTA',
-              style: TextStyle(fontSize: 19, fontWeight: FontWeight.w800),
-            ),
-            Text(
-              'Verifikasi hasil scraping baseline OTA',
-              style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w400),
-            ),
-          ],
+        title: const TwoLineTitle(
+          title: 'Pengawasan OTA',
+          subtitle: 'Verifikasi hasil scraping baseline OTA',
         ),
-        actions: [
-          IconButton(
-            icon: Badge(
-              isLabelVisible: _jumlahFilterAktif > 0,
-              label: Text('$_jumlahFilterAktif'),
-              backgroundColor: Colors.amberAccent,
-              textColor: Colors.black87,
-              child: const Icon(Icons.filter_list_rounded, color: Colors.white),
-            ),
-            onPressed: _bukaFilter,
-            tooltip: 'Filter',
-          ),
+        actions: <Widget>[
+          FilterAction(onPressed: _bukaFilter, activeCount: _jumlahFilterAktif),
         ],
       ),
       body: Column(
@@ -452,43 +404,24 @@ class _BaselineOtaPageState extends State<BaselineOtaPage>
           const OfflineBanner(),
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
-            child: TextField(
+            child: ListSearchField(
               controller: _searchCtrl,
-              textInputAction: TextInputAction.search,
-              decoration: InputDecoration(
-                hintText: 'Cari listing, alamat, platform...',
-                prefixIcon: const Icon(Icons.search, size: 20),
-                suffixIcon: ValueListenableBuilder<TextEditingValue>(
-                  valueListenable: _searchCtrl,
-                  builder: (_, value, _) => value.text.isEmpty
-                      ? const SizedBox.shrink()
-                      : IconButton(
-                          icon: const Icon(Icons.close_rounded, size: 18),
-                          tooltip: 'Hapus pencarian',
-                          onPressed: () {
-                            _searchCtrl.clear();
-                            _cari('');
-                          },
-                        ),
-                ),
-                filled: true,
-                fillColor: AppTheme.surface(context),
-                contentPadding: const EdgeInsets.symmetric(vertical: 0),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(13),
-                ),
-              ),
+              hintText: 'Cari listing, alamat, platform...',
               onSubmitted: _cari,
+              onClear: () {
+                _searchCtrl.clear();
+                _cari('');
+              },
             ),
           ),
           _buildBarisFilterCepat(),
           Builder(
             builder: (BuildContext context) {
-              final List<OssFilterChipData> chips = _chipFilterAktif();
+              final List<FilterChipData> chips = _chipFilterAktif();
               if (chips.isEmpty) return const SizedBox.shrink();
               return Padding(
                 padding: const EdgeInsets.only(top: 6),
-                child: OssActiveFilterChips(
+                child: ActiveFilterChips(
                   chips: chips,
                   onResetAll: _resetFilterSheet,
                 ),
@@ -496,35 +429,15 @@ class _BaselineOtaPageState extends State<BaselineOtaPage>
             },
           ),
           if (!_ctrl.loadingFirst && _ctrl.error == null)
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-              child: Align(
-                alignment: Alignment.centerLeft,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      '$_provinsiNama · ${_ctrl.total} data ditemukan'
-                      '${_filter.urutJarak ? ' · terdekat dulu' : ''}',
-                      style: TextStyle(
-                        fontSize: 11.5,
-                        color: AppTheme.textSecondary(context),
-                      ),
-                    ),
-                    if (_filter.urutJarak && _infoLokasi != null)
-                      Padding(
-                        padding: const EdgeInsets.only(top: 2),
-                        child: Text(
-                          _infoLokasi!,
-                          style: const TextStyle(
-                            fontSize: 11.5,
-                            color: Color(0xFFD08A00),
-                          ),
-                        ),
-                      ),
-                  ],
-                ),
-              ),
+            ListSummaryLine(
+              provinsi: _provinsiNama,
+              total: _ctrl.total,
+              satuan: 'data',
+              belum: _ringkasan != null && _filter.status == null
+                  ? _ringkasan!.belum
+                  : null,
+              akhiran: _filter.urutJarak ? 'terdekat dulu' : null,
+              catatan: _filter.urutJarak ? _infoLokasi : null,
             ),
           Expanded(child: _buildBody()),
         ],
@@ -532,41 +445,41 @@ class _BaselineOtaPageState extends State<BaselineOtaPage>
     );
   }
 
-  /// Satu baris chip yang bisa digeser: pilihan status (pilih satu), pemisah
-  /// tipis, lalu "Dekat saya" (mode urutan, bukan status). Tingginya tetap
-  /// sehingga header tidak melompat di layar sempit.
+  /// Dua baris: chip status (pilih satu, dengan jumlah per status) di atas,
+  /// lalu "Dekat saya" di bawahnya (mode urutan, bukan status).
   Widget _buildBarisFilterCepat() {
-    const List<(String?, String)> opsiStatus = <(String?, String)>[
-      (null, 'Semua'),
-      ('BELUM', 'Belum diverifikasi'),
-      ('SUDAH', 'Terverifikasi'),
-    ];
+    final BaselineOtaRingkasan? r = _ringkasan;
 
-    return SizedBox(
-      height: 40,
-      child: ListView(
-        scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: 16),
-        children: <Widget>[
-          for (final (String? value, String label) in opsiStatus)
-            Padding(
-              padding: const EdgeInsets.only(right: 8),
-              child: ChoiceChip(
-                label: Text(label, style: const TextStyle(fontSize: 12.5)),
-                selected: _filter.status == value,
-                visualDensity: VisualDensity.compact,
-                onSelected: (_) => _setStatus(value),
-              ),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        StatusFilterBar(
+          selected: _filter.status,
+          onChanged: _setStatus,
+          options: <StatusFilterOption>[
+            StatusFilterOption(
+              value: null,
+              label: 'Semua',
+              color: AppTheme.primaryColor,
+              count: r?.total,
             ),
-          Center(
-            child: Container(
-              width: 1,
-              height: 20,
-              margin: const EdgeInsets.only(left: 2, right: 10),
-              color: AppTheme.border(context),
+            StatusFilterOption(
+              value: 'BELUM',
+              label: 'Belum',
+              color: AppTheme.warning,
+              count: r?.belum,
             ),
-          ),
-          FilterChip(
+            StatusFilterOption(
+              value: 'SUDAH',
+              label: 'Terverifikasi',
+              color: AppTheme.success,
+              count: r?.sudah,
+            ),
+          ],
+        ),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 0, 16, 0),
+          child: FilterChip(
             avatar: gpsLoading
                 ? const SizedBox(
                     width: 14,
@@ -580,8 +493,8 @@ class _BaselineOtaPageState extends State<BaselineOtaPage>
             visualDensity: VisualDensity.compact,
             onSelected: gpsLoading ? null : (_) => _toggleDekatSaya(),
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 
@@ -620,12 +533,13 @@ class _BaselineOtaPageState extends State<BaselineOtaPage>
                   ? Icons.filter_alt_off_outlined
                   : Icons.inbox_outlined,
               title: adaFilter
-                  ? 'Tidak ada data yang cocok'
+                  ? 'Tidak ada yang cocok'
                   : 'Belum ada data hasil scraping OTA',
               message: adaFilter
-                  ? 'Coba ubah atau hapus filter dan kata kunci pencarian.'
+                  ? 'Tidak ada listing yang sesuai dengan filter atau kata '
+                        'kunci. Coba ubah atau hapus filternya.'
                   : 'Data akan muncul setelah proses scraping selesai.',
-              actionLabel: adaFilter ? 'Reset Filter' : null,
+              actionLabel: adaFilter ? 'Hapus semua filter' : null,
               actionIcon: Icons.restart_alt_rounded,
               onAction: adaFilter ? _resetFilter : null,
             ),
@@ -637,7 +551,7 @@ class _BaselineOtaPageState extends State<BaselineOtaPage>
     return RefreshIndicator(
       onRefresh: segarkan,
       child: ListView.builder(
-        controller: _scroll,
+        controller: scroll,
         physics: const AlwaysScrollableScrollPhysics(),
         padding: const EdgeInsets.fromLTRB(16, 4, 16, 24),
         itemCount: items.length + (_ctrl.hasNext ? 1 : 0),

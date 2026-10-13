@@ -1,3 +1,5 @@
+import 'package:ipardasbor/features/ota/models/baseline_ota_ringkasan.dart';
+
 import '../../non_oss/models/region_option.dart';
 import 'baseline_ota_item.dart';
 
@@ -40,6 +42,7 @@ class BaselineOtaPageResult {
     required this.lastPage,
     required this.total,
     required this.filterOptions,
+    this.ringkasan,
   });
 
   final int? provinsiId;
@@ -49,6 +52,9 @@ class BaselineOtaPageResult {
   final int lastPage;
   final int total;
   final BaselineOtaFilterOptions filterOptions;
+
+  /// Hitungan per status. Null kalau backend versi lama tidak mengirimnya.
+  final BaselineOtaRingkasan? ringkasan;
 
   bool get hasMore => currentPage < lastPage;
 
@@ -79,6 +85,7 @@ class BaselineOtaPageResult {
       filterOptions: BaselineOtaFilterOptions.fromJson(
         Map<String, dynamic>.from(data['filter_opsi'] as Map),
       ),
+      ringkasan: BaselineOtaRingkasan.fromJson(data['ringkasan']),
     );
   }
 }
