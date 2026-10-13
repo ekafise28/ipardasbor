@@ -31,12 +31,7 @@ import '../../shared/utils/staggered_entrance.dart';
 import '../../shared/widgets/list_states.dart';
 import '../../shared/widgets/connection_error_state.dart';
 
-import 'package:ipardasbor/shared/ocr/ocr_field_type.dart';
-import 'package:ipardasbor/shared/ocr/ocr_paste_cleaner.dart';
-import 'package:ipardasbor/shared/ocr/ocr_result.dart';
-import 'package:ipardasbor/shared/ocr/ocr_result_sheet.dart';
-import 'package:ipardasbor/shared/ocr/ocr_scan_flow.dart';
-import 'package:ipardasbor/shared/widgets/ocr_field_actions.dart';
+import 'package:ipardasbor/shared/ocr/ocr.dart';
 
 /// Daftar usaha akomodasi OSS yang perlu diverifikasi.
 ///
@@ -895,7 +890,7 @@ class _OssProyekPageState extends State<OssProyekPage>
           if (index == 0) {
             return ValueListenableBuilder<bool>(
               valueListenable: NetworkStatus.instance,
-              builder: (_, offline, __) =>
+              builder: (_, offline, _) =>
                   _KartuCekManual(onTap: _bukaCekManual, offline: offline),
             );
           }

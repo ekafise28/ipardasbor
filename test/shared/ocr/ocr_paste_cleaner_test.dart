@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:ipardasbor/shared/ocr/ocr_field_type.dart';
-import 'package:ipardasbor/shared/ocr/ocr_paste_cleaner.dart';
-import 'package:ipardasbor/shared/ocr/ocr_result.dart';
+import 'package:ipardasbor/shared/ocr/models/ocr_field_type.dart';
+import 'package:ipardasbor/shared/ocr/parsing/ocr_paste_cleaner.dart';
+import 'package:ipardasbor/shared/ocr/models/ocr_result.dart';
 
 List<String> values(String text, OcrFieldType type) =>
     OcrPasteCleaner.clean(text, type).map((e) => e.value).toList();

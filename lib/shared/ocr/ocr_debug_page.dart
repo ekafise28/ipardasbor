@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:ipardasbor/shared/ocr/ocr_result_sheet.dart';
+import 'package:ipardasbor/shared/ocr/widgets/ocr_result_sheet.dart';
 
-import 'ocr_field_type.dart';
-import 'ocr_result.dart';
-import 'ocr_service.dart';
+import 'models/ocr_field_type.dart';
+import 'models/ocr_result.dart';
+import 'services/ocr_service.dart';
 
 /// Halaman uji SEMENTARA untuk Batch 2. Hapus setelah UI asli (Batch 3-4)
 /// terpasang.

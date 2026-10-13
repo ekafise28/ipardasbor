@@ -1,8 +1,8 @@
 import 'package:ipardasbor/core/constants/kbli_constants.dart';
 
-import 'ocr_field_type.dart';
+import '../models/ocr_field_type.dart';
 import 'ocr_parser.dart';
-import 'ocr_result.dart';
+import '../models/ocr_result.dart';
 
 /// Membersihkan teks dari clipboard menjadi kandidat nilai satu field.
 ///

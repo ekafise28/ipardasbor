@@ -11,7 +11,7 @@ class OfflineBanner extends StatelessWidget {
   Widget build(BuildContext context) {
     return ValueListenableBuilder<DateTime?>(
       valueListenable: CacheStatus.instance,
-      builder: (_, DateTime? waktu, __) {
+      builder: (_, DateTime? waktu, _) {
         if (waktu == null) return const SizedBox.shrink();
         const Color warna = Color(0xFFB45309);
         return Container(

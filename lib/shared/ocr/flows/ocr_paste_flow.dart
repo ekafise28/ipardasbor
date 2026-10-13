@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:ipardasbor/shared/ocr/ocr_result_sheet.dart';
+import 'package:ipardasbor/shared/ocr/widgets/ocr_result_sheet.dart';
 
-import 'ocr_field_type.dart';
-import 'ocr_paste_cleaner.dart';
-import 'ocr_result.dart';
+import '../models/ocr_field_type.dart';
+import '../parsing/ocr_paste_cleaner.dart';
+import '../models/ocr_result.dart';
 
 /// Tempel dari clipboard ke satu field, dengan pembersihan otomatis.
 ///

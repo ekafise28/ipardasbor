@@ -1,7 +1,7 @@
 import 'package:ipardasbor/core/constants/kbli_constants.dart';
 
-import 'ocr_field_type.dart';
-import 'ocr_result.dart';
+import '../models/ocr_field_type.dart';
+import '../models/ocr_result.dart';
 
 /// Mengubah teks mentah hasil OCR menjadi kandidat NIB/NKU/KBLI.
 ///

@@ -11,7 +11,7 @@ class OfflineNotice extends StatelessWidget {
   Widget build(BuildContext context) {
     return ValueListenableBuilder<bool>(
       valueListenable: NetworkStatus.instance,
-      builder: (_, bool offline, __) {
+      builder: (_, bool offline, _) {
         if (!offline) return const SizedBox.shrink();
         const Color warna = Color(0xFFB45309);
         return Container(

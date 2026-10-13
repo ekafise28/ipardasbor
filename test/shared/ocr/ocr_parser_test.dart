@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:ipardasbor/shared/ocr/ocr_field_type.dart';
-import 'package:ipardasbor/shared/ocr/ocr_parser.dart';
-import 'package:ipardasbor/shared/ocr/ocr_result.dart';
+import 'package:ipardasbor/shared/ocr/models/ocr_field_type.dart';
+import 'package:ipardasbor/shared/ocr/parsing/ocr_parser.dart';
+import 'package:ipardasbor/shared/ocr/models/ocr_result.dart';
 
 List<String> values(Map<OcrFieldType, List<OcrResult>> r, OcrFieldType t) =>
     r[t]!.map((e) => e.value).toList();

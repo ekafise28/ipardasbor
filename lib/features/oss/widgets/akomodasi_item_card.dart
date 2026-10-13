@@ -165,15 +165,8 @@ class _AkomodasiItemCardState extends State<AkomodasiItemCard>
   }
 
   Future<void> _cekValidasi() async {
-    Future<void> _cekValidasi() async {
-      if (!await NetworkGuard.pastikanOnline(context)) return;
-      if (!mounted) return;
-      setState(() => _cekLoading = true);
-      await widget.onCekValidasi(_d);
-      if (!mounted) return;
-      setState(() => _cekLoading = false);
-    }
-
+    if (!await NetworkGuard.pastikanOnline(context)) return;
+    if (!mounted) return;
     setState(() => _cekLoading = true);
     await widget.onCekValidasi(_d);
     if (!mounted) return;

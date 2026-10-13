@@ -2,11 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:ipardasbor/app/app_theme.dart';
 // OCR: import baru
 import 'package:ipardasbor/core/constants/kbli_constants.dart';
-import 'package:ipardasbor/shared/ocr/ocr_field_type.dart';
-import 'package:ipardasbor/shared/ocr/ocr_paste_flow.dart';
-import 'package:ipardasbor/shared/ocr/ocr_scan_flow.dart';
-import 'package:ipardasbor/shared/widgets/ocr_field_actions.dart';
-import 'package:ipardasbor/shared/widgets/ocr_scan_button.dart';
+import 'package:ipardasbor/shared/ocr/ocr.dart';
 
 import '../../../core/api/api_client.dart';
 import '../../../core/network/network_status.dart';

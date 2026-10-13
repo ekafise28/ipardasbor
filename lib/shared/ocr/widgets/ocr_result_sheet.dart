@@ -3,17 +3,23 @@ import 'package:flutter/services.dart';
 import 'package:ipardasbor/app/app_theme.dart';
 import 'package:ipardasbor/core/constants/kbli_constants.dart';
 
-import 'ocr_field_type.dart';
-import 'ocr_result.dart';
+import '../models/ocr_field_type.dart';
+import '../models/ocr_result.dart';
 
 /// Keluaran bottom sheet.
-/// - [values]: nilai yang dicentang pengguna (kosong kalau [retry]).
+/// - [values]: nilai yang dicentang pengguna (kosong kalau [retry]/[manual]).
 /// - [retry]: pengguna minta memilih/scan gambar lagi.
+/// - [manual]: pengguna minta memilih baris langsung dari gambar yang sama.
 class OcrSheetResult {
-  const OcrSheetResult({this.values = const {}, this.retry = false});
+  const OcrSheetResult({
+    this.values = const {},
+    this.retry = false,
+    this.manual = false,
+  });
 
   final Map<OcrFieldType, String> values;
   final bool retry;
+  final bool manual;
 }
 
 /// Tampilkan hasil OCR untuk dikonfirmasi. Mengembalikan null kalau ditutup
@@ -22,11 +28,16 @@ class OcrSheetResult {
 /// [results] memuat kunci untuk setiap jenis yang dicari (daftar kosong =
 /// tidak ditemukan). [currentValues] adalah isi field di form saat ini,
 /// supaya nilai yang sudah ada tidak ditimpa diam-diam.
+///
+/// [canPickManual] menampilkan aksi "Pilih dari gambar". [preChecked]
+/// adalah jenis yang langsung tercentang (hasil pilihan manual pengguna).
 Future<OcrSheetResult?> showOcrResultSheet(
   BuildContext context, {
   required Map<OcrFieldType, List<OcrResult>> results,
   Map<OcrFieldType, String> currentValues = const {},
   bool allowRetry = true,
+  bool canPickManual = false,
+  Set<OcrFieldType> preChecked = const {},
   String bidang = 'akomodasi',
 }) {
   return showModalBottomSheet<OcrSheetResult>(
@@ -38,6 +49,8 @@ Future<OcrSheetResult?> showOcrResultSheet(
       results: results,
       currentValues: currentValues,
       allowRetry: allowRetry,
+      canPickManual: canPickManual,
+      preChecked: preChecked,
       bidang: bidang,
     ),
   );
@@ -48,12 +61,16 @@ class _OcrResultSheet extends StatefulWidget {
     required this.results,
     required this.currentValues,
     required this.allowRetry,
+    required this.canPickManual,
+    required this.preChecked,
     required this.bidang,
   });
 
   final Map<OcrFieldType, List<OcrResult>> results;
   final Map<OcrFieldType, String> currentValues;
   final bool allowRetry;
+  final bool canPickManual;
+  final Set<OcrFieldType> preChecked;
   final String bidang;
 
   @override
@@ -83,10 +100,12 @@ class _OcrResultSheetState extends State<_OcrResultSheet> {
       });
       _ctrls[t] = c;
       _picked[t] = 0;
-      // Tercentang otomatis hanya kalau: kandidat tunggal, tanpa peringatan,
-      // dan field di form masih kosong.
+      // Tercentang otomatis kalau pengguna baru memilihnya manual dari
+      // gambar, atau kalau: kandidat tunggal, tanpa peringatan, dan field
+      // di form masih kosong.
       _checked[t] =
-          cands.length == 1 && cands.first.isClean && _current(t).isEmpty;
+          widget.preChecked.contains(t) ||
+          (cands.length == 1 && cands.first.isClean && _current(t).isEmpty);
     }
   }
 
@@ -112,6 +131,9 @@ class _OcrResultSheetState extends State<_OcrResultSheet> {
   }
 
   void _retry() => Navigator.of(context).pop(const OcrSheetResult(retry: true));
+
+  void _pickManual() =>
+      Navigator.of(context).pop(const OcrSheetResult(manual: true));
 
   /// Peringatan dihitung ulang dari teks yang sedang tampil, jadi ikut
   /// berubah saat pengguna mengedit.
@@ -195,44 +217,91 @@ class _OcrResultSheetState extends State<_OcrResultSheet> {
           ),
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
-            child: hasAny
-                ? Row(
-                    children: [
-                      if (widget.allowRetry) ...[
-                        Expanded(
-                          child: OutlinedButton(
-                            onPressed: _retry,
-                            child: const Text('Scan ulang'),
-                          ),
-                        ),
-                        const SizedBox(width: 10),
-                      ],
-                      Expanded(
-                        flex: 2,
-                        child: FilledButton(
-                          onPressed: count > 0 ? _apply : null,
-                          style: FilledButton.styleFrom(
-                            backgroundColor: AppTheme.primaryColor,
-                          ),
-                          child: Text(count > 0 ? 'Pakai ($count)' : 'Pakai'),
-                        ),
-                      ),
-                    ],
-                  )
-                : SizedBox(
-                    width: double.infinity,
-                    child: FilledButton.icon(
-                      onPressed: _retry,
-                      style: FilledButton.styleFrom(
-                        backgroundColor: AppTheme.primaryColor,
-                      ),
-                      icon: const Icon(Icons.image_search_outlined),
-                      label: const Text('Pilih gambar lagi'),
-                    ),
-                  ),
+            child: hasAny ? _actionBar(count) : _emptyActions(),
           ),
         ],
       ),
+    );
+  }
+
+  Widget _actionBar(int count) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        if (widget.canPickManual)
+          SizedBox(
+            width: double.infinity,
+            child: TextButton.icon(
+              onPressed: _pickManual,
+              icon: const Icon(Icons.touch_app_outlined, size: 18),
+              label: const Text('Salah angka? Pilih dari gambar'),
+            ),
+          ),
+        Row(
+          children: [
+            if (widget.allowRetry) ...[
+              Expanded(
+                child: OutlinedButton(
+                  onPressed: _retry,
+                  child: const Text('Scan ulang'),
+                ),
+              ),
+              const SizedBox(width: 10),
+            ],
+            Expanded(
+              flex: 2,
+              child: FilledButton(
+                onPressed: count > 0 ? _apply : null,
+                style: FilledButton.styleFrom(
+                  backgroundColor: AppTheme.primaryColor,
+                ),
+                child: Text(count > 0 ? 'Pakai ($count)' : 'Pakai'),
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _emptyActions() {
+    if (!widget.canPickManual) {
+      return SizedBox(
+        width: double.infinity,
+        child: FilledButton.icon(
+          onPressed: _retry,
+          style: FilledButton.styleFrom(
+            backgroundColor: AppTheme.primaryColor,
+          ),
+          icon: const Icon(Icons.image_search_outlined),
+          label: const Text('Pilih gambar lagi'),
+        ),
+      );
+    }
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        SizedBox(
+          width: double.infinity,
+          child: FilledButton.icon(
+            onPressed: _pickManual,
+            style: FilledButton.styleFrom(
+              backgroundColor: AppTheme.primaryColor,
+            ),
+            icon: const Icon(Icons.touch_app_outlined),
+            label: const Text('Pilih dari gambar'),
+          ),
+        ),
+        const SizedBox(height: 8),
+        SizedBox(
+          width: double.infinity,
+          child: OutlinedButton.icon(
+            onPressed: _retry,
+            icon: const Icon(Icons.image_search_outlined),
+            label: const Text('Pilih gambar lagi'),
+          ),
+        ),
+      ],
     );
   }
 
@@ -256,7 +325,9 @@ class _OcrResultSheetState extends State<_OcrResultSheet> {
           ),
           const SizedBox(height: 4),
           Text(
-            'Coba gambar yang lebih jelas, atau potong ke area angka saja.',
+            widget.canPickManual
+                ? 'Pilih barisnya langsung dari gambar, atau ganti gambar.'
+                : 'Coba gambar yang lebih jelas, atau potong ke area angka saja.',
             textAlign: TextAlign.center,
             style: TextStyle(
               fontSize: 12.5,
