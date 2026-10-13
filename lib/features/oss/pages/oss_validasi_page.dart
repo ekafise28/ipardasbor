@@ -149,6 +149,7 @@ class _OssValidasiPageState extends State<OssValidasiPage> {
         OcrFieldType.nku: _nkuCtrl.text.trim(),
         OcrFieldType.kbli: _kbliCtrl.text.trim(),
       },
+      bidang: widget.bidang,
     );
     if (!mounted || values == null || values.isEmpty) return;
 
@@ -181,6 +182,7 @@ class _OssValidasiPageState extends State<OssValidasiPage> {
       context,
       type: type,
       currentValue: ctrl.text.trim(),
+      bidang: widget.bidang,
     );
     if (!mounted || value == null) return;
 

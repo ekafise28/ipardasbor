@@ -18,6 +18,7 @@ Future<String?> runPaste(
   BuildContext context, {
   required OcrFieldType type,
   String currentValue = '',
+  String bidang = 'akomodasi',
 }) async {
   final ClipboardData? data = await Clipboard.getData(Clipboard.kTextPlain);
   if (!context.mounted) return null;
@@ -28,7 +29,7 @@ Future<String?> runPaste(
     return null;
   }
 
-  final List<OcrResult> cands = OcrPasteCleaner.clean(text, type);
+  final List<OcrResult> cands = OcrPasteCleaner.clean(text, type, bidang: bidang);
   if (cands.isEmpty) {
     _snack(context, 'Tidak ada ${type.displayName} yang ditemukan di clipboard.');
     return null;
@@ -50,6 +51,7 @@ Future<String?> runPaste(
     results: {type: cands},
     currentValues: {type: currentValue},
     allowRetry: false,
+    bidang: bidang,
   );
   if (sheet == null || sheet.retry) return null;
   return sheet.values[type];

@@ -19,9 +19,15 @@ class OcrPasteCleaner {
   static final RegExp _invisible = RegExp(r'[\u200B\uFEFF]');
   static final RegExp _oddSpaces = RegExp(r'[\u00A0\u2007\u202F]');
 
-  static List<OcrResult> clean(String text, OcrFieldType type) {
-    final String t =
-        text.replaceAll(_invisible, '').replaceAll(_oddSpaces, ' ').trim();
+  static List<OcrResult> clean(
+    String text,
+    OcrFieldType type, {
+    String bidang = 'akomodasi',
+  }) {
+    final String t = text
+        .replaceAll(_invisible, '')
+        .replaceAll(_oddSpaces, ' ')
+        .trim();
     if (t.isEmpty) return const [];
 
     // KBLI yang dipisah spasi/titik bisa berarti beberapa KBLI, jangan
@@ -36,20 +42,21 @@ class OcrPasteCleaner {
           type: type,
           value: v,
           foundByLabel: true,
-          warnings: _warnings(type, v),
+          warnings: _warnings(type, v, bidang),
         ),
       ];
     }
 
-    return OcrParser.parseText(t, targets: {type})[type] ?? const [];
+    return OcrParser.parseText(t, targets: {type}, bidang: bidang)[type] ??
+        const [];
   }
 
-  static List<OcrWarning> _warnings(OcrFieldType type, String v) {
+  static List<OcrWarning> _warnings(OcrFieldType type, String v, String bidang) {
     final List<OcrWarning> w = [];
     if (v.length != type.expectedLength) w.add(OcrWarning.unusualLength);
     if (type == OcrFieldType.kbli &&
         v.length == 5 &&
-        !KbliConstants.isDiizinkan(v)) {
+        !KbliConstants.isDiizinkan(v, bidang: bidang)) {
       w.add(OcrWarning.notInAllowedList);
     }
     return w;

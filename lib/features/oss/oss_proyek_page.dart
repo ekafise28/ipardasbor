@@ -417,6 +417,7 @@ class _OssProyekPageState extends State<OssProyekPage>
       context,
       targets: {OcrFieldType.nib, OcrFieldType.nku},
       currentValues: {OcrFieldType.nib: '', OcrFieldType.nku: ''},
+      bidang: widget.bidang,
     );
     if (!mounted || values == null || values.isEmpty) return;
 
