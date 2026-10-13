@@ -41,7 +41,7 @@ class RiwayatCard extends StatelessWidget {
       color: AppTheme.surface(context),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(14),
-        side: BorderSide(color: Colors.black.withValues(alpha:0.06)),
+        side: BorderSide(color: AppTheme.border(context)),
       ),
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
       child: InkWell(
@@ -205,7 +205,7 @@ class _StatusBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final Color warna = selesai ? Colors.green : Colors.orange;
+    final Color warna = selesai ? AppTheme.success : AppTheme.warning;
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
@@ -246,20 +246,20 @@ class _TidakValidBadge extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
-        color: Colors.red.withValues(alpha:0.12),
+        color: AppTheme.danger.withValues(alpha:0.12),
         borderRadius: BorderRadius.circular(20),
       ),
       child: const Row(
         mainAxisSize: MainAxisSize.min,
         children: <Widget>[
-          Icon(Icons.error_outline_rounded, size: 12, color: Colors.red),
+          Icon(Icons.error_outline_rounded, size: 12, color: AppTheme.danger),
           SizedBox(width: 4),
           Text(
             'Tidak Valid',
             style: TextStyle(
               fontSize: 11,
               fontWeight: FontWeight.w700,
-              color: Colors.red,
+              color: AppTheme.danger,
             ),
           ),
         ],

@@ -515,3 +515,89 @@ class _BaselineOtaCardSkeleton extends StatelessWidget {
     );
   }
 }
+
+/// Meniru RiwayatCard (features/riwayat/widgets/riwayat_card.dart).
+class RiwayatSkeleton extends StatelessWidget {
+  const RiwayatSkeleton({super.key, this.itemCount = 4});
+
+  final int itemCount;
+
+  @override
+  Widget build(BuildContext context) {
+    return SkeletonList(
+      semanticsLabel: 'Memuat daftar riwayat',
+      itemCount: itemCount,
+      itemBuilder: (BuildContext context, int index) =>
+          const _RiwayatCardSkeleton(),
+    );
+  }
+}
+
+class _RiwayatCardSkeleton extends StatelessWidget {
+  const _RiwayatCardSkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    return const SkeletonCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          // Badge jenis + badge status + tanggal
+          Row(
+            children: <Widget>[
+              SkeletonBox(width: 48, height: 24, radius: 20),
+              SizedBox(width: 8),
+              SkeletonBox(width: 84, height: 24, radius: 20),
+              Spacer(),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: <Widget>[
+                  SkeletonBox(width: 70, height: 12, radius: 6),
+                  SizedBox(height: 4),
+                  SkeletonBox(width: 36, height: 10, radius: 6),
+                ],
+              ),
+            ],
+          ),
+          SizedBox(height: 10),
+          // Nama usaha + identitas
+          SkeletonBar(widthFactor: 0.7, height: 16),
+          SizedBox(height: 6),
+          SkeletonBar(widthFactor: 0.5, height: 12),
+          SizedBox(height: 10),
+          // Lokasi, petugas, bidang usaha
+          _RiwayatIconLineSkeleton(),
+          SizedBox(height: 6),
+          _RiwayatIconLineSkeleton(widthFactor: 0.45),
+          SizedBox(height: 6),
+          _RiwayatIconLineSkeleton(widthFactor: 0.6),
+          SizedBox(height: 12),
+          // Tombol Detail
+          Align(
+            alignment: Alignment.centerRight,
+            child: SkeletonBox(width: 80, height: 30, radius: 20),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _RiwayatIconLineSkeleton extends StatelessWidget {
+  const _RiwayatIconLineSkeleton({this.widthFactor = 0.85});
+
+  final double widthFactor;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: <Widget>[
+        const SkeletonBox(width: 15, height: 15, radius: 4),
+        const SizedBox(width: 6),
+        Expanded(
+          child: SkeletonBar(widthFactor: widthFactor, height: 12),
+        ),
+      ],
+    );
+  }
+}

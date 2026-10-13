@@ -1,12 +1,20 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:ipardasbor/core/constants/bidang_usaha_constants.dart';
+import 'package:ipardasbor/shared/utils/skeleton.dart';
+import 'package:ipardasbor/shared/widgets/app_bar_part.dart';
 import 'package:ipardasbor/shared/widgets/connection_error_state.dart';
 import 'package:ipardasbor/shared/widgets/offline_banner.dart';
 
 import '../../app/app_theme.dart';
 
-import '../../core/api/api_exception.dart';
+import '../../shared/pagination/paginated_list_controller.dart';
+import '../../shared/scroll/back_to_top_mixin.dart';
+import '../../shared/widgets/active_filter_chips.dart';
+import '../../shared/widgets/list_search_field.dart';
+import '../../shared/widgets/list_states.dart';
+import '../../shared/widgets/list_summary_line.dart';
 
 import 'models/riwayat_filter.dart';
 import 'models/riwayat_item.dart';
@@ -21,7 +29,8 @@ import 'widgets/riwayat_filter_sheet.dart';
 /// Halaman daftar riwayat pengawasan (OSS / Non-OSS / OTA).
 ///
 /// Fitur: pencarian, filter (sumber data, status, kabupaten, tanggal),
-/// infinite scroll pagination, dan pull-to-refresh.
+/// infinite scroll, tarik untuk menyegarkan, dan tombol kembali ke atas.
+/// Paginasi dikelola [PaginatedListController], sama seperti halaman OTA.
 class RiwayatPage extends StatefulWidget {
   const RiwayatPage({super.key});
 
@@ -29,147 +38,103 @@ class RiwayatPage extends StatefulWidget {
   State<RiwayatPage> createState() => _RiwayatPageState();
 }
 
-class _RiwayatPageState extends State<RiwayatPage> {
+class _RiwayatPageState extends State<RiwayatPage>
+    with BackToTopMixin<RiwayatPage> {
   final RiwayatService _service = RiwayatService();
-  final ScrollController _scrollController = ScrollController();
   final TextEditingController _searchController = TextEditingController();
+  late final PaginatedListController<RiwayatItem> _ctrl;
 
   Timer? _debounce;
 
   RiwayatFilter _filter = const RiwayatFilter();
   RiwayatFilterOptions _filterOptions = RiwayatFilterOptions.kosong;
 
-  final List<RiwayatItem> _items = <RiwayatItem>[];
-  RiwayatPagination _pagination = RiwayatPagination.kosong;
-
-  bool _loadingAwal = true;
-  bool _loadingHalamanBerikutnya = false;
-  String? _pesanError;
-
   @override
   void initState() {
     super.initState();
-    _scrollController.addListener(_onScroll);
-    _muatUlang();
+    initBackToTop();
+    _ctrl = PaginatedListController<RiwayatItem>(
+      fetchPage: _ambilHalaman,
+      idOf: (RiwayatItem e) => e.id,
+      perPage: () => _filter.perPage,
+      onLoaded: _setelahDimuat,
+      onSilentError: _snack,
+    )..addListener(_onCtrl);
+    _ctrl.reload();
   }
 
   @override
   void dispose() {
     _debounce?.cancel();
-    _scrollController.dispose();
+    _ctrl
+      ..removeListener(_onCtrl)
+      ..dispose();
     _searchController.dispose();
+    disposeBackToTop();
     super.dispose();
   }
 
-  void _onScroll() {
-    if (!_scrollController.hasClients) {
-      return;
-    }
-
-    final bool sudahMendekatiBawah =
-        _scrollController.position.pixels >=
-        _scrollController.position.maxScrollExtent - 200;
-
-    if (sudahMendekatiBawah) {
-      _muatHalamanBerikutnya();
-    }
+  /// Membaca filter terbaru setiap kali dipanggil.
+  Future<PageChunk<RiwayatItem>> _ambilHalaman(int page) async {
+    final RiwayatPageResult hasil = await _service.fetch(
+      filter: _filter,
+      page: page,
+    );
+    return PageChunk<RiwayatItem>(
+      items: hasil.items,
+      currentPage: hasil.pagination.currentPage,
+      hasNext: hasil.pagination.hasNextPage,
+      total: hasil.pagination.total,
+      meta: hasil,
+    );
   }
 
-  Future<void> _muatUlang() async {
+  /// Opsi filter dari respons; controller yang memberi tahu UI sesudahnya.
+  void _setelahDimuat(PageChunk<RiwayatItem> chunk) {
+    _filterOptions = (chunk.meta! as RiwayatPageResult).filterOptions;
+  }
+
+  void _onCtrl() {
+    if (!mounted) return;
     setState(() {
-      _loadingAwal = true;
-      _pesanError = null;
+      // Daftar diganti skeleton: posisi scroll akan kembali ke 0.
+      if (_ctrl.loadingFirst) hideBackToTop();
     });
-
-    try {
-      final RiwayatPageResult hasil = await _service.fetch(
-        filter: _filter,
-        page: 1,
-      );
-
-      if (!mounted) {
-        return;
-      }
-
-      setState(() {
-        _items
-          ..clear()
-          ..addAll(hasil.items);
-        _pagination = hasil.pagination;
-        _filterOptions = hasil.filterOptions;
-        _loadingAwal = false;
-      });
-    } on ApiException catch (e) {
-      if (!mounted) {
-        return;
-      }
-
-      setState(() {
-        _loadingAwal = false;
-        _pesanError = e.message;
-      });
-    } catch (_) {
-      if (!mounted) {
-        return;
-      }
-
-      setState(() {
-        _loadingAwal = false;
-        _pesanError = 'Terjadi kesalahan yang tidak terduga.';
-      });
-    }
   }
 
-  Future<void> _muatHalamanBerikutnya() async {
-    if (_loadingHalamanBerikutnya || _loadingAwal) {
-      return;
-    }
+  @override
+  void onNearBottom() {
+    _ctrl.loadMore();
+  }
 
-    if (!_pagination.hasNextPage) {
-      return;
-    }
+  void _snack(String pesan) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(pesan)));
+  }
 
-    setState(() => _loadingHalamanBerikutnya = true);
+  /// Mengganti filter lalu memuat ulang dari halaman pertama.
+  void _ubahFilter(RiwayatFilter baru) {
+    setState(() => _filter = baru);
+    _ctrl.reload();
+  }
 
-    try {
-      final RiwayatPageResult hasil = await _service.fetch(
-        filter: _filter,
-        page: _pagination.currentPage + 1,
-      );
-
-      if (!mounted) {
-        return;
-      }
-
-      setState(() {
-        _items.addAll(hasil.items);
-        _pagination = hasil.pagination;
-        _loadingHalamanBerikutnya = false;
-      });
-    } on ApiException catch (e) {
-      if (!mounted) {
-        return;
-      }
-
-      setState(() => _loadingHalamanBerikutnya = false);
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(e.message)));
-    } catch (_) {
-      if (!mounted) {
-        return;
-      }
-
-      setState(() => _loadingHalamanBerikutnya = false);
-    }
+  void _terapkanPencarian(String value) {
+    if (value.trim() == _filter.search.trim()) return;
+    _ubahFilter(_filter.copyWith(search: value));
   }
 
   void _onSearchChanged(String value) {
     _debounce?.cancel();
     _debounce = Timer(const Duration(milliseconds: 500), () {
-      setState(() => _filter = _filter.copyWith(search: value));
-      _muatUlang();
+      if (!mounted) return;
+      _terapkanPencarian(value);
     });
+  }
+
+  void _hapusPencarian() {
+    _debounce?.cancel();
+    _searchController.clear();
+    _terapkanPencarian('');
   }
 
   Future<void> _bukaFilter() async {
@@ -179,12 +144,24 @@ class _RiwayatPageState extends State<RiwayatPage> {
       options: _filterOptions,
     );
 
-    if (hasil == null) {
-      return;
-    }
+    if (hasil == null || !mounted) return;
+    _ubahFilter(hasil);
+  }
 
-    setState(() => _filter = hasil);
-    _muatUlang();
+  /// Menghapus SEMUA filter: pencarian dan filter dari sheet. Hanya jumlah
+  /// per halaman yang dipertahankan.
+  void _hapusSemuaFilter() {
+    _debounce?.cancel();
+    _searchController.clear();
+    _ubahFilter(RiwayatFilter(perPage: _filter.perPage));
+  }
+
+  /// Reset dari chip filter aktif ("Reset"): hanya filter dari sheet.
+  /// Pencarian dipertahankan.
+  void _resetFilterSheet() {
+    _ubahFilter(
+      RiwayatFilter(search: _filter.search, perPage: _filter.perPage),
+    );
   }
 
   void _bukaDetail(RiwayatItem item) {
@@ -193,140 +170,193 @@ class _RiwayatPageState extends State<RiwayatPage> {
     ).push(MaterialPageRoute(builder: (_) => RiwayatDetailPage(id: item.id)));
   }
 
+  String _namaKabupaten(int id) {
+    for (final RiwayatKabupatenOption o in _filterOptions.kabupaten) {
+      if (o.id == id) return o.nama;
+    }
+    return 'Kabupaten/Kota';
+  }
+
+  static String _tgl(DateTime d) =>
+      '${d.day.toString().padLeft(2, '0')}/'
+      '${d.month.toString().padLeft(2, '0')}/${d.year}';
+
+  static String _labelTanggal(DateTime? mulai, DateTime? selesai) {
+    if (mulai != null && selesai != null) {
+      return '${_tgl(mulai)} - ${_tgl(selesai)}';
+    }
+    if (mulai != null) return 'Mulai ${_tgl(mulai)}';
+    return 'Sampai ${_tgl(selesai!)}';
+  }
+
+  /// Chip filter aktif dari sheet (tanpa pencarian, yang punya kolom
+  /// sendiri). Rentang tanggal digabung jadi satu chip.
+  List<FilterChipData> _chipFilterAktif() {
+    final RiwayatFilter f = _filter;
+
+    return <FilterChipData>[
+      if (f.sumberData != null)
+        FilterChipData(
+          label: f.sumberData!,
+          onRemove: () => _ubahFilter(f.copyWith(clearSumberData: true)),
+        ),
+      if (f.statusVerifikasi != null)
+        FilterChipData(
+          label: f.statusVerifikasi!,
+          onRemove: () => _ubahFilter(f.copyWith(clearStatusVerifikasi: true)),
+        ),
+      if (f.bidangUsaha != null)
+        FilterChipData(
+          label: BidangUsahaOpsi.namaDari(f.bidangUsaha) ?? f.bidangUsaha!,
+          onRemove: () => _ubahFilter(f.copyWith(clearBidangUsaha: true)),
+        ),
+      if (f.kabupatenId != null)
+        FilterChipData(
+          label: _namaKabupaten(f.kabupatenId!),
+          onRemove: () => _ubahFilter(f.copyWith(clearKabupatenId: true)),
+        ),
+      if (f.tanggalMulai != null || f.tanggalSelesai != null)
+        FilterChipData(
+          label: _labelTanggal(f.tanggalMulai, f.tanggalSelesai),
+          onRemove: () => _ubahFilter(
+            f.copyWith(clearTanggalMulai: true, clearTanggalSelesai: true),
+          ),
+        ),
+    ];
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppTheme.scaffoldColorDynamic(context),
+      floatingActionButton: buildBackToTopFab(
+        enabled:
+            !_ctrl.loadingFirst &&
+            _ctrl.error == null &&
+            _ctrl.items.isNotEmpty,
+      ),
       appBar: AppBar(
         backgroundColor: AppTheme.primaryDark,
         foregroundColor: Colors.white,
-        title: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Riwayat',
-              style: TextStyle(
-                fontSize: 19,
-                color: Colors.white,
-                fontWeight: FontWeight.w800,
-              ),
-            ),
-            Text(
-              'Data Pengawasan yang Telah Dilakukan',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 11,
-                fontWeight: FontWeight.w400,
-              ),
-            ),
-          ],
+        title: const TwoLineTitle(
+          title: 'Riwayat',
+          subtitle: 'Data Pengawasan yang Telah Dilakukan',
         ),
         actions: <Widget>[
-          IconButton(
-            tooltip: 'Filter',
+          FilterAction(
             onPressed: _bukaFilter,
-            icon: Icon(
-              Icons.filter_list_rounded,
-              color: _filter.hasActiveFilter ? AppTheme.menuDashboard : null,
-            ),
+            activeCount: _filter.jumlahFilterSheet,
           ),
         ],
       ),
       body: Column(
         children: <Widget>[
-          const OfflineBanner(), 
+          const OfflineBanner(),
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
-            child: TextField(
+            child: ListSearchField(
               controller: _searchController,
+              hintText: 'Cari nama usaha, NIB, atau kode...',
               onChanged: _onSearchChanged,
-              decoration: InputDecoration(
-                hintText: 'Cari nama usaha, NIB, atau kode...',
-                prefixIcon: const Icon(Icons.search_rounded),
-                filled: true,
-                fillColor: AppTheme.surface(context),
-                contentPadding: const EdgeInsets.symmetric(vertical: 0),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide.none,
-                ),
-              ),
+              onSubmitted: (String v) {
+                _debounce?.cancel();
+                _terapkanPencarian(v);
+              },
+              onClear: _hapusPencarian,
             ),
           ),
-          Expanded(child: _buildBody(context)),
+          Builder(
+            builder: (BuildContext context) {
+              final List<FilterChipData> chips = _chipFilterAktif();
+              if (chips.isEmpty) return const SizedBox.shrink();
+              return Padding(
+                padding: const EdgeInsets.only(top: 6),
+                child: ActiveFilterChips(
+                  chips: chips,
+                  onResetAll: _resetFilterSheet,
+                ),
+              );
+            },
+          ),
+          if (!_ctrl.loadingFirst &&
+              _ctrl.error == null &&
+              _ctrl.items.isNotEmpty)
+            ListSummaryLine(total: _ctrl.total, satuan: 'riwayat'),
+          Expanded(child: _buildBody()),
         ],
       ),
     );
   }
 
-  Widget _buildBody(BuildContext context) {
-    if (_loadingAwal) {
-      return const Center(child: CircularProgressIndicator());
+  Widget _buildBody() {
+    if (_ctrl.loadingFirst) {
+      return const RiwayatSkeleton();
     }
 
-    if (_pesanError != null) {
-      return ConnectionErrorState(
-        title: 'Riwayat gagal dimuat',
-        message: _pesanError!,
-        isRetrying: _loadingAwal,
-        onRetry: _muatUlang,
+    Future<void> segarkan() => _ctrl.reload(showLoading: false);
+
+    // Error dan kosong dibungkus scrollable supaya layar tetap bisa ditarik.
+    if (_ctrl.error != null) {
+      return RefreshIndicator(
+        onRefresh: segarkan,
+        child: ScrollableFill(
+          child: ConnectionErrorState(
+            title: 'Riwayat gagal dimuat',
+            message: _ctrl.error!,
+            onRetry: _ctrl.reload,
+          ),
+        ),
       );
     }
 
-    if (_items.isEmpty) {
-      return _EmptyState(hasFilter: _filter.hasActiveFilter);
-    }
+    final List<RiwayatItem> items = _ctrl.items;
 
-    return RefreshIndicator(
-      onRefresh: _muatUlang,
-      child: ListView.builder(
-        controller: _scrollController,
-        padding: const EdgeInsets.only(top: 4, bottom: 24),
-        itemCount: _items.length + (_pagination.hasNextPage ? 1 : 0),
-        itemBuilder: (BuildContext context, int index) {
-          if (index >= _items.length) {
-            return const Padding(
-              padding: EdgeInsets.symmetric(vertical: 20),
-              child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
-            );
-          }
-
-          final RiwayatItem item = _items[index];
-          return RiwayatCard(item: item, onTap: () => _bukaDetail(item));
-        },
-      ),
-    );
-  }
-}
-
-class _EmptyState extends StatelessWidget {
-  const _EmptyState({required this.hasFilter});
-
-  final bool hasFilter;
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(32),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
+    if (items.isEmpty) {
+      final bool adaFilter = _filter.hasActiveFilter;
+      return RefreshIndicator(
+        onRefresh: segarkan,
+        child: ListView(
+          physics: const AlwaysScrollableScrollPhysics(),
           children: <Widget>[
-            Icon(
-              Icons.inbox_outlined,
-              size: 56,
-              color: AppTheme.textSecondary(context),
-            ),
-            const SizedBox(height: 12),
-            Text(
-              hasFilter
-                  ? 'Tidak ada data yang cocok dengan filter.'
-                  : 'Belum ada riwayat pengawasan.',
-              textAlign: TextAlign.center,
-              style: TextStyle(color: AppTheme.textSecondary(context)),
+            EmptyListState(
+              icon: adaFilter
+                  ? Icons.filter_alt_off_outlined
+                  : Icons.inbox_outlined,
+              title: adaFilter
+                  ? 'Tidak ada yang cocok'
+                  : 'Belum ada riwayat pengawasan',
+              message: adaFilter
+                  ? 'Tidak ada riwayat yang sesuai dengan filter atau kata '
+                        'kunci. Coba ubah atau hapus filternya.'
+                  : 'Data akan muncul setelah ada pengawasan yang tersimpan.',
+              actionLabel: adaFilter ? 'Hapus semua filter' : null,
+              onAction: adaFilter ? _hapusSemuaFilter : null,
             ),
           ],
         ),
+      );
+    }
+
+    return RefreshIndicator(
+      onRefresh: segarkan,
+      child: ListView.builder(
+        controller: scroll,
+        physics: const AlwaysScrollableScrollPhysics(),
+        keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+        padding: const EdgeInsets.only(top: 4, bottom: 24),
+        itemCount: items.length + (_ctrl.hasNext ? 1 : 0),
+        itemBuilder: (BuildContext context, int index) {
+          if (index >= items.length) {
+            return LoadMoreFooter(
+              gagal: _ctrl.loadMoreError,
+              pesan: _ctrl.loadMoreMessage,
+              onCobaLagi: _ctrl.retryLoadMore,
+            );
+          }
+
+          final RiwayatItem item = items[index];
+          return RiwayatCard(item: item, onTap: () => _bukaDetail(item));
+        },
       ),
     );
   }

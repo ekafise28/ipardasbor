@@ -8,7 +8,7 @@ import '../utils/format_number.dart';
 class ListSummaryLine extends StatelessWidget {
   const ListSummaryLine({
     super.key,
-    required this.provinsi,
+    this.provinsi,
     required this.total,
     required this.satuan,
     this.belum,
@@ -16,7 +16,9 @@ class ListSummaryLine extends StatelessWidget {
     this.catatan,
   });
 
-  final String provinsi;
+  /// Null = baris hanya menampilkan jumlah (mis. halaman yang tidak
+  /// dibatasi provinsi).
+  final String? provinsi;
   final int total;
 
   /// Kata benda setelah angka total, mis. "usaha" atau "data".
@@ -43,7 +45,9 @@ class ListSummaryLine extends StatelessWidget {
           children: <Widget>[
             Text.rich(
               TextSpan(
-                text: '$provinsi · ${formatNumber(total)} $satuan',
+                text: provinsi == null
+                    ? '${formatNumber(total)} $satuan'
+                    : '$provinsi · ${formatNumber(total)} $satuan',
                 children: <InlineSpan>[
                   if (belum != null)
                     TextSpan(
