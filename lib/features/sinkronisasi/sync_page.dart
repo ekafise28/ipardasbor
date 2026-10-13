@@ -1,6 +1,8 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:ipardasbor/app/app_banner.dart';
+import 'package:ipardasbor/shared/widgets/page_states.dart';
 
 import '../../app/app_theme.dart';
 import '../../core/api/api_client.dart';
@@ -13,10 +15,8 @@ import '../non_oss/services/non_oss_service.dart';
 import '../non_oss/non_oss_form_page.dart';
 
 import 'pages/sync_submission_detail_page.dart';
-import 'widget/widget_sync/empty_state.dart';
 import 'widget/widget_sync/sync_summary_card.dart';
 import 'widget/widget_sync/sync_table.dart';
-import 'widget/widget_sync/table_loading.dart';
 
 class SyncPage extends StatefulWidget {
   const SyncPage({super.key});
@@ -221,10 +221,7 @@ class _SyncPageState extends State<SyncPage> {
         leading: IconButton(
           tooltip: 'Kembali',
           onPressed: () => Navigator.of(context).pop(),
-          icon: Icon(
-            Icons.arrow_back_rounded,
-            color: Colors.white,
-          ),
+          icon: Icon(Icons.arrow_back_rounded, color: Colors.white),
         ),
         titleSpacing: 4,
         title: Column(
@@ -232,16 +229,11 @@ class _SyncPageState extends State<SyncPage> {
           children: [
             Text(
               'Sinkronisasi',
-              style: TextStyle(
-                fontSize: 19,
-                fontWeight: FontWeight.w800,
-              ),
+              style: TextStyle(fontSize: 19, fontWeight: FontWeight.w800),
             ),
             Text(
               'Kirim data pengawasan yang tersimpan offline',
-              style: TextStyle(
-                fontSize: 11,
-              ),
+              style: TextStyle(fontSize: 11),
             ),
           ],
         ),
@@ -249,10 +241,7 @@ class _SyncPageState extends State<SyncPage> {
           IconButton(
             tooltip: 'Muat ulang',
             onPressed: _isLoading ? null : () => _loadAllData(),
-            icon: Icon(
-              Icons.refresh_rounded,
-              color: Colors.white,
-            ),
+            icon: Icon(Icons.refresh_rounded, color: Colors.white),
           ),
           const SizedBox(width: 8),
         ],
@@ -310,9 +299,13 @@ class _SyncPageState extends State<SyncPage> {
                           ),
                         if (!_isLoading) const SizedBox(height: 10),
                         if (_isLoading)
-                          const TableLoading()
+                          const LoadingState(message: 'Memuat data tertunda...')
                         else if (_waitingData.isEmpty)
-                          const EmptyState()
+                          const AppBanner(
+                            tone: BannerTone.success,
+                            icon: Icons.check_circle_rounded,
+                            message: 'Semua data sudah tersinkronisasi.',
+                          )
                         else
                           SyncTable(
                             waitingData: _waitingData,

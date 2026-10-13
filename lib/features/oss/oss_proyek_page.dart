@@ -33,8 +33,7 @@ import 'widgets/oss_proyek_filter_chips.dart';
 
 import '../../shared/utils/skeleton.dart';
 import '../../shared/utils/staggered_entrance.dart';
-import '../../shared/widgets/list_states.dart';
-import '../../shared/widgets/connection_error_state.dart';
+import '../../shared/widgets/page_states.dart';
 
 import 'package:ipardasbor/shared/ocr/ocr.dart';
 

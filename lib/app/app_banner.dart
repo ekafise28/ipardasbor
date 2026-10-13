@@ -4,7 +4,7 @@ import 'package:ipardasbor/app/app_theme.dart';
 import 'package:ipardasbor/core/cache/cache_status.dart';
 import 'package:ipardasbor/core/network/network_status.dart';
 
-enum BannerTone { warning, info }
+enum BannerTone { warning, info, success }
 
 enum BannerLayout { strip, card }
 
@@ -33,8 +33,18 @@ class AppBanner extends StatelessWidget {
   Widget build(BuildContext context) {
     final bool isDark = Theme.of(context).brightness == Brightness.dark;
 
-    final (Color accent, Color surface, Color titleColor, Color bodyColor) =
-        switch (tone) {
+    final (
+      Color accent,
+      Color surface,
+      Color titleColor,
+      Color bodyColor,
+    ) = switch (tone) {
+      BannerTone.success => (
+        Colors.green,
+        Colors.green.withValues(alpha: 0.10),
+        Colors.green.shade700,
+        Colors.green.shade700,
+      ),
       BannerTone.warning => (
         AppTheme.warning,
         AppTheme.warningSurface(context),
@@ -114,8 +124,9 @@ class AppBanner extends StatelessWidget {
                     color: title != null ? bodyColor : titleColor,
                     fontSize: title != null ? 11.5 : 12.5,
                     height: 1.25,
-                    fontWeight:
-                        title != null ? FontWeight.w400 : FontWeight.w600,
+                    fontWeight: title != null
+                        ? FontWeight.w400
+                        : FontWeight.w600,
                   ),
                 ),
               ],

@@ -27,8 +27,7 @@ import '../../shared/widgets/active_filter_chips.dart';
 import '../../shared/gps/gps_capture_mixin.dart';
 import '../../shared/pagination/paginated_list_controller.dart';
 import '../../shared/utils/skeleton.dart';
-import '../../shared/widgets/connection_error_state.dart';
-import '../../shared/widgets/list_states.dart';
+import '../../shared/widgets/page_states.dart';
 import 'services/baseline_ota_service.dart';
 
 import 'widgets/baseline_ota_filter_sheet.dart';

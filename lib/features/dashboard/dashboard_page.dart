@@ -9,7 +9,7 @@ import 'package:ipardasbor/shared/utils/count_up_text.dart';
 import 'package:ipardasbor/shared/utils/format_number.dart';
 import 'package:ipardasbor/shared/utils/skeleton.dart';
 import 'package:ipardasbor/shared/utils/staggered_entrance.dart';
-import 'package:ipardasbor/shared/widgets/connection_error_state.dart';
+import 'package:ipardasbor/shared/widgets/page_states.dart';
 import '../../core/api/api_exception.dart';
 import '../../app/app_theme.dart';
 
