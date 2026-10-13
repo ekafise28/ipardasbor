@@ -91,7 +91,7 @@ class _SettingsPageState extends State<SettingsPage> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Tombol Screenshot',
+                      'Tombol Screenshot (Alpha)',
                       style: TextStyle(
                         color: AppTheme.textColor(context),
                         fontSize: 14.5,
