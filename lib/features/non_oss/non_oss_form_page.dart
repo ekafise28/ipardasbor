@@ -6,23 +6,23 @@ import 'dart:async';
 
 import 'package:ipardasbor/app/app_theme.dart';
 import 'package:ipardasbor/features/non_oss/offline/non_oss_local_data.dart';
-import 'package:ipardasbor/features/oss/widgets/status_ketidaksesuaian_selector.dart';
+import 'package:ipardasbor/features/oss/widgets/oss_status_ketidaksesuaian_selector.dart';
 import 'package:ipardasbor/shared/gps/gps_capture_mixin.dart';
 import 'package:ipardasbor/core/constants/bidang_usaha_constants.dart';
-import 'package:ipardasbor/features/oss/models/jenis_produk_akomodasi.dart';
+import 'package:ipardasbor/features/oss/models/oss_jenis_produk_akomodasi.dart';
 
 import '../../core/api/api_client.dart';
 
 import 'models/non_oss_form_data.dart';
-import 'models/region_option.dart';
+import '../../shared/region/models/region_option.dart';
 
 import 'services/non_oss_service.dart';
-import 'services/region_service.dart';
+import '../../shared/region/services/region_service.dart';
 
-import 'widgets/form_section.dart';
-import 'widgets/location_picker.dart';
+import '../../shared/widgets/form/form_section.dart';
+import '../../shared/widgets/form/location_picker.dart';
 import 'widgets/ota_selector.dart';
-import 'widgets/photo_picker.dart';
+import '../../shared/widgets/form/photo_picker.dart';
 
 import 'offline/offline_queue_service.dart';
 import 'package:ipardasbor/shared/validators/form_validators.dart';

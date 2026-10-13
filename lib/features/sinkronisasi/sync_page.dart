@@ -12,7 +12,7 @@ import '../non_oss/offline/sync_service.dart';
 import '../non_oss/services/non_oss_service.dart';
 import '../non_oss/non_oss_form_page.dart';
 
-import 'pages/submission_detail_page.dart';
+import 'pages/sync_submission_detail_page.dart';
 import 'widget/widget_sync/empty_state.dart';
 import 'widget/widget_sync/sync_summary_card.dart';
 import 'widget/widget_sync/sync_table.dart';

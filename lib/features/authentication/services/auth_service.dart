@@ -1,5 +1,5 @@
 import 'package:ipardasbor/features/non_oss/offline/offline_database.dart';
-import 'package:ipardasbor/features/non_oss/services/wilayah_akses_service.dart';
+import 'package:ipardasbor/shared/region/services/wilayah_akses_service.dart';
 
 import '../../../app/app_navigator.dart';
 import '../../../core/api/api_client.dart';

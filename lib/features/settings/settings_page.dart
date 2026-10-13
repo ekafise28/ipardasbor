@@ -2,15 +2,15 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:ipardasbor/features/non_oss/offline/offline_database.dart';
-import 'package:ipardasbor/features/non_oss/services/wilayah_akses_service.dart';
-import 'package:ipardasbor/features/notifications/notification_settings_page.dart';
+import 'package:ipardasbor/shared/region/services/wilayah_akses_service.dart';
+import 'package:ipardasbor/features/notifications/pages/notification_settings_page.dart';
 import 'package:ipardasbor/shared/screenshot/screenshot_button_controller.dart';
 
 import '../../app/app_theme.dart';
 import '../authentication/models/auth_user.dart';
 import '../authentication/services/auth_service.dart';
 import '../profile/profile_page.dart';
-import '../profile/services/profile_services.dart';
+import '../profile/services/profile_service.dart';
 
 import '../home/models/menu_data.dart';
 import '../home/pages/feature_placeholder_page.dart';

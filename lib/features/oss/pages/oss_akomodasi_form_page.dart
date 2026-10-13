@@ -1,15 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:ipardasbor/core/network/network_status.dart';
-import 'package:ipardasbor/features/oss/pages/akomodasi_review_page.dart';
+import 'package:ipardasbor/features/oss/pages/oss_akomodasi_review_page.dart';
 
 import '../../../app/app_theme.dart';
 import '../../../core/api/api_client.dart';
 import '../../../core/api/api_exception.dart';
-import '../../non_oss/services/region_service.dart';
-import '../models/akomodasi_item_data.dart';
+import '../../../shared/region/services/region_service.dart';
+import '../models/oss_akomodasi_item_data.dart';
 import '../models/oss_form_data.dart';
-import '../services/akomodasi_service.dart';
-import '../widgets/akomodasi_item_card.dart';
+import '../services/oss_akomodasi_service.dart';
+import '../widgets/oss_akomodasi_item_card.dart';
 
 /// Tahap 2 - Akomodasi yang Dikelola. Dibuka dari [OssFormPage] setelah
 /// identitas Tahap 1 (Manajemen Akomodasi) diisi, TAPI belum dikirim ke

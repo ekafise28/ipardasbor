@@ -2,7 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'package:ipardasbor/features/oss/models/jenis_produk_akomodasi.dart';
+import 'package:ipardasbor/features/oss/models/oss_jenis_produk_akomodasi.dart';
 import '../../non_oss/services/non_oss_service.dart';
 
 import '../../../app/app_theme.dart';
@@ -13,7 +13,7 @@ import '../../non_oss/offline/non_oss_local_data.dart';
 import '../../non_oss/offline/offline_database.dart';
 import '../../non_oss/offline/offline_queue_service.dart';
 import '../../non_oss/offline/sync_service.dart';
-import '../../non_oss/offline/wilayah_local_database.dart';
+import '../../../shared/region/data/wilayah_local_database.dart';
 import '../../non_oss/non_oss_form_page.dart';
 import '../../non_oss/offline/draft_completeness.dart';
 

@@ -4,7 +4,7 @@ import 'package:intl/intl.dart';
 import 'package:ipardasbor/app/app_theme.dart';
 import 'package:latlong2/latlong.dart';
 
-import '../models/location_fetch_status.dart';
+import '../../gps/location_fetch_status.dart';
 
 class LocationPicker extends StatelessWidget {
   const LocationPicker({

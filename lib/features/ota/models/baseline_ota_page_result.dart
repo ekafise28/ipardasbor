@@ -1,6 +1,6 @@
 import 'package:ipardasbor/features/ota/models/baseline_ota_ringkasan.dart';
 
-import '../../non_oss/models/region_option.dart';
+import '../../../shared/region/models/region_option.dart';
 import 'baseline_ota_item.dart';
 
 /// Opsi filter yang dikembalikan backend, dibatasi sesuai akses wilayah

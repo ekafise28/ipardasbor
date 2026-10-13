@@ -4,8 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 import 'package:ipardasbor/app/app_theme.dart';
-import 'package:ipardasbor/features/non_oss/models/location_fetch_status.dart';
-import 'package:ipardasbor/features/non_oss/services/location_service.dart';
+import 'package:ipardasbor/shared/gps/location_fetch_status.dart';
+import 'package:ipardasbor/shared/gps/location_service.dart';
 
 /// Mixin berbagi untuk alur pengambilan lokasi GPS di form lapangan
 /// (dipakai oleh Non-OSS dan OSS).

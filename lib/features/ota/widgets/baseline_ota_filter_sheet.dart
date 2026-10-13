@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 
 import '../../../app/app_theme.dart';
-import '../../non_oss/models/region_option.dart';
-import '../../non_oss/services/region_service.dart';
+import '../../../shared/region/models/region_option.dart';
+import '../../../shared/region/services/region_service.dart';
 import '../models/baseline_ota_filter.dart';
 import '../models/baseline_ota_page_result.dart';
 

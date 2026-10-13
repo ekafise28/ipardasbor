@@ -1,5 +1,5 @@
 import '../models/region_option.dart';
-import '../offline/wilayah_local_database.dart';
+import '../data/wilayah_local_database.dart';
 import 'wilayah_akses_service.dart';
 
 class RegionService {

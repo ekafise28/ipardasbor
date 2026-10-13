@@ -3,7 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:ipardasbor/shared/widgets/offline_banner.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'package:ipardasbor/features/non_oss/services/wilayah_akses_service.dart';
+import 'package:ipardasbor/shared/region/services/wilayah_akses_service.dart';
 import 'package:ipardasbor/shared/widgets/connection_error_state.dart';
 import '../../shared/utils/skeleton.dart';
 
@@ -11,7 +11,7 @@ import '../../app/app_theme.dart';
 import '../authentication/models/auth_user.dart';
 
 import '../authentication/services/auth_service.dart';
-import 'services/profile_services.dart';
+import 'services/profile_service.dart';
 
 import 'pages/password_page.dart';
 

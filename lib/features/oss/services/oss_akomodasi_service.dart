@@ -5,7 +5,7 @@ import 'package:http/http.dart' as http;
 import '../../../core/api/api_client.dart';
 import '../../../core/api/api_endpoints.dart';
 import '../../../core/api/api_exception.dart';
-import '../models/akomodasi_item_data.dart';
+import '../models/oss_akomodasi_item_data.dart';
 import '../models/oss_form_data.dart';
 
 /// Hasil live-check satu item akomodasi (endpoint /oss/validasi-akomodasi).

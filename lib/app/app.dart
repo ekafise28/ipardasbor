@@ -1,6 +1,6 @@
 import 'dart:async';
 
-import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:ipardasbor/core/network/network_status.dart';
 import 'package:flutter/material.dart';
 import 'package:ipardasbor/features/notifications/services/notification_retention_controller.dart';
 import 'package:ipardasbor/features/notifications/services/notification_service.dart';
@@ -28,7 +28,6 @@ class IparApp extends StatefulWidget {
 
 class _IparAppState extends State<IparApp> with WidgetsBindingObserver {
   late final NonOssSyncService _nonOssSync;
-  StreamSubscription<List<ConnectivityResult>>? _connectivitySubscription;
 
   @override
   void initState() {
@@ -49,23 +48,16 @@ class _IparAppState extends State<IparApp> with WidgetsBindingObserver {
 
     NotificationTriggers.run().catchError((Object _) {});
 
-    _connectivitySubscription = Connectivity().onConnectivityChanged.listen((
-      List<ConnectivityResult> results,
-    ) {
-      if (!AutoSyncController.instance.isEnabled) {
-        return;
-      }
-
-      final bool hasConnection = results.any(
-        (ConnectivityResult r) => r != ConnectivityResult.none,
-      );
-
-      if (hasConnection) {
-        _runSyncSilently();
-      }
-    });
+    NetworkStatus.instance.addListener(_onNetworkChanged);
 
     WidgetsBinding.instance.addObserver(this);
+  }
+
+    void _onNetworkChanged() {
+    // value true = offline. Sync hanya saat kembali online.
+    if (NetworkStatus.instance.isOffline) return;
+    if (!AutoSyncController.instance.isEnabled) return;
+    _runSyncSilently();
   }
 
   @override
@@ -92,7 +84,7 @@ class _IparAppState extends State<IparApp> with WidgetsBindingObserver {
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
-    _connectivitySubscription?.cancel();
+    NetworkStatus.instance.removeListener(_onNetworkChanged);
     super.dispose();
   }
 

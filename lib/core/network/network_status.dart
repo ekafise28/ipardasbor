@@ -21,6 +21,15 @@ class NetworkStatus extends ValueNotifier<bool> {
     _sub ??= Connectivity().onConnectivityChanged.listen(_terapkan);
   }
 
+  /// Membaca status jaringan langsung dari sistem (bukan nilai tersimpan).
+  /// true = ada jaringan. Sekaligus menyinkronkan [value].
+  Future<bool> cekOnline() async {
+    final List<ConnectivityResult> hasil = await Connectivity()
+        .checkConnectivity();
+    _terapkan(hasil);
+    return !value;
+  }
+
   void _terapkan(List<ConnectivityResult> hasil) {
     value = hasil.every((r) => r == ConnectivityResult.none);
   }

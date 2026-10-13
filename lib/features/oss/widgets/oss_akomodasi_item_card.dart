@@ -6,15 +6,15 @@ import 'package:ipardasbor/core/network/network_status.dart';
 import 'package:ipardasbor/shared/gps/gps_capture_mixin.dart';
 import 'package:ipardasbor/shared/validators/form_validators.dart';
 
-import '../../non_oss/models/region_option.dart';
-import '../../non_oss/services/region_service.dart';
-import '../../non_oss/widgets/form_section.dart';
-import '../../non_oss/widgets/location_picker.dart';
-import '../../non_oss/widgets/photo_picker.dart';
-import '../models/akomodasi_item_data.dart';
-import '../models/jenis_produk_akomodasi.dart';
-import 'ota_platform_selector.dart';
-import 'status_ketidaksesuaian_selector.dart';
+import '../../../shared/region/models/region_option.dart';
+import '../../../shared/region/services/region_service.dart';
+import '../../../shared/widgets/form/form_section.dart';
+import '../../../shared/widgets/form/location_picker.dart';
+import '../../../shared/widgets/form/photo_picker.dart';
+import '../models/oss_akomodasi_item_data.dart';
+import '../models/oss_jenis_produk_akomodasi.dart';
+import 'oss_ota_platform_selector.dart';
+import 'oss_status_ketidaksesuaian_selector.dart';
 
 /// Satu kartu "Akomodasi yang Dikelola" pada Tahap 2 form Manajemen
 /// Akomodasi. Controlled widget - semua perubahan langsung memutasi [data],

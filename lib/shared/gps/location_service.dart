@@ -1,10 +1,9 @@
 import 'dart:async';
-
-import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:ipardasbor/core/network/network_status.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import '../models/location_fetch_status.dart';
+import 'location_fetch_status.dart';
 
 class LocationResult {
   const LocationResult({
@@ -51,7 +50,7 @@ class LocationService {
 
     // Dicek di depan. Kalau tidak ada internet, tidak perlu mencoba GPS
     // langsung sama sekali - langsung ke jalur cadangan.
-    final bool adaInternet = await _cekInternet();
+    final bool adaInternet = await NetworkStatus.instance.cekOnline();
 
     if (!adaInternet) {
       return _pakaiCadanganAtauGagal(onStatus, adaInternet: false);
@@ -106,7 +105,14 @@ class LocationService {
   /// langsung menjadikannya hasil akhir. Dipakai saat layanan lokasi
   /// nonaktif, supaya UI bisa menampilkan konfirmasi dulu ke user sebelum
   /// koordinat cadangan benar-benar dipakai.
-  Future<LocationResult?> peekCadangan() async {
+  Future<LocationResult?> peekCadangan() =>
+      _cariCadangan(sumberOs: LocationSource.tersimpanLayananNonaktif);
+
+  /// Mencari lokasi cadangan: cache OS dulu, lalu cache manual.
+  /// [sumberOs] menentukan label sumber bila yang dipakai cache OS.
+  Future<LocationResult?> _cariCadangan({
+    required LocationSource sumberOs,
+  }) async {
     Position? posisiTerakhir;
     try {
       posisiTerakhir = await Geolocator.getLastKnownPosition();
@@ -115,23 +121,17 @@ class LocationService {
     }
 
     if (posisiTerakhir != null) {
-      return LocationResult(
-        position: posisiTerakhir,
-        source: LocationSource.tersimpanLayananNonaktif,
-      );
+      return LocationResult(position: posisiTerakhir, source: sumberOs);
     }
 
     final _CachedLocation? cacheManual = await _bacaCacheManual();
+    if (cacheManual == null) return null;
 
-    if (cacheManual != null) {
-      return LocationResult(
-        position: cacheManual.toPosition(),
-        source: LocationSource.cacheManual,
-        savedAt: cacheManual.savedAt,
-      );
-    }
-
-    return null;
+    return LocationResult(
+      position: cacheManual.toPosition(),
+      source: LocationSource.cacheManual,
+      savedAt: cacheManual.savedAt,
+    );
   }
 
   Future<LocationResult?> _pakaiCadanganAtauGagal(
@@ -144,36 +144,18 @@ class LocationService {
 
     onStatus?.call(statusFallback);
 
-    Position? posisiTerakhir;
-    try {
-      posisiTerakhir = await Geolocator.getLastKnownPosition();
-    } catch (_) {
-      posisiTerakhir = null;
-    }
+    final LocationResult? hasil = await _cariCadangan(
+      sumberOs: adaInternet
+          ? LocationSource.tersimpanSinyalLemah
+          : LocationSource.tersimpanTanpaInternet,
+    );
 
-    if (posisiTerakhir != null) {
-      onStatus?.call(LocationFetchStatus.berhasil);
-      return LocationResult(
-        position: posisiTerakhir,
-        source: adaInternet
-            ? LocationSource.tersimpanSinyalLemah
-            : LocationSource.tersimpanTanpaInternet,
-      );
-    }
-
-    final _CachedLocation? cacheManual = await _bacaCacheManual();
-
-    if (cacheManual != null) {
-      onStatus?.call(LocationFetchStatus.berhasil);
-      return LocationResult(
-        position: cacheManual.toPosition(),
-        source: LocationSource.cacheManual,
-        savedAt: cacheManual.savedAt,
-      );
-    }
-
-    onStatus?.call(LocationFetchStatus.gagalTanpaCadangan);
-    return null;
+    onStatus?.call(
+      hasil != null
+          ? LocationFetchStatus.berhasil
+          : LocationFetchStatus.gagalTanpaCadangan,
+    );
+    return hasil;
   }
 
   Future<void> _simpanCacheManual(Position posisi) async {
@@ -196,13 +178,6 @@ class LocationService {
       longitude: lng,
       savedAt: waktuStr != null ? DateTime.tryParse(waktuStr) : null,
     );
-  }
-
-  Future<bool> _cekInternet() async {
-    final List<ConnectivityResult> hasil = await Connectivity()
-        .checkConnectivity();
-
-    return hasil.any((ConnectivityResult r) => r != ConnectivityResult.none);
   }
 }
 

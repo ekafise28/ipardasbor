@@ -5,23 +5,23 @@ import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import 'package:ipardasbor/app/app_theme.dart';
 import 'package:ipardasbor/core/api/api_exception.dart';
-import 'package:ipardasbor/features/oss/models/jenis_produk_akomodasi.dart';
-import 'package:ipardasbor/features/oss/pages/akomodasi_form_page.dart';
+import 'package:ipardasbor/features/oss/models/oss_jenis_produk_akomodasi.dart';
+import 'package:ipardasbor/features/oss/pages/oss_akomodasi_form_page.dart';
 import 'package:ipardasbor/shared/gps/gps_capture_mixin.dart';
 import 'package:ipardasbor/core/constants/bidang_usaha_constants.dart';
 import 'package:ipardasbor/shared/validators/form_validators.dart';
 
 import '../../../core/api/api_client.dart';
-import '../../non_oss/models/region_option.dart';
-import '../../non_oss/services/region_service.dart';
-import '../../non_oss/widgets/location_picker.dart';
-import '../../non_oss/widgets/photo_picker.dart';
+import '../../../shared/region/models/region_option.dart';
+import '../../../shared/region/services/region_service.dart';
+import '../../../shared/widgets/form/location_picker.dart';
+import '../../../shared/widgets/form/photo_picker.dart';
 
 import '../models/oss_form_data.dart';
 import '../models/oss_validasi_result.dart';
 import '../services/oss_service.dart';
-import '../widgets/ota_platform_selector.dart';
-import '../widgets/status_ketidaksesuaian_selector.dart';
+import '../widgets/oss_ota_platform_selector.dart';
+import '../widgets/oss_status_ketidaksesuaian_selector.dart';
 
 /// Tahap 2: form lanjutan validasi OSS, dibuka setelah [OssValidasiPage]
 /// mengembalikan [OssValidasiResult].

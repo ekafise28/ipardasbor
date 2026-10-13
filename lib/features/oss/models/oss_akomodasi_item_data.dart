@@ -1,6 +1,6 @@
 // lib/features/oss/models/akomodasi_item_data.dart
 import 'package:image_picker/image_picker.dart';
-import 'package:ipardasbor/features/oss/widgets/ota_platform_selector.dart';
+import 'package:ipardasbor/features/oss/widgets/oss_ota_platform_selector.dart';
 
 /// Status live-check NIB/KBLI/NKU satu kartu akomodasi (dipanggil ke
 /// endpoint /mobile/oss/validasi-akomodasi - lihat AkomodasiService).

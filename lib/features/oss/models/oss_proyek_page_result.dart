@@ -1,4 +1,4 @@
-import '../../non_oss/models/region_option.dart';
+import '../../../shared/region/models/region_option.dart';
 import '../../riwayat/models/riwayat_page_result.dart' show RiwayatPagination;
 import 'oss_proyek_item.dart';
 

@@ -4,7 +4,7 @@ import 'package:flutter/services.dart';
 import '../../../../app/app_theme.dart';
 import '../../../../core/api/api_exception.dart';
 import '../../authentication/models/auth_user.dart';
-import '../services/profile_services.dart';
+import '../services/profile_service.dart';
 
 /// Halaman untuk mengubah password akun.
 ///

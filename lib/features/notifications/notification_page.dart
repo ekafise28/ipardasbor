@@ -5,7 +5,7 @@ import 'package:ipardasbor/features/non_oss/offline/offline_database.dart';
 import 'package:ipardasbor/features/non_oss/offline/offline_queue_service.dart';
 import 'package:ipardasbor/features/non_oss/offline/sync_service.dart';
 import 'package:ipardasbor/features/non_oss/services/non_oss_service.dart';
-import 'package:ipardasbor/features/sinkronisasi/pages/submission_detail_page.dart';
+import 'package:ipardasbor/features/sinkronisasi/pages/sync_submission_detail_page.dart';
 import 'package:ipardasbor/features/sinkronisasi/sync_page.dart';
 
 import '../../../app/app_theme.dart';
