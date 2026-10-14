@@ -5,18 +5,23 @@ import 'package:ipardasbor/shared/ocr/models/ocr_field_type.dart';
 import 'package:ipardasbor/shared/ocr/models/ocr_result.dart';
 import 'package:ipardasbor/shared/ocr/pages/ocr_image_picker_page.dart';
 import 'package:ipardasbor/shared/ocr/pages/ocr_live_camera_page.dart';
+import 'package:ipardasbor/shared/ocr/pages/ocr_live_copy_page.dart';
 import 'package:ipardasbor/shared/ocr/services/ocr_service.dart';
 import 'package:ipardasbor/shared/ocr/widgets/ocr_result_sheet.dart';
 
 /// Sumber gambar yang ditawarkan ke pengguna. [camera] membuka layar kamera
 /// milik aplikasi (dengan bingkai dan deteksi), bukan kamera bawaan HP;
 /// layar itu mengembalikan path foto seperti halnya image_picker.
-enum _Source { camera, gallery }
+/// [liveCopy] hanya menyalin teks ke clipboard dan tidak mengisi field.
+enum _Source { camera, liveCopy, gallery }
 
 /// Alur lengkap scan: pilih Kamera/Galeri, baca teks (dengan loading),
 /// tampilkan bottom sheet konfirmasi. Dari sheet,
 /// pengguna bisa membuka layar "pilih dari gambar" untuk menunjuk sendiri
 /// barisnya; hasilnya kembali ke sheet yang sama.
+///
+/// Pilihan "Kamera live copy" hanya menyalin teks ke clipboard, jadi selalu
+/// mengembalikan null (tidak ada nilai untuk mengisi field).
 ///
 /// Mengembalikan nilai yang dicentang pengguna, atau null kalau dibatalkan
 /// di tahap mana pun. Map kosong berarti sheet dikonfirmasi tanpa ada yang
@@ -35,6 +40,11 @@ Future<Map<OcrFieldType, String>?> runOcrScan(
 
   while (source != null) {
     if (!context.mounted) return null;
+
+    if (source == _Source.liveCopy) {
+      await showOcrLiveCopy(context);
+      return null; // hanya menyalin, tidak ada yang diisikan ke form
+    }
 
     String? path;
     try {
@@ -130,6 +140,12 @@ Future<_Source?> _pickSource(BuildContext context) {
             title: const Text('Kamera'),
             subtitle: const Text('Arahkan angka ke bingkai, terbaca otomatis'),
             onTap: () => Navigator.of(ctx).pop(_Source.camera),
+          ),
+          ListTile(
+            leading: const Icon(Icons.content_copy_outlined),
+            title: const Text('Kamera live copy'),
+            subtitle: const Text('Salin teks langsung dari kamera'),
+            onTap: () => Navigator.of(ctx).pop(_Source.liveCopy),
           ),
           ListTile(
             leading: const Icon(Icons.photo_library_outlined),

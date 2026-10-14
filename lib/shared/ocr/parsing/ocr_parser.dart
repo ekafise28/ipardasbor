@@ -118,7 +118,7 @@ class OcrParser {
         result[t] = _rank(t, fallback, preferred: grouped)
             .map(
               (v) => _build(t, v, byLabel: false, bidang: bidang),
-            ) // <- tambah bidang
+            )
             .toList();
       }
     }
