@@ -8,8 +8,8 @@ import 'package:url_launcher/url_launcher.dart';
 
 /// Kerangka kartu yang dipakai semua kartu di halaman detail, supaya gaya
 /// (sudut, border, padding) hanya ada di satu tempat.
-class _DetailCard extends StatelessWidget {
-  const _DetailCard({required this.child});
+class DetailCard extends StatelessWidget {
+  const DetailCard({super.key, required this.child});
 
   final Widget child;
 
@@ -74,7 +74,7 @@ class SectionCard extends StatelessWidget {
     final List<Baris> terisi = rows.where((Baris r) => r.adaIsi).toList();
     if (terisi.isEmpty) return const SizedBox.shrink();
 
-    return _DetailCard(
+    return DetailCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
@@ -175,7 +175,6 @@ class _LinkValue extends StatelessWidget {
   }
 }
 
-/// Membuka [url] di browser/aplikasi eksternal.
 /// Membuka [url] di browser/aplikasi eksternal.  Hanya dipakai [_LinkValue].
 Future<void> _bukaTautanUrl(BuildContext context, String url) async {
   // Diambil sebelum await, jadi tidak perlu memakai context sesudahnya.
@@ -236,7 +235,7 @@ class StatusHeaderCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return _DetailCard(
+    return DetailCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
