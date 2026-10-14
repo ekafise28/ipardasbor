@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../app/app_theme.dart';
-import '../utils/format_number.dart';
+import '../utils/formatters.dart';
 
 /// Baris keterangan di atas daftar: "Provinsi · N data · M belum
 /// diverifikasi". Bagian opsional hanya tampil kalau diisi.

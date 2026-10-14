@@ -25,48 +25,21 @@ class DetailPhotoSection extends StatelessWidget {
   final ValueChanged<int> onOpenPhoto;
 
   @override
-  Widget build(BuildContext context) {
-    return DetailCard(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: <Widget>[
-          Row(
-            children: <Widget>[
-              const Icon(
-                Icons.photo_library_outlined,
-                size: 18,
-                color: AppTheme.menuDashboard,
-              ),
-              const SizedBox(width: 8),
-              Text(
-                'Foto Dokumentasi',
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w800,
-                  color: AppTheme.textColor(context),
-                ),
-              ),
-              const SizedBox(width: 6),
-              Text(
-                '(${photoPaths.length})',
-                style: TextStyle(
-                  fontSize: 12.5,
-                  color: AppTheme.textSecondary(context),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          GridView.builder(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 3,
-              crossAxisSpacing: 8,
-              mainAxisSpacing: 8,
-            ),
-            itemCount: photoPaths.length,
-            itemBuilder: (BuildContext context, int index) {
+Widget build(BuildContext context) {
+  return DetailCard(
+    icon: Icons.photo_library_outlined,
+    title: 'Foto Dokumentasi',
+    count: photoPaths.length,
+    child: GridView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 3,
+        crossAxisSpacing: 8,
+        mainAxisSpacing: 8,
+      ),
+      itemCount: photoPaths.length,
+      itemBuilder: (BuildContext context, int index) {
               final String path = photoPaths[index];
               final File file = File(path);
               final bool exists = file.existsSync();
@@ -91,9 +64,7 @@ class DetailPhotoSection extends StatelessWidget {
               );
             },
           ),
-        ],
-      ),
-    );
+      );    
   }
 }
 

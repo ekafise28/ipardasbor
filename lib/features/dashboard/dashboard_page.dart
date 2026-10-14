@@ -2,11 +2,11 @@ import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
-import 'package:ipardasbor/app/app_banner.dart';
+import 'package:ipardasbor/shared/widgets/app_banner.dart';
 import 'package:ipardasbor/core/constants/bidang_usaha_constants.dart';
 import 'package:ipardasbor/features/dashboard/models/dashboard_insight.dart';
 import 'package:ipardasbor/shared/widgets/animation.dart';
-import 'package:ipardasbor/shared/utils/format_number.dart';
+import 'package:ipardasbor/shared/utils/formatters.dart';
 import 'package:ipardasbor/shared/widgets/skeleton.dart';
 import 'package:ipardasbor/shared/widgets/page_states.dart';
 import '../../core/api/api_exception.dart';

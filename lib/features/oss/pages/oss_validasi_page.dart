@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:ipardasbor/app/app_banner.dart';
+import 'package:ipardasbor/shared/utils/ui_actions.dart';
+import 'package:ipardasbor/shared/widgets/app_banner.dart';
 import 'package:ipardasbor/app/app_theme.dart';
-// OCR: import baru
 import 'package:ipardasbor/core/constants/kbli_constants.dart';
 import 'package:ipardasbor/shared/ocr/ocr.dart';
 
@@ -118,10 +118,6 @@ class _OssValidasiPageState extends State<OssValidasiPage> {
   String? _requiredValidator(String? v) =>
       (v == null || v.trim().isEmpty) ? 'Wajib diisi.' : null;
 
-  void _showError(String pesan) {
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(pesan)));
-  }
-
   // OCR: logika KBLI khusus yang tadinya inline di onChanged, dijadikan satu
   // fungsi supaya bisa dipanggil juga setelah controller diisi lewat kode
   // (mengisi controller TIDAK memicu onChanged).
@@ -198,7 +194,7 @@ class _OssValidasiPageState extends State<OssValidasiPage> {
     }
 
     if (!valid || (_isKbliAkomodasiKhusus && _kbliDesc == null)) {
-      _showError('Periksa kembali data yang diisi.');
+      tampilkanPesan(context, 'Periksa kembali data yang diisi.');
       return;
     }
 
@@ -249,7 +245,7 @@ class _OssValidasiPageState extends State<OssValidasiPage> {
           ? 'Tidak dapat terhubung ke server. Periksa koneksi internet.'
           : e.toString().replaceFirst('Exception: ', '');
 
-      _showError(pesan);
+      tampilkanPesan(context, pesan);
     }
   }
 
@@ -542,7 +538,7 @@ class _OssValidasiPageState extends State<OssValidasiPage> {
                 DropdownButtonFormField<String>(
                   initialValue: _kbliDesc,
                   isExpanded:
-                      true, // <- ini yang biasanya hilang & bikin overflow
+                      true,
                   decoration: const InputDecoration(
                     hintText: 'Pilih jenis usaha penyediaan akomodasi lainnya',
                     prefixIcon: Icon(Icons.apartment_outlined, size: 20),

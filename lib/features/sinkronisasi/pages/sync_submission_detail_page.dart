@@ -2,8 +2,10 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:ipardasbor/features/sinkronisasi/widgets/submission_photos.dart';
-import 'package:url_launcher/url_launcher.dart';
 import 'package:ipardasbor/features/oss/models/oss_jenis_produk_akomodasi.dart';
+import 'package:ipardasbor/features/sinkronisasi/widgets/sync_table.dart';
+import 'package:ipardasbor/shared/utils/formatters.dart';
+import 'package:ipardasbor/shared/utils/ui_actions.dart';
 import '../../non_oss/services/non_oss_service.dart';
 
 import '../../../app/app_theme.dart';
@@ -124,7 +126,7 @@ class _SubmissionDetailPageState extends State<SubmissionDetailPage> {
       Baris('Nama Pemilik', p['nama_pemilik']),
       Baris('Nama Brand', p['nama_brand']),
       Baris('Jenis Produk', _labelJenisProdukTampil ?? p['jenis_produk']),
-      Baris('Website', p['website'], url: _normalisasiUrl(p['website'])),
+      Baris('Website', p['website'], url: normalisasiUrl(p['website'])),
       Baris('No. HP', p['no_hp']),
       Baris('Email', p['email']),
     ];
@@ -155,7 +157,7 @@ class _SubmissionDetailPageState extends State<SubmissionDetailPage> {
         (lat != null && lng != null && lat.isNotEmpty && lng.isNotEmpty)
             ? '$lat, $lng'
             : null,
-        url: _mapsUrlFromLatLng(lat, lng),
+        url: mapsUrl(lat, lng),
       ),
     ];
   }
@@ -203,27 +205,6 @@ class _SubmissionDetailPageState extends State<SubmissionDetailPage> {
     ];
   }
 
-  String? _normalisasiUrl(String? website) {
-    if (website == null || website.trim().isEmpty) {
-      return null;
-    }
-    final String bersih = website.trim();
-    if (bersih.startsWith('http://') || bersih.startsWith('https://')) {
-      return bersih;
-    }
-    return 'https://$bersih';
-  }
-
-  String? _mapsUrlFromLatLng(String? lat, String? lng) {
-    if (lat == null ||
-        lng == null ||
-        lat.trim().isEmpty ||
-        lng.trim().isEmpty) {
-      return null;
-    }
-    return 'https://www.google.com/maps?q=$lat,$lng';
-  }
-
   Future<void> _sync() async {
     if (_isSyncing || _isDeleting || _data.isDraft) return;
 
@@ -256,12 +237,13 @@ class _SubmissionDetailPageState extends State<SubmissionDetailPage> {
     if (!mounted) return;
 
     if (success) {
-      _showMessage('Ajuan berhasil disinkronkan.', success: true);
+      tampilkanPesan(context, 'Ajuan berhasil disinkronkan.', sukses: true);
       Navigator.of(context).pop('synced');
     } else {
-      _showMessage(
+      tampilkanPesan(
+        context,
         'Sinkronisasi gagal. Periksa internet atau server lalu coba lagi.',
-        success: false,
+        sukses: false,
       );
     }
   }
@@ -370,10 +352,14 @@ class _SubmissionDetailPageState extends State<SubmissionDetailPage> {
     if (!mounted) return;
 
     if (success) {
-      _showMessage('Ajuan berhasil dihapus.', success: true);
+      tampilkanPesan(context, 'Ajuan berhasil dihapus.', sukses: true);
       Navigator.of(context).pop('deleted');
     } else {
-      _showMessage('Gagal menghapus ajuan. Silakan coba lagi.', success: false);
+      tampilkanPesan(
+        context,
+        'Gagal menghapus ajuan. Silakan coba lagi.',
+        sukses: false,
+      );
     }
   }
 
@@ -395,52 +381,11 @@ class _SubmissionDetailPageState extends State<SubmissionDetailPage> {
     );
   }
 
-  void _showMessage(
-    String message, {
-    required bool success,
-    Color textColor = Colors.white,
-  }) {
-    ScaffoldMessenger.of(context)
-      ..hideCurrentSnackBar()
-      ..showSnackBar(
-        SnackBar(
-          content: Text(message, style: TextStyle(color: textColor)),
-          backgroundColor: success
-              ? const Color(0xFF238636)
-              : const Color(0xFFC2410C),
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(14),
-          ),
-        ),
-      );
-  }
-
-  Future<void> _openUrl(String url) async {
-    final Uri? uri = Uri.tryParse(url);
-    if (uri == null) {
-      _showMessage('Tautan tidak valid.', success: false);
-      return;
-    }
-
-    final bool launched = await launchUrl(
-      uri,
-      mode: LaunchMode.externalApplication,
-    );
-
-    if (!launched && mounted) {
-      _showMessage('Tidak dapat membuka tautan.', success: false);
-    }
-  }
-
-  @override
   @override
   Widget build(BuildContext context) {
     final bool failed = _data.isFailed;
     final bool isDraft = _data.isDraft;
-    final Color statusColor = isDraft
-        ? const Color(0xFF6B7280)
-        : (failed ? const Color(0xFFFF3B30) : const Color(0xFFFF9500));
+    final Color statusColor = submissionStatus(_data).color;
 
     return Scaffold(
       backgroundColor: AppTheme.scaffoldColorDynamic(context),
@@ -474,7 +419,7 @@ class _SubmissionDetailPageState extends State<SubmissionDetailPage> {
           children: [
             StatusHeaderCard(
               title: _data.displayName,
-              subtitle: _formatDateTime(_data.createdAt),
+              subtitle: 'Dibuat ${formatTanggalJam(_data.createdAt.toLocal())}',
               errorMessage: (!isDraft && failed) ? _data.lastError : null,
               badges: <StatusBadge>[
                 StatusBadge(text: 'NON OSS', color: AppTheme.menuNonOss),
@@ -525,7 +470,7 @@ class _SubmissionDetailPageState extends State<SubmissionDetailPage> {
             const SizedBox(height: 12),
             _SubmissionOtaSection(
               entries: _parseOtaEntries(),
-              onTapUrl: _openUrl,
+              onTapUrl: (String u) => bukaTautan(context, u),
             ),
             const SizedBox(height: 12),
             _buildActionButtons(context, failed, isDraft),
@@ -575,7 +520,7 @@ class _SubmissionDetailPageState extends State<SubmissionDetailPage> {
                 : (isDraft ? _openEdit : _sync),
             style: FilledButton.styleFrom(
               backgroundColor: isDraft
-                  ? const Color(0xFF6B7280)
+                  ? submissionStatus(_data).color
                   : const Color(0xFF007AFF),
               foregroundColor: Colors.white,
               padding: const EdgeInsets.symmetric(vertical: 14),
@@ -657,13 +602,6 @@ class _SubmissionDetailPageState extends State<SubmissionDetailPage> {
   }
 }
 
-String _formatDateTime(DateTime value) {
-  final DateTime local = value.toLocal();
-  String two(int number) => number.toString().padLeft(2, '0');
-  return '${two(local.day)}/${two(local.month)}/${local.year} '
-      '${two(local.hour)}:${two(local.minute)}';
-}
-
 /// Kartu section OTA bergaya sama dengan halaman detail Riwayat, tapi
 /// data submission cuma punya nama platform + daftar URL (tanpa status,
 /// harga, rating - karena itu semua diisi lewat proses verifikasi OSS
@@ -676,56 +614,20 @@ class _SubmissionOtaSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (entries.isEmpty) {
-      return const SizedBox.shrink();
-    }
+    if (entries.isEmpty) return const SizedBox.shrink();
 
-    return Card(
-      elevation: 0,
-      color: AppTheme.surface(context),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(14),
-        side: BorderSide(color: Colors.black.withValues(alpha:0.06)),
-      ),
-      margin: EdgeInsets.zero,
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: <Widget>[
-            Row(
-              children: <Widget>[
-                Icon(
-                  Icons.travel_explore_outlined,
-                  size: 18,
-                  color: AppTheme.menuDashboard,
-                ),
-                const SizedBox(width: 8),
-                Text(
-                  'Platform OTA',
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w800,
-                    color: AppTheme.textColor(context),
-                  ),
-                ),
-                const SizedBox(width: 6),
-                Text(
-                  '(${entries.length})',
-                  style: TextStyle(
-                    fontSize: 12.5,
-                    color: AppTheme.textSecondary(context),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            for (int i = 0; i < entries.length; i++) ...<Widget>[
-              if (i > 0) const Divider(height: 20),
-              _SubmissionOtaTile(entry: entries[i], onTapUrl: onTapUrl),
-            ],
+    return DetailCard(
+      icon: Icons.travel_explore_outlined,
+      title: 'Platform OTA',
+      count: entries.length,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          for (int i = 0; i < entries.length; i++) ...<Widget>[
+            if (i > 0) const Divider(height: 20),
+            _SubmissionOtaTile(entry: entries[i], onTapUrl: onTapUrl),
           ],
-        ),
+        ],
       ),
     );
   }
@@ -769,7 +671,7 @@ class _SubmissionOtaTile extends StatelessWidget {
             runSpacing: 6,
             children: <Widget>[
               for (int i = 0; i < urls.length; i++)
-                _LinkButtonSubmission(
+                LinkButton(
                   icon: Icons.open_in_new_rounded,
                   label: urls.length > 1
                       ? 'Buka Link ${i + 1}'
@@ -784,9 +686,7 @@ class _SubmissionOtaTile extends StatelessWidget {
   }
 }
 
-/// Checklist bagian form yang masih perlu dilengkapi. Sama persis logic-nya
-/// dengan yang dipakai di expanded row SyncPage (SubmissionRow) - lihat
-/// DraftCompletenessChecker untuk sumber kebenarannya.
+/// Checklist bagian form yang masih perlu dilengkapi.
 class _DraftChecklistCard extends StatelessWidget {
   const _DraftChecklistCard({required this.data});
 
@@ -799,147 +699,31 @@ class _DraftChecklistCard extends StatelessWidget {
       data.photoPaths,
     );
 
-    return Card(
-      elevation: 0,
-      color: AppTheme.surface(context),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(14),
-        side: BorderSide(color: Colors.black.withValues(alpha:0.06)),
-      ),
-      margin: EdgeInsets.zero,
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: <Widget>[
-            Row(
+    return DetailCard(
+      icon: Icons.checklist_rounded,
+      title: 'Data Yang Belum Lengkap',
+      child: missing.isEmpty
+          ? Row(
               children: <Widget>[
-                Icon(
-                  Icons.checklist_rounded,
-                  size: 18,
-                  color: AppTheme.menuDashboard,
+                const Icon(
+                  Icons.check_circle_rounded,
+                  size: 16,
+                  color: Color(0xFF238636),
                 ),
                 const SizedBox(width: 8),
-                Text(
-                  'Data Yang Belum Lengkap',
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w800,
-                    color: AppTheme.textColor(context),
+                Expanded(
+                  child: Text(
+                    'Semua data sudah lengkap. Tekan "Lanjutkan Isi" untuk '
+                    'meninjau kembali sebelum dikirim.',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: AppTheme.textSecondary(context),
+                    ),
                   ),
                 ),
               ],
-            ),
-            const SizedBox(height: 12),
-            if (missing.isEmpty)
-              Row(
-                children: [
-                  const Icon(
-                    Icons.check_circle_rounded,
-                    size: 16,
-                    color: Color(0xFF238636),
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      'Semua data sudah lengkap. Tekan "Lanjutkan Isi" untuk '
-                      'meninjau kembali sebelum dikirim.',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: AppTheme.textSecondary(context),
-                      ),
-                    ),
-                  ),
-                ],
-              )
-            else
-              _buildGrouped(context, missing),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildGrouped(BuildContext context, List<DraftMissingItem> missing) {
-    final Map<String, List<String>> grouped = <String, List<String>>{};
-    for (final DraftMissingItem item in missing) {
-      grouped.putIfAbsent(item.section, () => <String>[]).add(item.label);
-    }
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: <Widget>[
-        for (final MapEntry<String, List<String>> entry in grouped.entries)
-          Padding(
-            padding: const EdgeInsets.only(bottom: 10),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  entry.key,
-                  style: TextStyle(
-                    color: AppTheme.primaryColor,
-                    fontSize: 12,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                for (final String label in entry.value)
-                  Padding(
-                    padding: const EdgeInsets.only(left: 2, bottom: 3),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Icon(
-                          Icons.radio_button_unchecked_rounded,
-                          size: 13,
-                          color: AppTheme.warning,
-                        ),
-                        const SizedBox(width: 6),
-                        Expanded(
-                          child: Text(
-                            label,
-                            style: TextStyle(
-                              color: AppTheme.textSecondary(context),
-                              fontSize: 12,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-              ],
-            ),
-          ),
-      ],
-    );
-  }
-}
-
-class _LinkButtonSubmission extends StatelessWidget {
-  const _LinkButtonSubmission({
-    required this.icon,
-    required this.label,
-    required this.onTap,
-  });
-
-  final IconData icon;
-  final String label;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return OutlinedButton.icon(
-      onPressed: onTap,
-      icon: Icon(icon, size: 15),
-      label: Text(label, style: const TextStyle(fontSize: 12)),
-      style: OutlinedButton.styleFrom(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-        minimumSize: Size.zero,
-        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-        foregroundColor: AppTheme.menuDashboard,
-        side: BorderSide(color: AppTheme.menuDashboard.withValues(alpha:0.4)),
-      ),
+            )
+          : DraftMissingList(items: missing),
     );
   }
 }

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:ipardasbor/app/app_theme.dart';
-import 'package:url_launcher/url_launcher.dart';
+import 'package:ipardasbor/shared/utils/ui_actions.dart';
 
 // ======================================================================
 // Dasar kartu
@@ -9,9 +9,18 @@ import 'package:url_launcher/url_launcher.dart';
 /// Kerangka kartu yang dipakai semua kartu di halaman detail, supaya gaya
 /// (sudut, border, padding) hanya ada di satu tempat.
 class DetailCard extends StatelessWidget {
-  const DetailCard({super.key, required this.child});
+  const DetailCard({
+    super.key,
+    required this.child,
+    this.icon,
+    this.title,
+    this.count,
+  });
 
   final Widget child;
+  final IconData? icon;
+  final String? title;
+  final int? count;
 
   @override
   Widget build(BuildContext context) {
@@ -23,7 +32,44 @@ class DetailCard extends StatelessWidget {
         side: BorderSide(color: AppTheme.border(context)),
       ),
       margin: EdgeInsets.zero,
-      child: Padding(padding: const EdgeInsets.all(16), child: child),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            if (title != null) ...<Widget>[
+              Row(
+                children: <Widget>[
+                  if (icon != null) ...<Widget>[
+                    Icon(icon, size: 18, color: AppTheme.menuDashboard),
+                    const SizedBox(width: 8),
+                  ],
+                  Text(
+                    title!,
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w800,
+                      color: AppTheme.textColor(context),
+                    ),
+                  ),
+                  if (count != null) ...<Widget>[
+                    const SizedBox(width: 6),
+                    Text(
+                      '($count)',
+                      style: TextStyle(
+                        fontSize: 12.5,
+                        color: AppTheme.textSecondary(context),
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+              const SizedBox(height: 12),
+            ],
+            child,
+          ],
+        ),
+      ),
     );
   }
 }
@@ -75,24 +121,10 @@ class SectionCard extends StatelessWidget {
     if (terisi.isEmpty) return const SizedBox.shrink();
 
     return DetailCard(
+      icon: icon,
+      title: title,
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          Row(
-            children: <Widget>[
-              Icon(icon, size: 18, color: AppTheme.menuDashboard),
-              const SizedBox(width: 8),
-              Text(
-                title,
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w800,
-                  color: AppTheme.textColor(context),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
           for (final Baris baris in terisi) _BarisTile(baris: baris),
         ],
       ),
@@ -152,7 +184,7 @@ class _LinkValue extends StatelessWidget {
     final Color warna = isDark ? AppTheme.primaryLight : AppTheme.primaryColor;
 
     return InkWell(
-      onTap: () => _bukaTautanUrl(context, url),
+      onTap: () => bukaTautan(context, url),
       child: Row(
         children: <Widget>[
           Flexible(
@@ -173,31 +205,6 @@ class _LinkValue extends StatelessWidget {
       ),
     );
   }
-}
-
-/// Membuka [url] di browser/aplikasi eksternal.  Hanya dipakai [_LinkValue].
-Future<void> _bukaTautanUrl(BuildContext context, String url) async {
-  // Diambil sebelum await, jadi tidak perlu memakai context sesudahnya.
-  final ScaffoldMessengerState messenger = ScaffoldMessenger.of(context);
-
-  void beritahu(String pesan) => messenger
-    ..hideCurrentSnackBar()
-    ..showSnackBar(SnackBar(content: Text(pesan)));
-
-  final Uri? uri = Uri.tryParse(url);
-  if (uri == null) {
-    beritahu('Tautan tidak valid.');
-    return;
-  }
-
-  bool berhasil;
-  try {
-    berhasil = await launchUrl(uri, mode: LaunchMode.externalApplication);
-  } catch (_) {
-    berhasil = false;
-  }
-
-  if (!berhasil) beritahu('Tidak dapat membuka tautan.');
 }
 
 // ======================================================================
@@ -334,6 +341,36 @@ class _BadgeChip extends StatelessWidget {
           fontWeight: FontWeight.w700,
           color: badge.color,
         ),
+      ),
+    );
+  }
+}
+
+/// Tombol tautan kecil bergaris tepi (mis. "Buka Listing", "Lihat Peta").
+class LinkButton extends StatelessWidget {
+  const LinkButton({
+    super.key,
+    required this.icon,
+    required this.label,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return OutlinedButton.icon(
+      onPressed: onTap,
+      icon: Icon(icon, size: 15),
+      label: Text(label, style: const TextStyle(fontSize: 12)),
+      style: OutlinedButton.styleFrom(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+        minimumSize: Size.zero,
+        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+        foregroundColor: AppTheme.menuDashboard,
+        side: BorderSide(color: AppTheme.menuDashboard.withValues(alpha: 0.4)),
       ),
     );
   }

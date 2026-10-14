@@ -12,7 +12,7 @@ const double _lebarPanah = 28;
 
 /// Label dan warna tampilan sebuah ajuan lokal. Satu sumber untuk semua
 /// tempat yang menampilkan status ajuan (tabel, halaman detail).
-({String label, Color color}) _submissionStatus(NonOssLocalData d) {
+({String label, Color color}) submissionStatus(NonOssLocalData d) {
   if (d.isDraft) return (label: 'DRAFT', color: const Color(0xFF6B7280));
   if (d.isFailed) return (label: 'GAGAL', color: const Color(0xFFFF3B30));
   return (label: 'PENDING', color: const Color(0xFFFF9500));
@@ -86,9 +86,18 @@ class _TableHeader extends StatelessWidget {
       ),
       child: Row(
         children: <Widget>[
-          Expanded(flex: _flexNama, child: Text('NAMA USAHA', style: style)),
-          Expanded(flex: _flexStatus, child: Text('STATUS', style: style)),
-          Expanded(flex: _flexTanggal, child: Text('TANGGAL', style: style)),
+          Expanded(
+            flex: _flexNama,
+            child: Text('NAMA USAHA', style: style),
+          ),
+          Expanded(
+            flex: _flexStatus,
+            child: Text('STATUS', style: style),
+          ),
+          Expanded(
+            flex: _flexTanggal,
+            child: Text('TANGGAL', style: style),
+          ),
           const SizedBox(width: _lebarPanah),
         ],
       ),
@@ -124,7 +133,7 @@ class SubmissionRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final ({String label, Color color}) status = _submissionStatus(data);
+    final ({String label, Color color}) status = submissionStatus(data);
 
     return Column(
       children: <Widget>[
@@ -352,11 +361,6 @@ class _DraftChecklist extends StatelessWidget {
       );
     }
 
-    final Map<String, List<String>> grouped = <String, List<String>>{};
-    for (final DraftMissingItem item in missing) {
-      grouped.putIfAbsent(item.section, () => <String>[]).add(item.label);
-    }
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
@@ -369,9 +373,42 @@ class _DraftChecklist extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 6),
+        DraftMissingList(items: missing, compact: true),
+      ],
+    );
+  }
+}
+
+/// Daftar bagian form yang belum lengkap, dikelompokkan per section.
+/// [compact] = true untuk dipakai di dalam tabel (font dan jarak lebih kecil).
+class DraftMissingList extends StatelessWidget {
+  const DraftMissingList({
+    super.key,
+    required this.items,
+    this.compact = false,
+  });
+
+  final List<DraftMissingItem> items;
+  final bool compact;
+
+  @override
+  Widget build(BuildContext context) {
+    final Map<String, List<String>> grouped = <String, List<String>>{};
+    for (final DraftMissingItem item in items) {
+      grouped.putIfAbsent(item.section, () => <String>[]).add(item.label);
+    }
+
+    final double fontSection = compact ? 11 : 12;
+    final double fontLabel = compact ? 11.5 : 12;
+    final double jarakSection = compact ? 6 : 10;
+    final double jarakLabel = compact ? 2 : 3;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
         for (final MapEntry<String, List<String>> entry in grouped.entries)
           Padding(
-            padding: const EdgeInsets.only(bottom: 6),
+            padding: EdgeInsets.only(bottom: jarakSection),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
@@ -379,14 +416,14 @@ class _DraftChecklist extends StatelessWidget {
                   entry.key,
                   style: TextStyle(
                     color: AppTheme.primaryColor,
-                    fontSize: 11,
+                    fontSize: fontSection,
                     fontWeight: FontWeight.w700,
                   ),
                 ),
                 const SizedBox(height: 3),
                 for (final String label in entry.value)
                   Padding(
-                    padding: const EdgeInsets.only(left: 2, bottom: 2),
+                    padding: EdgeInsets.only(left: 2, bottom: jarakLabel),
                     child: Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: <Widget>[
@@ -401,7 +438,7 @@ class _DraftChecklist extends StatelessWidget {
                             label,
                             style: TextStyle(
                               color: AppTheme.textSecondary(context),
-                              fontSize: 11.5,
+                              fontSize: fontLabel,
                             ),
                           ),
                         ),

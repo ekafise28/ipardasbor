@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:url_launcher/url_launcher.dart';
+import 'package:ipardasbor/shared/utils/formatters.dart';
+import 'package:ipardasbor/shared/utils/ui_actions.dart';
 
 import '../../../app/app_theme.dart';
 import '../models/baseline_ota_item.dart';
@@ -18,34 +19,14 @@ class BaselineOtaDetailPage extends StatelessWidget {
   String _tgl(DateTime d) =>
       '${d.day.toString().padLeft(2, '0')}-${d.month.toString().padLeft(2, '0')}-${d.year}';
 
-  Future<void> _buka(BuildContext context, String? url) async {
-    if (url == null || url.trim().isEmpty) return;
-    final Uri? uri = Uri.tryParse(url);
-    if (uri == null ||
-        !await launchUrl(uri, mode: LaunchMode.externalApplication)) {
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Tidak bisa membuka tautan ini.')),
-        );
-      }
-    }
-  }
-
   Future<void> _salin(BuildContext context, String teks, String label) async {
     await Clipboard.setData(ClipboardData(text: teks));
-    if (context.mounted) {
-      ScaffoldMessenger.of(context)
-        ..hideCurrentSnackBar()
-        ..showSnackBar(SnackBar(content: Text('$label disalin.')));
-    }
+    if (context.mounted) tampilkanPesan(context, '$label disalin.');
   }
 
   String? get _urlMaps {
     if ((item.urlMaps ?? '').trim().isNotEmpty) return item.urlMaps;
-    if (item.latitude != null && item.longitude != null) {
-      return 'https://www.google.com/maps?q=${item.latitude},${item.longitude}';
-    }
-    return null;
+    return mapsUrl(item.latitude, item.longitude);
   }
 
   @override
@@ -142,7 +123,7 @@ class BaselineOtaDetailPage extends StatelessWidget {
                   Expanded(
                     child: OutlinedButton.icon(
                       onPressed: (item.sourceUrl ?? '').trim().isNotEmpty
-                          ? () => _buka(context, item.sourceUrl)
+                          ? () => bukaTautan(context, item.sourceUrl)
                           : null,
                       icon: const Icon(Icons.open_in_new_rounded, size: 17),
                       label: const Text('Listing OTA'),
@@ -152,7 +133,7 @@ class BaselineOtaDetailPage extends StatelessWidget {
                   Expanded(
                     child: OutlinedButton.icon(
                       onPressed: _urlMaps != null
-                          ? () => _buka(context, _urlMaps)
+                          ? () => bukaTautan(context, _urlMaps)
                           : null,
                       icon: const Icon(Icons.map_rounded, size: 17),
                       label: const Text('Buka Maps'),

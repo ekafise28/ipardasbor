@@ -1,7 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:ipardasbor/app/app_banner.dart';
+import 'package:ipardasbor/shared/widgets/app_banner.dart';
 import 'package:ipardasbor/core/constants/bidang_usaha_constants.dart';
 import 'package:ipardasbor/shared/widgets/list_filters.dart';
 import 'package:ipardasbor/shared/widgets/skeleton.dart';

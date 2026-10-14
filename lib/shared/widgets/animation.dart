@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:ipardasbor/shared/utils/format_number.dart';
+import 'package:ipardasbor/shared/utils/formatters.dart';
 
 /// Menampilkan angka yang menghitung naik dari 0 (saat pertama muncul) atau
 /// dari nilai sebelumnya ke nilai baru (saat [value] berubah, mis. setelah

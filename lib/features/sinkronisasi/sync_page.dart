@@ -1,7 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:ipardasbor/app/app_banner.dart';
+import 'package:ipardasbor/shared/widgets/app_banner.dart';
 import 'package:ipardasbor/shared/widgets/page_states.dart';
 
 import '../../app/app_theme.dart';

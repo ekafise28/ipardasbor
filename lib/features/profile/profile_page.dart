@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:ipardasbor/app/app_banner.dart';
+import 'package:ipardasbor/shared/widgets/app_banner.dart';
 import 'package:ipardasbor/shared/widgets/page_states.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:url_launcher/url_launcher.dart';

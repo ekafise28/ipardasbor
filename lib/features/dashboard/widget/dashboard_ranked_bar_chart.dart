@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:ipardasbor/app/app_theme.dart';
-import 'package:ipardasbor/shared/utils/format_number.dart';
+import 'package:ipardasbor/shared/utils/formatters.dart';
 
 import '../models/chart_series.dart';
 

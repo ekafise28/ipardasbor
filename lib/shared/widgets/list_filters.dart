@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:ipardasbor/app/app_theme.dart';
-import 'package:ipardasbor/shared/utils/format_number.dart';
+import 'package:ipardasbor/shared/utils/formatters.dart';
 
 /// Kolom pencarian halaman daftar: ikon cari, tombol hapus saat ada teks,
 /// dan (opsional) contoh isian saat kolom difokuskan dan masih kosong.

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:ipardasbor/app/app_banner.dart';
+import 'package:ipardasbor/shared/widgets/app_banner.dart';
 import 'welcome_card.dart' show ServerConnectionStatus;
 
 /// Strip informasi di bawah kartu sambutan. Hanya muncul saat ada hal yang
