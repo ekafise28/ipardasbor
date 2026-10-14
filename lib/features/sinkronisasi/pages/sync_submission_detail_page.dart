@@ -1,7 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:ipardasbor/features/sinkronisasi/widget/submission_photos.dart';
+import 'package:ipardasbor/features/sinkronisasi/widgets/submission_photos.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:ipardasbor/features/oss/models/oss_jenis_produk_akomodasi.dart';
 import '../../non_oss/services/non_oss_service.dart';

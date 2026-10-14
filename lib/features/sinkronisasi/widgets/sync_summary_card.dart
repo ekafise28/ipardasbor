@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../../../app/app_theme.dart';
+import '../../../app/app_theme.dart';
 
 /// Kartu ringkasan di puncak [SyncPage]: jumlah data yang menunggu
 /// sinkronisasi dan tombol "Sync Semua".
