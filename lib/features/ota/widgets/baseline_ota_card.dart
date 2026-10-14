@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:ipardasbor/shared/utils/ui_actions.dart';
 import 'package:ipardasbor/shared/widgets/list_parts.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 import '../../../app/app_theme.dart';
 import '../models/baseline_ota_item.dart';
