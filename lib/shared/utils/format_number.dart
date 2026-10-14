@@ -17,3 +17,11 @@ String formatNumber(int value) {
 
   return result.toString();
 }
+
+/// "350 m", "2,4 km", "12 km".
+String formatJarak(double km) {
+  if (km < 1) return '${(km * 1000).round()} m';
+  if (km < 10) return '${km.toStringAsFixed(1).replaceAll('.', ',')} km';
+  return '${km.round()} km';
+}
+

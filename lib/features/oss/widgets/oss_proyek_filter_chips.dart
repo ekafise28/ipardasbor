@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:ipardasbor/shared/widgets/list_filters.dart';
 
 import '../../../app/app_theme.dart';
-import '../../../shared/widgets/status_filter_bar.dart';
 import '../models/oss_proyek_filter.dart';
 import '../models/oss_proyek_page_result.dart';
 

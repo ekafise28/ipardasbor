@@ -6,8 +6,7 @@ import '../../../core/api/api_exception.dart';
 import '../models/riwayat_detail.dart';
 import '../services/riwayat_service.dart';
 
-import '../../../shared/widgets/detail_section_card.dart';
-import '../../../shared/widgets/detail_status_header.dart';
+import '../../../shared/widgets/detail_cards.dart';
 
 /// Halaman detail penuh untuk satu item riwayat pengawasan.
 ///

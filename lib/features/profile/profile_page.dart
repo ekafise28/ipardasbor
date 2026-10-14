@@ -5,7 +5,7 @@ import 'package:ipardasbor/shared/widgets/page_states.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:ipardasbor/shared/region/services/wilayah_akses_service.dart';
-import '../../shared/utils/skeleton.dart';
+import '../../shared/widgets/skeleton.dart';
 
 import '../../app/app_theme.dart';
 import '../authentication/models/auth_user.dart';

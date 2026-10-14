@@ -4,7 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:ipardasbor/app/app_theme.dart';
 import 'package:ipardasbor/core/network/network_status.dart';
 import 'package:ipardasbor/shared/gps/gps_capture_mixin.dart';
-import 'package:ipardasbor/shared/validators/form_validators.dart';
+import 'package:ipardasbor/shared/utils/form_validators.dart';
 
 import '../../../shared/region/models/region_option.dart';
 import '../../../shared/region/services/region_service.dart';

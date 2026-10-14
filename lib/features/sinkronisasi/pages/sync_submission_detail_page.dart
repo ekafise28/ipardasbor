@@ -6,8 +6,7 @@ import 'package:ipardasbor/features/oss/models/oss_jenis_produk_akomodasi.dart';
 import '../../non_oss/services/non_oss_service.dart';
 
 import '../../../app/app_theme.dart';
-import '../../../shared/widgets/detail_section_card.dart';
-import '../../../shared/widgets/detail_status_header.dart';
+import '../../../shared/widgets/detail_cards.dart';
 
 import '../../non_oss/offline/non_oss_local_data.dart';
 import '../../non_oss/offline/offline_database.dart';

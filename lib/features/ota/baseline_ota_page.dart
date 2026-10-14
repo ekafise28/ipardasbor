@@ -2,10 +2,9 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:ipardasbor/app/app_banner.dart';
 import 'package:ipardasbor/features/oss/oss_proyek_page.dart';
-import 'package:ipardasbor/shared/scroll/back_to_top_mixin.dart';
-import 'package:ipardasbor/shared/widgets/app_bar_part.dart';
-import 'package:ipardasbor/shared/widgets/list_search_field.dart';
-import 'package:ipardasbor/shared/widgets/list_summary_line.dart';
+import 'package:ipardasbor/shared/pagination/back_to_top_mixin.dart';
+import 'package:ipardasbor/shared/widgets/list_filters.dart';
+import 'package:ipardasbor/shared/widgets/list_parts.dart';
 
 import '../../app/app_theme.dart';
 
@@ -17,16 +16,14 @@ import 'models/baseline_ota_item.dart';
 import 'models/baseline_ota_page_result.dart';
 import '../../shared/gps/location_fetch_status.dart';
 import 'models/baseline_ota_ringkasan.dart';
-import '../../shared/widgets/status_filter_bar.dart';
 
 import '../non_oss/non_oss_form_page.dart';
 import 'pages/baseline_ota_detail_page.dart';
 
 import '../../shared/region/services/region_service.dart';
-import '../../shared/widgets/active_filter_chips.dart';
 import '../../shared/gps/gps_capture_mixin.dart';
 import '../../shared/pagination/paginated_list_controller.dart';
-import '../../shared/utils/skeleton.dart';
+import '../../shared/widgets/skeleton.dart';
 import '../../shared/widgets/page_states.dart';
 import 'services/baseline_ota_service.dart';
 

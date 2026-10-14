@@ -25,7 +25,7 @@ import 'widgets/ota_selector.dart';
 import '../../shared/widgets/form/photo_picker.dart';
 
 import 'offline/offline_queue_service.dart';
-import 'package:ipardasbor/shared/validators/form_validators.dart';
+import 'package:ipardasbor/shared/utils/form_validators.dart';
 
 class NonOssFormPage extends StatefulWidget {
   const NonOssFormPage({

@@ -5,11 +5,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:ipardasbor/app/app_banner.dart';
 import 'package:ipardasbor/features/oss/pages/oss_proyek_filter_sheet.dart';
-import 'package:ipardasbor/shared/scroll/back_to_top_mixin.dart';
-import 'package:ipardasbor/shared/widgets/active_filter_chips.dart';
-import 'package:ipardasbor/shared/widgets/app_bar_part.dart';
-import 'package:ipardasbor/shared/widgets/list_search_field.dart';
-import 'package:ipardasbor/shared/widgets/list_summary_line.dart';
+import 'package:ipardasbor/shared/pagination/back_to_top_mixin.dart';
+import 'package:ipardasbor/shared/widgets/animation.dart';
+import 'package:ipardasbor/shared/widgets/list_filters.dart';
+import 'package:ipardasbor/shared/widgets/list_parts.dart';
 
 import '../../app/app_theme.dart';
 import '../../core/api/api_exception.dart';
@@ -31,8 +30,7 @@ import 'services/oss_proyek_service.dart';
 import 'widgets/oss_proyek_card.dart';
 import 'widgets/oss_proyek_filter_chips.dart';
 
-import '../../shared/utils/skeleton.dart';
-import '../../shared/utils/staggered_entrance.dart';
+import '../../shared/widgets/skeleton.dart';
 import '../../shared/widgets/page_states.dart';
 
 import 'package:ipardasbor/shared/ocr/ocr.dart';

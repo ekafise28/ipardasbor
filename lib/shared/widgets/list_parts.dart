@@ -82,3 +82,56 @@ class ListSummaryLine extends StatelessWidget {
     );
   }
 }
+
+class DistanceBadge extends StatelessWidget {
+  const DistanceBadge({super.key, required this.km});
+  final double km;
+
+  @override
+  Widget build(BuildContext context) {
+    final Color warna = AppTheme.primaryColor;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3),
+      decoration: BoxDecoration(
+        color: warna.withValues(alpha: 0.10),
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.near_me_rounded, size: 12, color: warna),
+          const SizedBox(width: 4),
+          Text(
+            formatJarak(km),
+            style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: warna),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Judul AppBar dua baris: judul tebal dan keterangan kecil di bawahnya.
+class TwoLineTitle extends StatelessWidget {
+  const TwoLineTitle({super.key, required this.title, required this.subtitle});
+
+  final String title;
+  final String subtitle;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        Text(
+          title,
+          style: const TextStyle(fontSize: 19, fontWeight: FontWeight.w800),
+        ),
+        Text(
+          subtitle,
+          style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.w400),
+        ),
+      ],
+    );
+  }
+}
