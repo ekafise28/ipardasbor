@@ -275,9 +275,7 @@ class _FotoSection extends StatelessWidget {
                   item.url,
                   fit: BoxFit.cover,
                   loadingBuilder: (context, child, progress) {
-                    if (progress == null) {
-                      return child;
-                    }
+                    if (progress == null) return child;
                     return const Center(
                       child: SizedBox(
                         width: 20,
@@ -497,8 +495,7 @@ class _OtaTile extends StatelessWidget {
             if (item.tanggalDitemukan != null)
               _InfoKecil(
                 icon: Icons.calendar_today_outlined,
-                text:
-                    'Ditemukan ${formatTanggal(item.tanggalDitemukan)}',
+                text: 'Ditemukan ${formatTanggal(item.tanggalDitemukan)}',
               ),
           ],
         ),
@@ -526,7 +523,7 @@ class _OtaTile extends StatelessWidget {
                   LinkButton(
                     icon: Icons.open_in_new_rounded,
                     label: 'Buka Listing',
-                    onTap: () => bukaTautan(context, item.urlListing)
+                    onTap: () => bukaTautan(context, item.urlListing),
                   ),
                 if ((item.mapsUrl ?? '').trim().isNotEmpty)
                   LinkButton(

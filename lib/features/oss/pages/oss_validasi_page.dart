@@ -4,6 +4,7 @@ import 'package:ipardasbor/shared/widgets/app_banner.dart';
 import 'package:ipardasbor/app/app_theme.dart';
 import 'package:ipardasbor/core/constants/kbli_constants.dart';
 import 'package:ipardasbor/shared/ocr/ocr.dart';
+import 'package:ipardasbor/shared/widgets/list_parts.dart';
 
 import '../../../core/api/api_client.dart';
 import '../../../core/network/network_status.dart';
@@ -56,6 +57,20 @@ class _OssValidasiPageState extends State<OssValidasiPage> {
 
   String? _kbliDesc;
   bool _submitting = false;
+
+  TextEditingController _ctrlFor(OcrFieldType type) => switch (type) {
+    OcrFieldType.nib => _nibCtrl,
+    OcrFieldType.nku => _nkuCtrl,
+    OcrFieldType.kbli => _kbliCtrl,
+  };
+
+  Widget? _ocrSuffix(OcrFieldType type) {
+    if (_dariDaftar) return null;
+    return OcrFieldActions(
+      onPaste: _submitting ? null : () => _pasteInto(type),
+      onScan: _submitting ? null : () => _scanOcr({type}),
+    );
+  }
 
   // OCR: _daftarKbliDiizinkan dipindah ke KbliConstants.daftarDiizinkan.
 
@@ -141,38 +156,22 @@ class _OssValidasiPageState extends State<OssValidasiPage> {
       context,
       targets: targets,
       currentValues: {
-        OcrFieldType.nib: _nibCtrl.text.trim(),
-        OcrFieldType.nku: _nkuCtrl.text.trim(),
-        OcrFieldType.kbli: _kbliCtrl.text.trim(),
+        for (final OcrFieldType t in OcrFieldType.values)
+          t: _ctrlFor(t).text.trim(),
       },
       bidang: widget.bidang,
     );
     if (!mounted || values == null || values.isEmpty) return;
 
-    values.forEach((type, value) {
-      switch (type) {
-        case OcrFieldType.nib:
-          _nibCtrl.text = value;
-        case OcrFieldType.nku:
-          _nkuCtrl.text = value;
-        case OcrFieldType.kbli:
-          _kbliCtrl.text = value;
-      }
-    });
+    values.forEach((type, value) => _ctrlFor(type).text = value);
     _syncKbliState();
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('${values.length} field diisi dari scan.')),
-    );
+    tampilkanPesan(context, '${values.length} field diisi dari scan.');
   }
 
   // OCR: tempel dari clipboard ke satu field, dengan pembersihan otomatis.
   Future<void> _pasteInto(OcrFieldType type) async {
-    final TextEditingController ctrl = switch (type) {
-      OcrFieldType.nib => _nibCtrl,
-      OcrFieldType.nku => _nkuCtrl,
-      OcrFieldType.kbli => _kbliCtrl,
-    };
+    final TextEditingController ctrl = _ctrlFor(type);
 
     final String? value = await runPaste(
       context,
@@ -252,36 +251,7 @@ class _OssValidasiPageState extends State<OssValidasiPage> {
   @override
   Widget build(BuildContext context) {
     return Theme(
-      data: Theme.of(context).copyWith(
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: AppTheme.primaryColor,
-          primary: AppTheme.primaryColor,
-          brightness: Theme.of(context).brightness,
-          surface: AppTheme.surface(context),
-        ),
-        inputDecorationTheme: InputDecorationTheme(
-          contentPadding: const EdgeInsets.symmetric(
-            horizontal: 14,
-            vertical: 16,
-          ),
-          labelStyle: TextStyle(color: AppTheme.textSecondary(context)),
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(13),
-            borderSide: BorderSide(color: AppTheme.border(context)),
-          ),
-          enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(13),
-            borderSide: BorderSide(color: AppTheme.border(context)),
-          ),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(13),
-            borderSide: const BorderSide(
-              color: AppTheme.primaryColor,
-              width: 1.5,
-            ),
-          ),
-        ),
-      ),
+      data: AppTheme.formTheme(context),
       child: Scaffold(
         backgroundColor: AppTheme.scaffoldColorDynamic(context),
         appBar: AppBar(
@@ -289,18 +259,9 @@ class _OssValidasiPageState extends State<OssValidasiPage> {
           backgroundColor: AppTheme.primaryDark,
           foregroundColor: Colors.white,
           titleSpacing: 4,
-          title: const Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Validasi Data OSS',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
-              ),
-              Text(
-                'Periksa NIB, KBLI, dan NKU usaha',
-                style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w400),
-              ),
-            ],
+          title: const TwoLineTitle(
+            title: 'Validasi Data OSS',
+            subtitle: 'Periksa NIB, KBLI, dan NKU usaha',
           ),
         ),
         body: Form(
@@ -395,22 +356,11 @@ class _OssValidasiPageState extends State<OssValidasiPage> {
                 ),
               TextFormField(
                 controller: _nkuCtrl,
-                // readOnly: _dariDaftar,
                 decoration: InputDecoration(
                   labelText: 'NKU *',
                   hintText: 'Contoh: 202210051139546023359',
                   prefixIcon: const Icon(Icons.key_outlined, size: 20),
-                  // OCR: ikon scan per field
-                  suffixIcon: _dariDaftar
-                      ? null
-                      : OcrFieldActions(
-                          onPaste: _submitting
-                              ? null
-                              : () => _pasteInto(OcrFieldType.nku),
-                          onScan: _submitting
-                              ? null
-                              : () => _scanOcr({OcrFieldType.nku}),
-                        ),
+                  suffixIcon: _ocrSuffix(OcrFieldType.nku),
                 ),
                 keyboardType: TextInputType.number,
                 validator: _requiredValidator,
@@ -424,16 +374,7 @@ class _OssValidasiPageState extends State<OssValidasiPage> {
                   hintText: 'Masukkan NIB',
                   prefixIcon: const Icon(Icons.credit_card_outlined, size: 20),
                   // OCR: ikon scan per field
-                  suffixIcon: _dariDaftar
-                      ? null
-                      : OcrFieldActions(
-                          onPaste: _submitting
-                              ? null
-                              : () => _pasteInto(OcrFieldType.nib),
-                          onScan: _submitting
-                              ? null
-                              : () => _scanOcr({OcrFieldType.nib}),
-                        ),
+                  suffixIcon: _ocrSuffix(OcrFieldType.nib),                    
                 ),
                 keyboardType: TextInputType.number,
                 validator: _requiredValidator,
@@ -452,16 +393,7 @@ class _OssValidasiPageState extends State<OssValidasiPage> {
                       : null,
                   helperMaxLines: 2,
                   // OCR: ikon scan per field
-                  suffixIcon: _dariDaftar
-                      ? null
-                      : OcrFieldActions(
-                          onPaste: _submitting
-                              ? null
-                              : () => _pasteInto(OcrFieldType.kbli),
-                          onScan: _submitting
-                              ? null
-                              : () => _scanOcr({OcrFieldType.kbli}),
-                        ),
+                  suffixIcon: _ocrSuffix(OcrFieldType.kbli),                     
                 ),
                 keyboardType: TextInputType.number,
                 maxLength: 5,
@@ -537,8 +469,7 @@ class _OssValidasiPageState extends State<OssValidasiPage> {
                 const SizedBox(height: 8),
                 DropdownButtonFormField<String>(
                   initialValue: _kbliDesc,
-                  isExpanded:
-                      true,
+                  isExpanded: true,
                   decoration: const InputDecoration(
                     hintText: 'Pilih jenis usaha penyediaan akomodasi lainnya',
                     prefixIcon: Icon(Icons.apartment_outlined, size: 20),

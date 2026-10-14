@@ -861,36 +861,7 @@ class _NonOssFormPageState extends State<NonOssFormPage>
 
   @override
   Widget build(BuildContext context) => Theme(
-    data: Theme.of(context).copyWith(
-      colorScheme: ColorScheme.fromSeed(
-        seedColor: AppTheme.primaryColor,
-        primary: AppTheme.primaryColor,
-        brightness: Theme.of(context).brightness, // langsung dari context
-        surface: AppTheme.surface(context),
-      ),
-      inputDecorationTheme: InputDecorationTheme(
-        contentPadding: const EdgeInsets.symmetric(
-          horizontal: 14,
-          vertical: 16,
-        ),
-        labelStyle: TextStyle(color: AppTheme.textSecondary(context)),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(13),
-          borderSide: BorderSide(color: AppTheme.border(context)),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(13),
-          borderSide: BorderSide(color: AppTheme.border(context)),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(13),
-          borderSide: const BorderSide(
-            color: AppTheme.primaryColor,
-            width: 1.5,
-          ),
-        ),
-      ),
-    ),
+    data: AppTheme.formTheme(context),
     child: PopScope(
       canPop: false,
       onPopInvokedWithResult: (bool didPop, Object? result) {

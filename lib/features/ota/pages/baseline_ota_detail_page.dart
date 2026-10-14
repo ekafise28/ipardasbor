@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:ipardasbor/shared/utils/formatters.dart';
 import 'package:ipardasbor/shared/utils/ui_actions.dart';
+import 'package:ipardasbor/shared/widgets/app_banner.dart';
+import 'package:ipardasbor/shared/widgets/detail_cards.dart';
 
 import '../../../app/app_theme.dart';
 import '../models/baseline_ota_item.dart';
@@ -15,9 +17,6 @@ class BaselineOtaDetailPage extends StatelessWidget {
   const BaselineOtaDetailPage({super.key, required this.item});
 
   final BaselineOtaItem item;
-
-  String _tgl(DateTime d) =>
-      '${d.day.toString().padLeft(2, '0')}-${d.month.toString().padLeft(2, '0')}-${d.year}';
 
   Future<void> _salin(BuildContext context, String teks, String label) async {
     await Clipboard.setData(ClipboardData(text: teks));
@@ -114,7 +113,7 @@ class BaselineOtaDetailPage extends StatelessWidget {
               _Baris(label: 'Platform', nilai: _atauStrip(item.platformOta)),
               _Baris(
                 label: 'Tanggal scraping',
-                nilai: item.scrapedAt != null ? _tgl(item.scrapedAt!) : '-',
+                nilai: formatTanggal(item.scrapedAt) ?? '-',
               ),
               _Baris(label: 'ID listing', nilai: '#${item.id}'),
               const SizedBox(height: 4),
@@ -165,82 +164,64 @@ class BaselineOtaDetailPage extends StatelessWidget {
           ? null
           : ValueListenableBuilder<bool>(
               valueListenable: NetworkStatus.instance,
-              builder: (context, offline, _) => Container(
-                decoration: BoxDecoration(
-                  color: AppTheme.surface(context),
-                  border: Border(
-                    top: BorderSide(color: AppTheme.border(context)),
-                  ),
-                ),
-                child: SafeArea(
-                  top: false,
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        if (offline)
-                          Padding(
-                            padding: const EdgeInsets.only(bottom: 8),
-                            child: Text(
-                              'Perlu koneksi internet untuk verifikasi.',
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: AppTheme.textSecondary(context),
-                              ),
-                            ),
-                          ),
-                        Row(
-                          children: [
-                            Expanded(
-                              flex: 5,
-                              child: OtaVerifButton(
-                                label: 'Ada NIB',
-                                color: AppTheme.primaryColor,
-                                filled: true,
-                                onTap: offline
-                                    ? null
-                                    : () => Navigator.pop(
-                                        context,
-                                        BaselineOtaAksi.adaNib,
-                                      ),
-                              ),
-                            ),
-                            const SizedBox(width: 6),
-                            Expanded(
-                              flex: 4,
-                              child: OtaVerifButton(
-                                label: 'Tidak Ada',
-                                color: Colors.red.shade700,
-                                onTap: offline
-                                    ? null
-                                    : () => Navigator.pop(
-                                        context,
-                                        BaselineOtaAksi.tidakAda,
-                                      ),
-                              ),
-                            ),
-                            const SizedBox(width: 6),
-                            Expanded(
-                              flex: 4,
-                              child: OtaVerifButton(
-                                label: 'Tidak Tahu',
-                                color: Colors.blueGrey.shade600,
-                                onTap: offline
-                                    ? null
-                                    : () => Navigator.pop(
-                                        context,
-                                        BaselineOtaAksi.tidakTahu,
-                                      ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
+              builder: (context, offline, _) {
+                VoidCallback? pilih(BaselineOtaAksi aksi) =>
+                    offline ? null : () => Navigator.pop(context, aksi);
+                return Container(
+                  decoration: BoxDecoration(
+                    color: AppTheme.surface(context),
+                    border: Border(
+                      top: BorderSide(color: AppTheme.border(context)),
                     ),
                   ),
-                ),
-              ),
+                  child: SafeArea(
+                    top: false,
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          if (offline)
+                            const OfflineNotice(
+                              pesan: 'Perlu koneksi internet untuk verifikasi.',
+                            ),
+                          Row(
+                            children: [
+                              Expanded(
+                                flex: 5,
+                                child: OtaVerifButton(
+                                  label: 'Ada NIB',
+                                  color: AppTheme.primaryColor,
+                                  filled: true,
+                                  onTap: pilih(BaselineOtaAksi.adaNib),
+                                ),
+                              ),
+                              const SizedBox(width: 6),
+                              Expanded(
+                                flex: 4,
+                                child: OtaVerifButton(
+                                  label: 'Tidak Ada',
+                                  color: Colors.red.shade700,
+                                  onTap: pilih(BaselineOtaAksi.tidakAda),
+                                ),
+                              ),
+                              const SizedBox(width: 6),
+                              Expanded(
+                                flex: 4,
+                                child: OtaVerifButton(
+                                  label: 'Tidak Tahu',
+                                  color: Colors.blueGrey.shade600,
+                                  onTap: pilih(BaselineOtaAksi.tidakTahu),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                );
+              },
             ),
     );
   }
@@ -256,28 +237,11 @@ class _Seksi extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: AppTheme.surface(context),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppTheme.border(context)),
-      ),
+    return DetailCard(
+      title: judul,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            judul,
-            style: TextStyle(
-              color: AppTheme.textColor(context),
-              fontSize: 13.5,
-              fontWeight: FontWeight.w800,
-            ),
-          ),
-          const SizedBox(height: 10),
-          ...anak,
-        ],
+        children: anak,
       ),
     );
   }

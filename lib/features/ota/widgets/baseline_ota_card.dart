@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:ipardasbor/shared/utils/ui_actions.dart';
 import 'package:ipardasbor/shared/widgets/list_parts.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -25,19 +26,6 @@ class BaselineOtaCard extends StatelessWidget {
   final VoidCallback onAdaNib;
   final VoidCallback onTidakAda;
   final VoidCallback onTidakTahu;
-
-  Future<void> _buka(BuildContext context, String? url) async {
-    if (url == null || url.trim().isEmpty) return;
-    final Uri? uri = Uri.tryParse(url);
-    if (uri == null ||
-        !await launchUrl(uri, mode: LaunchMode.externalApplication)) {
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Tidak bisa membuka tautan ini.')),
-        );
-      }
-    }
-  }
 
   String _tgl(DateTime d) =>
       '${d.day.toString().padLeft(2, '0')}-${d.month.toString().padLeft(2, '0')}-${d.year}';
@@ -150,14 +138,14 @@ class BaselineOtaCard extends StatelessWidget {
                           icon: Icons.open_in_new_rounded,
                           enabled: (item.sourceUrl ?? '').trim().isNotEmpty,
                           tooltip: 'Buka listing OTA',
-                          onTap: () => _buka(context, item.sourceUrl),
+                          onTap: () => bukaTautan(context, item.sourceUrl),
                         ),
                         const SizedBox(width: 8),
                         _LinkButton(
                           icon: Icons.map_rounded,
                           enabled: (item.urlMaps ?? '').trim().isNotEmpty,
                           tooltip: 'Buka di Maps',
-                          onTap: () => _buka(context, item.urlMaps),
+                          onTap: () => bukaTautan(context, item.urlMaps),
                         ),
                       ],
                     ),

@@ -230,6 +230,39 @@ class AppTheme {
       ),
     );
   }
+
+    /// Tema untuk halaman form (OSS, Non-OSS, validasi): warna utama dan gaya
+  /// kolom isian tanpa latar terisi. Dipakai lewat
+  /// `Theme(data: AppTheme.formTheme(context), child: ...)`.
+  static ThemeData formTheme(BuildContext context) {
+    final ThemeData base = Theme.of(context);
+    final OutlineInputBorder garis = OutlineInputBorder(
+      borderRadius: BorderRadius.circular(13),
+      borderSide: BorderSide(color: border(context)),
+    );
+
+    return base.copyWith(
+      colorScheme: ColorScheme.fromSeed(
+        seedColor: primaryColor,
+        primary: primaryColor,
+        brightness: base.brightness,
+        surface: surface(context),
+      ),
+      inputDecorationTheme: InputDecorationTheme(
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 14,
+          vertical: 16,
+        ),
+        labelStyle: TextStyle(color: textSecondary(context)),
+        border: garis,
+        enabledBorder: garis,
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(13),
+          borderSide: const BorderSide(color: primaryColor, width: 1.5),
+        ),
+      ),
+    );
+  }
 }
 
 /// Mengelola status mode gelap aplikasi dan menyimpannya secara lokal
