@@ -12,7 +12,7 @@ class NonOssSyncService {
   final NonOssService remote;
   final OfflineDatabase database;
 
-  bool _running = false;
+  static bool _running = false;
 
   /// Mengirim satu data lokal ke server.
   ///
@@ -42,7 +42,12 @@ class NonOssSyncService {
         return false;
       }
 
-      await database.markSyncing(data.clientUuid);
+      // Klaim atomik. Kalau gagal, proses lain sedang/sudah mengirim data
+      // ini: berhenti tanpa menandai FAILED dan tanpa notifikasi.
+      final bool diklaim = await database.markSyncing(data.clientUuid);
+      if (!diklaim) {
+        return false;
+      }
 
       final dynamic response = await remote.submitLocal(data);
 

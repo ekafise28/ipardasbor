@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:ipardasbor/features/non_oss/offline/auto_sync_controller.dart';
+import 'package:ipardasbor/features/non_oss/offline/offline_database.dart';
 import 'package:ipardasbor/features/notifications/services/notification_category_preferences.dart';
 import 'package:ipardasbor/features/notifications/services/notification_local_service.dart';
 import 'package:ipardasbor/features/notifications/services/notification_retention_controller.dart';
@@ -24,5 +25,12 @@ void main() async {
   await CachePreferences.instance.loadSavedPreference();
   await NetworkStatus.instance.init();
   ApiCache.instance.pruneExpired(); // tanpa await, jalan di latar belakang
+  // Saat app baru dibuka tidak ada proses kirim yang berjalan, jadi semua
+  // SYNCING sisa sesi sebelumnya aman dikembalikan ke PENDING.
+  try {
+    await OfflineDatabase.instance.restoreInterruptedSyncs(
+      staleAfter: Duration.zero,
+    );
+  } catch (_) {}
   runApp(const IparApp());
 }

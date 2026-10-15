@@ -1,5 +1,5 @@
 import 'dart:convert';
-
+import 'package:uuid/uuid.dart';
 import 'package:image_picker/image_picker.dart';
 import '../offline/non_oss_local_data.dart';
 
@@ -9,6 +9,12 @@ class NonOssFormData {
   /// Slug bidang usaha (key config bidang_usaha_pariwisata). Draft/antrean
   /// lama tanpa nilai ini dianggap akomodasi.
   String bidang = 'akomodasi';
+
+  /// ID unik data ini, dibuat SEKALI saat form dibuat dan dipakai ulang di
+  /// pengiriman langsung maupun antrean offline. Server memakainya untuk
+  /// menolak duplikat (kolom kode_validasi). Mode edit memakai UUID milik
+  /// data yang diedit (lihat fromLocalData).
+  String clientUuid = const Uuid().v4();
 
   String memilikiNib = 'TIDAK';
 
@@ -76,6 +82,7 @@ class NonOssFormData {
     final NonOssFormData form = NonOssFormData();
     final Map<String, String> payload = data.payload;
 
+    form.clientUuid = data.clientUuid;
     form.memilikiNib = payload['memiliki_nib'] ?? 'TIDAK';
     form.bidang = payload['bidang_usaha'] ?? 'akomodasi';
     form.namaPemilik = payload['nama_pemilik'] ?? '';
@@ -158,6 +165,7 @@ class NonOssFormData {
     final Map<String, String> fields = <String, String>{
       'memiliki_nib': memilikiNib.trim().toUpperCase(),
       'bidang_usaha': bidang,
+      'client_uuid': clientUuid,
       'nama_pemilik': namaPemilik.trim(),
       'nama_brand': namaBrand.trim(),
       'jenis_produk': jenisProduk.trim(),

@@ -243,16 +243,30 @@ class OfflineDatabase {
     return rows.map(NonOssLocalData.fromDatabase).toList(growable: false);
   }
 
-  // markSyncing / markSynced / markFailed SENGAJA hanya memakai client_uuid,
-  // tanpa filter pemilik: baris yang dimaksud sudah diambil lewat query di
-  // atas (yang terbatas ke akun aktif). Kalau sesi berganti di tengah
-  // proses kirim, status tetap harus tercatat supaya data tidak terkirim
-  // dua kali.
-  Future<void> markSyncing(String clientUuid) async {
-    await _updateStatus(clientUuid, SyncStatus.syncing, <String, Object?>{
-      'last_attempt_at': DateTime.now().toIso8601String(),
-      'last_error': null,
-    });
+  /// Klaim atomik: hanya berhasil kalau baris masih PENDING/FAILED.
+  /// Return false kalau sudah diklaim proses lain (SYNCING), sudah SYNCED,
+  /// atau berstatus DRAFT. Pemanggil harus berhenti kalau false.
+  Future<bool> markSyncing(String clientUuid) async {
+    final Database db = await database;
+    final String now = DateTime.now().toIso8601String();
+
+    final int diubah = await db.update(
+      table,
+      <String, Object?>{
+        'sync_status': SyncStatus.syncing.value,
+        'updated_at': now,
+        'last_attempt_at': now,
+        'last_error': null,
+      },
+      where: 'client_uuid = ? AND sync_status IN (?, ?)',
+      whereArgs: <Object?>[
+        clientUuid,
+        SyncStatus.pending.value,
+        SyncStatus.failed.value,
+      ],
+    );
+
+    return diubah == 1;
   }
 
   Future<void> markSynced(String clientUuid, {int? serverId}) async {
@@ -280,18 +294,25 @@ class OfflineDatabase {
     );
   }
 
-  /// Global untuk semua akun: hanya mengembalikan status SYNCING (proses
-  /// yang terputus) ke PENDING, tidak membuka data siapa pun.
-  Future<void> restoreInterruptedSyncs() async {
+  /// Mengembalikan status SYNCING yang macet ke PENDING. Hanya baris yang
+  /// percobaannya sudah lebih tua dari [staleAfter], supaya proses kirim
+  /// yang masih berjalan tidak ikut di-reset. Saat aplikasi baru dibuka,
+  /// pakai Duration.zero karena belum ada proses kirim yang berjalan.
+  Future<void> restoreInterruptedSyncs({
+    Duration staleAfter = const Duration(minutes: 5),
+  }) async {
     final Database db = await database;
+    final String batas = DateTime.now().subtract(staleAfter).toIso8601String();
+
     await db.update(
       table,
       <String, Object?>{
         'sync_status': SyncStatus.pending.value,
         'updated_at': DateTime.now().toIso8601String(),
       },
-      where: 'sync_status = ?',
-      whereArgs: <Object?>[SyncStatus.syncing.value],
+      where:
+          'sync_status = ? AND (last_attempt_at IS NULL OR last_attempt_at <= ?)',
+      whereArgs: <Object?>[SyncStatus.syncing.value, batas],
     );
   }
 

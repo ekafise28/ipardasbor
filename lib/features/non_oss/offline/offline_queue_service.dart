@@ -41,7 +41,7 @@ class OfflineQueueService {
       throw Exception('Isi minimal satu data sebelum menyimpan sebagai draft.');
     }
 
-    final String clientUuid = _uuid.v4();
+    final String clientUuid = form.clientUuid;
     final List<String> photoPaths = await _photoStorage.persistAll(
       clientUuid,
       form.photos,
@@ -113,7 +113,7 @@ class OfflineQueueService {
   }
 
   Future<NonOssLocalData> save(NonOssFormData form) async {
-    final String clientUuid = _uuid.v4();
+    final String clientUuid = form.clientUuid;
     final List<String> photoPaths = await _photoStorage.persistAll(
       clientUuid,
       form.photos,

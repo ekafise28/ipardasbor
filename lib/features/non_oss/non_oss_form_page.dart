@@ -534,7 +534,22 @@ class _NonOssFormPageState extends State<NonOssFormPage>
     _RequiredCheck(_Section.foto, _data.photos.isEmpty),
   ];
 
+  // Guard sinkron. _saving baru menyala setelah `await endOfFrame` di
+  // _doSubmit, jadi dua ketukan cepat sebelumnya sama-sama lolos dan
+  // mengirim dua kali (pola duplikat 2-10 detik di data staging).
+  bool _submitGuard = false;
+
   Future<void> _submit() async {
+    if (_submitGuard || _saving) return;
+    _submitGuard = true;
+    try {
+      await _doSubmit();
+    } finally {
+      _submitGuard = false;
+    }
+  }
+
+  Future<void> _doSubmit() async {
     _key.currentState!.validate();
     _key.currentState!.save();
 
