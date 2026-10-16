@@ -1,5 +1,5 @@
 import 'dart:convert';
-import 'package:ipardasbor/shared/utils/ota_fields.dart';
+import 'package:ipardasbor/shared/utils/ota_utils.dart';
 import 'package:uuid/uuid.dart';
 import 'package:image_picker/image_picker.dart';
 import '../offline/non_oss_local_data.dart';

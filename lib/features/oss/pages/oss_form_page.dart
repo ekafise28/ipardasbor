@@ -10,7 +10,7 @@ import 'package:ipardasbor/features/oss/pages/oss_akomodasi_form_page.dart';
 import 'package:ipardasbor/shared/gps/gps_capture_mixin.dart';
 import 'package:ipardasbor/core/constants/bidang_usaha_constants.dart';
 import 'package:ipardasbor/shared/utils/form_validators.dart';
-import 'package:ipardasbor/shared/utils/ota_url_rules.dart';
+import 'package:ipardasbor/shared/utils/ota_utils.dart';
 
 import '../../../core/api/api_client.dart';
 import '../../../shared/region/models/region_option.dart';

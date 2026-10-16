@@ -6,7 +6,7 @@ import 'package:ipardasbor/features/sinkronisasi/widgets/submission_photos.dart'
 import 'package:ipardasbor/features/oss/models/oss_jenis_produk_akomodasi.dart';
 import 'package:ipardasbor/features/sinkronisasi/widgets/sync_table.dart';
 import 'package:ipardasbor/shared/utils/formatters.dart';
-import 'package:ipardasbor/shared/utils/ota_fields.dart';
+import 'package:ipardasbor/shared/utils/ota_utils.dart';
 import 'package:ipardasbor/shared/utils/ui_actions.dart';
 import '../../non_oss/services/non_oss_service.dart';
 

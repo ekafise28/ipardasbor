@@ -10,7 +10,7 @@ import 'package:ipardasbor/features/oss/widgets/oss_status_ketidaksesuaian_selec
 import 'package:ipardasbor/shared/gps/gps_capture_mixin.dart';
 import 'package:ipardasbor/core/constants/bidang_usaha_constants.dart';
 import 'package:ipardasbor/features/oss/models/oss_jenis_produk_akomodasi.dart';
-import 'package:ipardasbor/shared/utils/ota_url_rules.dart';
+import 'package:ipardasbor/shared/utils/ota_utils.dart';
 import 'package:ipardasbor/shared/widgets/form/ota_platform_selector.dart';
 
 import '../../core/api/api_client.dart';

@@ -3,7 +3,8 @@ import 'package:ipardasbor/app/app_theme.dart';
 import 'package:ipardasbor/core/constants/ota_platform_constants.dart';
 import 'package:ipardasbor/shared/utils/form_validators.dart';
 
-/// Pemilih platform OTA: grid chip + satu field URL per platform terpilih.
+/// Pemilih platform OTA: daftar checkbox vertikal, dan tiap platform yang
+/// dicentang menampilkan satu field URL tepat di bawahnya.
 ///
 /// Data: `Map<String, List<String>>` key platform -> daftar URL. Satu platform
 /// satu URL, jadi widget hanya membaca dan menulis URL pertama.
@@ -42,14 +43,14 @@ class _OtaPlatformSelectorState extends State<OtaPlatformSelector> {
     super.dispose();
   }
 
-  void _toggle(String key, bool selected) {
+  void _toggle(String key, bool pilih) {
     final Map<String, List<String>> next = Map<String, List<String>>.from(
       widget.urls,
     );
-    if (selected) {
-      next.remove(key);
-    } else {
+    if (pilih) {
       next[key] = <String>[''];
+    } else {
+      next.remove(key);
     }
     widget.onChanged(next);
   }
@@ -74,113 +75,71 @@ class _OtaPlatformSelectorState extends State<OtaPlatformSelector> {
 
   @override
   Widget build(BuildContext context) {
-    final List<MapEntry<String, String>> platforms =
-        OtaPlatform.labels.entries.toList(growable: false);
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        GridView.builder(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          itemCount: platforms.length,
-          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 2,
-            crossAxisSpacing: 8,
-            mainAxisSpacing: 8,
-            childAspectRatio: 3.2,
-          ),
-          itemBuilder: (context, index) {
-            final MapEntry<String, String> entry = platforms[index];
-            final bool selected = widget.urls.containsKey(entry.key);
+      children: OtaPlatform.labels.entries.map((entry) {
+        final bool selected = widget.urls.containsKey(entry.key);
+        final List<String> daftarUrl = widget.urls[entry.key] ?? const [];
+        final String urlSaatIni = daftarUrl.isNotEmpty ? daftarUrl.first : '';
 
-            return InkWell(
-              borderRadius: BorderRadius.circular(10),
-              onTap: () => _toggle(entry.key, selected),
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10),
-                decoration: BoxDecoration(
-                  color: selected
-                      ? AppTheme.textOnBrandBadge
-                      : AppTheme.scaffoldColorDynamic(context),
-                  borderRadius: BorderRadius.circular(10),
-                  border: Border.all(
-                    color: selected
-                        ? AppTheme.primaryColor
-                        : AppTheme.border(context),
-                    width: selected ? 1.5 : 1,
-                  ),
-                ),
-                child: Row(
-                  children: [
-                    Icon(
-                      selected
-                          ? Icons.check_circle_rounded
-                          : Icons.circle_outlined,
-                      size: 17,
-                      color: selected
-                          ? AppTheme.primaryColor
-                          : AppTheme.textMuted,
-                    ),
-                    const SizedBox(width: 7),
-                    Expanded(
-                      child: Text(
-                        entry.value,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w700,
-                          color: selected
-                              ? AppTheme.primaryColor
-                              : AppTheme.textSecondary(context),
-                        ),
-                      ),
-                    ),
-                  ],
+        return Column(
+          key: ValueKey<String>(entry.key),
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            CheckboxListTile(
+              contentPadding: EdgeInsets.zero,
+              dense: true,
+              title: Text(
+                entry.value,
+                style: TextStyle(
+                  fontSize: 13.5,
+                  fontWeight: FontWeight.w700,
+                  color: AppTheme.textColor(context),
                 ),
               ),
-            );
-          },
-        ),
-        for (final MapEntry<String, String> entry in platforms)
-          if (widget.urls.containsKey(entry.key)) ...[
-            if (entry.key == OtaPlatform.lainnya &&
-                widget.onLainnyaChanged != null)
-              Padding(
-                padding: const EdgeInsets.only(top: 10),
-                child: TextFormField(
-                  key: const ValueKey<String>('ota_lainnya_nama'),
-                  controller: _lainnyaCtrl,
-                  decoration: _decoration(
-                    'Nama OTA Lainnya *',
-                    'Nama platform',
-                    Icons.edit_outlined,
-                  ),
-                  validator: (String? v) =>
-                      (v == null || v.trim().isEmpty) ? 'Wajib diisi.' : null,
-                  onChanged: widget.onLainnyaChanged,
-                ),
-              ),
-            Padding(
-              padding: const EdgeInsets.only(top: 10),
-              child: TextFormField(
-                key: ValueKey<String>('ota_url_${entry.key}'),
-                initialValue: (widget.urls[entry.key] ?? const <String>[])
-                        .isNotEmpty
-                    ? widget.urls[entry.key]!.first
-                    : '',
-                decoration: _decoration(
-                  'URL listing ${entry.value} *',
-                  'https://...',
-                  Icons.link_rounded,
-                ),
-                keyboardType: TextInputType.url,
-                validator: (String? v) => FormValidators.url(v, wajib: true),
-                onChanged: (String v) => _setUrl(entry.key, v),
-              ),
+              value: selected,
+              onChanged: (bool? v) => _toggle(entry.key, v == true),
             ),
+            if (selected) ...[
+              if (entry.key == OtaPlatform.lainnya &&
+                  widget.onLainnyaChanged != null)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 10),
+                  child: TextFormField(
+                    key: const ValueKey<String>('ota_lainnya_nama'),
+                    controller: _lainnyaCtrl,
+                    decoration: _decoration(
+                      'Nama OTA Lainnya *',
+                      'Nama platform',
+                      Icons.edit_outlined,
+                    ),
+                    validator: (String? v) =>
+                        (v == null || v.trim().isEmpty)
+                        ? 'Wajib diisi.'
+                        : null,
+                    onChanged: widget.onLainnyaChanged,
+                  ),
+                ),
+              Padding(
+                padding: const EdgeInsets.only(bottom: 12),
+                child: TextFormField(
+                  key: ValueKey<String>('ota_url_${entry.key}'),
+                  initialValue: urlSaatIni,
+                  decoration: _decoration(
+                    'URL listing ${entry.value} *',
+                    'https://...',
+                    Icons.link_rounded,
+                  ),
+                  keyboardType: TextInputType.url,
+                  validator: (String? v) =>
+                      FormValidators.url(v, wajib: true),
+                  onChanged: (String v) => _setUrl(entry.key, v),
+                ),
+              ),
+            ],
           ],
-      ],
+        );
+      }).toList(),
     );
   }
 }
