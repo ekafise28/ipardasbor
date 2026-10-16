@@ -16,11 +16,14 @@ class FormValidators {
     return null;
   }
 
-  static String? url(String? v) {
+  /// [wajib] true: kosong ditolak ("URL wajib diisi."), dipakai URL listing OTA.
+  /// Tetap kompatibel dipakai sebagai `validator: FormValidators.url`.
+  static String? url(String? v, {bool wajib = false}) {
     final String value = v?.trim() ?? '';
-    if (value.isEmpty) return null;
+    if (value.isEmpty) return wajib ? 'URL wajib diisi.' : null;
     final Uri? uri = Uri.tryParse(value);
-    final bool valid = uri != null &&
+    final bool valid =
+        uri != null &&
         uri.hasScheme &&
         (uri.scheme == 'http' || uri.scheme == 'https') &&
         uri.host.isNotEmpty;

@@ -1,6 +1,7 @@
 // lib/features/oss/models/akomodasi_item_data.dart
 import 'package:image_picker/image_picker.dart';
-import 'package:ipardasbor/features/oss/widgets/oss_ota_platform_selector.dart';
+import 'package:ipardasbor/shared/utils/ota_fields.dart';
+import 'package:ipardasbor/shared/utils/ota_url_rules.dart';
 
 /// Status live-check NIB/KBLI/NKU satu kartu akomodasi (dipanggil ke
 /// endpoint /mobile/oss/validasi-akomodasi - lihat AkomodasiService).
@@ -117,6 +118,12 @@ class AkomodasiItemData {
 
     if (!identitasDasarLengkap) return false;
 
+    if (terdaftarOtaYa &&
+        (OtaUrlRules.belumLengkap(otaUrls) ||
+            OtaUrlRules.adaUrlTidakValid(otaUrls))) {
+      return false;
+    }
+
     if (memilikiNibYa) {
       final bool nibLengkap =
           nib.trim().isNotEmpty &&
@@ -184,27 +191,7 @@ class AkomodasiItemData {
     }
 
     if (terdaftarOtaYa) {
-      final List<MapEntry<String, List<String>>> selected = otaUrls.entries
-          .where(
-            (e) =>
-                e.key.trim().isNotEmpty &&
-                e.value.any((u) => u.trim().isNotEmpty),
-          )
-          .toList(growable: false);
-
-      for (int i = 0; i < selected.length; i++) {
-        final String url = selected[i].value.firstWhere(
-          (u) => u.trim().isNotEmpty,
-          orElse: () => '',
-        );
-        // 'nama' dikirim sebagai label manusiawi (bukan key mentah seperti
-        // 'booking_com'), karena backend B2 langsung menyimpan string ini
-        // apa adanya ke kolom nama_platform (tidak ada tabel terjemahan
-        // key->label seperti $platformMap di mobileStorePengawasanOss).
-        fields['$p[ota][$i][nama]'] =
-            OtaPlatformSelector.platforms[selected[i].key] ?? selected[i].key;
-        fields['$p[ota][$i][url]'] = url.trim();
-      }
+      OtaFields.tulisAkomodasi(fields, p, otaUrls);
     }
 
     return fields;

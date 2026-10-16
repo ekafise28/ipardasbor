@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:ipardasbor/shared/utils/ota_fields.dart';
 import 'package:uuid/uuid.dart';
 import 'package:image_picker/image_picker.dart';
 import '../offline/non_oss_local_data.dart';
@@ -120,37 +121,9 @@ class NonOssFormData {
 
     // Susun ulang platform_ota[i] & ota_urls[platform][j] menjadi
     // Map<String, List<String>> seperti bentuk asalnya di form.
-    final RegExp platformPattern = RegExp(r'^platform_ota\[(\d+)\]$');
-    final RegExp urlPattern = RegExp(r'^ota_urls\[([^\]]+)\]\[(\d+)\]$');
-
-    final Map<int, String> platformByIndex = <int, String>{};
-    for (final MapEntry<String, String> entry in payload.entries) {
-      final Match? match = platformPattern.firstMatch(entry.key);
-      if (match != null) {
-        platformByIndex[int.parse(match.group(1)!)] = entry.value;
-      }
-    }
-
-    final Map<String, Map<int, String>> urlByPlatform =
-        <String, Map<int, String>>{};
-    for (final MapEntry<String, String> entry in payload.entries) {
-      final Match? match = urlPattern.firstMatch(entry.key);
-      if (match != null) {
-        final String platform = match.group(1)!;
-        final int urlIndex = int.parse(match.group(2)!);
-        urlByPlatform.putIfAbsent(platform, () => <int, String>{})[urlIndex] =
-            entry.value;
-      }
-    }
-
-    for (final String platform in platformByIndex.values) {
-      final Map<int, String> urlMap =
-          urlByPlatform[platform] ?? <int, String>{};
-      final List<int> sortedKeys = urlMap.keys.toList()..sort();
-      form.otaUrls[platform] = sortedKeys
-          .map((int key) => urlMap[key]!)
-          .toList();
-    }
+    form.otaUrls
+      ..clear()
+      ..addAll(OtaFields.parse(payload));
 
     // Bungkus path foto permanen sebagai XFile supaya PhotoPicker bisa
     // menampilkan foto lama seolah baru saja dipilih.
@@ -217,38 +190,8 @@ class NonOssFormData {
     }
   }
 
-  void _addOtaFields(Map<String, String> fields) {
-    final List<MapEntry<String, List<String>>> selectedOta = otaUrls.entries
-        .where((MapEntry<String, List<String>> entry) {
-          final String platform = entry.key.trim();
-
-          return platform.isNotEmpty &&
-              entry.value.any((String url) => url.trim().isNotEmpty);
-        })
-        .toList(growable: false);
-
-    for (int i = 0; i < selectedOta.length; i++) {
-      final MapEntry<String, List<String>> entry = selectedOta[i];
-      final String platform = entry.key.trim();
-      final List<String> validUrls = entry.value
-          .map((String url) => url.trim())
-          .where((String url) => url.isNotEmpty)
-          .toList(growable: false);
-
-      fields['platform_ota[$i]'] = platform;
-
-      for (int j = 0; j < validUrls.length; j++) {
-        fields['ota_urls[$platform][$j]'] = validUrls[j];
-      }
-    }
-
-    // API mewajibkan nama ini jika platform "lainnya" dipilih.
-    if (selectedOta.any(
-      (MapEntry<String, List<String>> entry) => entry.key.trim() == 'lainnya',
-    )) {
-      _addOptional(fields, 'ota_lainnya_nama', otaLainnyaNama);
-    }
-  }
+  void _addOtaFields(Map<String, String> fields) =>
+      OtaFields.tulis(fields, otaUrls, lainnyaNama: otaLainnyaNama);
 
   void _addOptional(Map<String, String> fields, String key, String value) {
     final String cleanValue = value.trim();

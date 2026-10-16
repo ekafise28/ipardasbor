@@ -1,10 +1,12 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:ipardasbor/core/constants/ota_platform_constants.dart';
 import 'package:ipardasbor/features/sinkronisasi/widgets/submission_photos.dart';
 import 'package:ipardasbor/features/oss/models/oss_jenis_produk_akomodasi.dart';
 import 'package:ipardasbor/features/sinkronisasi/widgets/sync_table.dart';
 import 'package:ipardasbor/shared/utils/formatters.dart';
+import 'package:ipardasbor/shared/utils/ota_fields.dart';
 import 'package:ipardasbor/shared/utils/ui_actions.dart';
 import '../../non_oss/services/non_oss_service.dart';
 
@@ -554,51 +556,18 @@ class _SubmissionDetailPageState extends State<SubmissionDetailPage> {
     );
   }
 
-  static const Map<String, String> _otaPlatformLabels = <String, String>{
-    'booking_com': 'Booking.com',
-    'tiket_com': 'Tiket.com',
-    'traveloka': 'Traveloka',
-    'oyo': 'OYO',
-    'agoda': 'Agoda',
-    'expedia': 'Expedia',
-    'trip_com': 'Trip.com',
-    'reddoorz': 'RedDoorz',
-  };
-
   List<OtaEntry> _parseOtaEntries() {
     final Map<String, String> payload = _data.payload;
-    final RegExp platformKeyRegex = RegExp(r'^platform_ota\[\d+\]$');
-    final RegExp urlKeyRegex = RegExp(r'^ota_urls\[([^\]]+)\]\[\d+\]$');
+    final String lainnyaNama = payload['ota_lainnya_nama'] ?? '';
 
-    final List<String> platforms = <String>[];
-    for (final MapEntry<String, String> entry in payload.entries) {
-      if (platformKeyRegex.hasMatch(entry.key)) {
-        platforms.add(entry.value);
-      }
-    }
-
-    final Map<String, List<String>> urlsByPlatform = <String, List<String>>{};
-    for (final MapEntry<String, String> entry in payload.entries) {
-      final Match? match = urlKeyRegex.firstMatch(entry.key);
-      if (match != null) {
-        urlsByPlatform
-            .putIfAbsent(match.group(1)!, () => <String>[])
-            .add(entry.value);
-      }
-    }
-
-    return platforms.map((String platform) {
-      final String displayName = platform == 'lainnya'
-          ? (payload['ota_lainnya_nama']?.trim().isNotEmpty == true
-                ? payload['ota_lainnya_nama']!.trim()
-                : 'Lainnya')
-          : (_otaPlatformLabels[platform] ?? platform);
-
-      return OtaEntry(
-        name: displayName,
-        urls: urlsByPlatform[platform] ?? const <String>[],
-      );
-    }).toList();
+    return OtaFields.parse(payload).entries
+        .map(
+          (MapEntry<String, List<String>> e) => OtaEntry(
+            name: OtaPlatform.labelTampil(e.key, lainnyaNama: lainnyaNama),
+            urls: e.value,
+          ),
+        )
+        .toList();
   }
 }
 

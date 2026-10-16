@@ -1,3 +1,7 @@
+import 'package:ipardasbor/shared/utils/form_validators.dart';
+import 'package:ipardasbor/shared/utils/ota_fields.dart';
+import 'package:ipardasbor/shared/utils/ota_url_rules.dart';
+
 /// Menentukan bagian form mana yang masih kosong/tidak valid pada sebuah
 /// draft, berdasarkan payload mentah yang tersimpan di antrean lokal.
 ///
@@ -76,16 +80,13 @@ class DraftCompletenessChecker {
       missing.add(
         const DraftMissingItem('Kontak dan Legalitas', 'Telepon/WhatsApp'),
       );
-    } else {
-      final int panjang = v('no_hp').length;
-      if (panjang < 9 || panjang > 15) {
-        missing.add(
-          const DraftMissingItem(
-            'Kontak dan Legalitas',
-            'Format Telepon/WhatsApp (9-15 digit)',
-          ),
-        );
-      }
+    } else if (FormValidators.phone(v('no_hp')) != null) {
+      missing.add(
+        const DraftMissingItem(
+          'Kontak dan Legalitas',
+          'Format Telepon/WhatsApp (10-15 digit)',
+        ),
+      );
     }
     if (!empty('website') && !_isValidUrl(v('website'))) {
       missing.add(
@@ -102,22 +103,12 @@ class DraftCompletenessChecker {
 
     // --- Platform OTA ---
     if (v('terdaftar_ota') == 'YA') {
-      final Map<String, List<String>> otaUrls = _parseOtaUrls(payload);
-      final bool adaUrlTerisi = otaUrls.values.any(
-        (List<String> urls) => urls.any((String u) => u.trim().isNotEmpty),
-      );
+      final Map<String, List<String>> otaUrls = OtaFields.parse(payload);
 
-      if (otaUrls.isEmpty || !adaUrlTerisi) {
+      if (OtaUrlRules.belumLengkap(otaUrls)) {
         missing.add(const DraftMissingItem('Platform OTA', 'URL Listing OTA'));
-      } else {
-        final bool adaUrlTidakValid = otaUrls.values.any(
-          (List<String> urls) => urls.any(
-            (String u) => u.trim().isNotEmpty && !_isValidUrl(u.trim()),
-          ),
-        );
-        if (adaUrlTidakValid) {
-          missing.add(const DraftMissingItem('Platform OTA', 'Format URL OTA'));
-        }
+      } else if (OtaUrlRules.adaUrlTidakValid(otaUrls)) {
+        missing.add(const DraftMissingItem('Platform OTA', 'Format URL OTA'));
       }
     }
 
@@ -141,29 +132,5 @@ class DraftCompletenessChecker {
         uri.hasScheme &&
         (uri.scheme == 'http' || uri.scheme == 'https') &&
         uri.host.isNotEmpty;
-  }
-
-  static Map<String, List<String>> _parseOtaUrls(Map<String, String> payload) {
-    final RegExp urlPattern = RegExp(r'^ota_urls\[([^\]]+)\]\[(\d+)\]$');
-    final Map<String, Map<int, String>> byPlatform =
-        <String, Map<int, String>>{};
-
-    for (final MapEntry<String, String> entry in payload.entries) {
-      final Match? match = urlPattern.firstMatch(entry.key);
-      if (match != null) {
-        final String platform = match.group(1)!;
-        final int index = int.parse(match.group(2)!);
-        byPlatform.putIfAbsent(platform, () => <int, String>{})[index] =
-            entry.value;
-      }
-    }
-
-    return byPlatform.map((String platform, Map<int, String> urlMap) {
-      final List<int> sortedKeys = urlMap.keys.toList()..sort();
-      return MapEntry<String, List<String>>(
-        platform,
-        sortedKeys.map((int key) => urlMap[key]!).toList(),
-      );
-    });
   }
 }

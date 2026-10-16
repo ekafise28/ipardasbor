@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:ipardasbor/core/constants/ota_platform_constants.dart';
 import 'package:ipardasbor/shared/widgets/app_banner.dart';
 
 import '../../../app/app_theme.dart';
@@ -367,7 +368,7 @@ class _AkomodasiReviewPageState extends State<AkomodasiReviewPage> {
               .where((e) => e.value.any((u) => u.trim().isNotEmpty))
               .map(
                 (e) => _kv(
-                  e.key,
+                  OtaPlatform.labelDari(e.key),
                   e.value.where((u) => u.trim().isNotEmpty).join(', '),
                 ),
               ),

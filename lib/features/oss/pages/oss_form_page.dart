@@ -10,6 +10,7 @@ import 'package:ipardasbor/features/oss/pages/oss_akomodasi_form_page.dart';
 import 'package:ipardasbor/shared/gps/gps_capture_mixin.dart';
 import 'package:ipardasbor/core/constants/bidang_usaha_constants.dart';
 import 'package:ipardasbor/shared/utils/form_validators.dart';
+import 'package:ipardasbor/shared/utils/ota_url_rules.dart';
 
 import '../../../core/api/api_client.dart';
 import '../../../shared/region/models/region_option.dart';
@@ -20,7 +21,7 @@ import '../../../shared/widgets/form/photo_picker.dart';
 import '../models/oss_form_data.dart';
 import '../models/oss_validasi_result.dart';
 import '../services/oss_service.dart';
-import '../widgets/oss_ota_platform_selector.dart';
+import '../../../shared/widgets/form/ota_platform_selector.dart';
 import '../widgets/oss_status_ketidaksesuaian_selector.dart';
 
 /// Tahap 2: form lanjutan validasi OSS, dibuka setelah [OssValidasiPage]
@@ -102,7 +103,6 @@ class _OssFormPageState extends State<OssFormPage>
   late final TextEditingController _noHpCtrl;
   late final TextEditingController _emailCtrl;
   late final TextEditingController _catatanPetugasCtrl;
-  late final TextEditingController _otaLainnyaCtrl;
 
   @override
   void initState() {
@@ -135,7 +135,6 @@ class _OssFormPageState extends State<OssFormPage>
     _noHpCtrl = TextEditingController();
     _emailCtrl = TextEditingController();
     _catatanPetugasCtrl = TextEditingController();
-    _otaLainnyaCtrl = TextEditingController();
 
     _muatAwal();
   }
@@ -152,7 +151,6 @@ class _OssFormPageState extends State<OssFormPage>
     _noHpCtrl.dispose();
     _emailCtrl.dispose();
     _catatanPetugasCtrl.dispose();
-    _otaLainnyaCtrl.dispose();
     super.dispose();
   }
 
@@ -363,17 +361,8 @@ class _OssFormPageState extends State<OssFormPage>
 
   String? _emailValidator(String? v) => FormValidators.email(v);
 
-  bool _hasInvalidOtaUrl() {
-    if (_data.terdaftarOta != 'YA') return false;
-    for (final urls in _data.otaUrls.values) {
-      for (final url in urls) {
-        final trimmed = url.trim();
-        if (trimmed.isEmpty) continue;
-        if (_urlValidator(trimmed) != null) return true;
-      }
-    }
-    return false;
-  }
+  bool _hasInvalidOtaUrl() =>
+      _data.terdaftarOta == 'YA' && OtaUrlRules.adaUrlTidakValid(_data.otaUrls);
 
   void _error(Object e) {
     if (!mounted) return;
@@ -388,16 +377,12 @@ class _OssFormPageState extends State<OssFormPage>
   List<_RequiredCheck> _buildChecks() => [
     _RequiredCheck(
       _Section.identitas,
-      !_isManajemenAkomodasi && !_data.isValid && _data.jenisProduk.isEmpty,
-    ),
-    _RequiredCheck(_Section.identitas, _data.namaPemilik.trim().isEmpty),
-    _RequiredCheck(_Section.identitas, _data.namaBrand.trim().isEmpty),
-    _RequiredCheck(
-      _Section.identitas,
       // Untuk Manajemen Akomodasi, jenis_produk selalu "Manajemen
       // Akomodasi" (dipaksa di backend B2), bukan pilihan petugas.
       !_isManajemenAkomodasi && !_data.isValid && _data.jenisProduk.isEmpty,
     ),
+    _RequiredCheck(_Section.identitas, _data.namaPemilik.trim().isEmpty),
+    _RequiredCheck(_Section.identitas, _data.namaBrand.trim().isEmpty),
     _RequiredCheck(_Section.wilayah, _data.provinsiId == null),
     _RequiredCheck(_Section.wilayah, _data.kabupatenId == null),
     _RequiredCheck(_Section.wilayah, _data.kecamatanId == null),
@@ -412,20 +397,22 @@ class _OssFormPageState extends State<OssFormPage>
     _RequiredCheck(_Section.kontak, _urlValidator(_data.website) != null),
     _RequiredCheck(_Section.kontak, _data.email.trim().isEmpty),
     _RequiredCheck(_Section.kontak, _emailValidator(_data.email) != null),
+
     // OTA Tahap 1 tidak relevan untuk Manajemen Akomodasi - OTA-nya ada
     // per item di Tahap 2 (AkomodasiItemCard), bukan di sini.
     if (!_isManajemenAkomodasi) ...[
       _RequiredCheck(
         _Section.ota,
-        _data.terdaftarOta == 'YA' &&
-            (_data.otaUrls.isEmpty ||
-                _data.otaUrls.values.any(
-                  (v) => v.every((x) => x.trim().isEmpty),
-                )),
+        _data.terdaftarOta == 'YA' && OtaUrlRules.belumLengkap(_data.otaUrls),
       ),
       _RequiredCheck(_Section.ota, _hasInvalidOtaUrl()),
+      _RequiredCheck(
+        _Section.ota,
+        _data.terdaftarOta == 'YA' &&
+            _data.otaUrls.containsKey('lainnya') &&
+            _data.otaLainnyaNama.trim().isEmpty,
+      ),
     ],
-    _RequiredCheck(_Section.ota, _hasInvalidOtaUrl()),
     _RequiredCheck(
       _Section.ketidaksesuaian,
       !_data.isValid && _data.statusKetidaksesuaian.isEmpty,
@@ -1132,17 +1119,10 @@ class _OssFormPageState extends State<OssFormPage>
                                         ..clear()
                                         ..addAll(v);
                                     }),
+                                    lainnyaNama: _data.otaLainnyaNama,
+                                    onLainnyaChanged: (v) =>
+                                        _data.otaLainnyaNama = v,
                                   ),
-                                  if (_data.otaUrls.containsKey('lainnya'))
-                                    Padding(
-                                      padding: const EdgeInsets.only(top: 12),
-                                      child: _text(
-                                        'Nama OTA Lainnya',
-                                        _otaLainnyaCtrl,
-                                        (v) => _data.otaLainnyaNama = v,
-                                        icon: Icons.edit_outlined,
-                                      ),
-                                    ),
                                 ],
                               ],
                             ),
