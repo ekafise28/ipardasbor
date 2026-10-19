@@ -25,8 +25,9 @@ import 'widgets/riwayat_filter_sheet.dart';
 
 /// Halaman daftar riwayat pengawasan (OSS / Non-OSS / OTA).
 ///
-/// Fitur: pencarian, filter (sumber data, status, kabupaten, tanggal),
-/// infinite scroll, tarik untuk menyegarkan, dan tombol kembali ke atas.
+/// Fitur: pencarian, chip status cepat (Semua / Draft / Selesai), filter
+/// (sumber data, bidang, kabupaten, tanggal), infinite scroll, tarik untuk
+/// menyegarkan, dan tombol kembali ke atas.
 /// Paginasi dikelola [PaginatedListController], sama seperti halaman OTA.
 class RiwayatPage extends StatefulWidget {
   const RiwayatPage({super.key});
@@ -45,6 +46,9 @@ class _RiwayatPageState extends State<RiwayatPage>
 
   RiwayatFilter _filter = const RiwayatFilter();
   RiwayatFilterOptions _filterOptions = RiwayatFilterOptions.kosong;
+
+  // hitungan per status untuk chip filter cepat.
+  RiwayatRingkasan? _ringkasan;
 
   @override
   void initState() {
@@ -86,9 +90,14 @@ class _RiwayatPageState extends State<RiwayatPage>
     );
   }
 
-  /// Opsi filter dari respons; controller yang memberi tahu UI sesudahnya.
+  /// Opsi filter dan ringkasan status dari respons; controller yang memberi
+  /// tahu UI sesudahnya, jadi tidak perlu setState di sini.
   void _setelahDimuat(PageChunk<RiwayatItem> chunk) {
-    _filterOptions = (chunk.meta! as RiwayatPageResult).filterOptions;
+    final RiwayatPageResult hasil = chunk.meta! as RiwayatPageResult;
+    _filterOptions = hasil.filterOptions;
+    // DIUBAH: ringkasan ikut disimpan. Kalau backend belum mengirim,
+    // nilai lama dipertahankan.
+    _ringkasan = hasil.ringkasan ?? _ringkasan;
   }
 
   void _onCtrl() {
@@ -113,6 +122,17 @@ class _RiwayatPageState extends State<RiwayatPage>
   void _ubahFilter(RiwayatFilter baru) {
     setState(() => _filter = baru);
     _ctrl.reload();
+  }
+
+  // dipanggil chip status cepat.
+  void _ubahStatus(String? status) {
+    if (status == _filter.statusVerifikasi) return;
+    _ubahFilter(
+      _filter.copyWith(
+        statusVerifikasi: status,
+        clearStatusVerifikasi: status == null,
+      ),
+    );
   }
 
   void _terapkanPencarian(String value) {
@@ -145,8 +165,8 @@ class _RiwayatPageState extends State<RiwayatPage>
     _ubahFilter(hasil);
   }
 
-  /// Menghapus SEMUA filter: pencarian dan filter dari sheet. Hanya jumlah
-  /// per halaman yang dipertahankan.
+  /// Menghapus SEMUA filter: pencarian, status, dan filter dari sheet.
+  /// Hanya jumlah per halaman yang dipertahankan.
   void _hapusSemuaFilter() {
     _debounce?.cancel();
     _searchController.clear();
@@ -154,10 +174,14 @@ class _RiwayatPageState extends State<RiwayatPage>
   }
 
   /// Reset dari chip filter aktif ("Reset"): hanya filter dari sheet.
-  /// Pencarian dipertahankan.
+  /// Pencarian dan status dipertahankan.
   void _resetFilterSheet() {
     _ubahFilter(
-      RiwayatFilter(search: _filter.search, perPage: _filter.perPage),
+      RiwayatFilter(
+        search: _filter.search,
+        statusVerifikasi: _filter.statusVerifikasi, // DIUBAH: status dijaga
+        perPage: _filter.perPage,
+      ),
     );
   }
 
@@ -186,8 +210,8 @@ class _RiwayatPageState extends State<RiwayatPage>
     return 'Sampai ${_tgl(selesai!)}';
   }
 
-  /// Chip filter aktif dari sheet (tanpa pencarian, yang punya kolom
-  /// sendiri). Rentang tanggal digabung jadi satu chip.
+  /// Chip filter aktif dari sheet (tanpa pencarian dan status, yang punya
+  /// kontrol sendiri). Rentang tanggal digabung jadi satu chip.
   List<FilterChipData> _chipFilterAktif() {
     final RiwayatFilter f = _filter;
 
@@ -197,11 +221,7 @@ class _RiwayatPageState extends State<RiwayatPage>
           label: f.sumberData!,
           onRemove: () => _ubahFilter(f.copyWith(clearSumberData: true)),
         ),
-      if (f.statusVerifikasi != null)
-        FilterChipData(
-          label: f.statusVerifikasi!,
-          onRemove: () => _ubahFilter(f.copyWith(clearStatusVerifikasi: true)),
-        ),
+      // DIHAPUS: chip statusVerifikasi, sekarang ada di StatusFilterBar.
       if (f.bidangUsaha != null)
         FilterChipData(
           label: BidangUsahaOpsi.namaDari(f.bidangUsaha) ?? f.bidangUsaha!,
@@ -220,6 +240,36 @@ class _RiwayatPageState extends State<RiwayatPage>
           ),
         ),
     ];
+  }
+
+  // baris chip status (pilih satu) dengan jumlah per status.
+  Widget _buildStatusBar() {
+    final RiwayatRingkasan? r = _ringkasan;
+
+    return StatusFilterBar(
+      selected: _filter.statusVerifikasi,
+      onChanged: _ubahStatus,
+      options: <StatusFilterOption>[
+        StatusFilterOption(
+          value: null,
+          label: 'Semua',
+          color: AppTheme.primaryColor,
+          count: r?.total,
+        ),
+        StatusFilterOption(
+          value: 'DRAFT',
+          label: 'Draft',
+          color: AppTheme.warning,
+          count: r?.draft,
+        ),
+        StatusFilterOption(
+          value: 'SELESAI',
+          label: 'Selesai',
+          color: AppTheme.success,
+          count: r?.selesai,
+        ),
+      ],
+    );
   }
 
   @override
@@ -262,6 +312,7 @@ class _RiwayatPageState extends State<RiwayatPage>
               onClear: _hapusPencarian,
             ),
           ),
+          _buildStatusBar(),
           Builder(
             builder: (BuildContext context) {
               final List<FilterChipData> chips = _chipFilterAktif();
@@ -275,9 +326,9 @@ class _RiwayatPageState extends State<RiwayatPage>
               );
             },
           ),
-          if (!_ctrl.loadingFirst &&
-              _ctrl.error == null &&
-              _ctrl.items.isNotEmpty)
+          // DIUBAH: tanpa syarat items.isNotEmpty, sama seperti OTA, supaya
+          // hasil kosong tetap menampilkan "0 riwayat".
+          if (!_ctrl.loadingFirst && _ctrl.error == null)
             ListSummaryLine(total: _ctrl.total, satuan: 'riwayat'),
           Expanded(child: _buildBody()),
         ],
@@ -310,6 +361,8 @@ class _RiwayatPageState extends State<RiwayatPage>
 
     if (items.isEmpty) {
       final bool adaFilter = _filter.hasActiveFilter;
+      final bool adaCari = _filter.search.trim().isNotEmpty;
+
       return RefreshIndicator(
         onRefresh: segarkan,
         child: ListView(
@@ -322,11 +375,16 @@ class _RiwayatPageState extends State<RiwayatPage>
               title: adaFilter
                   ? 'Tidak ada yang cocok'
                   : 'Belum ada riwayat pengawasan',
-              message: adaFilter
-                  ? 'Tidak ada riwayat yang sesuai dengan filter atau kata '
-                        'kunci. Coba ubah atau hapus filternya.'
+              // DIUBAH: pesan dibedakan untuk pencarian, filter, dan kosong.
+              message: adaCari
+                  ? 'Tidak ada riwayat untuk kata kunci tersebut. '
+                        'Coba kata kunci lain.'
+                  : adaFilter
+                  ? 'Tidak ada riwayat yang sesuai dengan filter yang '
+                        'dipilih. Coba ubah atau hapus filternya.'
                   : 'Data akan muncul setelah ada pengawasan yang tersimpan.',
               actionLabel: adaFilter ? 'Hapus semua filter' : null,
+              actionIcon: Icons.restart_alt_rounded,
               onAction: adaFilter ? _hapusSemuaFilter : null,
             ),
           ],

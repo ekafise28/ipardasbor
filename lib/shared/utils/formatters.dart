@@ -44,6 +44,102 @@ String? mapsUrl(Object? lat, Object? lng) {
   return 'https://www.google.com/maps?q=$a,$b';
 }
 
+// ======================================================================
+// Nomor telepon
+// ======================================================================
+
+/// Jenis nomor hasil [klasifikasiNomor].
+enum JenisNomor {
+  /// Seluler Indonesia (08... / 628...): bisa WhatsApp dan telepon.
+  seluler,
+
+  /// Telepon tetap atau nomor layanan (kode area, 1500..., 0800...).
+  telepon,
+
+  /// Bukan nomor yang masuk akal: tampil sebagai teks biasa.
+  bukanNomor,
+}
+
+/// Hasil klasifikasi satu nomor beserta tautan aksinya.
+class NomorTelepon {
+  const NomorTelepon._(this.jenis, this.waUrl, this.telUrl);
+
+  static const NomorTelepon bukanNomor = NomorTelepon._(
+    JenisNomor.bukanNomor,
+    null,
+    null,
+  );
+
+  final JenisNomor jenis;
+
+  /// "https://wa.me/628123..." - hanya untuk [JenisNomor.seluler].
+  final String? waUrl;
+
+  /// "tel:08123..." - null untuk [JenisNomor.bukanNomor].
+  final String? telUrl;
+}
+
+/// Mengklasifikasikan nomor telepon.
+///
+/// Spasi, strip, titik, dan kurung dibuang dulu; awalan "+" dikenali.
+///
+/// - `08...` / `628...` (10-14 digit)      -> seluler (WhatsApp + telepon)
+/// - `8...` tanpa nol (9-12 digit)         -> dianggap seluler
+/// - `0...` selain 08, `62...` selain 628 -> telepon tetap (kode area)
+/// - `1500...`, `0800...`, dsb (7-15 digit)-> telepon
+/// - berisi huruf/simbol, terlalu pendek/panjang, atau semua digit sama
+///                                         -> bukan nomor (tanpa aksi)
+NomorTelepon klasifikasiNomor(String? raw) {
+  final String teks = (raw ?? '').trim();
+  if (teks.isEmpty) return NomorTelepon.bukanNomor;
+
+  final bool pakaiPlus = teks.startsWith('+');
+  final String d = teks
+      .replaceAll(RegExp(r'[\s\-.()]'), '')
+      .replaceFirst(RegExp(r'^\+'), '');
+
+  if (!RegExp(r'^\d+$').hasMatch(d)) return NomorTelepon.bukanNomor;
+  if (RegExp(r'^(\d)\1*$').hasMatch(d)) return NomorTelepon.bukanNomor;
+
+  // Bentuk nasional (awalan 0).
+  final String n;
+  if (d.startsWith('62')) {
+    n = '0${d.substring(2)}';
+  } else if (!pakaiPlus && d.startsWith('8') && d.length >= 9 && d.length <= 12) {
+    n = '0$d'; // nol di depan hilang (mis. karena Excel).
+  } else {
+    n = d;
+  }
+
+  // 0800 adalah nomor layanan bebas pulsa, bukan seluler.
+  if (n.startsWith('08') &&
+      !n.startsWith('0800') &&
+      n.length >= 10 &&
+      n.length <= 14) {
+    return NomorTelepon._(
+      JenisNomor.seluler,
+      'https://wa.me/62${n.substring(1)}',
+      'tel:$n',
+    );
+  }
+
+  // Minimal 7 digit supaya nomor layanan seperti "1500123" tetap dikenali.
+  if (n.length >= 7 && n.length <= 15) {
+    final bool asing = pakaiPlus && !d.startsWith('62');
+    return NomorTelepon._(
+      JenisNomor.telepon,
+      null,
+      asing ? 'tel:+$d' : 'tel:$n',
+    );
+  }
+
+  return NomorTelepon.bukanNomor;
+}
+
+// ======================================================================
+// Tanggal
+// ======================================================================
+
 const List<String> _bulan = <String>[
   'Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun',
   'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des',

@@ -6,7 +6,7 @@ import 'dart:async';
 
 import 'package:ipardasbor/app/app_theme.dart';
 import 'package:ipardasbor/features/non_oss/offline/non_oss_local_data.dart';
-import 'package:ipardasbor/features/oss/widgets/oss_status_ketidaksesuaian_selector.dart';
+import 'package:ipardasbor/shared/widgets/form/status_ketidaksesuaian_selector.dart';
 import 'package:ipardasbor/shared/gps/gps_capture_mixin.dart';
 import 'package:ipardasbor/core/constants/bidang_usaha_constants.dart';
 import 'package:ipardasbor/features/oss/models/oss_jenis_produk_akomodasi.dart';

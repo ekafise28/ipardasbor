@@ -1,301 +1,146 @@
 import 'package:flutter/material.dart';
+import 'package:ipardasbor/shared/utils/formatters.dart';
+import 'package:ipardasbor/shared/widgets/list_parts.dart';
 
 import '../../../app/app_theme.dart';
 import '../../../core/constants/bidang_usaha_constants.dart';
 import '../models/riwayat_item.dart';
 
-/// Kartu ringkasan satu item riwayat pengawasan.
+/// Kartu satu item riwayat pengawasan (OSS / Non-OSS / OTA).
 ///
-/// Menampilkan: jenis (badge), nama usaha, identitas (NIB/OTA), lokasi,
-/// petugas, tanggal, dan status (badge) + tombol Detail.
+/// Anatomi sama dengan kartu OSS dan OTA: strip status di kiri, judul +
+/// chip status, baris chip meta, baris info berikon, lalu tombol detail.
 class RiwayatCard extends StatelessWidget {
   const RiwayatCard({super.key, required this.item, required this.onTap});
 
   final RiwayatItem item;
   final VoidCallback onTap;
 
-  Color _warnaJenis(BuildContext context) {
-    switch (item.jenis.toUpperCase()) {
-      case 'OSS':
-        return AppTheme.menuOss;
-      case 'OTA':
-        return AppTheme.menuOta;
-      case 'NON OSS':
-      default:
-        return AppTheme.menuNonOss;
-    }
+  /// Warna strip: merah > hijau > kuning.
+  Color get _warnaStrip {
+    if (item.ossTidakValid) return AppTheme.danger;
+    return item.selesai ? AppTheme.success : AppTheme.warning;
   }
 
   @override
   Widget build(BuildContext context) {
-    final Color warnaJenis = _warnaJenis(context);
-    final String tanggalLabel = item.tanggal != null
-        ? _formatTanggal(item.tanggal!)
-        : '-';
-    final String jamLabel = item.tanggal != null
-        ? _formatJam(item.tanggal!)
-        : '';
+    final String? bidang = BidangUsahaOpsi.namaDari(item.bidangUsaha);
+    final String? nib = (item.identitas.nib ?? '').trim().isEmpty
+        ? null
+        : item.identitas.nib;
+    final DateTime? tgl = item.tanggal?.toLocal();
 
-    return Card(
-      elevation: 0,
-      color: AppTheme.surface(context),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(14),
-        side: BorderSide(color: AppTheme.border(context)),
-      ),
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(14),
-        onTap: onTap,
-        child: Padding(
-          padding: const EdgeInsets.all(14),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+    return StripCard(
+      stripColor: _warnaStrip,
+      onTap: onTap,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          CardTitleRow(
+            title: item.namaUsaha,
+            statusLabel: item.selesai ? 'Selesai' : 'Draft',
+            statusColor: item.selesai ? AppTheme.success : AppTheme.warning,
+            statusIcon: item.selesai
+                ? Icons.check_circle_rounded
+                : Icons.edit_note_rounded,
+          ),
+          const SizedBox(height: 8),
+
+          // Chip meta
+          Wrap(
+            spacing: 8,
+            runSpacing: 6,
+            crossAxisAlignment: WrapCrossAlignment.center,
             children: <Widget>[
-              Row(
-                children: <Widget>[
-                  _Badge(text: item.jenis, color: warnaJenis),
-                  const SizedBox(width: 8),
-                  _StatusBadge(selesai: item.selesai, label: item.status),
-                  if (item.ossTidakValid) ...<Widget>[
-                    const SizedBox(width: 8),
-                    const _TidakValidBadge(),
-                  ],
-                  const Spacer(),
-                  if (tanggalLabel != '-')
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.end,
-                      children: <Widget>[
-                        Text(
-                          tanggalLabel,
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
-                            color: AppTheme.textColor(context),
-                          ),
-                        ),
-                        if (jamLabel.isNotEmpty)
-                          Text(
-                            jamLabel,
-                            style: TextStyle(
-                              fontSize: 11,
-                              color: AppTheme.textSecondary(context),
-                            ),
-                          ),
-                      ],
-                    ),
-                ],
+              TintChip(
+                label: item.jenis,
+                color: AppTheme.warnaJenis(item.jenis),
               ),
-              const SizedBox(height: 10),
-              Text(
-                item.namaUsaha,
-                style: TextStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w700,
-                  color: AppTheme.textColor(context),
+              if (bidang != null)
+                TintChip(
+                  label: bidang,
+                  color: AppTheme.textSecondary(context),
                 ),
-              ),
-              const SizedBox(height: 2),
-              Text(
-                item.identitas.ringkasan,
+              if (item.ossTidakValid)
+                const TintChip(
+                  label: 'Tidak valid',
+                  color: AppTheme.danger,
+                  icon: Icons.warning_amber_rounded,
+                ),
+            ],
+          ),
+          const SizedBox(height: 10),
+
+          // Identitas legalitas
+          _IdentitasBlock(ringkasan: item.identitas.ringkasan, nib: nib),
+          const SizedBox(height: 10),
+
+          // Info berikon
+          ListInfoRow(
+            icon: Icons.location_on_outlined,
+            text: item.lokasi.gabungan,
+            maxLines: 2,
+          ),
+          ListInfoRow(icon: Icons.badge_outlined, text: item.petugas),
+          if (tgl != null)
+            ListInfoRow(
+              icon: Icons.event_outlined,
+              text: formatTanggalJam(tgl)!,
+            ),
+          const SizedBox(height: 8),
+
+          SizedBox(
+            width: double.infinity,
+            height: 40,
+            child: OutlinedButton.icon(
+              onPressed: onTap,
+              icon: const Icon(Icons.visibility_outlined, size: 18),
+              label: const Text('Lihat Detail'),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Blok berlatar muted: ringkasan status NIB/OTA, plus NIB bila ada.
+class _IdentitasBlock extends StatelessWidget {
+  const _IdentitasBlock({required this.ringkasan, this.nib});
+
+  final String ringkasan;
+  final String? nib;
+
+  @override
+  Widget build(BuildContext context) {
+    return MutedPanel(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Text(
+            ringkasan,
+            style: TextStyle(
+              fontSize: 12.5,
+              fontWeight: FontWeight.w600,
+              color: AppTheme.textColor(context),
+            ),
+          ),
+          if (nib != null)
+            Padding(
+              padding: const EdgeInsets.only(top: 2),
+              child: Text(
+                'NIB $nib',
                 style: TextStyle(
                   fontSize: 12.5,
                   color: AppTheme.textSecondary(context),
+                  fontFeatures: const <FontFeature>[
+                    FontFeature.tabularFigures(),
+                  ],
                 ),
               ),
-              const SizedBox(height: 8),
-              _IconLine(
-                icon: Icons.place_outlined,
-                text: item.lokasi.gabungan,
-                context: context,
-              ),
-              const SizedBox(height: 4),
-              _IconLine(
-                icon: Icons.badge_outlined,
-                text: item.petugas,
-                context: context,
-              ),
-              if (BidangUsahaOpsi.namaDari(item.bidangUsaha) !=
-                  null) ...<Widget>[
-                const SizedBox(height: 4),
-                _IconLine(
-                  icon: Icons.category_outlined,
-                  text: BidangUsahaOpsi.namaDari(item.bidangUsaha)!,
-                  context: context,
-                ),
-              ],
-              const SizedBox(height: 10),
-              Align(
-                alignment: Alignment.centerRight,
-                child: TextButton.icon(
-                  onPressed: onTap,
-                  icon: const Icon(Icons.chevron_right_rounded, size: 18),
-                  label: const Text('Detail'),
-                  style: TextButton.styleFrom(
-                    foregroundColor: AppTheme.menuDashboard,
-                    padding: const EdgeInsets.symmetric(horizontal: 8),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  static String _formatTanggal(DateTime tanggal) {
-    const List<String> bulan = <String>[
-      'Jan',
-      'Feb',
-      'Mar',
-      'Apr',
-      'Mei',
-      'Jun',
-      'Jul',
-      'Agu',
-      'Sep',
-      'Okt',
-      'Nov',
-      'Des',
-    ];
-
-    return '${tanggal.day} ${bulan[tanggal.month - 1]} ${tanggal.year}';
-  }
-
-  static String _formatJam(DateTime tanggal) {
-    final String jam = tanggal.hour.toString().padLeft(2, '0');
-    final String menit = tanggal.minute.toString().padLeft(2, '0');
-
-    return '$jam:$menit';
-  }
-}
-
-class _Badge extends StatelessWidget {
-  const _Badge({required this.text, required this.color});
-
-  final String text;
-  final Color color;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha:0.12),
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Text(
-        text,
-        style: TextStyle(
-          fontSize: 11,
-          fontWeight: FontWeight.w700,
-          color: color,
-        ),
-      ),
-    );
-  }
-}
-
-class _StatusBadge extends StatelessWidget {
-  const _StatusBadge({required this.selesai, required this.label});
-
-  final bool selesai;
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    final Color warna = selesai ? AppTheme.success : AppTheme.warning;
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration: BoxDecoration(
-        color: warna.withValues(alpha:0.12),
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: <Widget>[
-          Icon(
-            selesai
-                ? Icons.check_circle_rounded
-                : Icons.hourglass_bottom_rounded,
-            size: 12,
-            color: warna,
-          ),
-          const SizedBox(width: 4),
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 11,
-              fontWeight: FontWeight.w700,
-              color: warna,
             ),
-          ),
         ],
       ),
-    );
-  }
-}
-
-class _TidakValidBadge extends StatelessWidget {
-  const _TidakValidBadge();
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration: BoxDecoration(
-        color: AppTheme.danger.withValues(alpha:0.12),
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: const Row(
-        mainAxisSize: MainAxisSize.min,
-        children: <Widget>[
-          Icon(Icons.error_outline_rounded, size: 12, color: AppTheme.danger),
-          SizedBox(width: 4),
-          Text(
-            'Tidak Valid',
-            style: TextStyle(
-              fontSize: 11,
-              fontWeight: FontWeight.w700,
-              color: AppTheme.danger,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _IconLine extends StatelessWidget {
-  const _IconLine({
-    required this.icon,
-    required this.text,
-    required this.context,
-  });
-
-  final IconData icon;
-  final String text;
-  final BuildContext context;
-
-  @override
-  Widget build(BuildContext _) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: <Widget>[
-        Icon(icon, size: 15, color: AppTheme.textSecondary(context)),
-        const SizedBox(width: 6),
-        Expanded(
-          child: Text(
-            text,
-            style: TextStyle(
-              fontSize: 12.5,
-              color: AppTheme.textSecondary(context),
-            ),
-          ),
-        ),
-      ],
     );
   }
 }

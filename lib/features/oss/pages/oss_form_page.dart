@@ -22,7 +22,7 @@ import '../models/oss_form_data.dart';
 import '../models/oss_validasi_result.dart';
 import '../services/oss_service.dart';
 import '../../../shared/widgets/form/ota_platform_selector.dart';
-import '../widgets/oss_status_ketidaksesuaian_selector.dart';
+import '../../../shared/widgets/form/status_ketidaksesuaian_selector.dart';
 
 /// Tahap 2: form lanjutan validasi OSS, dibuka setelah [OssValidasiPage]
 /// mengembalikan [OssValidasiResult].

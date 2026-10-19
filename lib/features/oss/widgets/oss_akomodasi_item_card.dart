@@ -14,7 +14,7 @@ import '../../../shared/widgets/form/photo_picker.dart';
 import '../models/oss_akomodasi_item_data.dart';
 import '../models/oss_jenis_produk_akomodasi.dart';
 import '../../../shared/widgets/form/ota_platform_selector.dart';
-import 'oss_status_ketidaksesuaian_selector.dart';
+import '../../../shared/widgets/form/status_ketidaksesuaian_selector.dart';
 
 /// Satu kartu "Akomodasi yang Dikelola" pada Tahap 2 form Manajemen
 /// Akomodasi. Controlled widget - semua perubahan langsung memutasi [data],

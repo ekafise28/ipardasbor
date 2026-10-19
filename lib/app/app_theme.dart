@@ -128,7 +128,18 @@ class AppTheme {
   static const Color menuProfil = Color(0xFF455A64);
   static const Color menuProfilBg = Color(0xFFECEFF1);
 
-
+  /// Warna chip jenis data (OSS / OTA / Non-OSS), dipakai kartu dan halaman
+  /// detail Riwayat. Jenis yang tidak dikenal dianggap Non-OSS.
+  static Color warnaJenis(String jenis) {
+    switch (jenis.toUpperCase()) {
+      case 'OSS':
+        return menuOss;
+      case 'OTA':
+        return menuOta;
+      default:
+        return menuNonOss;
+    }
+  }
 
   // ---- Kategori sumber data (dashboard, grafik, peta) ----
   // Satu kategori = satu warna di semua tempat. Mengikuti warna menu di

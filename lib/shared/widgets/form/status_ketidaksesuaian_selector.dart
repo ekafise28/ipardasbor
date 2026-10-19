@@ -53,6 +53,20 @@ class StatusKetidaksesuaianSelector extends StatelessWidget {
     'LAINNYA': 'Lainnya',
   };
 
+  /// Kode yang tidak muncul sebagai pilihan di form tapi tetap ada di data
+  /// (mis. status tetap Non-OSS saat memiliki_nib == 'TIDAK').
+  static const Map<String, String> _labelTambahan = {
+    'NIB_TIDAK_DITEMUKAN': 'Tidak Punya NIB',
+  };
+
+  /// Label tampilan untuk satu kode status, dari semua daftar di atas.
+  /// Kode yang tidak dikenal ditampilkan apa adanya.
+  static String labelDari(String kode) =>
+      ossStatusHasilOptions[kode] ??
+      nonOssTidakTahuOptions[kode] ??
+      _labelTambahan[kode] ??
+      kode;
+
   @override
   Widget build(BuildContext context) {
     final bool showKeterangan = selected.contains(keteranganKey);

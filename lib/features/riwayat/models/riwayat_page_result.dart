@@ -93,25 +93,54 @@ class RiwayatPageResult {
     required this.items,
     required this.pagination,
     required this.filterOptions,
+    this.ringkasan,
   });
 
   final List<RiwayatItem> items;
   final RiwayatPagination pagination;
   final RiwayatFilterOptions filterOptions;
+  final RiwayatRingkasan? ringkasan;
 
   factory RiwayatPageResult.fromJson(Map<String, dynamic> json) {
     return RiwayatPageResult(
       items: ((json['items'] as List<dynamic>?) ?? const <dynamic>[])
           .map(
-            (dynamic item) => RiwayatItem.fromJson(item as Map<String, dynamic>),
+            (dynamic item) =>
+                RiwayatItem.fromJson(item as Map<String, dynamic>),
           )
           .toList(),
       pagination: RiwayatPagination.fromJson(
-        (json['pagination'] as Map<String, dynamic>?) ?? const <String, dynamic>{},
+        (json['pagination'] as Map<String, dynamic>?) ??
+            const <String, dynamic>{},
       ),
       filterOptions: RiwayatFilterOptions.fromJson(
-        (json['filter_opsi'] as Map<String, dynamic>?) ?? const <String, dynamic>{},
+        (json['filter_opsi'] as Map<String, dynamic>?) ??
+            const <String, dynamic>{},
       ),
+      ringkasan: json['ringkasan'] is Map<String, dynamic>
+          ? RiwayatRingkasan.fromJson(json['ringkasan'] as Map<String, dynamic>)
+          : null,
+    );
+  }
+}
+
+/// Hitungan riwayat per status, untuk chip filter cepat.
+class RiwayatRingkasan {
+  const RiwayatRingkasan({
+    required this.total,
+    required this.draft,
+    required this.selesai,
+  });
+
+  final int total;
+  final int draft;
+  final int selesai;
+
+  factory RiwayatRingkasan.fromJson(Map<String, dynamic> json) {
+    return RiwayatRingkasan(
+      total: (json['total'] as num?)?.toInt() ?? 0,
+      draft: (json['draft'] as num?)?.toInt() ?? 0,
+      selesai: (json['selesai'] as num?)?.toInt() ?? 0,
     );
   }
 }

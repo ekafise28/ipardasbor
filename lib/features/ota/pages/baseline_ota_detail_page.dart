@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:ipardasbor/shared/utils/formatters.dart';
 import 'package:ipardasbor/shared/utils/ui_actions.dart';
 import 'package:ipardasbor/shared/widgets/app_banner.dart';
 import 'package:ipardasbor/shared/widgets/detail_cards.dart';
+import 'package:ipardasbor/shared/widgets/list_parts.dart';
 
 import '../../../app/app_theme.dart';
 import '../models/baseline_ota_item.dart';
@@ -18,11 +18,6 @@ class BaselineOtaDetailPage extends StatelessWidget {
 
   final BaselineOtaItem item;
 
-  Future<void> _salin(BuildContext context, String teks, String label) async {
-    await Clipboard.setData(ClipboardData(text: teks));
-    if (context.mounted) tampilkanPesan(context, '$label disalin.');
-  }
-
   String? get _urlMaps {
     if ((item.urlMaps ?? '').trim().isNotEmpty) return item.urlMaps;
     return mapsUrl(item.latitude, item.longitude);
@@ -32,7 +27,6 @@ class BaselineOtaDetailPage extends StatelessWidget {
   Widget build(BuildContext context) {
     final bool adaNama = (item.namaListing ?? '').trim().isNotEmpty;
     final bool adaAlamat = (item.alamat ?? '').trim().isNotEmpty;
-    final bool adaKoordinat = item.latitude != null && item.longitude != null;
     final BaselineOtaVerifikasi? v = item.verifikasiAktif;
 
     return Scaffold(
@@ -49,113 +43,143 @@ class BaselineOtaDetailPage extends StatelessWidget {
       body: ListView(
         padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
         children: [
-          // Header: nama + chip platform + status.
-          Text(
-            adaNama ? item.namaListing! : '(Tanpa nama listing)',
-            style: TextStyle(
-              color: AppTheme.textColor(context),
-              fontSize: 19,
-              fontWeight: FontWeight.w800,
-              height: 1.25,
+          // Header: nama, chip platform/status/jarak, dan alamat.
+          DetailCard(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  adaNama ? item.namaListing! : '(Tanpa nama listing)',
+                  style: TextStyle(
+                    color: AppTheme.textColor(context),
+                    fontSize: 19,
+                    fontWeight: FontWeight.w800,
+                    height: 1.25,
+                  ),
+                ),
+                const SizedBox(height: 10),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 6,
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  children: [
+                    OtaPlatformChip(platform: item.platformOta),
+                    OtaStatusBadge(sudahDiverifikasi: item.sudahDiverifikasi),
+                    if (item.jarakKm != null)
+                      DistanceBadge(km: item.jarakKm!)
+                    else if (item.latitude == null || item.longitude == null)
+                      const Text(
+                        'Koordinat tidak tersedia',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Color(0xFFD08A00),
+                        ),
+                      ),
+                  ],
+                ),
+                if (adaAlamat) ...[
+                  const SizedBox(height: 10),
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(
+                        child: ListInfoRow(
+                          icon: Icons.location_on_outlined,
+                          text: item.alamat!,
+                          maxLines: 3,
+                        ),
+                      ),
+                      SizedBox(
+                        width: 32,
+                        height: 24,
+                        child: IconButton(
+                          padding: EdgeInsets.zero,
+                          iconSize: 17,
+                          tooltip: 'Salin alamat',
+                          color: AppTheme.textSecondary(context),
+                          onPressed: () =>
+                              salinKeClipboard(context, item.alamat!, 'Alamat'),
+                          icon: const Icon(Icons.copy_rounded),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ],
             ),
           ),
-          const SizedBox(height: 10),
-          Wrap(
-            spacing: 8,
-            runSpacing: 6,
-            crossAxisAlignment: WrapCrossAlignment.center,
-            children: [
-              OtaPlatformChip(platform: item.platformOta),
-              OtaStatusBadge(sudahDiverifikasi: item.sudahDiverifikasi),
-            ],
-          ),
-          const SizedBox(height: 16),
 
-          _Seksi(
-            judul: 'Lokasi',
-            anak: [
-              _Baris(
-                label: 'Alamat',
-                nilai: adaAlamat ? item.alamat! : '-',
-                onSalin: adaAlamat
-                    ? () => _salin(context, item.alamat!, 'Alamat')
-                    : null,
+          // Hasil verifikasi naik ke atas: ini info terpenting untuk listing
+          // yang sudah selesai.
+          if (item.sudahDiverifikasi) ...[
+            const SizedBox(height: 12),
+            DetailCard(
+              icon: Icons.fact_check_outlined,
+              title: 'Hasil Verifikasi',
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  OtaSudahDiverifikasiBox(verifikasi: v),
+                  const SizedBox(height: 10),
+                  BarisTile(baris: Baris('NIB', v?.nib, salin: true)),
+                  BarisTile(
+                    baris: Baris('ID Proyek', v?.idProyek, salin: true),
+                  ),
+                ],
               ),
-              _Baris(
-                label: 'Kabupaten/Kota',
-                nilai: _atauStrip(item.kabupaten),
-              ),
-              _Baris(label: 'Kecamatan', nilai: _atauStrip(item.kecamatan)),
-              _Baris(
-                label: 'Kelurahan/Desa',
-                nilai: _atauStrip(item.kelurahan),
-              ),
-              _Baris(
-                label: 'Koordinat',
-                nilai: adaKoordinat
-                    ? '${item.latitude}, ${item.longitude}'
-                    : '-',
-                onSalin: adaKoordinat
-                    ? () => _salin(
-                        context,
-                        '${item.latitude}, ${item.longitude}',
-                        'Koordinat',
-                      )
-                    : null,
-              ),
+            ),
+          ],
+          const SizedBox(height: 12),
+
+          SectionCard(
+            icon: Icons.place_outlined,
+            title: 'Lokasi',
+            rows: <Baris>[
+              Baris('Kelurahan/Desa', item.kelurahan),
+              Baris('Kecamatan', item.kecamatan),
+              Baris('Kabupaten/Kota', item.kabupaten),
+              Baris.koordinat(item.latitude, item.longitude),
             ],
           ),
           const SizedBox(height: 12),
 
-          _Seksi(
-            judul: 'Sumber data',
-            anak: [
-              _Baris(label: 'Platform', nilai: _atauStrip(item.platformOta)),
-              _Baris(
-                label: 'Tanggal scraping',
-                nilai: formatTanggal(item.scrapedAt) ?? '-',
-              ),
-              _Baris(label: 'ID listing', nilai: '#${item.id}'),
-              const SizedBox(height: 4),
-              Row(
-                children: [
-                  Expanded(
-                    child: OutlinedButton.icon(
-                      onPressed: (item.sourceUrl ?? '').trim().isNotEmpty
-                          ? () => bukaTautan(context, item.sourceUrl)
-                          : null,
-                      icon: const Icon(Icons.open_in_new_rounded, size: 17),
-                      label: const Text('Listing OTA'),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: OutlinedButton.icon(
-                      onPressed: _urlMaps != null
-                          ? () => bukaTautan(context, _urlMaps)
-                          : null,
-                      icon: const Icon(Icons.map_rounded, size: 17),
-                      label: const Text('Buka Maps'),
-                    ),
-                  ),
-                ],
-              ),
+          SectionCard(
+            icon: Icons.travel_explore_outlined,
+            title: 'Sumber Data',
+            rows: <Baris>[
+              Baris('Tanggal scraping', formatTanggal(item.scrapedAt)),
+              Baris('ID listing', '#${item.id}'),
             ],
-          ),
-
-          if (item.sudahDiverifikasi) ...[
-            const SizedBox(height: 12),
-            _Seksi(
-              judul: 'Hasil verifikasi',
-              anak: [
-                OtaSudahDiverifikasiBox(verifikasi: v),
-                if ((v?.idProyek ?? '').trim().isNotEmpty) ...[
-                  const SizedBox(height: 10),
-                  _Baris(label: 'ID Proyek', nilai: v!.idProyek!),
-                ],
+            footer: Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: (item.sourceUrl ?? '').trim().isNotEmpty
+                        ? () => bukaTautan(context, item.sourceUrl)
+                        : null,
+                    icon: const Icon(Icons.open_in_new_rounded, size: 17),
+                    label: Text(
+                      (item.sourceUrl ?? '').trim().isNotEmpty
+                          ? 'Listing OTA'
+                          : 'Link tidak ada',
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: _urlMaps != null
+                        ? () => bukaTautan(context, _urlMaps)
+                        : null,
+                    icon: const Icon(Icons.map_rounded, size: 17),
+                    label: Text(
+                      _urlMaps != null ? 'Buka Maps' : 'Koordinat kosong',
+                    ),
+                  ),
+                ),
               ],
             ),
-          ],
+          ),
         ],
       ),
 
@@ -223,80 +247,6 @@ class BaselineOtaDetailPage extends StatelessWidget {
                 );
               },
             ),
-    );
-  }
-
-  String _atauStrip(String? s) => (s ?? '').trim().isEmpty ? '-' : s!;
-}
-
-/// Kotak bagian dengan judul.
-class _Seksi extends StatelessWidget {
-  const _Seksi({required this.judul, required this.anak});
-  final String judul;
-  final List<Widget> anak;
-
-  @override
-  Widget build(BuildContext context) {
-    return DetailCard(
-      title: judul,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: anak,
-      ),
-    );
-  }
-}
-
-/// Satu pasang label-nilai, dengan tombol salin opsional.
-class _Baris extends StatelessWidget {
-  const _Baris({required this.label, required this.nilai, this.onSalin});
-  final String label;
-  final String nilai;
-  final VoidCallback? onSalin;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          SizedBox(
-            width: 112,
-            child: Text(
-              label,
-              style: TextStyle(
-                fontSize: 12.5,
-                color: AppTheme.textSecondary(context),
-              ),
-            ),
-          ),
-          Expanded(
-            child: Text(
-              nilai,
-              style: TextStyle(
-                fontSize: 13.5,
-                height: 1.3,
-                fontWeight: FontWeight.w600,
-                color: AppTheme.textColor(context),
-              ),
-            ),
-          ),
-          if (onSalin != null)
-            InkWell(
-              onTap: onSalin,
-              borderRadius: BorderRadius.circular(8),
-              child: Padding(
-                padding: const EdgeInsets.all(2),
-                child: Icon(
-                  Icons.copy_rounded,
-                  size: 16,
-                  color: AppTheme.textSecondary(context),
-                ),
-              ),
-            ),
-        ],
-      ),
     );
   }
 }

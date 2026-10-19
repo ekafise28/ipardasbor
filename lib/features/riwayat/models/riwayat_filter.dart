@@ -32,11 +32,11 @@ class RiwayatFilter {
       tanggalSelesai != null ||
       search.trim().isNotEmpty;
 
-  /// Jumlah filter dari sheet (tanpa pencarian teks, yang punya kolom
-  /// sendiri). Rentang tanggal dihitung satu, sama seperti chipnya.
+  /// Jumlah filter dari sheet (tanpa pencarian teks dan status, yang
+  /// punya kontrol sendiri). Rentang tanggal dihitung satu, sama seperti
+  /// chipnya.
   int get jumlahFilterSheet =>
       (sumberData != null ? 1 : 0) +
-      (statusVerifikasi != null ? 1 : 0) +
       (bidangUsaha != null ? 1 : 0) +
       (kabupatenId != null ? 1 : 0) +
       ((tanggalMulai != null || tanggalSelesai != null) ? 1 : 0);

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:ipardasbor/shared/utils/formatters.dart';
 import 'package:ipardasbor/shared/utils/ui_actions.dart';
 import 'package:ipardasbor/shared/widgets/list_parts.dart';
 
@@ -25,9 +26,6 @@ class BaselineOtaCard extends StatelessWidget {
   final VoidCallback onAdaNib;
   final VoidCallback onTidakAda;
   final VoidCallback onTidakTahu;
-
-  String _tgl(DateTime d) =>
-      '${d.day.toString().padLeft(2, '0')}-${d.month.toString().padLeft(2, '0')}-${d.year}';
 
   @override
   Widget build(BuildContext context) {
@@ -104,7 +102,7 @@ class BaselineOtaCard extends StatelessWidget {
                           ),
                         if (item.scrapedAt != null)
                           Text(
-                            'Scraping ${_tgl(item.scrapedAt!)}',
+                            'Scraping ${formatTanggal(item.scrapedAt)}',
                             style: TextStyle(
                               fontSize: 12,
                               color: AppTheme.textSecondary(context),
@@ -121,13 +119,15 @@ class BaselineOtaCard extends StatelessWidget {
                     ),
                     const SizedBox(height: 10),
                     if (adaAlamat)
-                      _InfoRow(
+                      ListInfoRow(
                         icon: Icons.location_on_outlined,
                         text: item.alamat!,
+                        maxLines: 3,
                       ),
-                    _InfoRow(
+                    ListInfoRow(
                       icon: Icons.map_outlined,
                       text: item.wilayahRingkas,
+                      maxLines: 2,
                       redup: adaAlamat,
                     ),
                     const SizedBox(height: 8),
@@ -215,38 +215,6 @@ class BaselineOtaCard extends StatelessWidget {
   }
 }
 
-class _InfoRow extends StatelessWidget {
-  const _InfoRow({required this.icon, required this.text, this.redup = false});
-  final IconData icon;
-  final String text;
-
-  /// true = baris sekunder, warnanya lebih muted.
-  final bool redup;
-
-  @override
-  Widget build(BuildContext context) {
-    final Color warna = redup
-        ? AppTheme.textMuted
-        : AppTheme.textSecondary(context);
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 4),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(icon, size: 15, color: warna),
-          const SizedBox(width: 6),
-          Expanded(
-            child: Text(
-              text,
-              style: TextStyle(fontSize: 12.5, height: 1.3, color: warna),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
 /// Chip platform dengan warna identitas tiap OTA. Platform yang tidak
 /// dikenal memakai warna netral.
 class OtaPlatformChip extends StatelessWidget {
@@ -266,21 +234,9 @@ class OtaPlatformChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final Color warna = _warna(context);
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3),
-      decoration: BoxDecoration(
-        color: warna.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Text(
-        (platform ?? '-').trim().isEmpty ? '-' : platform!,
-        style: TextStyle(
-          fontSize: 12,
-          fontWeight: FontWeight.w700,
-          color: warna,
-        ),
-      ),
+    return TintChip(
+      label: (platform ?? '-').trim().isEmpty ? '-' : platform!,
+      color: _warna(context),
     );
   }
 }
@@ -379,43 +335,19 @@ class OtaVerifButton extends StatelessWidget {
   }
 }
 
+/// Badge status verifikasi listing (Terverifikasi / Belum).
 class OtaStatusBadge extends StatelessWidget {
   const OtaStatusBadge({super.key, required this.sudahDiverifikasi});
   final bool sudahDiverifikasi;
 
   @override
   Widget build(BuildContext context) {
-    final Color bg = sudahDiverifikasi
-        ? const Color(0xFFDCF6E7)
-        : const Color(0xFFFFF1D6);
-    final Color fg = sudahDiverifikasi
-        ? const Color(0xFF15803D)
-        : const Color(0xFFA96700);
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-      decoration: BoxDecoration(
-        color: bg,
-        borderRadius: BorderRadius.circular(30),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(
-            sudahDiverifikasi ? Icons.check_circle : Icons.access_time,
-            size: 12,
-            color: fg,
-          ),
-          const SizedBox(width: 4),
-          Text(
-            sudahDiverifikasi ? 'Terverifikasi' : 'Belum',
-            style: TextStyle(
-              fontSize: 10.5,
-              fontWeight: FontWeight.w800,
-              color: fg,
-            ),
-          ),
-        ],
-      ),
+    return TintChip(
+      label: sudahDiverifikasi ? 'Terverifikasi' : 'Belum',
+      color: sudahDiverifikasi
+          ? const Color(0xFF15803D)
+          : const Color(0xFFA96700),
+      icon: sudahDiverifikasi ? Icons.check_circle : Icons.access_time,
     );
   }
 }
@@ -443,17 +375,10 @@ class OtaSudahDiverifikasiBox extends StatelessWidget {
     return ('Sudah diverifikasi', const Color(0xFF15803D), Icons.check_circle);
   }
 
-  String? _tanggal() {
-    final DateTime? d = verifikasi?.verifiedAt;
-    if (d == null) return null;
-    return '${d.day.toString().padLeft(2, '0')}-'
-        '${d.month.toString().padLeft(2, '0')}-${d.year}';
-  }
-
   @override
   Widget build(BuildContext context) {
     final (String label, Color warna, IconData ikon) = _hasil();
-    final String? tanggal = _tanggal();
+    final String? tanggal = formatTanggal(verifikasi?.verifiedAt);
     final String? nib = (verifikasi?.nib ?? '').trim().isNotEmpty
         ? verifikasi!.nib
         : null;

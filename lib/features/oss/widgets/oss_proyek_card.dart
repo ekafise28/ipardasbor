@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
+import 'package:ipardasbor/shared/utils/ui_actions.dart';
+import 'package:ipardasbor/shared/widgets/list_parts.dart';
 
 import '../../../core/network/network_status.dart';
 
@@ -30,12 +31,6 @@ class OssProyekCard extends StatelessWidget {
   final VoidCallback onVerifikasi;
   final VoidCallback onDetail;
 
-  /// Aksi utama kartu. Null = kartu tidak bisa ditekan.
-  VoidCallback? _aksiUtama(bool offline) {
-    if (!item.sudahDiverifikasi) return offline ? null : onVerifikasi;
-    return item.pengawasanId == null ? null : onDetail;
-  }
-
   _StatusUi get _status {
     if (item.tidakValid) {
       return const _StatusUi(
@@ -61,7 +56,6 @@ class OssProyekCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final _StatusUi status = _status;
-    final BorderRadius radius = BorderRadius.circular(14);
 
     final String modalRisiko = <String?>[
       item.statusPenanamanModal,
@@ -70,110 +64,72 @@ class OssProyekCard extends StatelessWidget {
 
     return ValueListenableBuilder<bool>(
       valueListenable: NetworkStatus.instance,
-      builder: (context, offline, _) => Card(
-        elevation: 0,
-        clipBehavior: Clip.antiAlias,
-        color: highlight
-            ? Color.alphaBlend(
-                status.color.withValues(alpha: 0.12),
-                AppTheme.surface(context),
-              )
-            : AppTheme.surface(context),
-        shape: RoundedRectangleBorder(
-          borderRadius: radius,
-          side: BorderSide(color: AppTheme.border(context)),
-        ),
-        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-        child: InkWell(
-          onTap: _aksiUtama(offline),
-          child: IntrinsicHeight(
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: <Widget>[
-                // Strip status di sisi kiri.
-                Container(width: 4, color: status.color),
-                Expanded(
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(14, 14, 14, 12),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: <Widget>[
-                        Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: <Widget>[
-                            Expanded(
-                              child: Text(
-                                item.namaPerusahaan,
-                                maxLines: 2,
-                                overflow: TextOverflow.ellipsis,
-                                style: TextStyle(
-                                  fontSize: 15,
-                                  fontWeight: FontWeight.w800,
-                                  height: 1.25,
-                                  color: AppTheme.textColor(context),
-                                ),
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            _StatusChip(status: status),
-                          ],
-                        ),
-                        const SizedBox(height: 10),
-                        _KodeBlock(nib: item.nib, nku: item.nku),
-                        const SizedBox(height: 10),
-                        if (modalRisiko.isNotEmpty)
-                          _InfoRow(
-                            icon: Icons.shield_outlined,
-                            text: modalRisiko,
-                          ),
-                        _InfoRow(
-                          icon: Icons.location_on_outlined,
-                          text: item.lokasiRingkas,
-                          maxLines: 2,
-                        ),
-                        if (item.alamat.isNotEmpty)
-                          _InfoRow(
-                            icon: Icons.home_work_outlined,
-                            text: item.alamat,
-                            maxLines: 2,
-                          ),
-                        const SizedBox(height: 10),
-                        SizedBox(
-                          width: double.infinity,
-                          height: 40,
-                          child: item.sudahDiverifikasi
-                              ? OutlinedButton.icon(
-                                  onPressed: item.pengawasanId == null
-                                      ? null
-                                      : onDetail,
-                                  icon: const Icon(
-                                    Icons.visibility_outlined,
-                                    size: 18,
-                                  ),
-                                  label: const Text('Lihat Detail'),
-                                )
-                              : FilledButton.icon(
-                                  onPressed: offline ? null : onVerifikasi,
-                                  icon: Icon(
-                                    offline
-                                        ? Icons.cloud_off_rounded
-                                        : Icons.verified_user_outlined,
-                                    size: 18,
-                                  ),
-                                  label: Text(
-                                    offline ? 'Perlu koneksi' : 'Verifikasi',
-                                  ),
-                                ),
-                        ),
-                      ],
-                    ),
-                  ),
+      builder: (context, offline, _) {
+        // Aksi dihitung sekali di sini, dipakai kartu dan tombolnya.
+        final VoidCallback? aksiDetail = item.pengawasanId == null
+            ? null
+            : onDetail;
+        final VoidCallback? aksiVerifikasi = offline ? null : onVerifikasi;
+
+        return StripCard(
+          stripColor: status.color,
+          onTap: item.sudahDiverifikasi ? aksiDetail : aksiVerifikasi,
+          background: highlight
+              ? Color.alphaBlend(
+                  status.color.withValues(alpha: 0.12),
+                  AppTheme.surface(context),
+                )
+              : null,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              CardTitleRow(
+                title: item.namaPerusahaan,
+                statusLabel: status.label,
+                statusColor: status.color,
+                statusIcon: status.icon,
+              ),
+              const SizedBox(height: 10),
+              _KodeBlock(nib: item.nib, nku: item.nku),
+              const SizedBox(height: 10),
+              if (modalRisiko.isNotEmpty)
+                ListInfoRow(icon: Icons.shield_outlined, text: modalRisiko),
+              ListInfoRow(
+                icon: Icons.location_on_outlined,
+                text: item.lokasiRingkas,
+                maxLines: 2,
+              ),
+              if (item.alamat.isNotEmpty)
+                ListInfoRow(
+                  icon: Icons.home_work_outlined,
+                  text: item.alamat,
+                  maxLines: 2,
                 ),
-              ],
-            ),
+              const SizedBox(height: 10),
+              SizedBox(
+                width: double.infinity,
+                height: 40,
+                child: item.sudahDiverifikasi
+                    ? OutlinedButton.icon(
+                        onPressed: aksiDetail,
+                        icon: const Icon(Icons.visibility_outlined, size: 18),
+                        label: const Text('Lihat Detail'),
+                      )
+                    : FilledButton.icon(
+                        onPressed: aksiVerifikasi,
+                        icon: Icon(
+                          offline
+                              ? Icons.cloud_off_rounded
+                              : Icons.verified_user_outlined,
+                          size: 18,
+                        ),
+                        label: Text(offline ? 'Perlu koneksi' : 'Verifikasi'),
+                      ),
+              ),
+            ],
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 }
@@ -190,42 +146,6 @@ class _StatusUi {
   final IconData icon;
 }
 
-class _StatusChip extends StatelessWidget {
-  const _StatusChip({required this.status});
-
-  final _StatusUi status;
-
-  @override
-  Widget build(BuildContext context) {
-    return Semantics(
-      label: 'Status: ${status.label}',
-      excludeSemantics: true,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
-        decoration: BoxDecoration(
-          color: status.color.withValues(alpha: 0.12),
-          borderRadius: BorderRadius.circular(20),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: <Widget>[
-            Icon(status.icon, size: 13, color: status.color),
-            const SizedBox(width: 4),
-            Text(
-              status.label,
-              style: TextStyle(
-                color: status.color,
-                fontSize: 11.5,
-                fontWeight: FontWeight.w800,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
 /// Blok kecil berlatar tint berisi NIB dan NKU, masing-masing bisa disalin.
 class _KodeBlock extends StatelessWidget {
   const _KodeBlock({required this.nib, required this.nku});
@@ -235,13 +155,8 @@ class _KodeBlock extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
+    return MutedPanel(
       padding: const EdgeInsets.fromLTRB(10, 4, 4, 4),
-      decoration: BoxDecoration(
-        color: AppTheme.surfaceMuted(context),
-        borderRadius: BorderRadius.circular(10),
-      ),
       child: Column(
         children: <Widget>[
           _KodeRow(label: 'NIB', value: nib),
@@ -257,20 +172,6 @@ class _KodeRow extends StatelessWidget {
 
   final String label;
   final String value;
-
-  Future<void> _salin(BuildContext context) async {
-    await Clipboard.setData(ClipboardData(text: value));
-    HapticFeedback.selectionClick();
-    if (!context.mounted) return;
-    ScaffoldMessenger.of(context)
-      ..hideCurrentSnackBar()
-      ..showSnackBar(
-        SnackBar(
-          content: Text('$label disalin'),
-          duration: const Duration(seconds: 1),
-        ),
-      );
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -308,48 +209,13 @@ class _KodeRow extends StatelessWidget {
             iconSize: 17,
             tooltip: 'Salin $label',
             color: AppTheme.textSecondary(context),
-            onPressed: kosong ? null : () => _salin(context),
+            onPressed: kosong
+                ? null
+                : () => salinKeClipboard(context, value, label),
             icon: const Icon(Icons.copy_rounded),
           ),
         ),
       ],
-    );
-  }
-}
-
-class _InfoRow extends StatelessWidget {
-  const _InfoRow({required this.icon, required this.text, this.maxLines = 1});
-
-  final IconData icon;
-  final String text;
-  final int maxLines;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 4),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: <Widget>[
-          Padding(
-            padding: const EdgeInsets.only(top: 1),
-            child: Icon(icon, size: 15, color: AppTheme.textMuted),
-          ),
-          const SizedBox(width: 6),
-          Expanded(
-            child: Text(
-              text,
-              maxLines: maxLines,
-              overflow: TextOverflow.ellipsis,
-              style: TextStyle(
-                fontSize: 13,
-                color: AppTheme.textSecondary(context),
-                height: 1.3,
-              ),
-            ),
-          ),
-        ],
-      ),
     );
   }
 }

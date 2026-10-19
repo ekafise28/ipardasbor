@@ -2,12 +2,12 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:ipardasbor/core/constants/ota_platform_constants.dart';
-import 'package:ipardasbor/features/sinkronisasi/widgets/submission_photos.dart';
 import 'package:ipardasbor/features/oss/models/oss_jenis_produk_akomodasi.dart';
 import 'package:ipardasbor/features/sinkronisasi/widgets/sync_table.dart';
 import 'package:ipardasbor/shared/utils/formatters.dart';
 import 'package:ipardasbor/shared/utils/ota_utils.dart';
 import 'package:ipardasbor/shared/utils/ui_actions.dart';
+import 'package:ipardasbor/shared/widgets/form/status_ketidaksesuaian_selector.dart';
 import '../../non_oss/services/non_oss_service.dart';
 
 import '../../../app/app_theme.dart';
@@ -129,7 +129,7 @@ class _SubmissionDetailPageState extends State<SubmissionDetailPage> {
       Baris('Nama Brand', p['nama_brand']),
       Baris('Jenis Produk', _labelJenisProdukTampil ?? p['jenis_produk']),
       Baris('Website', p['website'], url: normalisasiUrl(p['website'])),
-      Baris('No. HP', p['no_hp']),
+      Baris.telepon('No. HP', p['no_hp']),
       Baris('Email', p['email']),
     ];
   }
@@ -145,35 +145,18 @@ class _SubmissionDetailPageState extends State<SubmissionDetailPage> {
 
   List<Baris> _lokasiRows() {
     final Map<String, String> p = _data.payload;
-    final String? lat = p['latitude'];
-    final String? lng = p['longitude'];
-
     return <Baris>[
       Baris('Provinsi', _regionNames['provinsi_id']),
       Baris('Kabupaten/Kota', _regionNames['kabupaten_id']),
       Baris('Kecamatan', _regionNames['kecamatan_id']),
       Baris('Kelurahan', _regionNames['kelurahan_id']),
-      Baris('Alamat', p['alamat']),
-      Baris(
-        'Koordinat',
-        (lat != null && lng != null && lat.isNotEmpty && lng.isNotEmpty)
-            ? '$lat, $lng'
-            : null,
-        url: mapsUrl(lat, lng),
-      ),
+      Baris('Alamat', p['alamat'], salin: true),
+      Baris.koordinat(p['latitude'], p['longitude']),
     ];
   }
 
-  static const Map<String, String> _labelStatus = <String, String>{
-    'NIB_TIDAK_DITEMUKAN': 'Tidak Punya NIB',
-    'TIDAK_BERTEMU_PEMILIK': 'Tidak bertemu pemilik',
-    'PENGELOLA_TIDAK_BISA_MEMBERIKAN_DATA':
-        'Pengelola tidak bisa memberikan data',
-    'LAINNYA': 'Lainnya',
-  };
-
   /// Gabungan semua status_ketidaksesuaian[i] dari payload, urut indeks.
-  String? _statusPengawasanTampil() {
+  List<String> _statusKetidaksesuaianList() {
     final RegExp pola = RegExp(r'^status_ketidaksesuaian\[(\d+)\]$');
     final Map<int, String> byIndex = <int, String>{};
 
@@ -187,20 +170,22 @@ class _SubmissionDetailPageState extends State<SubmissionDetailPage> {
     // Data "Tidak" selalu bernilai tetap, walau draft lama belum menyimpannya.
     if (byIndex.isEmpty &&
         (_data.payload['memiliki_nib'] ?? '').toUpperCase() == 'TIDAK') {
-      return _labelStatus['NIB_TIDAK_DITEMUKAN'];
+      return <String>[
+        StatusKetidaksesuaianSelector.labelDari('NIB_TIDAK_DITEMUKAN'),
+      ];
     }
-    if (byIndex.isEmpty) return null;
+    if (byIndex.isEmpty) return const <String>[];
 
     final List<int> urut = byIndex.keys.toList()..sort();
     return urut
-        .map((int i) => _labelStatus[byIndex[i]] ?? byIndex[i]!)
-        .join(', ');
+        .map((int i) => StatusKetidaksesuaianSelector.labelDari(byIndex[i]!))
+        .toList();
   }
 
   List<Baris> _hasilPengawasanRows() {
     final Map<String, String> p = _data.payload;
     return <Baris>[
-      Baris('Status Pengawasan', _statusPengawasanTampil()),
+      Baris.chips('Status Pengawasan', _statusKetidaksesuaianList()),
       Baris('Keterangan', p['keterangan']),
       Baris('Catatan Petugas', p['catatan_petugas']),
       Baris('Tanggal Pengawasan', p['tanggal_pengawasan']),
@@ -365,24 +350,6 @@ class _SubmissionDetailPageState extends State<SubmissionDetailPage> {
     }
   }
 
-  void _openPhotoViewer(int initialIndex) {
-    Navigator.of(context).push(
-      PageRouteBuilder<void>(
-        opaque: false,
-        barrierColor: Colors.black,
-        pageBuilder: (context, animation, secondaryAnimation) {
-          return FadeTransition(
-            opacity: animation,
-            child: PhotoViewerPage(
-              photoPaths: _data.photoPaths,
-              initialIndex: initialIndex,
-            ),
-          );
-        },
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     final bool failed = _data.isFailed;
@@ -416,8 +383,9 @@ class _SubmissionDetailPageState extends State<SubmissionDetailPage> {
         ],
       ),
       body: SafeArea(
+        bottom: false,
         child: ListView(
-          padding: const EdgeInsets.fromLTRB(18, 18, 18, 32),
+          padding: const EdgeInsets.fromLTRB(18, 18, 18, 16),
           children: [
             StatusHeaderCard(
               title: _data.displayName,
@@ -438,11 +406,12 @@ class _SubmissionDetailPageState extends State<SubmissionDetailPage> {
               _DraftChecklistCard(data: _data),
               const SizedBox(height: 12),
             ],
-            const SizedBox(height: 16),
             if (_data.photoPaths.isNotEmpty) ...[
-              DetailPhotoSection(
-                photoPaths: _data.photoPaths,
-                onOpenPhoto: _openPhotoViewer,
+              FotoGallerySection(
+                foto: <FotoItem>[
+                  for (final String path in _data.photoPaths)
+                    FotoItem.file(path),
+                ],
               ),
               const SizedBox(height: 12),
             ],
@@ -470,13 +439,23 @@ class _SubmissionDetailPageState extends State<SubmissionDetailPage> {
               rows: _hasilPengawasanRows(),
             ),
             const SizedBox(height: 12),
-            _SubmissionOtaSection(
-              entries: _parseOtaEntries(),
-              onTapUrl: (String u) => bukaTautan(context, u),
-            ),
-            const SizedBox(height: 12),
-            _buildActionButtons(context, failed, isDraft),
+            OtaListSection(title: 'Platform OTA', items: _parseOtaEntries()),
           ],
+        ),
+      ),
+
+      // Aksi menempel di bawah layar, selalu terlihat tanpa menggulir.
+      bottomNavigationBar: Container(
+        decoration: BoxDecoration(
+          color: AppTheme.surface(context),
+          border: Border(top: BorderSide(color: AppTheme.border(context))),
+        ),
+        child: SafeArea(
+          top: false,
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(18, 12, 18, 12),
+            child: _buildActionButtons(context, failed, isDraft),
+          ),
         ),
       ),
     );
@@ -556,102 +535,21 @@ class _SubmissionDetailPageState extends State<SubmissionDetailPage> {
     );
   }
 
-  List<OtaEntry> _parseOtaEntries() {
+  /// Platform OTA yang diisi di form, satu per platform beserta URL-nya.
+  /// Ajuan lokal tidak punya status/harga/rating (itu diisi lewat proses
+  /// verifikasi OSS), jadi hanya nama platform dan tautan yang tampil.
+  List<OtaListingItem> _parseOtaEntries() {
     final Map<String, String> payload = _data.payload;
     final String lainnyaNama = payload['ota_lainnya_nama'] ?? '';
 
     return OtaFields.parse(payload).entries
         .map(
-          (MapEntry<String, List<String>> e) => OtaEntry(
-            name: OtaPlatform.labelTampil(e.key, lainnyaNama: lainnyaNama),
+          (MapEntry<String, List<String>> e) => OtaListingItem(
+            judul: OtaPlatform.labelTampil(e.key, lainnyaNama: lainnyaNama),
             urls: e.value,
           ),
         )
         .toList();
-  }
-}
-
-/// Kartu section OTA bergaya sama dengan halaman detail Riwayat, tapi
-/// data submission cuma punya nama platform + daftar URL (tanpa status,
-/// harga, rating - karena itu semua diisi lewat proses verifikasi OSS
-/// yang belum berlaku untuk ajuan yang masih di antrean lokal).
-class _SubmissionOtaSection extends StatelessWidget {
-  const _SubmissionOtaSection({required this.entries, required this.onTapUrl});
-
-  final List<OtaEntry> entries;
-  final ValueChanged<String> onTapUrl;
-
-  @override
-  Widget build(BuildContext context) {
-    if (entries.isEmpty) return const SizedBox.shrink();
-
-    return DetailCard(
-      icon: Icons.travel_explore_outlined,
-      title: 'Platform OTA',
-      count: entries.length,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: <Widget>[
-          for (int i = 0; i < entries.length; i++) ...<Widget>[
-            if (i > 0) const Divider(height: 20),
-            _SubmissionOtaTile(entry: entries[i], onTapUrl: onTapUrl),
-          ],
-        ],
-      ),
-    );
-  }
-}
-
-/// Satu platform OTA beserta daftar URL yang terdaftar untuknya.
-class OtaEntry {
-  const OtaEntry({required this.name, required this.urls});
-
-  final String name;
-  final List<String> urls;
-}
-
-class _SubmissionOtaTile extends StatelessWidget {
-  const _SubmissionOtaTile({required this.entry, required this.onTapUrl});
-
-  final OtaEntry entry;
-  final ValueChanged<String> onTapUrl;
-
-  @override
-  Widget build(BuildContext context) {
-    final List<String> urls = entry.urls
-        .where((String u) => u.trim().isNotEmpty)
-        .toList();
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: <Widget>[
-        Text(
-          entry.name,
-          style: TextStyle(
-            fontSize: 13.5,
-            fontWeight: FontWeight.w700,
-            color: AppTheme.textColor(context),
-          ),
-        ),
-        if (urls.isNotEmpty) ...<Widget>[
-          const SizedBox(height: 8),
-          Wrap(
-            spacing: 8,
-            runSpacing: 6,
-            children: <Widget>[
-              for (int i = 0; i < urls.length; i++)
-                LinkButton(
-                  icon: Icons.open_in_new_rounded,
-                  label: urls.length > 1
-                      ? 'Buka Link ${i + 1}'
-                      : 'Buka Listing',
-                  onTap: () => onTapUrl(urls[i]),
-                ),
-            ],
-          ),
-        ],
-      ],
-    );
   }
 }
 

@@ -179,7 +179,7 @@ class _HomePageState extends State<HomePage>
   // Menu Fitur
   Future<void> _openMenu(BuildContext context, MenuData menu) async {
     switch (menu.title) {
-      case 'Dashboar':
+      case 'Dashboard':
         await Navigator.of(
           context,
         ).push(MaterialPageRoute<void>(builder: (_) => const DashboardPage()));

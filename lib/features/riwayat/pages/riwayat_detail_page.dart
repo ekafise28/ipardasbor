@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:ipardasbor/shared/utils/formatters.dart';
-import 'package:ipardasbor/shared/utils/ui_actions.dart';
+import 'package:ipardasbor/shared/widgets/form/status_ketidaksesuaian_selector.dart';
 import 'package:ipardasbor/shared/widgets/page_states.dart';
+import 'package:share_plus/share_plus.dart';
+import 'package:ipardasbor/shared/utils/ui_actions.dart';
 
 import '../../../app/app_theme.dart';
 import '../../../core/api/api_exception.dart';
@@ -90,6 +92,14 @@ class _RiwayatDetailPageState extends State<RiwayatDetailPage> {
             fontWeight: FontWeight.w800,
           ),
         ),
+        actions: <Widget>[
+          if (_detail != null)
+            IconButton(
+              tooltip: 'Bagikan ringlanjutkasan',
+              icon: const Icon(Icons.share_outlined),
+              onPressed: () => _bagikan(_detail!),
+            ),
+        ],
       ),
       body: _buildBody(context),
     );
@@ -109,6 +119,9 @@ class _RiwayatDetailPageState extends State<RiwayatDetailPage> {
     }
 
     final RiwayatDetail detail = _detail!;
+    final bool adaKetKetidaksesuaian = (detail.keteranganKetidaksesuaian ?? '')
+        .trim()
+        .isNotEmpty;
 
     return RefreshIndicator(
       onRefresh: _muat,
@@ -120,7 +133,7 @@ class _RiwayatDetailPageState extends State<RiwayatDetailPage> {
             badges: <StatusBadge>[
               StatusBadge(
                 text: detail.sumberData,
-                color: _warnaJenisRiwayat(detail.sumberData),
+                color: AppTheme.warnaJenis(detail.sumberData),
               ),
               StatusBadge(
                 text: detail.statusVerifikasi,
@@ -148,7 +161,7 @@ class _RiwayatDetailPageState extends State<RiwayatDetailPage> {
                 detail.website,
                 url: normalisasiUrl(detail.website),
               ),
-              Baris('No. HP', detail.noHp),
+              Baris.telepon('No. HP', detail.noHp),
               Baris('Email', detail.email),
             ],
           ),
@@ -159,8 +172,8 @@ class _RiwayatDetailPageState extends State<RiwayatDetailPage> {
             rows: <Baris>[
               Baris('Status Verifikasi', detail.statusVerifikasi),
               Baris('Memiliki NIB', detail.memilikiNib),
-              Baris('Nomor NIB', detail.nib),
-              Baris('NKU', detail.idProyek),
+              Baris('Nomor NIB', detail.nib, salin: true),
+              Baris('NKU', detail.idProyek, salin: true),
               Baris('NPWPD', detail.npwpd),
               Baris('Terdaftar OTA', detail.terdaftarOta),
               if (detail.sumberData.toUpperCase() == 'OSS') ...<Baris>[
@@ -171,8 +184,13 @@ class _RiwayatDetailPageState extends State<RiwayatDetailPage> {
                       : detail.hasilValidasi == 'VALID'
                       ? 'Valid'
                       : null,
+                  sorot: detail.ossTidakValid,
                 ),
-                Baris('Keterangan Validasi', detail.pesanValidasi),
+                Baris(
+                  'Keterangan Validasi',
+                  detail.pesanValidasi,
+                  sorot: detail.ossTidakValid,
+                ),
               ],
             ],
           ),
@@ -185,12 +203,8 @@ class _RiwayatDetailPageState extends State<RiwayatDetailPage> {
               Baris('Kabupaten/Kota', detail.wilayah.kabupaten),
               Baris('Kecamatan', detail.wilayah.kecamatan),
               Baris('Kelurahan', detail.wilayah.kelurahan),
-              Baris('Alamat', detail.alamat),
-              Baris(
-                'Koordinat',
-                _formatKoordinat(detail),
-                url: mapsUrl(detail.latitude, detail.longitude),
-              ),
+              Baris('Alamat', detail.alamat, salin: true),
+              Baris.koordinat(detail.latitude, detail.longitude),
             ],
           ),
           const SizedBox(height: 12),
@@ -200,379 +214,159 @@ class _RiwayatDetailPageState extends State<RiwayatDetailPage> {
             rows: <Baris>[
               Baris('Petugas', detail.petugas),
               Baris('Status Pengawasan', detail.statusPengawasan),
-              Baris(
+              Baris.chips(
                 'Status Ketidaksesuaian',
-                detail.statusKetidaksesuaian.isEmpty
-                    ? null
-                    : detail.statusKetidaksesuaian.join(', '),
+                detail.statusKetidaksesuaian
+                    .map(StatusKetidaksesuaianSelector.labelDari)
+                    .toList(),
               ),
-              Baris(
-                'Keterangan Ketidaksesuaian',
-                detail.keteranganKetidaksesuaian,
-              ),
-              Baris('Keterangan', detail.keterangan),
+              if (adaKetKetidaksesuaian)
+                Baris(
+                  'Keterangan Ketidaksesuaian',
+                  detail.keteranganKetidaksesuaian,
+                )
+              else
+                Baris('Keterangan', detail.keterangan),
               Baris('Catatan Petugas', detail.catatanPetugas),
               Baris(
                 'Tanggal Pengawasan',
                 formatTanggal(detail.tanggalPengawasan),
               ),
-              Baris('Dibuat Pada', formatTanggalJam(detail.createdAt)),
-              Baris('Diperbarui Pada', formatTanggalJam(detail.updatedAt)),
+              Baris(
+                'Dibuat Pada',
+                formatTanggalJam(detail.createdAt?.toLocal()),
+              ),
+              Baris(
+                'Diperbarui Pada',
+                formatTanggalJam(detail.updatedAt?.toLocal()),
+              ),
             ],
           ),
           const SizedBox(height: 12),
-          _FotoSection(foto: detail.foto),
+          FotoGallerySection(
+            foto: <FotoItem>[
+              for (final RiwayatDetailFoto f in detail.foto)
+                FotoItem.url(f.url, keterangan: f.keterangan),
+            ],
+          ),
           const SizedBox(height: 12),
-          _OtaSection(ota: detail.ota),
+          OtaListSection(items: detail.ota.map(_itemOta).toList()),
         ],
       ),
     );
   }
 
-  static String? _formatKoordinat(RiwayatDetail detail) {
-    if (detail.latitude == null || detail.longitude == null) {
-      return null;
+  /// Ringkasan teks untuk dibagikan (mis. ke WhatsApp). Hanya baris yang
+  /// terisi. No. HP, email, dan foto sengaja tidak ikut.
+  static String _ringkasan(RiwayatDetail d) {
+    final List<String> baris = <String>['*Hasil Pengawasan: ${d.namaUsaha}*'];
+
+    void tambah(String label, String? isi) {
+      final String bersih = (isi ?? '').trim();
+      if (bersih.isNotEmpty) baris.add('$label: $bersih');
     }
 
-    return '${detail.latitude}, ${detail.longitude}';
+    final String status = d.statusVerifikasi.toUpperCase() == 'SELESAI'
+        ? 'Selesai'
+        : d.statusVerifikasi;
+    tambah(
+      'Jenis',
+      <String>[
+        d.sumberData,
+        status,
+      ].where((String s) => s.trim().isNotEmpty && s != '-').join(' · '),
+    );
+
+    final String? validasi = d.hasilValidasi == 'TIDAK_VALID'
+        ? 'Tidak valid'
+        : d.hasilValidasi == 'VALID'
+        ? 'Valid'
+        : null;
+    final String ketidaksesuaian = d.statusKetidaksesuaian
+        .map(StatusKetidaksesuaianSelector.labelDari)
+        .join(', ');
+    tambah(
+      'Hasil',
+      validasi == null
+          ? ketidaksesuaian
+          : (ketidaksesuaian.isEmpty
+                ? validasi
+                : '$validasi ($ketidaksesuaian)'),
+    );
+    if (d.ossTidakValid) tambah('Alasan', d.pesanValidasi);
+
+    tambah('NIB', d.nib);
+    tambah('NKU', d.idProyek);
+
+    final String wilayah = d.wilayah.gabungan == '-' ? '' : d.wilayah.gabungan;
+    tambah(
+      'Alamat',
+      <String>[
+        (d.alamat ?? '').trim(),
+        wilayah,
+      ].where((String s) => s.isNotEmpty).join(', '),
+    );
+    tambah('Lokasi', mapsUrl(d.latitude, d.longitude));
+
+    tambah(
+      'Petugas',
+      <String>[
+        (d.petugas ?? '').trim(),
+        formatTanggal(d.tanggalPengawasan) ?? '',
+      ].where((String s) => s.isNotEmpty).join(' · '),
+    );
+
+    if ((d.keteranganKetidaksesuaian ?? '').trim().isNotEmpty) {
+      tambah('Keterangan ketidaksesuaian', d.keteranganKetidaksesuaian);
+    } else {
+      tambah('Keterangan', d.keterangan);
+    }
+    tambah('Catatan', d.catatanPetugas);
+
+    return baris.join('\n');
   }
-}
 
-/// Kartu section khusus foto dokumentasi, tampil grid 3 kolom.
-/// Tap foto membuka full-screen viewer dengan zoom.
-class _FotoSection extends StatelessWidget {
-  const _FotoSection({required this.foto});
-
-  final List<RiwayatDetailFoto> foto;
-
-  @override
-  Widget build(BuildContext context) {
-    if (foto.isEmpty) return const SizedBox.shrink();
-
-    return DetailCard(
-      icon: Icons.photo_library_outlined,
-      title: 'Foto Dokumentasi',
-      count: foto.length,
-      child: GridView.builder(
-        shrinkWrap: true,
-        physics: const NeverScrollableScrollPhysics(),
-        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: 3,
-          crossAxisSpacing: 8,
-          mainAxisSpacing: 8,
+  Future<void> _bagikan(RiwayatDetail d) async {
+    try {
+      await SharePlus.instance.share(
+        ShareParams(
+          text: _ringkasan(d),
+          subject: 'Hasil Pengawasan: ${d.namaUsaha}',
         ),
-        itemCount: foto.length,
-        itemBuilder: (BuildContext context, int index) {
-          final RiwayatDetailFoto item = foto[index];
-
-          return GestureDetector(
-            onTap: () => _bukaViewer(context, index),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(10),
-              child: Container(
-                color: Colors.black12,
-                child: Image.network(
-                  item.url,
-                  fit: BoxFit.cover,
-                  loadingBuilder: (context, child, progress) {
-                    if (progress == null) return child;
-                    return const Center(
-                      child: SizedBox(
-                        width: 20,
-                        height: 20,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      ),
-                    );
-                  },
-                  errorBuilder: (_, _, _) => const Center(
-                    child: Icon(
-                      Icons.broken_image_outlined,
-                      color: Colors.black38,
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          );
-        },
-      ),
-    );
-  }
-
-  void _bukaViewer(BuildContext context, int indexAwal) {
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (_) => _FotoViewerPage(foto: foto, indexAwal: indexAwal),
-        fullscreenDialog: true,
-      ),
-    );
-  }
-}
-
-/// Halaman full-screen untuk melihat foto satu per satu, bisa swipe
-/// antar foto dan pinch-to-zoom.
-class _FotoViewerPage extends StatefulWidget {
-  const _FotoViewerPage({required this.foto, required this.indexAwal});
-
-  final List<RiwayatDetailFoto> foto;
-  final int indexAwal;
-
-  @override
-  State<_FotoViewerPage> createState() => _FotoViewerPageState();
-}
-
-class _FotoViewerPageState extends State<_FotoViewerPage> {
-  late final PageController _pageController = PageController(
-    initialPage: widget.indexAwal,
-  );
-  late int _indexSaatIni = widget.indexAwal;
-
-  @override
-  void dispose() {
-    _pageController.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final RiwayatDetailFoto item = widget.foto[_indexSaatIni];
-
-    return Scaffold(
-      backgroundColor: Colors.black,
-      appBar: AppBar(
-        backgroundColor: Colors.black,
-        foregroundColor: Colors.white,
-        title: Text('${_indexSaatIni + 1} / ${widget.foto.length}'),
-      ),
-      body: Column(
-        children: <Widget>[
-          Expanded(
-            child: PageView.builder(
-              controller: _pageController,
-              itemCount: widget.foto.length,
-              onPageChanged: (int index) {
-                setState(() => _indexSaatIni = index);
-              },
-              itemBuilder: (BuildContext context, int index) {
-                return InteractiveViewer(
-                  minScale: 1,
-                  maxScale: 4,
-                  child: Center(
-                    child: Image.network(
-                      widget.foto[index].url,
-                      fit: BoxFit.contain,
-                      errorBuilder: (_, _, _) => const Icon(
-                        Icons.broken_image_outlined,
-                        color: Colors.white54,
-                        size: 48,
-                      ),
-                    ),
-                  ),
-                );
-              },
-            ),
-          ),
-          if ((item.keterangan ?? '').trim().isNotEmpty)
-            Padding(
-              padding: const EdgeInsets.all(16),
-              child: Text(
-                item.keterangan!,
-                textAlign: TextAlign.center,
-                style: const TextStyle(color: Colors.white70, fontSize: 13),
-              ),
-            ),
-        ],
-      ),
-    );
-  }
-}
-
-/// Kartu section untuk daftar listing OTA terkait hasil pengawasan.
-/// Tiap listing ditampilkan sebagai satu kartu kecil dengan link buka URL.
-class _OtaSection extends StatelessWidget {
-  const _OtaSection({required this.ota});
-
-  final List<RiwayatDetailOta> ota;
-
-  @override
-  Widget build(BuildContext context) {
-    if (ota.isEmpty) return const SizedBox.shrink();
-
-    return DetailCard(
-      icon: Icons.travel_explore_outlined,
-      title: 'Listing OTA',
-      count: ota.length,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: <Widget>[
-          for (int i = 0; i < ota.length; i++) ...<Widget>[
-            if (i > 0) const Divider(height: 20),
-            _OtaTile(item: ota[i]),
-          ],
-        ],
-      ),
-    );
-  }
-}
-
-class _OtaTile extends StatelessWidget {
-  const _OtaTile({required this.item});
-
-  final RiwayatDetailOta item;
-
-  Color _warnaStatus() {
-    switch ((item.statusListing ?? '').toUpperCase()) {
-      case 'AKTIF':
-        return Colors.green;
-      case 'TIDAK AKTIF':
-      case 'NONAKTIF':
-        return Colors.red;
-      default:
-        return Colors.orange;
+      );
+    } catch (_) {
+      if (!mounted) return;
+      tampilkanPesan(
+        context,
+        'Tidak dapat membuka menu bagikan.',
+        sukses: false,
+      );
     }
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: <Widget>[
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: <Widget>[
-            Expanded(
-              child: Text(
-                item.namaListing ?? '-',
-                style: TextStyle(
-                  fontSize: 13.5,
-                  fontWeight: FontWeight.w700,
-                  color: AppTheme.textColor(context),
-                ),
-              ),
-            ),
-            if ((item.statusListing ?? '').trim().isNotEmpty)
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                decoration: BoxDecoration(
-                  color: _warnaStatus().withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Text(
-                  item.statusListing!,
-                  style: TextStyle(
-                    fontSize: 10.5,
-                    fontWeight: FontWeight.w700,
-                    color: _warnaStatus(),
-                  ),
-                ),
-              ),
-          ],
-        ),
-        const SizedBox(height: 4),
-        if ((item.namaPlatform ?? '').trim().isNotEmpty)
-          Text(
-            item.namaPlatform!,
-            style: TextStyle(
-              fontSize: 12,
-              color: AppTheme.textSecondary(context),
-            ),
-          ),
-        const SizedBox(height: 6),
-        Wrap(
-          spacing: 12,
-          runSpacing: 4,
-          children: <Widget>[
-            if (item.hargaTerendah != null)
-              _InfoKecil(
-                icon: Icons.sell_outlined,
-                text: 'Rp ${item.hargaTerendah!.toStringAsFixed(0)}',
-              ),
-            if (item.rating != null)
-              _InfoKecil(
-                icon: Icons.star_outline_rounded,
-                text: '${item.rating} (${item.jumlahUlasan ?? 0} ulasan)',
-              ),
-            if (item.tanggalDitemukan != null)
-              _InfoKecil(
-                icon: Icons.calendar_today_outlined,
-                text: 'Ditemukan ${formatTanggal(item.tanggalDitemukan)}',
-              ),
-          ],
-        ),
-        if ((item.catatan ?? '').trim().isNotEmpty) ...<Widget>[
-          const SizedBox(height: 6),
-          Text(
-            item.catatan!,
-            style: TextStyle(
-              fontSize: 12,
-              fontStyle: FontStyle.italic,
-              color: AppTheme.textSecondary(context),
-            ),
-          ),
-        ],
-        if ((item.urlListing ?? '').trim().isNotEmpty) ...<Widget>[
-          const SizedBox(height: 6),
-          if ((item.urlListing ?? '').trim().isNotEmpty ||
-              (item.mapsUrl ?? '').trim().isNotEmpty) ...<Widget>[
-            const SizedBox(height: 8),
-            Wrap(
-              spacing: 8,
-              runSpacing: 6,
-              children: <Widget>[
-                if ((item.urlListing ?? '').trim().isNotEmpty)
-                  LinkButton(
-                    icon: Icons.open_in_new_rounded,
-                    label: 'Buka Listing',
-                    onTap: () => bukaTautan(context, item.urlListing),
-                  ),
-                if ((item.mapsUrl ?? '').trim().isNotEmpty)
-                  LinkButton(
-                    icon: Icons.map_outlined,
-                    label: 'Lihat Peta',
-                    onTap: () => bukaTautan(context, item.mapsUrl),
-                  ),
-              ],
-            ),
-          ],
-        ],
-      ],
+  /// Judul kartu OTA: nama listing, atau nama platform kalau listing tidak
+  /// punya nama (mis. data dari form Non-OSS yang hanya mengisi platform
+  /// dan URL).
+  static OtaListingItem _itemOta(RiwayatDetailOta o) {
+    final bool adaListing = (o.namaListing ?? '').trim().isNotEmpty;
+    final bool adaPlatform = (o.namaPlatform ?? '').trim().isNotEmpty;
+    final bool adaUrl = (o.urlListing ?? '').trim().isNotEmpty;
+
+    return OtaListingItem(
+      judul: adaListing
+          ? o.namaListing!
+          : (adaPlatform ? o.namaPlatform! : '-'),
+      platform: adaListing ? o.namaPlatform : null,
+      status: o.statusListing,
+      hargaTerendah: o.hargaTerendah,
+      rating: o.rating?.toString(),
+      jumlahUlasan: o.jumlahUlasan,
+      tanggalDitemukan: o.tanggalDitemukan == null
+          ? null
+          : formatTanggal(o.tanggalDitemukan),
+      catatan: o.catatan,
+      urls: <String>[if (adaUrl) o.urlListing!],
+      mapsUrl: o.mapsUrl,
     );
-  }
-}
-
-class _InfoKecil extends StatelessWidget {
-  const _InfoKecil({required this.icon, required this.text});
-
-  final IconData icon;
-  final String text;
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: <Widget>[
-        Icon(icon, size: 13, color: AppTheme.textSecondary(context)),
-        const SizedBox(width: 4),
-        Text(
-          text,
-          style: TextStyle(
-            fontSize: 11.5,
-            color: AppTheme.textSecondary(context),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-Color _warnaJenisRiwayat(String jenis) {
-  switch (jenis.toUpperCase()) {
-    case 'OSS':
-      return AppTheme.menuOss;
-    case 'OTA':
-      return AppTheme.menuOta;
-    case 'NON OSS':
-    default:
-      return AppTheme.menuNonOss;
   }
 }

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 /// Menampilkan satu snackbar (yang lama otomatis diganti).
@@ -6,7 +7,13 @@ import 'package:url_launcher/url_launcher.dart';
 /// [sukses] null  : snackbar standar tema.
 /// [sukses] true  : hijau, melayang.
 /// [sukses] false : oranye tua, melayang.
-void tampilkanPesan(BuildContext context, String pesan, {bool? sukses}) {
+/// [durasi] null  : durasi bawaan snackbar (4 detik).
+void tampilkanPesan(
+  BuildContext context,
+  String pesan, {
+  bool? sukses,
+  Duration? durasi,
+}) {
   final bool gaya = sukses != null;
 
   ScaffoldMessenger.of(context)
@@ -17,6 +24,7 @@ void tampilkanPesan(BuildContext context, String pesan, {bool? sukses}) {
           pesan,
           style: gaya ? const TextStyle(color: Colors.white) : null,
         ),
+        duration: durasi ?? const Duration(seconds: 4),
         backgroundColor: !gaya
             ? null
             : (sukses ? const Color(0xFF238636) : const Color(0xFFC2410C)),
@@ -26,6 +34,25 @@ void tampilkanPesan(BuildContext context, String pesan, {bool? sukses}) {
             : null,
       ),
     );
+}
+
+/// Menyalin [teks] ke clipboard, memberi getaran ringan, lalu menampilkan
+/// snackbar singkat "[label] disalin.". Satu-satunya jalur salin di app,
+/// supaya perilakunya sama di kartu daftar maupun halaman detail.
+Future<void> salinKeClipboard(
+  BuildContext context,
+  String teks,
+  String label,
+) async {
+  await Clipboard.setData(ClipboardData(text: teks));
+  HapticFeedback.selectionClick();
+  if (!context.mounted) return;
+
+  tampilkanPesan(
+    context,
+    '$label disalin.',
+    durasi: const Duration(seconds: 1),
+  );
 }
 
 /// Membuka [url] di browser/aplikasi eksternal. Bila gagal, menampilkan

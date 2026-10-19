@@ -36,7 +36,6 @@ class _RiwayatFilterSheet extends StatefulWidget {
 
 class _RiwayatFilterSheetState extends State<_RiwayatFilterSheet> {
   late String? _sumberData = widget.filter.sumberData;
-  late String? _statusVerifikasi = widget.filter.statusVerifikasi;
   late String? _bidangUsaha = widget.filter.bidangUsaha;
   late int? _kabupatenId = widget.filter.kabupatenId;
   late DateTime? _tanggalMulai = widget.filter.tanggalMulai;
@@ -67,7 +66,6 @@ class _RiwayatFilterSheetState extends State<_RiwayatFilterSheet> {
   void _reset() {
     setState(() {
       _sumberData = null;
-      _statusVerifikasi = null;
       _bidangUsaha = null;
       _kabupatenId = null;
       _tanggalMulai = null;
@@ -79,8 +77,6 @@ class _RiwayatFilterSheetState extends State<_RiwayatFilterSheet> {
     final RiwayatFilter hasil = widget.filter.copyWith(
       sumberData: _sumberData,
       clearSumberData: _sumberData == null,
-      statusVerifikasi: _statusVerifikasi,
-      clearStatusVerifikasi: _statusVerifikasi == null,
       bidangUsaha: _bidangUsaha,
       clearBidangUsaha: _bidangUsaha == null,
       kabupatenId: _kabupatenId,
@@ -108,164 +104,146 @@ class _RiwayatFilterSheetState extends State<_RiwayatFilterSheet> {
           color: AppTheme.surface(context),
           borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
         ),
-        child:SingleChildScrollView(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: <Widget>[
-            Center(
-              child: Container(
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: Colors.black12,
-                  borderRadius: BorderRadius.circular(20),
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              Center(
+                child: Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: Colors.black12,
+                    borderRadius: BorderRadius.circular(20),
+                  ),
                 ),
               ),
-            ),
-            const SizedBox(height: 16),
-            Text(
-              'Filter Riwayat',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w800,
-                color: AppTheme.textColor(context),
-              ),
-            ),
-            const SizedBox(height: 16),
-
-            _Label('Bidang Usaha'),
-            DropdownButtonFormField<String?>(
-              initialValue: _bidangUsaha,
-              isExpanded: true,
-              decoration: const InputDecoration(
-                border: OutlineInputBorder(),
-                contentPadding: EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 8,
+              const SizedBox(height: 16),
+              Text(
+                'Filter Riwayat',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w800,
+                  color: AppTheme.textColor(context),
                 ),
               ),
-              items: <DropdownMenuItem<String?>>[
-                const DropdownMenuItem<String?>(
-                  value: null,
-                  child: Text('Semua bidang'),
+              const SizedBox(height: 16),
+
+              _Label('Bidang Usaha'),
+              DropdownButtonFormField<String?>(
+                initialValue: _bidangUsaha,
+                isExpanded: true,
+                decoration: const InputDecoration(
+                  border: OutlineInputBorder(),
+                  contentPadding: EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 8,
+                  ),
                 ),
-                for (final BidangUsahaOpsi b in BidangUsahaOpsi.daftar)
-                  DropdownMenuItem<String?>(
-                    value: b.slug,
-                    child: Text(b.nama, overflow: TextOverflow.ellipsis),
+                items: <DropdownMenuItem<String?>>[
+                  const DropdownMenuItem<String?>(
+                    value: null,
+                    child: Text('Semua bidang'),
                   ),
-              ],
-              onChanged: (String? v) => setState(() => _bidangUsaha = v),
-            ),
-            const SizedBox(height: 16),
-
-            _Label('Sumber Data'),
-            Wrap(
-              spacing: 8,
-              children: <Widget>[
-                for (final String opsi in widget.options.sumberData)
-                  ChoiceChip(
-                    label: Text(opsi),
-                    selected: _sumberData == opsi,
-                    onSelected: (bool selected) {
-                      setState(() => _sumberData = selected ? opsi : null);
-                    },
-                  ),
-              ],
-            ),
-            const SizedBox(height: 16),
-
-            _Label('Status Verifikasi'),
-            Wrap(
-              spacing: 8,
-              children: <Widget>[
-                for (final String opsi in widget.options.statusVerifikasi)
-                  ChoiceChip(
-                    label: Text(opsi),
-                    selected: _statusVerifikasi == opsi,
-                    onSelected: (bool selected) {
-                      setState(
-                        () => _statusVerifikasi = selected ? opsi : null,
-                      );
-                    },
-                  ),
-              ],
-            ),
-            const SizedBox(height: 16),
-
-            _Label('Kabupaten/Kota'),
-            DropdownButtonFormField<int?>(
-              initialValue: _kabupatenId,
-              isExpanded: true,
-              decoration: const InputDecoration(
-                border: OutlineInputBorder(),
-                contentPadding: EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 8,
-                ),
+                  for (final BidangUsahaOpsi b in BidangUsahaOpsi.daftar)
+                    DropdownMenuItem<String?>(
+                      value: b.slug,
+                      child: Text(b.nama, overflow: TextOverflow.ellipsis),
+                    ),
+                ],
+                onChanged: (String? v) => setState(() => _bidangUsaha = v),
               ),
-              hint: const Text('Semua kabupaten/kota'),
-              items: <DropdownMenuItem<int?>>[
-                const DropdownMenuItem<int?>(
-                  value: null,
-                  child: Text('Semua kabupaten/kota'),
-                ),
-                for (final option in widget.options.kabupaten)
-                  DropdownMenuItem<int?>(
-                    value: option.id,
-                    child: Text(option.nama),
-                  ),
-              ],
-              onChanged: (int? value) => setState(() => _kabupatenId = value),
-            ),
-            const SizedBox(height: 16),
+              const SizedBox(height: 16),
 
-            _Label('Rentang Tanggal'),
-            Row(
-              children: <Widget>[
-                Expanded(
-                  child: _TanggalButton(
-                    label: _tanggalMulai == null
-                        ? 'Dari tanggal'
-                        : _formatTanggalSingkat(_tanggalMulai!),
-                    onTap: () => _pilihTanggal(mulai: true),
-                  ),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: _TanggalButton(
-                    label: _tanggalSelesai == null
-                        ? 'Sampai tanggal'
-                        : _formatTanggalSingkat(_tanggalSelesai!),
-                    onTap: () => _pilihTanggal(mulai: false),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 24),
+              _Label('Sumber Data'),
+              Wrap(
+                spacing: 8,
+                children: <Widget>[
+                  for (final String opsi in widget.options.sumberData)
+                    ChoiceChip(
+                      label: Text(opsi),
+                      selected: _sumberData == opsi,
+                      onSelected: (bool selected) {
+                        setState(() => _sumberData = selected ? opsi : null);
+                      },
+                    ),
+                ],
+              ),
+              const SizedBox(height: 16),
 
-            Row(
-              children: <Widget>[
-                Expanded(
-                  child: OutlinedButton(
-                    onPressed: _reset,
-                    child: const Text('Reset'),
+              _Label('Kabupaten/Kota'),
+              DropdownButtonFormField<int?>(
+                initialValue: _kabupatenId,
+                isExpanded: true,
+                decoration: const InputDecoration(
+                  border: OutlineInputBorder(),
+                  contentPadding: EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 8,
                   ),
                 ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: FilledButton(
-                    onPressed: _terapkan,
-                    child: const Text('Terapkan'),
+                hint: const Text('Semua kabupaten/kota'),
+                items: <DropdownMenuItem<int?>>[
+                  const DropdownMenuItem<int?>(
+                    value: null,
+                    child: Text('Semua kabupaten/kota'),
                   ),
-                ),
-              ],
-            ),
-          ],
+                  for (final option in widget.options.kabupaten)
+                    DropdownMenuItem<int?>(
+                      value: option.id,
+                      child: Text(option.nama),
+                    ),
+                ],
+                onChanged: (int? value) => setState(() => _kabupatenId = value),
+              ),
+              const SizedBox(height: 16),
+
+              _Label('Rentang Tanggal'),
+              Row(
+                children: <Widget>[
+                  Expanded(
+                    child: _TanggalButton(
+                      label: _tanggalMulai == null
+                          ? 'Dari tanggal'
+                          : _formatTanggalSingkat(_tanggalMulai!),
+                      onTap: () => _pilihTanggal(mulai: true),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: _TanggalButton(
+                      label: _tanggalSelesai == null
+                          ? 'Sampai tanggal'
+                          : _formatTanggalSingkat(_tanggalSelesai!),
+                      onTap: () => _pilihTanggal(mulai: false),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 24),
+
+              Row(
+                children: <Widget>[
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: _reset,
+                      child: const Text('Reset'),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: FilledButton(
+                      onPressed: _terapkan,
+                      child: const Text('Terapkan'),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
         ),
       ),
-      )
     );
   }
 
