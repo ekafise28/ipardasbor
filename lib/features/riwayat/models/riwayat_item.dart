@@ -4,10 +4,12 @@ class RiwayatIdentitas {
     required this.memilikiNib,
     required this.labelNib,
     required this.nib,
+    required this.nku, 
     required this.terdaftarOta,
   });
 
   final String? memilikiNib;
+  final String? nku;
   final String labelNib;
   final String? nib;
   final String? terdaftarOta;
@@ -17,6 +19,7 @@ class RiwayatIdentitas {
       memilikiNib: json['memiliki_nib'] as String?,
       labelNib: (json['label_nib'] as String?) ?? '-',
       nib: json['nib'] as String?,
+      nku: json['nku'] as String?,
       terdaftarOta: json['terdaftar_ota'] as String?,
     );
   }

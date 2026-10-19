@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:ipardasbor/shared/utils/ui_actions.dart';
 import 'package:ipardasbor/shared/widgets/list_parts.dart';
 
 import '../../../core/network/network_status.dart';
@@ -90,7 +89,7 @@ class OssProyekCard extends StatelessWidget {
                 statusIcon: status.icon,
               ),
               const SizedBox(height: 10),
-              _KodeBlock(nib: item.nib, nku: item.nku),
+              KodeBlock(nib: item.nib, nku: item.nku),
               const SizedBox(height: 10),
               if (modalRisiko.isNotEmpty)
                 ListInfoRow(icon: Icons.shield_outlined, text: modalRisiko),
@@ -144,78 +143,4 @@ class _StatusUi {
   final String label;
   final Color color;
   final IconData icon;
-}
-
-/// Blok kecil berlatar tint berisi NIB dan NKU, masing-masing bisa disalin.
-class _KodeBlock extends StatelessWidget {
-  const _KodeBlock({required this.nib, required this.nku});
-
-  final String nib;
-  final String nku;
-
-  @override
-  Widget build(BuildContext context) {
-    return MutedPanel(
-      padding: const EdgeInsets.fromLTRB(10, 4, 4, 4),
-      child: Column(
-        children: <Widget>[
-          _KodeRow(label: 'NIB', value: nib),
-          _KodeRow(label: 'NKU', value: nku),
-        ],
-      ),
-    );
-  }
-}
-
-class _KodeRow extends StatelessWidget {
-  const _KodeRow({required this.label, required this.value});
-
-  final String label;
-  final String value;
-
-  @override
-  Widget build(BuildContext context) {
-    final bool kosong = value.isEmpty;
-
-    return Row(
-      children: <Widget>[
-        SizedBox(
-          width: 34,
-          child: Text(
-            label,
-            style: TextStyle(
-              fontSize: 11.5,
-              fontWeight: FontWeight.w700,
-              color: AppTheme.textSecondary(context),
-            ),
-          ),
-        ),
-        Expanded(
-          child: Text(
-            kosong ? '-' : value,
-            style: TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w600,
-              color: AppTheme.textColor(context),
-              fontFeatures: const <FontFeature>[FontFeature.tabularFigures()],
-            ),
-          ),
-        ),
-        SizedBox(
-          width: 32,
-          height: 32,
-          child: IconButton(
-            padding: EdgeInsets.zero,
-            iconSize: 17,
-            tooltip: 'Salin $label',
-            color: AppTheme.textSecondary(context),
-            onPressed: kosong
-                ? null
-                : () => salinKeClipboard(context, value, label),
-            icon: const Icon(Icons.copy_rounded),
-          ),
-        ),
-      ],
-    );
-  }
 }

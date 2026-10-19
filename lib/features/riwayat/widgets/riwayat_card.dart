@@ -22,12 +22,23 @@ class RiwayatCard extends StatelessWidget {
     return item.selesai ? AppTheme.success : AppTheme.warning;
   }
 
+  Color _warnaNib(BuildContext context) {
+    switch (item.identitas.memilikiNib) {
+      case 'YA':
+        return AppTheme.success;
+      case 'TIDAK TAHU':
+        return AppTheme.warning;
+      default:
+        return AppTheme.textSecondary(context); // lihat catatan di bawah
+    }
+  }
+
+  bool get _terdaftarOta =>
+      (item.identitas.terdaftarOta ?? '').toUpperCase() == 'YA';
+
   @override
   Widget build(BuildContext context) {
     final String? bidang = BidangUsahaOpsi.namaDari(item.bidangUsaha);
-    final String? nib = (item.identitas.nib ?? '').trim().isEmpty
-        ? null
-        : item.identitas.nib;
     final DateTime? tgl = item.tanggal?.toLocal();
 
     return StripCard(
@@ -57,9 +68,16 @@ class RiwayatCard extends StatelessWidget {
                 color: AppTheme.warnaJenis(item.jenis),
               ),
               if (bidang != null)
-                TintChip(
-                  label: bidang,
-                  color: AppTheme.textSecondary(context),
+                TintChip(label: bidang, color: AppTheme.textSecondary(context)),
+              TintChip(
+                // BARU
+                label: item.identitas.labelNib,
+                color: _warnaNib(context),
+              ),
+              if (_terdaftarOta) // BARU
+                const TintChip(
+                  label: 'Terdaftar OTA',
+                  color: AppTheme.primaryColor,
                 ),
               if (item.ossTidakValid)
                 const TintChip(
@@ -72,7 +90,10 @@ class RiwayatCard extends StatelessWidget {
           const SizedBox(height: 10),
 
           // Identitas legalitas
-          _IdentitasBlock(ringkasan: item.identitas.ringkasan, nib: nib),
+          KodeBlock(
+            nib: item.identitas.nib ?? '',
+            nku: item.identitas.nku ?? '',
+          ),
           const SizedBox(height: 10),
 
           // Info berikon
@@ -98,47 +119,6 @@ class RiwayatCard extends StatelessWidget {
               label: const Text('Lihat Detail'),
             ),
           ),
-        ],
-      ),
-    );
-  }
-}
-
-/// Blok berlatar muted: ringkasan status NIB/OTA, plus NIB bila ada.
-class _IdentitasBlock extends StatelessWidget {
-  const _IdentitasBlock({required this.ringkasan, this.nib});
-
-  final String ringkasan;
-  final String? nib;
-
-  @override
-  Widget build(BuildContext context) {
-    return MutedPanel(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: <Widget>[
-          Text(
-            ringkasan,
-            style: TextStyle(
-              fontSize: 12.5,
-              fontWeight: FontWeight.w600,
-              color: AppTheme.textColor(context),
-            ),
-          ),
-          if (nib != null)
-            Padding(
-              padding: const EdgeInsets.only(top: 2),
-              child: Text(
-                'NIB $nib',
-                style: TextStyle(
-                  fontSize: 12.5,
-                  color: AppTheme.textSecondary(context),
-                  fontFeatures: const <FontFeature>[
-                    FontFeature.tabularFigures(),
-                  ],
-                ),
-              ),
-            ),
         ],
       ),
     );

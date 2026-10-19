@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:ipardasbor/shared/utils/ui_actions.dart';
 
 import '../../app/app_theme.dart';
 import '../utils/formatters.dart';
@@ -103,7 +104,11 @@ class DistanceBadge extends StatelessWidget {
           const SizedBox(width: 4),
           Text(
             formatJarak(km),
-            style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: warna),
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
+              color: warna,
+            ),
           ),
         ],
       ),
@@ -155,8 +160,9 @@ class ListInfoRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final Color warna =
-        redup ? AppTheme.textMuted : AppTheme.textSecondary(context);
+    final Color warna = redup
+        ? AppTheme.textMuted
+        : AppTheme.textSecondary(context);
     return Padding(
       padding: const EdgeInsets.only(bottom: 4),
       child: Row(
@@ -209,12 +215,16 @@ class TintChip extends StatelessWidget {
             Icon(icon, size: 13, color: color),
             const SizedBox(width: 4),
           ],
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 11.5,
-              fontWeight: FontWeight.w800,
-              color: color,
+          Flexible(
+            child: Text(
+              label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                fontSize: 11.5,
+                fontWeight: FontWeight.w800,
+                color: color,
+              ),
             ),
           ),
         ],
@@ -345,6 +355,80 @@ class MutedPanel extends StatelessWidget {
         borderRadius: BorderRadius.circular(10),
       ),
       child: child,
+    );
+  }
+}
+
+/// Blok kecil berlatar tint berisi NIB dan NKU, masing-masing bisa disalin.
+class KodeBlock extends StatelessWidget {
+  const KodeBlock({super.key, required this.nib, required this.nku});
+
+  final String nib;
+  final String nku;
+
+  @override
+  Widget build(BuildContext context) {
+    return MutedPanel(
+      padding: const EdgeInsets.fromLTRB(10, 4, 4, 4),
+      child: Column(
+        children: <Widget>[
+          KodeRow(label: 'NIB', value: nib),
+          KodeRow(label: 'NKU', value: nku),
+        ],
+      ),
+    );
+  }
+}
+
+class KodeRow extends StatelessWidget {
+  const KodeRow({super.key, required this.label, required this.value});
+
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    final bool kosong = value.isEmpty;
+
+    return Row(
+      children: <Widget>[
+        SizedBox(
+          width: 34,
+          child: Text(
+            label,
+            style: TextStyle(
+              fontSize: 11.5,
+              fontWeight: FontWeight.w700,
+              color: AppTheme.textSecondary(context),
+            ),
+          ),
+        ),
+        Expanded(
+          child: Text(
+            kosong ? '-' : value,
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+              color: AppTheme.textColor(context),
+              fontFeatures: const <FontFeature>[FontFeature.tabularFigures()],
+            ),
+          ),
+        ),
+        SizedBox(
+          width: 32,
+          height: 32,
+          child: IconButton(
+            padding: EdgeInsets.zero,
+            iconSize: 17,
+            tooltip: 'Salin $label',
+            color: AppTheme.textSecondary(context),
+            onPressed: kosong
+                ? null
+                : () => salinKeClipboard(context, value, label),
+            icon: const Icon(Icons.copy_rounded),
+          ),
+        ),
+      ],
     );
   }
 }
