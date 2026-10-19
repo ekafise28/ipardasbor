@@ -15,6 +15,7 @@ import 'models/menu_data.dart';
 import 'pages/feature_placeholder_page.dart';
 
 import '../profile/profile_page.dart';
+import '../profile/pages/kelola_akun_page.dart';
 import '../settings/settings_page.dart';
 
 import 'widgets/menu_card.dart';
@@ -107,6 +108,8 @@ class _HomePageState extends State<HomePage>
     backgroundColor: AppTheme.menuOssBg,
   );
 
+
+
   static const MenuData _mNonOss = MenuData(
     title: 'Pengawasan Non-OSS',
     description: 'Pencatatan usaha di luar OSS',
@@ -147,6 +150,14 @@ class _HomePageState extends State<HomePage>
     backgroundColor: AppTheme.menuProfilBg,
   );
 
+  static const MenuData _mKelolaAkun = MenuData(
+    title: 'Kelola Akun',
+    description: 'Atur akun dan keamanan',
+    icon: Icons.manage_accounts_outlined,
+    color: AppTheme.menuProfil,
+    backgroundColor: AppTheme.menuProfilBg,
+  );
+
   // 3 + 4 menu: pas mengisi grid 4 kolom tanpa baris yang timpang.
   static const List<_MenuGroup> _groups = [
     _MenuGroup('Pengawasan', [_mOss, _mNonOss, _mOta]),
@@ -155,6 +166,7 @@ class _HomePageState extends State<HomePage>
       _mRiwayat,
       _mSinkronisasi,
       _mProfil,
+      _mKelolaAkun,
     ]),
   ];
 
@@ -167,7 +179,7 @@ class _HomePageState extends State<HomePage>
   // Menu Fitur
   Future<void> _openMenu(BuildContext context, MenuData menu) async {
     switch (menu.title) {
-      case 'Dashboard':
+      case 'Dashboar':
         await Navigator.of(
           context,
         ).push(MaterialPageRoute<void>(builder: (_) => const DashboardPage()));
@@ -197,6 +209,12 @@ class _HomePageState extends State<HomePage>
         await Navigator.of(
           context,
         ).push(MaterialPageRoute<void>(builder: (_) => const ProfilePage()));
+        break;
+
+      case 'Kelola Akun':
+        await Navigator.of(context).push(
+          MaterialPageRoute<void>(builder: (_) => const KelolaAkunPage()),
+        );
         break;
 
       case 'Riwayat':
