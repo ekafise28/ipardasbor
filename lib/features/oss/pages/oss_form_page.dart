@@ -11,6 +11,7 @@ import 'package:ipardasbor/shared/gps/gps_capture_mixin.dart';
 import 'package:ipardasbor/core/constants/bidang_usaha_constants.dart';
 import 'package:ipardasbor/shared/utils/form_validators.dart';
 import 'package:ipardasbor/shared/utils/ota_utils.dart';
+import 'package:ipardasbor/shared/widgets/form/jenis_produk_dropdown.dart';
 
 import '../../../core/api/api_client.dart';
 import '../../../shared/region/models/region_option.dart';
@@ -52,12 +53,7 @@ class _OssFormPageState extends State<OssFormPage>
   String get _labelJenisProdukTerkunci {
     if (_isAkomodasiLainnya55900) return _data.kbliDesc;
     for (final MapEntry<String, String> o in _jenisProdukOptions) {
-      if (o.key != _data.kbli) continue;
-      // Opsi akomodasi (statis) hanya berisi nama; opsi bidang lain dari API
-      // sudah berformat "kode - nama".
-      return o.value.startsWith('${o.key} ')
-          ? o.value
-          : '${o.key} - ${o.value}';
+      if (o.key == _data.kbli) return labelJenisProduk(o.key, o.value);
     }
     return _data.kbli; // fallback: kode saja
   }
@@ -928,41 +924,11 @@ class _OssFormPageState extends State<OssFormPage>
                                         'Jenis Produk (dari KBLI)',
                                         _labelJenisProdukTerkunci,
                                       )
-                                    : Padding(
-                                        padding: const EdgeInsets.only(
-                                          bottom: 12,
-                                        ),
-                                        child: DropdownButtonFormField<String>(
-                                          initialValue:
-                                              _data.jenisProduk.isEmpty
-                                              ? null
-                                              : _data.jenisProduk,
-                                          isExpanded: true,
-                                          decoration: const InputDecoration(
-                                            labelText: 'Jenis Produk *',
-                                            prefixIcon: Icon(
-                                              Icons.category_outlined,
-                                              size: 20,
-                                            ),
-                                          ),
-                                          items: _jenisProdukOptions
-                                              .map(
-                                                (e) => DropdownMenuItem(
-                                                  value: e.key,
-                                                  child: Text(
-                                                    e.value,
-                                                    overflow:
-                                                        TextOverflow.ellipsis,
-                                                  ),
-                                                ),
-                                              )
-                                              .toList(),
-                                          onChanged: (v) => setState(
-                                            () => _data.jenisProduk = v ?? '',
-                                          ),
-                                          validator: (v) => v == null
-                                              ? 'Wajib dipilih.'
-                                              : null,
+                                    : JenisProdukDropdown(
+                                        options: _jenisProdukOptions,
+                                        value: _data.jenisProduk,
+                                        onChanged: (v) => setState(
+                                          () => _data.jenisProduk = v,
                                         ),
                                       ),
                             ],

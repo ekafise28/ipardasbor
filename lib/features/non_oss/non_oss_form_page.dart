@@ -6,6 +6,7 @@ import 'dart:async';
 
 import 'package:ipardasbor/app/app_theme.dart';
 import 'package:ipardasbor/features/non_oss/offline/non_oss_local_data.dart';
+import 'package:ipardasbor/shared/widgets/form/jenis_produk_dropdown.dart';
 import 'package:ipardasbor/shared/widgets/form/status_ketidaksesuaian_selector.dart';
 import 'package:ipardasbor/shared/gps/gps_capture_mixin.dart';
 import 'package:ipardasbor/core/constants/bidang_usaha_constants.dart';
@@ -68,13 +69,6 @@ class _NonOssFormPageState extends State<NonOssFormPage>
   late final RegionService _regions;
   late final NonOssService _service;
   late final OfflineQueueService _offlineQueue;
-
-  /// "55105 - Hotel Bintang 1". Nilai lama (label teks, mis. "Hotel") tampil apa adanya.
-  String _labelJenisProduk(MapEntry<String, String> e) {
-    final bool kode = RegExp(r'^\d{5}$').hasMatch(e.key);
-    if (!kode) return e.value;
-    return e.value.startsWith(e.key) ? e.value : '${e.key} - ${e.value}';
-  }
 
   List<RegionOption> _provinces = [],
       _regencies = [],
@@ -1002,53 +996,11 @@ class _NonOssFormPageState extends State<NonOssFormPage>
                             _namaBrandCtrl,
                             (v) => _data.namaBrand = v,
                           ),
-
-                          Builder(
-                            builder: (_) {
-                              final opsi = List<MapEntry<String, String>>.of(
-                                _jenisProdukOptions,
-                              );
-                              // Nilai tersimpan (draft/edit) yang tidak ada di
-                              // daftar tetap ditampilkan, supaya dropdown tidak
-                              // error dan nilainya tidak hilang.
-                              if (_data.jenisProduk.isNotEmpty &&
-                                  !opsi.any(
-                                    (e) => e.key == _data.jenisProduk,
-                                  )) {
-                                opsi.add(
-                                  MapEntry(
-                                    _data.jenisProduk,
-                                    _data.jenisProduk,
-                                  ),
-                                );
-                              }
-                              return DropdownButtonFormField<String>(
-                                key: ValueKey<String>('jp-${opsi.length}'),
-                                initialValue: _data.jenisProduk.isEmpty
-                                    ? null
-                                    : _data.jenisProduk,
-                                isExpanded: true,
-                                decoration: const InputDecoration(
-                                  labelText: 'Jenis Produk *',
-                                  border: OutlineInputBorder(),
-                                ),
-                                items: opsi
-                                    .map(
-                                      (e) => DropdownMenuItem(
-                                        value: e.key,
-                                        child: Text(
-                                          _labelJenisProduk(e),
-                                          overflow: TextOverflow.ellipsis,
-                                        ),
-                                      ),
-                                    )
-                                    .toList(),
-                                onChanged: (v) =>
-                                    setState(() => _data.jenisProduk = v ?? ''),
-                                validator: (v) =>
-                                    v == null ? 'Wajib dipilih.' : null,
-                              );
-                            },
+                          JenisProdukDropdown(
+                            options: _jenisProdukOptions,
+                            value: _data.jenisProduk,
+                            onChanged: (v) =>
+                                setState(() => _data.jenisProduk = v),
                           ),
                         ],
                       ),
@@ -1207,6 +1159,7 @@ class _NonOssFormPageState extends State<NonOssFormPage>
                       icon: Icons.fact_check,
                       hasError: _sectionErrors.contains(_Section.hasil),
                       child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
                             'Status Hasil Pengawasan *',

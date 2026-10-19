@@ -5,6 +5,7 @@ import 'package:ipardasbor/app/app_theme.dart';
 import 'package:ipardasbor/core/network/network_status.dart';
 import 'package:ipardasbor/shared/gps/gps_capture_mixin.dart';
 import 'package:ipardasbor/shared/utils/form_validators.dart';
+import 'package:ipardasbor/shared/widgets/form/jenis_produk_dropdown.dart';
 
 import '../../../shared/region/models/region_option.dart';
 import '../../../shared/region/services/region_service.dart';
@@ -589,26 +590,11 @@ class _AkomodasiItemCardState extends State<AkomodasiItemCard>
           }),
         ),
         const SizedBox(height: 10),
-        DropdownButtonFormField<String>(
-          initialValue: _d.jenisProduk.isEmpty ? null : _d.jenisProduk,
-          isExpanded: true,
-          decoration: const InputDecoration(
-            labelText: 'Jenis Produk Akomodasi *',
-            prefixIcon: Icon(Icons.category_outlined, size: 20),
-          ),
-          items: JenisProdukAkomodasi.options
-              .map(
-                (e) => DropdownMenuItem(
-                  value: e.key,
-                  child: Text(
-                    '${e.key} - ${e.value}',
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-              )
-              .toList(),
-          onChanged: (v) => setState(() => _d.jenisProduk = v ?? ''),
-          validator: (v) => v == null ? 'Wajib dipilih.' : null,
+        JenisProdukDropdown(
+          label: 'Jenis Produk Akomodasi *',
+          options: JenisProdukAkomodasi.options,
+          value: _d.jenisProduk,
+          onChanged: (v) => setState(() => _d.jenisProduk = v),
         ),
       ],
     );
