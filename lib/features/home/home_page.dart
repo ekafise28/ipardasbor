@@ -108,8 +108,6 @@ class _HomePageState extends State<HomePage>
     backgroundColor: AppTheme.menuOssBg,
   );
 
-
-
   static const MenuData _mNonOss = MenuData(
     title: 'Pengawasan Non-OSS',
     description: 'Pencatatan usaha di luar OSS',
@@ -158,6 +156,37 @@ class _HomePageState extends State<HomePage>
     backgroundColor: AppTheme.menuProfilBg,
   );
 
+  static const MenuData _mIndustriPariwisata = MenuData(
+    title: 'Industri Pariwisata',
+    description: 'Data usaha & industri pariwisata',
+    icon: Icons.apartment_rounded,
+    color: AppTheme.menuNonOss,
+    backgroundColor: AppTheme.menuNonOssBg,
+  );
+
+  static const MenuData _mWisman = MenuData(
+    title: 'Wisatawan Mancanegara',
+    description: 'Kunjungan wisman',
+    icon: Icons.flight_land_rounded,
+    color: AppTheme.menuOta,
+    backgroundColor: AppTheme.menuOtaBg,
+  );
+
+  static const MenuData _mProfilPasarWisman = MenuData(
+    title: 'Profil Pasar Wisman',
+    description: 'Profil pasar wisatawan mancanegara',
+    icon: Icons.pie_chart_rounded,
+    color: AppTheme.menuRiwayat,
+    backgroundColor: AppTheme.menuRiwayatBg,
+  );
+
+  static const MenuData _mOkupansi = MenuData(
+    title: 'Okupansi Akomodasi',
+    description: 'Tingkat hunian akomodasi',
+    icon: Icons.hotel_rounded,
+    color: AppTheme.menuSinkronisasi,
+    backgroundColor: AppTheme.menuSinkronisasiBg,
+  );
   // 3 + 4 menu: pas mengisi grid 4 kolom tanpa baris yang timpang.
   static const List<_MenuGroup> _groups = [
     _MenuGroup('Pengawasan', [_mOss, _mNonOss, _mOta]),
@@ -167,6 +196,11 @@ class _HomePageState extends State<HomePage>
       _mSinkronisasi,
       _mProfil,
       _mKelolaAkun,
+      //Menu Bakal Masuk Ke Dashboard
+      _mIndustriPariwisata,
+      _mWisman,
+      _mProfilPasarWisman,
+      _mOkupansi,
     ]),
   ];
 
@@ -212,9 +246,9 @@ class _HomePageState extends State<HomePage>
         break;
 
       case 'Kelola Akun':
-        await Navigator.of(context).push(
-          MaterialPageRoute<void>(builder: (_) => const KelolaAkunPage()),
-        );
+        await Navigator.of(
+          context,
+        ).push(MaterialPageRoute<void>(builder: (_) => const KelolaAkunPage()));
         break;
 
       case 'Riwayat':
