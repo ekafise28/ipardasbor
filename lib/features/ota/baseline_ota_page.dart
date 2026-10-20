@@ -576,6 +576,7 @@ class _BaselineOtaPageState extends State<BaselineOtaPage>
       currentPage: _ctrl.currentPage,
       totalPages: _ctrl.totalPages,
       perPage: _filter.perPage,
+      total: _ctrl.total,
       enabled: !_ctrl.loadingFirst,
       onPageChanged: _ctrl.goToPage,
       onPerPageChanged: (int n) => _ubahFilter(() => _filter.perPage = n),
