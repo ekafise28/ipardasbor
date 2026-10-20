@@ -2,38 +2,37 @@ import 'package:flutter/material.dart';
 
 import '../../../app/app_theme.dart';
 
-/// Kartu ringkasan di puncak [SyncPage]: jumlah data yang menunggu
-/// sinkronisasi dan tombol "Sync Semua".
+/// Kartu ringkasan di puncak halaman Sinkronisasi: jumlah data yang siap
+/// dikirim dan jumlah draft yang belum lengkap.
+///
+/// Tombol "Sinkronkan Semua" tidak lagi di sini; letaknya di
+/// [SyncBottomBar] supaya selalu terjangkau saat daftar panjang.
 class SyncSummaryCard extends StatelessWidget {
   const SyncSummaryCard({
     super.key,
     required this.isLoading,
-    required this.isSyncingAll,
     required this.waitingCount,
     required this.draftCount,
-    required this.onSyncAll,
   });
 
   final bool isLoading;
-  final bool isSyncingAll;
   final int waitingCount;
 
-  /// Jumlah draft (belum lengkap, TIDAK ikut diproses tombol "Sync
-  /// Semua"). Disebutkan terpisah di pesan supaya user tidak bingung
-  /// kenapa jumlah yang benar-benar terkirim beda dari total data yang
-  /// tersimpan di perangkat.
+  /// Draft TIDAK ikut diproses tombol "Sinkronkan Semua", jadi dihitung
+  /// terpisah supaya petugas tahu kenapa jumlah yang terkirim berbeda dari
+  /// total data di perangkat.
   final int draftCount;
-
-  final VoidCallback onSyncAll;
 
   @override
   Widget build(BuildContext context) {
+    final int total = waitingCount + draftCount;
+
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(18),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppTheme.surface(context).withValues(alpha: 0.96),
-        borderRadius: BorderRadius.circular(24),
+        color: AppTheme.surface(context),
+        borderRadius: BorderRadius.circular(22),
         border: Border.all(color: AppTheme.border(context)),
         boxShadow: const <BoxShadow>[
           BoxShadow(
@@ -43,97 +42,206 @@ class SyncSummaryCard extends StatelessWidget {
           ),
         ],
       ),
-      child: Row(
+      child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          Container(
-            width: 44,
-            height: 44,
-            decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                colors: <Color>[Color(0xFFFF9F0A), Color(0xFFFF6B00)],
-              ),
-              borderRadius: BorderRadius.circular(14),
-            ),
-            child: const Icon(
-              Icons.cloud_upload_rounded,
-              color: Colors.white,
-              size: 23,
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: <Widget>[
-                Text(
-                  'Menunggu Sinkronisasi',
-                  style: TextStyle(
-                    color: AppTheme.textColor(context),
-                    fontSize: 16,
-                    fontWeight: FontWeight.w800,
-                  ),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                  gradient: AppTheme.brandGradient,
+                  borderRadius: BorderRadius.circular(14),
                 ),
-                const SizedBox(height: 3),
-                if (isLoading)
-                  Text(
-                    'Memuat data...',
-                    style: TextStyle(
-                      color: AppTheme.textSecondary(context),
-                      fontSize: 12,
-                    ),
-                  )
-                else ...[
-                  Text(
-                    waitingCount == 0
-                        ? '✅ Semua data siap sync sudah terkirim.'
-                        : '🔃 $waitingCount data tersimpan aman di perangkat.',
-                    style: TextStyle(
-                      color: AppTheme.textSecondary(context),
-                      fontSize: 12,
-                    ),
-                  ),
-                  if (draftCount > 0) ...[
-                    const SizedBox(height: 2),
+                child: const Icon(
+                  Icons.cloud_sync_rounded,
+                  color: Colors.white,
+                  size: 24,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
                     Text(
-                      '📝 $draftCount draft belum lengkap - lihat di bagian '
-                      'Draft di bawah.',
+                      'Ringkasan Antrean',
+                      style: TextStyle(
+                        color: AppTheme.textColor(context),
+                        fontSize: 16,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    const SizedBox(height: 3),
+                    Text(
+                      isLoading
+                          ? 'Memuat data...'
+                          : '$waitingCount laporan siap dikirim, '
+                                '$draftCount formulir belum lengkap.',
                       style: TextStyle(
                         color: AppTheme.textSecondary(context),
-                        fontSize: 11.5,
+                        fontSize: 12,
+                        height: 1.3,
                       ),
                     ),
                   ],
-                ],
+                ),
+              ),
+              if (!isLoading) ...<Widget>[
+                const SizedBox(width: 8),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 9,
+                    vertical: 4,
+                  ),
+                  decoration: BoxDecoration(
+                    color: AppTheme.tintBackground(
+                      context,
+                      AppTheme.primaryColor,
+                      AppTheme.menuDashboardBg,
+                    ),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Text(
+                    '$total Berkas',
+                    style: const TextStyle(
+                      color: AppTheme.primaryColor,
+                      fontSize: 10.5,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                ),
+              ],
+            ],
+          ),
+          const SizedBox(height: 14),
+          // IntrinsicHeight wajib: Row dengan stretch di dalam Column yang
+          // tingginya tak terbatas (isi SingleChildScrollView) akan
+          // mendapat constraint tinggi tak hingga dan merusak layout.
+          IntrinsicHeight(
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: <Widget>[
+                Expanded(
+                  child: _SummaryBox(
+                    title: 'Siap Dikirim',
+                    icon: Icons.check_circle_outline_rounded,
+                    count: isLoading ? null : waitingCount,
+                    unit: 'Data Valid',
+                    description: 'Tersimpan aman di penyimpanan lokal',
+                    color: AppTheme.primaryColor,
+                    lightBackground: AppTheme.menuDashboardBg,
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: _SummaryBox(
+                    title: 'Belum Lengkap',
+                    icon: Icons.edit_note_rounded,
+                    count: isLoading ? null : draftCount,
+                    unit: 'Draft Terbuka',
+                    description: 'Perlu dilengkapi sebelum sinkronisasi',
+                    color: AppTheme.warning,
+                    lightBackground: AppTheme.warningBackground,
+                  ),
+                ),
               ],
             ),
           ),
-          const SizedBox(width: 8),
-          FilledButton.icon(
-            onPressed: waitingCount == 0 || isSyncingAll || isLoading
-                ? null
-                : onSyncAll,
-            style: FilledButton.styleFrom(
-              backgroundColor: const Color(0xFF007AFF),
-              foregroundColor: Colors.white,
-              disabledBackgroundColor: AppTheme.surfaceMuted(context),
-              disabledForegroundColor: AppTheme.textMuted,
-              padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 11),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(13),
+        ],
+      ),
+    );
+  }
+}
+
+class _SummaryBox extends StatelessWidget {
+  const _SummaryBox({
+    required this.title,
+    required this.icon,
+    required this.count,
+    required this.unit,
+    required this.description,
+    required this.color,
+    required this.lightBackground,
+  });
+
+  final String title;
+  final IconData icon;
+
+  /// null = masih memuat.
+  final int? count;
+  final String unit;
+  final String description;
+  final Color color;
+  final Color lightBackground;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(12, 11, 12, 12),
+      decoration: BoxDecoration(
+        color: AppTheme.tintBackground(context, color, lightBackground),
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Row(
+            children: <Widget>[
+              Expanded(
+                child: Text(
+                  title,
+                  style: TextStyle(
+                    color: AppTheme.textSecondary(context),
+                    fontSize: 11.5,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
               ),
-            ),
-            icon: isSyncingAll
-                ? const SizedBox(
-                    width: 16,
-                    height: 16,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      color: Colors.white,
+              Icon(icon, size: 18, color: color),
+            ],
+          ),
+          const SizedBox(height: 6),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: <Widget>[
+              Text(
+                count?.toString() ?? '-',
+                style: TextStyle(
+                  color: AppTheme.textColor(context),
+                  fontSize: 28,
+                  height: 1,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+              const SizedBox(width: 6),
+              Flexible(
+                child: Padding(
+                  padding: const EdgeInsets.only(bottom: 2),
+                  child: Text(
+                    unit,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      color: color,
+                      fontSize: 11,
+                      fontWeight: FontWeight.w800,
                     ),
-                  )
-                : const Icon(Icons.sync_rounded, size: 18),
-            label: Text(isSyncingAll ? 'Proses' : 'Sync Semua'),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          Text(
+            description,
+            style: TextStyle(
+              color: AppTheme.textSecondary(context),
+              fontSize: 11,
+              height: 1.3,
+            ),
           ),
         ],
       ),

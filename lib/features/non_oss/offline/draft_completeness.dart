@@ -1,3 +1,4 @@
+import 'package:ipardasbor/core/constants/ota_platform_constants.dart';
 import 'package:ipardasbor/shared/utils/form_validators.dart';
 import 'package:ipardasbor/shared/utils/ota_utils.dart';
 
@@ -16,6 +17,27 @@ class DraftMissingItem {
   final String label;
 }
 
+/// Status satu bagian form (satu section) pada sebuah draft.
+class DraftModule {
+  const DraftModule({
+    required this.title,
+    required this.missing,
+    this.completeNote,
+  });
+
+  /// Nama bagian, sama dengan judul section di form.
+  final String title;
+
+  /// Label field yang masih kurang. Kosong berarti bagian ini lengkap.
+  final List<String> missing;
+
+  /// Keterangan singkat saat bagian ini lengkap (opsional), misalnya
+  /// "Tidak berlaku" untuk Platform OTA pada usaha yang tidak terdaftar.
+  final String? completeNote;
+
+  bool get isComplete => missing.isEmpty;
+}
+
 class DraftCompletenessChecker {
   DraftCompletenessChecker._();
 
@@ -23,6 +45,9 @@ class DraftCompletenessChecker {
     r'^[\w\.\-\+]+@[\w\-]+\.[\w\-\.]+$',
   );
 
+  /// Daftar kekurangan, dikelompokkan per section. Bersumber dari
+  /// [checkModules] supaya aturan wajib-isi hanya ada di satu tempat.
+  ///
   /// List kosong berarti draft ini sudah lengkap dan valid seperti data
   /// biasa (user memilih simpan sebagai draft murni karena pilihannya
   /// sendiri, bukan karena data belum lengkap).
@@ -30,99 +55,113 @@ class DraftCompletenessChecker {
     Map<String, String> payload,
     List<String> photoPaths,
   ) {
-    final List<DraftMissingItem> missing = <DraftMissingItem>[];
+    return <DraftMissingItem>[
+      for (final DraftModule module in checkModules(payload, photoPaths))
+        for (final String label in module.missing)
+          DraftMissingItem(module.title, label),
+    ];
+  }
 
+  /// Status SEMUA bagian form (selalu 7 bagian, urutan sama dengan form),
+  /// baik yang sudah lengkap maupun yang belum.
+  static List<DraftModule> checkModules(
+    Map<String, String> payload,
+    List<String> photoPaths,
+  ) {
     String v(String key) => (payload[key] ?? '').trim();
     bool empty(String key) => v(key).isEmpty;
 
     // --- Identitas Usaha ---
-    if (empty('nama_pemilik')) {
-      missing.add(const DraftMissingItem('Identitas Usaha', 'Nama Pemilik'));
-    }
-    if (empty('nama_brand')) {
-      missing.add(const DraftMissingItem('Identitas Usaha', 'Nama Brand'));
-    }
-    if (empty('jenis_produk')) {
-      missing.add(const DraftMissingItem('Identitas Usaha', 'Jenis Produk'));
-    }
+    final List<String> identitas = <String>[
+      if (empty('nama_pemilik')) 'Nama Pemilik',
+      if (empty('nama_brand')) 'Nama Brand',
+      if (empty('jenis_produk')) 'Jenis Produk',
+    ];
 
     // --- Wilayah dan Alamat ---
-    if (empty('provinsi_id')) {
-      missing.add(const DraftMissingItem('Wilayah dan Alamat', 'Provinsi'));
-    }
-    if (empty('kabupaten_id')) {
-      missing.add(
-        const DraftMissingItem('Wilayah dan Alamat', 'Kabupaten/Kota'),
-      );
-    }
-    if (empty('kecamatan_id')) {
-      missing.add(const DraftMissingItem('Wilayah dan Alamat', 'Kecamatan'));
-    }
-    if (empty('kelurahan_id')) {
-      missing.add(
-        const DraftMissingItem('Wilayah dan Alamat', 'Kelurahan/Desa'),
-      );
-    }
-    if (empty('alamat')) {
-      missing.add(
-        const DraftMissingItem('Wilayah dan Alamat', 'Alamat Lengkap'),
-      );
-    }
+    final List<String> wilayah = <String>[
+      if (empty('provinsi_id')) 'Provinsi',
+      if (empty('kabupaten_id')) 'Kabupaten/Kota',
+      if (empty('kecamatan_id')) 'Kecamatan',
+      if (empty('kelurahan_id')) 'Kelurahan/Desa',
+      if (empty('alamat')) 'Alamat Lengkap',
+    ];
 
     // --- Lokasi dan Peta ---
-    if (empty('latitude') || empty('longitude')) {
-      missing.add(const DraftMissingItem('Lokasi dan Peta', 'Koordinat GPS'));
-    }
+    final List<String> lokasi = <String>[
+      if (empty('latitude') || empty('longitude')) 'Koordinat GPS',
+    ];
 
     // --- Kontak dan Legalitas ---
+    final List<String> kontak = <String>[];
     if (empty('no_hp')) {
-      missing.add(
-        const DraftMissingItem('Kontak dan Legalitas', 'Telepon/WhatsApp'),
-      );
+      kontak.add('Telepon/WhatsApp');
     } else if (FormValidators.phone(v('no_hp')) != null) {
-      missing.add(
-        const DraftMissingItem(
-          'Kontak dan Legalitas',
-          'Format Telepon/WhatsApp (10-15 digit)',
-        ),
-      );
+      kontak.add('Format Telepon/WhatsApp (10-15 digit)');
     }
     if (!empty('website') && !_isValidUrl(v('website'))) {
-      missing.add(
-        const DraftMissingItem('Kontak dan Legalitas', 'Format Website'),
-      );
+      kontak.add('Format Website');
     }
     if (empty('email')) {
-      missing.add(const DraftMissingItem('Kontak dan Legalitas', 'Email'));
+      kontak.add('Email');
     } else if (!_emailPattern.hasMatch(v('email'))) {
-      missing.add(
-        const DraftMissingItem('Kontak dan Legalitas', 'Format Email'),
-      );
+      kontak.add('Format Email');
     }
 
     // --- Platform OTA ---
-    if (v('terdaftar_ota') == 'YA') {
+    final bool terdaftarOta = v('terdaftar_ota') == 'YA';
+    final List<String> ota = <String>[];
+    if (terdaftarOta) {
       final Map<String, List<String>> otaUrls = OtaFields.parse(payload);
 
       if (OtaUrlRules.belumLengkap(otaUrls)) {
-        missing.add(const DraftMissingItem('Platform OTA', 'URL Listing OTA'));
+        ota.add('URL Listing OTA');
       } else if (OtaUrlRules.adaUrlTidakValid(otaUrls)) {
-        missing.add(const DraftMissingItem('Platform OTA', 'Format URL OTA'));
+        ota.add('Format URL OTA');
+      }
+      if (otaUrls.containsKey(OtaPlatform.lainnya) &&
+          empty('ota_lainnya_nama')) {
+        ota.add('Nama Platform Lainnya');
       }
     }
 
     // --- Hasil Pengawasan ---
-    final int status = int.tryParse(payload['status_pengawasan'] ?? '') ?? 0;
-    if ((status == 3 || status == 8) && empty('keterangan')) {
-      missing.add(const DraftMissingItem('Hasil Pengawasan', 'Keterangan'));
+    // Mengikuti `_buildChecks` di NonOssFormPage: status hanya dipilih
+    // petugas saat NIB "TIDAK TAHU"; untuk "TIDAK" statusnya otomatis.
+    final List<String> statusDipilih = <String>[
+      for (final MapEntry<String, String> entry in payload.entries)
+        if (entry.key.startsWith('status_ketidaksesuaian[') &&
+            entry.value.trim().isNotEmpty)
+          entry.value.trim(),
+    ];
+    final List<String> hasil = <String>[];
+    if (v('memiliki_nib') == 'TIDAK TAHU') {
+      if (statusDipilih.isEmpty) {
+        hasil.add('Status Hasil Pengawasan');
+      }
+      if (statusDipilih.contains('LAINNYA') && empty('keterangan')) {
+        hasil.add('Keterangan Status Lainnya');
+      }
     }
 
     // --- Foto Dokumentasi ---
-    if (photoPaths.isEmpty) {
-      missing.add(const DraftMissingItem('Foto Dokumentasi', 'Minimal 1 Foto'));
-    }
+    final List<String> foto = <String>[
+      if (photoPaths.isEmpty) 'Minimal 1 Foto',
+    ];
 
-    return missing;
+    return <DraftModule>[
+      DraftModule(title: 'Identitas Usaha', missing: identitas),
+      DraftModule(title: 'Wilayah dan Alamat', missing: wilayah),
+      DraftModule(title: 'Lokasi dan Peta', missing: lokasi),
+      DraftModule(title: 'Kontak dan Legalitas', missing: kontak),
+      DraftModule(
+        title: 'Platform OTA',
+        missing: ota,
+        completeNote: terdaftarOta ? null : 'Tidak berlaku (tidak terdaftar OTA)',
+      ),
+      DraftModule(title: 'Hasil Pengawasan', missing: hasil),
+      DraftModule(title: 'Foto Dokumentasi', missing: foto),
+    ];
   }
 
   static bool _isValidUrl(String value) {

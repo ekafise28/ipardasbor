@@ -365,6 +365,26 @@ class OfflineDatabase {
     );
   }
 
+  /// Waktu sinkronisasi terakhir yang berhasil untuk akun yang sedang
+  /// login (dari kolom synced_at). Null kalau belum pernah ada.
+  Future<DateTime?> lastSyncedAt() async {
+    final String? uid = await _currentUserId();
+    if (uid == null) {
+      return null;
+    }
+
+    final Database db = await database;
+    final List<Map<String, Object?>> rows = await db.rawQuery(
+      'SELECT MAX(synced_at) AS terakhir FROM $table '
+      'WHERE user_id = ? AND sync_status = ?',
+      <Object?>[uid, SyncStatus.synced.value],
+    );
+
+    if (rows.isEmpty) return null;
+    final Object? raw = rows.first['terakhir'];
+    return raw == null ? null : DateTime.tryParse(raw.toString());
+  }
+
   /// Menghitung seluruh ajuan milik akun yang sedang login yang tersimpan
   /// lokal dan BELUM synced - mencakup draft, pending, failed, dan syncing
   /// (kalau sedang berjalan). Dipakai untuk badge jumlah di ikon status

@@ -900,7 +900,6 @@ class StatusHeaderCard extends StatelessWidget {
     return DetailCard(child: modeBaru ? _isiBaru(context) : _isiLama(context));
   }
 
-  @override
   Widget _isiLama(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,

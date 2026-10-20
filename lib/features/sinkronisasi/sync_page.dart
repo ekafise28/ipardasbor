@@ -13,10 +13,16 @@ import '../non_oss/offline/offline_queue_service.dart';
 import '../non_oss/offline/sync_service.dart';
 import '../non_oss/services/non_oss_service.dart';
 import '../non_oss/non_oss_form_page.dart';
+import '../oss/models/oss_jenis_produk_akomodasi.dart';
+import '../riwayat/riwayat_page.dart';
 
 import 'pages/sync_submission_detail_page.dart';
+import 'widgets/sync_bottom_bar.dart';
+import 'widgets/sync_connection_banner.dart';
+import 'widgets/sync_draft_card.dart';
+import 'widgets/sync_formatters.dart';
+import 'widgets/sync_ready_card.dart';
 import 'widgets/sync_summary_card.dart';
-import 'widgets/sync_table.dart';
 
 class SyncPage extends StatefulWidget {
   const SyncPage({super.key});
@@ -35,6 +41,11 @@ class _SyncPageState extends State<SyncPage> {
   List<NonOssLocalData> _draftData = <NonOssLocalData>[];
   final Set<String> _syncingIds = <String>{};
   String? _expandedUuid;
+
+  /// bidang -> (kode produk -> label), untuk menampilkan nama jenis produk.
+  Map<String, Map<String, String>> _produkLabels =
+      <String, Map<String, String>>{};
+  DateTime? _lastSyncedAt;
 
   bool _isLoading = true;
   bool _isSyncingAll = false;
@@ -70,16 +81,56 @@ class _SyncPageState extends State<SyncPage> {
         limit: 200,
       );
 
+      // Dua data tambahan ini hanya hiasan tampilan; gagal memuatnya tidak
+      // boleh membuat daftar data ikut gagal tampil.
+      final DateTime? terakhir = await _muatWaktuSyncTerakhir();
+      final Map<String, Map<String, String>> labels = await _muatLabelProduk(
+        <NonOssLocalData>[...waiting, ...drafts],
+      );
+
       if (!mounted) return;
       setState(() {
         _waitingData = waiting;
         _draftData = drafts;
+        _lastSyncedAt = terakhir;
+        _produkLabels = labels;
         _isLoading = false;
       });
     } catch (_) {
       if (!mounted) return;
       setState(() => _isLoading = false);
     }
+  }
+
+  Future<DateTime?> _muatWaktuSyncTerakhir() async {
+    try {
+      return await _database.lastSyncedAt();
+    } catch (_) {
+      return null;
+    }
+  }
+
+  Future<Map<String, Map<String, String>>> _muatLabelProduk(
+    List<NonOssLocalData> items,
+  ) async {
+    final Map<String, Map<String, String>> hasil =
+        <String, Map<String, String>>{};
+
+    try {
+      for (final String bidang in items.map(bidangSlugOf).toSet()) {
+        final List<MapEntry<String, String>> daftar = bidang == 'akomodasi'
+            ? JenisProdukAkomodasi.options
+            : await NonOssService.jenisProdukTersimpan(bidang);
+
+        hasil[bidang] = <String, String>{
+          for (final MapEntry<String, String> e in daftar) e.key: e.value,
+        };
+      }
+    } catch (_) {
+      // Label tidak tersedia: kartu cukup tidak menampilkan baris Produk.
+    }
+
+    return hasil;
   }
 
   Future<void> _syncAll() async {
@@ -144,17 +195,6 @@ class _SyncPageState extends State<SyncPage> {
     );
   }
 
-  /// Handler tombol utama pada baris tabel - bercabang berdasarkan status:
-  /// draft membuka form untuk melanjutkan pengisian, selain itu memicu
-  /// proses sync seperti biasa.
-  Future<void> _handlePrimaryAction(NonOssLocalData data) async {
-    if (data.isDraft) {
-      await _continueDraft(data);
-    } else {
-      await _syncOne(data);
-    }
-  }
-
   Future<void> _continueDraft(NonOssLocalData data) async {
     await Navigator.of(context).push<Object?>(
       MaterialPageRoute<Object?>(
@@ -180,6 +220,13 @@ class _SyncPageState extends State<SyncPage> {
     if (result == 'synced' || result == 'deleted' || result == 'edited') {
       await _loadAllData(showLoading: false);
     }
+  }
+
+  Future<void> _openRiwayat() async {
+    await Navigator.of(context).push<Object?>(
+      MaterialPageRoute<Object?>(builder: (_) => const RiwayatPage()),
+    );
+    await _loadAllData(showLoading: false);
   }
 
   void _toggleExpand(String clientUuid) {
@@ -211,6 +258,9 @@ class _SyncPageState extends State<SyncPage> {
 
   @override
   Widget build(BuildContext context) {
+    final bool tampilkanTombolSemua =
+        !_isLoading && (_waitingData.isNotEmpty || _isSyncingAll);
+
     return Scaffold(
       backgroundColor: AppTheme.scaffoldColorDynamic(context),
       appBar: AppBar(
@@ -221,31 +271,30 @@ class _SyncPageState extends State<SyncPage> {
         leading: IconButton(
           tooltip: 'Kembali',
           onPressed: () => Navigator.of(context).pop(),
-          icon: Icon(Icons.arrow_back_rounded, color: Colors.white),
+          icon: const Icon(Icons.arrow_back_rounded, color: Colors.white),
         ),
         titleSpacing: 4,
-        title: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Sinkronisasi',
-              style: TextStyle(fontSize: 19, fontWeight: FontWeight.w800),
-            ),
-            Text(
-              'Kirim data pengawasan yang tersimpan offline',
-              style: TextStyle(fontSize: 11),
-            ),
-          ],
+        title: const Text(
+          'Antrean Sinkronisasi',
+          style: TextStyle(fontSize: 19, fontWeight: FontWeight.w800),
         ),
         actions: [
           IconButton(
             tooltip: 'Muat ulang',
             onPressed: _isLoading ? null : () => _loadAllData(),
-            icon: Icon(Icons.refresh_rounded, color: Colors.white),
+            icon: const Icon(Icons.refresh_rounded, color: Colors.white),
           ),
           const SizedBox(width: 8),
         ],
       ),
+      bottomNavigationBar: tampilkanTombolSemua
+          ? SyncBottomBar(
+              readyCount: _waitingData.length,
+              draftCount: _draftData.length,
+              isSyncing: _isSyncingAll,
+              onSyncAll: _syncAll,
+            )
+          : null,
       body: SafeArea(
         child: RefreshIndicator(
           color: AppTheme.primaryColor,
@@ -258,7 +307,7 @@ class _SyncPageState extends State<SyncPage> {
 
               return SingleChildScrollView(
                 physics: const AlwaysScrollableScrollPhysics(),
-                padding: const EdgeInsets.fromLTRB(18, 20, 18, 36),
+                padding: const EdgeInsets.fromLTRB(16, 16, 16, 28),
                 child: Align(
                   alignment: Alignment.topCenter,
                   child: SizedBox(
@@ -266,55 +315,81 @@ class _SyncPageState extends State<SyncPage> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
+                        SyncConnectionBanner(
+                          lastSyncText: lastSyncLabel(_lastSyncedAt),
+                        ),
+                        const SizedBox(height: 14),
                         SyncSummaryCard(
                           isLoading: _isLoading,
-                          isSyncingAll: _isSyncingAll,
                           waitingCount: _waitingData.length,
                           draftCount: _draftData.length,
-                          onSyncAll: _syncAll,
                         ),
-                        if (!_isLoading && _draftData.isNotEmpty) ...[
-                          const SizedBox(height: 20),
-                          _buildSectionTitle(
-                            context,
-                            'Draft (${_draftData.length})',
-                            'Data yang belum lengkap, belum ikut sinkronisasi.',
-                          ),
-                          const SizedBox(height: 10),
-                          SyncTable(
-                            items: _draftData,
-                            expandedUuid: _expandedUuid,
-                            syncingIds: _syncingIds,
-                            onToggleExpand: _toggleExpand,
-                            onOpenDetail: _openDetail,
-                            onSync: _handlePrimaryAction,
-                          ),
-                        ],
-                        const SizedBox(height: 20),
-                        if (!_isLoading)
-                          _buildSectionTitle(
-                            context,
-                            'Menunggu Sinkronisasi',
-                            null,
-                          ),
-                        if (!_isLoading) const SizedBox(height: 10),
+                        const SizedBox(height: 22),
+                        _buildSectionHeader(
+                          context,
+                          'Siap Sinkronisasi',
+                          count: _isLoading ? null : _waitingData.length,
+                        ),
+                        const SizedBox(height: 10),
                         if (_isLoading)
                           const LoadingState(message: 'Memuat data tertunda...')
-                        else if (_waitingData.isEmpty)
+                        else if (_waitingData.isEmpty) ...<Widget>[
                           const AppBanner(
                             tone: BannerTone.success,
                             icon: Icons.check_circle_rounded,
-                            message: 'Semua data sudah tersinkronisasi.',
-                          )
-                        else
-                          SyncTable(
-                            items: _waitingData,
-                            expandedUuid: _expandedUuid,
-                            syncingIds: _syncingIds,
-                            onToggleExpand: _toggleExpand,
-                            onOpenDetail: _openDetail,
-                            onSync: _handlePrimaryAction,
+                            message: 'Semua data siap sync sudah terkirim.',
                           ),
+                          const SizedBox(height: 4),
+                          TextButton.icon(
+                            onPressed: _openRiwayat,
+                            style: TextButton.styleFrom(
+                              foregroundColor: AppTheme.primaryColor,
+                            ),
+                            icon: const Icon(Icons.history_rounded, size: 18),
+                            label: const Text('Lihat Riwayat'),
+                          ),
+                        ] else
+                          ...<Widget>[
+                            for (final NonOssLocalData data in _waitingData)
+                              Padding(
+                                padding: const EdgeInsets.only(bottom: 12),
+                                child: SyncReadyCard(
+                                  key: ValueKey<String>(data.clientUuid),
+                                  data: data,
+                                  produkLabels: _produkLabels,
+                                  syncing:
+                                      _isSyncingAll ||
+                                      _syncingIds.contains(data.clientUuid),
+                                  onOpenDetail: () => _openDetail(data),
+                                  onSync: () => _syncOne(data),
+                                ),
+                              ),
+                          ],
+                        if (!_isLoading && _draftData.isNotEmpty) ...<Widget>[
+                          const SizedBox(height: 14),
+                          _buildSectionHeader(
+                            context,
+                            'Draft Belum Lengkap',
+                            count: _draftData.length,
+                            subtitle:
+                                'Lengkapi data berikut agar dapat diikutsertakan '
+                                'dalam sinkronisasi server.',
+                          ),
+                          const SizedBox(height: 10),
+                          for (final NonOssLocalData data in _draftData)
+                            Padding(
+                              padding: const EdgeInsets.only(bottom: 12),
+                              child: SyncDraftCard(
+                                key: ValueKey<String>(data.clientUuid),
+                                data: data,
+                                expanded: _expandedUuid == data.clientUuid,
+                                onToggleExpand: () =>
+                                    _toggleExpand(data.clientUuid),
+                                onOpenDetail: () => _openDetail(data),
+                                onContinue: () => _continueDraft(data),
+                              ),
+                            ),
+                        ],
                       ],
                     ),
                   ),
@@ -327,29 +402,58 @@ class _SyncPageState extends State<SyncPage> {
     );
   }
 
-  Widget _buildSectionTitle(
+  Widget _buildSectionHeader(
     BuildContext context,
-    String title,
+    String title, {
+    int? count,
     String? subtitle,
-  ) {
+  }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          title,
-          style: TextStyle(
-            color: AppTheme.textColor(context),
-            fontSize: 14,
-            fontWeight: FontWeight.w800,
-          ),
+        Row(
+          children: [
+            Text(
+              title,
+              style: TextStyle(
+                color: AppTheme.textColor(context),
+                fontSize: 16,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+            if (count != null) ...[
+              const SizedBox(width: 8),
+              Container(
+                constraints: const BoxConstraints(minWidth: 22),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 7,
+                  vertical: 2,
+                ),
+                decoration: BoxDecoration(
+                  color: AppTheme.primaryDark,
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Text(
+                  '$count',
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ),
+            ],
+          ],
         ),
         if (subtitle != null) ...[
-          const SizedBox(height: 2),
+          const SizedBox(height: 3),
           Text(
             subtitle,
             style: TextStyle(
               color: AppTheme.textSecondary(context),
               fontSize: 11.5,
+              height: 1.3,
             ),
           ),
         ],
