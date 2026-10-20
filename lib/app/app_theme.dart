@@ -128,6 +128,9 @@ class AppTheme {
   static const Color menuProfil = Color(0xFF455A64);
   static const Color menuProfilBg = Color(0xFFECEFF1);
 
+  static const Color menuFoto = Color(0xFF7E57C2);
+  static const Color menuFotoBg = Color(0xFFEDE7F6);
+
   /// Warna chip jenis data (OSS / OTA / Non-OSS), dipakai kartu dan halaman
   /// detail Riwayat. Jenis yang tidak dikenal dianggap Non-OSS.
   static Color warnaJenis(String jenis) {

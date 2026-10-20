@@ -18,6 +18,9 @@ class DetailCard extends StatelessWidget {
     this.icon,
     this.title,
     this.count,
+    this.countSuffix = '',
+    this.aksen = AppTheme.menuDashboard,
+    this.aksenBg = AppTheme.menuDashboardBg,
   });
 
   final Widget child;
@@ -25,13 +28,20 @@ class DetailCard extends StatelessWidget {
   final String? title;
   final int? count;
 
+  /// Mis. ' foto' -> "(3 foto)".
+  final String countSuffix;
+
+  /// Warna ikon header dan latar kotaknya (pastel di mode terang).
+  final Color aksen;
+  final Color aksenBg;
+
   @override
   Widget build(BuildContext context) {
     return Card(
       elevation: 0,
       color: AppTheme.surface(context),
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(16),
         side: BorderSide(color: AppTheme.border(context)),
       ),
       margin: EdgeInsets.zero,
@@ -44,21 +54,32 @@ class DetailCard extends StatelessWidget {
               Row(
                 children: <Widget>[
                   if (icon != null) ...<Widget>[
-                    Icon(icon, size: 18, color: AppTheme.menuDashboard),
+                    Container(
+                      width: 28,
+                      height: 28,
+                      decoration: BoxDecoration(
+                        color: AppTheme.tintBackground(context, aksen, aksenBg),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Icon(icon, size: 16, color: aksen),
+                    ),
                     const SizedBox(width: 8),
                   ],
-                  Text(
-                    title!,
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w800,
-                      color: AppTheme.textColor(context),
+                  Flexible(
+                    child: Text(
+                      title!.toUpperCase(),
+                      style: TextStyle(
+                        fontSize: 13,
+                        letterSpacing: 0.4,
+                        fontWeight: FontWeight.w800,
+                        color: AppTheme.textColor(context),
+                      ),
                     ),
                   ),
                   if (count != null) ...<Widget>[
                     const SizedBox(width: 6),
                     Text(
-                      '($count)',
+                      '($count$countSuffix)',
                       style: TextStyle(
                         fontSize: 12.5,
                         color: AppTheme.textSecondary(context),
@@ -67,7 +88,9 @@ class DetailCard extends StatelessWidget {
                   ],
                 ],
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 10),
+              Divider(height: 1, color: AppTheme.border(context)),
+              const SizedBox(height: 2),
             ],
             child,
           ],
@@ -75,6 +98,13 @@ class DetailCard extends StatelessWidget {
       ),
     );
   }
+}
+
+/// Teks pada latar tipis: digelapkan (mode terang) / diterangkan (mode
+/// gelap) dari warna dasarnya supaya kontrasnya terbaca.
+Color _teksDariWarna(BuildContext context, Color warna) {
+  final bool gelap = Theme.of(context).brightness == Brightness.dark;
+  return Color.lerp(warna, gelap ? Colors.white : Colors.black, 0.35)!;
 }
 
 bool _terisi(String? s) => s != null && s.trim().isNotEmpty;
@@ -90,14 +120,26 @@ class BarisAksi {
     required this.icon,
     required this.tooltip,
     required this.onTap,
+    this.label,
+    this.warna,
   });
 
   final IconData icon;
-
-  /// Juga dipakai sebagai label aksesibilitas.
   final String tooltip;
   final void Function(BuildContext context) onTap;
+
+  /// Kalau diisi, aksi tampil sebagai tombol berlabel di bawah nilai
+  /// (pil, atau tombol lebar untuk peta), bukan ikon di ujung baris.
+  final String? label;
+
+  /// Warna pil berlabel. Null = netral.
+  final Color? warna;
 }
+
+/// Bentuk tampilan khusus sebuah [Baris].
+/// - netral / peringatan: label di atas, nilai di dalam kotak (teks panjang)
+/// - peta: kotak koordinat dengan tombol buka Maps
+enum KotakBaris { tidak, netral, peringatan, peta }
 
 /// Satu pasangan label-nilai yang dirender oleh [SectionCard].
 ///
@@ -118,7 +160,19 @@ class Baris {
     this.aksi = const <BarisAksi>[],
     this.chips = const <String>[],
     this.sorot = false,
+    this.kode = false,
+    this.kotak = KotakBaris.tidak,
+    this.warnaLencana,
   });
+
+  /// Nilai ditampilkan monospace di dalam chip (KBLI, NIB, NKU, dsb).
+  /// Kalau [salin] true, tombol salin ada di dalam chip.
+  final bool kode;
+
+  final KotakBaris kotak;
+
+  /// Nilai ditampilkan sebagai lencana kecil berwarna (mis. status).
+  final Color? warnaLencana;
 
   /// Baris koordinat: nilai "lat, lng" sebagai teks biasa, dengan tombol
   /// peta (buka Google Maps) dan tombol salin. Kalau salah satu koordinat
@@ -126,7 +180,7 @@ class Baris {
   factory Baris.koordinat(
     Object? lat,
     Object? lng, {
-    String label = 'Koordinat',
+    String label = 'Titik Koordinat Geografis',
   }) {
     final String? la = lat?.toString().trim();
     final String? lo = lng?.toString().trim();
@@ -137,11 +191,13 @@ class Baris {
       label,
       ada ? '$la, $lo' : null,
       salin: ada,
+      kotak: ada ? KotakBaris.peta : KotakBaris.tidak,
       aksi: <BarisAksi>[
         if (tautan != null)
           BarisAksi(
             icon: Icons.map_outlined,
-            tooltip: 'Buka di Maps',
+            tooltip: 'Buka di Google Maps',
+            label: 'Buka di Google Maps',
             onTap: (BuildContext c) => bukaTautan(c, tautan),
           ),
       ],
@@ -160,22 +216,25 @@ class Baris {
       label,
       value,
       aksi: <BarisAksi>[
-        if (wa != null)
-          BarisAksi(
-            icon: Icons.chat_outlined,
-            tooltip: 'Chat WhatsApp',
-            onTap: (BuildContext c) =>
-                bukaTautan(c, wa, pesanGagal: 'WhatsApp tidak dapat dibuka.'),
-          ),
         if (tel != null)
           BarisAksi(
             icon: Icons.call_outlined,
             tooltip: 'Telepon',
+            label: 'Telepon',
             onTap: (BuildContext c) => bukaTautan(
               c,
               tel,
               pesanGagal: 'Aplikasi telepon tidak dapat dibuka.',
             ),
+          ),
+        if (wa != null)
+          BarisAksi(
+            icon: Icons.chat_outlined,
+            tooltip: 'Chat WhatsApp',
+            label: 'Kirim Pesan',
+            warna: AppTheme.success,
+            onTap: (BuildContext c) =>
+                bukaTautan(c, wa, pesanGagal: 'WhatsApp tidak dapat dibuka.'),
           ),
       ],
     );
@@ -223,22 +282,35 @@ class SectionCard extends StatelessWidget {
     required this.title,
     required this.rows,
     this.footer,
+    this.aksen = AppTheme.menuDashboard,
+    this.aksenBg = AppTheme.menuDashboardBg,
   });
 
   final IconData icon;
   final String title;
   final List<Baris> rows;
   final Widget? footer;
+  final Color aksen;
+  final Color aksenBg;
 
   @override
   Widget build(BuildContext context) {
     return DetailCard(
       icon: icon,
       title: title,
+      aksen: aksen,
+      aksenBg: aksenBg,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          for (final Baris baris in rows) BarisTile(baris: baris),
+          for (int i = 0; i < rows.length; i++) ...<Widget>[
+            if (i > 0)
+              Divider(
+                height: 1,
+                color: AppTheme.border(context).withValues(alpha: 0.7),
+              ),
+            BarisTile(baris: rows[i]),
+          ],
           if (footer != null) ...<Widget>[const SizedBox(height: 8), footer!],
         ],
       ),
@@ -257,61 +329,11 @@ class BarisTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final bool adaIsi = baris.adaIsi;
 
-    final Widget isi = Padding(
-      padding: const EdgeInsets.symmetric(vertical: 6),
-      child: Row(
-        // Baris panjang (keterangan, chip) rata atas; baris dengan tombol
-        // ikon tetap rata tengah supaya sejajar dengan tombolnya.
-        crossAxisAlignment: (baris.aksi.isEmpty && !baris.salin)
-            ? CrossAxisAlignment.start
-            : CrossAxisAlignment.center,
-        children: <Widget>[
-          SizedBox(
-            width: 130,
-            child: Text(
-              baris.label,
-              style: TextStyle(
-                fontSize: 12.5,
-                color: AppTheme.textSecondary(context),
-              ),
-            ),
-          ),
-          Expanded(
-            child: baris.chips.isNotEmpty
-                ? _DaftarNilai(items: baris.chips)
-                : baris.bisaDibuka
-                ? _LinkValue(text: baris.value!, url: baris.url!)
-                : Text(
-                    adaIsi ? baris.value! : '-',
-                    style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: !adaIsi
-                          ? FontWeight.w400
-                          : (baris.sorot ? FontWeight.w800 : FontWeight.w600),
-                      color: !adaIsi
-                          ? AppTheme.textMuted
-                          : (baris.sorot
-                                ? AppTheme.danger
-                                : AppTheme.textColor(context)),
-                    ),
-                  ),
-          ),
-          if (adaIsi)
-            for (final BarisAksi a in baris.aksi)
-              _TombolBaris(
-                icon: a.icon,
-                tooltip: a.tooltip,
-                onTap: () => a.onTap(context),
-              ),
-          if (adaIsi && baris.salin)
-            _TombolBaris(
-              icon: Icons.copy_rounded,
-              tooltip: 'Salin ${baris.label}',
-              onTap: () => salinKeClipboard(context, baris.value!, baris.label),
-            ),
-        ],
-      ),
-    );
+    final Widget isi = switch (adaIsi ? baris.kotak : KotakBaris.tidak) {
+      KotakBaris.netral || KotakBaris.peringatan => _bentukKotak(context),
+      KotakBaris.peta => _bentukPeta(context),
+      KotakBaris.tidak => _bentukBaris(context),
+    };
 
     if (!adaIsi) return isi;
 
@@ -319,6 +341,467 @@ class BarisTile extends StatelessWidget {
     return InkWell(
       onLongPress: () => salinKeClipboard(context, baris.value!, baris.label),
       child: isi,
+    );
+  }
+
+  /// Label kiri, nilai rata kanan. Aksi berlabel (Telepon, Kirim Pesan)
+  /// berupa pil di bawah nilai.
+  Widget _bentukBaris(BuildContext context) {
+    final bool adaIsi = baris.adaIsi;
+    final List<BarisAksi> aksiIkon = adaIsi
+        ? baris.aksi.where((BarisAksi a) => a.label == null).toList()
+        : <BarisAksi>[];
+    final List<BarisAksi> aksiLabel = adaIsi
+        ? baris.aksi.where((BarisAksi a) => a.label != null).toList()
+        : <BarisAksi>[];
+    final bool salinLuar = adaIsi && baris.salin && !baris.kode;
+    final bool sebaris = aksiIkon.isNotEmpty || salinLuar;
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 10),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: <Widget>[
+          Row(
+            crossAxisAlignment: sebaris
+                ? CrossAxisAlignment.center
+                : CrossAxisAlignment.start,
+            children: <Widget>[
+              ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 150),
+                child: Text(
+                  baris.label,
+                  style: TextStyle(
+                    fontSize: 13.5,
+                    fontWeight: FontWeight.w500,
+                    color: AppTheme.textSecondary(context),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Align(
+                  alignment: Alignment.centerRight,
+                  child: _nilai(context),
+                ),
+              ),
+              for (final BarisAksi a in aksiIkon)
+                _TombolBaris(
+                  icon: a.icon,
+                  tooltip: a.tooltip,
+                  onTap: () => a.onTap(context),
+                ),
+              if (salinLuar)
+                _TombolBaris(
+                  icon: Icons.copy_rounded,
+                  tooltip: 'Salin ${baris.label}',
+                  onTap: () =>
+                      salinKeClipboard(context, baris.value!, baris.label),
+                ),
+            ],
+          ),
+          if (aksiLabel.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.only(top: 8),
+              child: Wrap(
+                alignment: WrapAlignment.end,
+                spacing: 8,
+                runSpacing: 6,
+                children: <Widget>[
+                  for (final BarisAksi a in aksiLabel) _PilAksi(aksi: a),
+                ],
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _nilai(BuildContext context) {
+    if (!baris.adaIsi) {
+      return Text(
+        '-',
+        textAlign: TextAlign.right,
+        style: TextStyle(
+          fontSize: 13.5,
+          fontStyle: FontStyle.italic,
+          color: AppTheme.textMuted,
+        ),
+      );
+    }
+    if (baris.chips.isNotEmpty) return _DaftarNilai(items: baris.chips);
+    if (baris.bisaDibuka) {
+      return _LinkValue(text: baris.value!, url: baris.url!);
+    }
+    if (baris.warnaLencana != null) {
+      return _LencanaNilai(text: baris.value!, warna: baris.warnaLencana!);
+    }
+    if (baris.kode) {
+      return _KodeNilai(
+        text: baris.value!,
+        tooltip: 'Salin ${baris.label}',
+        onSalin: baris.salin
+            ? () => salinKeClipboard(context, baris.value!, baris.label)
+            : null,
+      );
+    }
+    return Text(
+      baris.value!,
+      textAlign: TextAlign.right,
+      style: TextStyle(
+        fontSize: 13.5,
+        fontWeight: baris.sorot ? FontWeight.w800 : FontWeight.w600,
+        color: baris.sorot ? AppTheme.danger : AppTheme.textColor(context),
+      ),
+    );
+  }
+
+  /// Teks panjang: label kapital kecil di atas, nilai di dalam kotak.
+  Widget _bentukKotak(BuildContext context) {
+    final bool peringatan = baris.kotak == KotakBaris.peringatan;
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 10),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Text(
+            baris.label.toUpperCase(),
+            style: TextStyle(
+              fontSize: 11.5,
+              fontWeight: FontWeight.w700,
+              letterSpacing: 0.5,
+              color: AppTheme.textSecondary(context),
+            ),
+          ),
+          const SizedBox(height: 6),
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: peringatan
+                  ? AppTheme.warningSurface(context)
+                  : AppTheme.surfaceMuted(context),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: peringatan
+                    ? AppTheme.warning.withValues(alpha: 0.35)
+                    : AppTheme.border(context),
+              ),
+            ),
+            child: Text(
+              baris.value!,
+              style: TextStyle(
+                fontSize: 13.5,
+                height: 1.4,
+                fontWeight: FontWeight.w500,
+                color: AppTheme.textColor(context),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Kotak koordinat: label + salin, koordinat monospace, tombol Maps.
+  Widget _bentukPeta(BuildContext context) {
+    final List<BarisAksi> aksi = baris.aksi
+        .where((BarisAksi a) => a.label != null)
+        .toList();
+
+    return Padding(
+      padding: const EdgeInsets.only(top: 10, bottom: 2),
+      child: Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: AppTheme.surfaceMuted(context),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: AppTheme.border(context)),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: <Widget>[
+            Row(
+              children: <Widget>[
+                Expanded(
+                  child: Text(
+                    baris.label,
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
+                      color: AppTheme.textSecondary(context),
+                    ),
+                  ),
+                ),
+                if (baris.salin)
+                  _TombolBaris(
+                    icon: Icons.copy_rounded,
+                    tooltip: 'Salin ${baris.label}',
+                    onTap: () =>
+                        salinKeClipboard(context, baris.value!, baris.label),
+                  ),
+              ],
+            ),
+            Text(
+              baris.value!,
+              style: TextStyle(
+                fontFamily: 'monospace',
+                fontSize: 12.5,
+                fontWeight: FontWeight.w700,
+                color: AppTheme.textColor(context),
+              ),
+            ),
+            for (final BarisAksi a in aksi) ...<Widget>[
+              const SizedBox(height: 10),
+              OutlinedButton.icon(
+                onPressed: () => a.onTap(context),
+                icon: Icon(a.icon, size: 18, color: AppTheme.danger),
+                label: Text(
+                  a.label!,
+                  style: const TextStyle(
+                    fontSize: 12.5,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                style: OutlinedButton.styleFrom(
+                  minimumSize: const Size.fromHeight(40),
+                  foregroundColor: AppTheme.textColor(context),
+                  backgroundColor: AppTheme.surface(context),
+                  side: BorderSide(color: AppTheme.border(context)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                ),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Chip monospace untuk kode (KBLI, NIB, NKU). Tombol salin di dalam chip.
+class _KodeNilai extends StatelessWidget {
+  const _KodeNilai({required this.text, required this.tooltip, this.onSalin});
+
+  final String text;
+  final String tooltip;
+  final VoidCallback? onSalin;
+
+  @override
+  Widget build(BuildContext context) {
+    final bool adaSalin = onSalin != null;
+
+    return Container(
+      padding: EdgeInsets.only(
+        left: 8,
+        right: adaSalin ? 2 : 8,
+        top: adaSalin ? 0 : 2,
+        bottom: adaSalin ? 0 : 2,
+      ),
+      decoration: BoxDecoration(
+        color: AppTheme.surfaceMuted(context),
+        borderRadius: BorderRadius.circular(6),
+        border: Border.all(color: AppTheme.border(context)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: <Widget>[
+          Flexible(
+            child: Text(
+              text,
+              style: TextStyle(
+                fontFamily: 'monospace',
+                fontSize: 12.5,
+                fontWeight: FontWeight.w700,
+                color: AppTheme.textColor(context),
+              ),
+            ),
+          ),
+          if (adaSalin)
+            SizedBox(
+              width: 30,
+              height: 30,
+              child: IconButton(
+                padding: EdgeInsets.zero,
+                iconSize: 16,
+                tooltip: tooltip,
+                color: AppTheme.textSecondary(context),
+                onPressed: onSalin,
+                icon: const Icon(Icons.copy_rounded),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Lencana kecil untuk nilai status (mis. SELESAI).
+class _LencanaNilai extends StatelessWidget {
+  const _LencanaNilai({required this.text, required this.warna});
+
+  final String text;
+  final Color warna;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+      decoration: BoxDecoration(
+        color: warna.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(6),
+      ),
+      child: Text(
+        text,
+        style: TextStyle(
+          fontSize: 12,
+          fontWeight: FontWeight.w700,
+          color: _teksDariWarna(context, warna),
+        ),
+      ),
+    );
+  }
+}
+
+/// Pil aksi berlabel (Telepon, Kirim Pesan).
+class _PilAksi extends StatelessWidget {
+  const _PilAksi({required this.aksi});
+
+  final BarisAksi aksi;
+
+  @override
+  Widget build(BuildContext context) {
+    final Color? w = aksi.warna;
+    final Color fg = w == null
+        ? AppTheme.textColor(context)
+        : _teksDariWarna(context, w);
+
+    return Material(
+      color: w == null
+          ? AppTheme.surfaceMuted(context)
+          : w.withValues(alpha: 0.12),
+      shape: StadiumBorder(
+        side: w == null
+            ? BorderSide.none
+            : BorderSide(color: w.withValues(alpha: 0.35)),
+      ),
+      child: InkWell(
+        customBorder: const StadiumBorder(),
+        onTap: () => aksi.onTap(context),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: <Widget>[
+              Icon(aksi.icon, size: 15, color: fg),
+              const SizedBox(width: 6),
+              Text(
+                aksi.label!,
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: fg,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _LinkValue extends StatelessWidget {
+  const _LinkValue({required this.text, required this.url});
+
+  final String text;
+  final String url;
+
+  @override
+  Widget build(BuildContext context) {
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
+    final Color warna = isDark ? AppTheme.primaryLight : AppTheme.primaryColor;
+
+    return InkWell(
+      onTap: () => bukaTautan(context, url),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: <Widget>[
+          Flexible(
+            child: Text(
+              text,
+              textAlign: TextAlign.right,
+              style: TextStyle(
+                fontSize: 13.5,
+                fontWeight: FontWeight.w600,
+                color: warna,
+                decoration: TextDecoration.underline,
+                decorationColor: warna,
+              ),
+            ),
+          ),
+          const SizedBox(width: 4),
+          Icon(Icons.open_in_new_rounded, size: 13, color: warna),
+        ],
+      ),
+    );
+  }
+}
+
+/// Daftar nilai berbentuk pil amber dengan titik (status ketidaksesuaian),
+/// rata kanan. Teks boleh turun baris.
+class _DaftarNilai extends StatelessWidget {
+  const _DaftarNilai({required this.items});
+
+  final List<String> items;
+
+  @override
+  Widget build(BuildContext context) {
+    const Color warna = AppTheme.warning;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.end,
+      children: <Widget>[
+        for (int i = 0; i < items.length; i++)
+          Padding(
+            padding: EdgeInsets.only(top: i == 0 ? 0 : 6),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              decoration: BoxDecoration(
+                color: warna.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: warna.withValues(alpha: 0.35)),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: <Widget>[
+                  Container(
+                    width: 6,
+                    height: 6,
+                    decoration: const BoxDecoration(
+                      color: warna,
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+                  const SizedBox(width: 6),
+                  Flexible(
+                    child: Text(
+                      items[i],
+                      style: TextStyle(
+                        fontSize: 12.5,
+                        fontWeight: FontWeight.w600,
+                        color: _teksDariWarna(context, warna),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+      ],
     );
   }
 }
@@ -353,99 +836,33 @@ class _TombolBaris extends StatelessWidget {
   }
 }
 
-class _LinkValue extends StatelessWidget {
-  const _LinkValue({required this.text, required this.url});
-
-  final String text;
-  final String url;
-
-  @override
-  Widget build(BuildContext context) {
-    final bool isDark = Theme.of(context).brightness == Brightness.dark;
-    final Color warna = isDark ? AppTheme.primaryLight : AppTheme.primaryColor;
-
-    return InkWell(
-      onTap: () => bukaTautan(context, url),
-      child: Row(
-        children: <Widget>[
-          Flexible(
-            child: Text(
-              text,
-              style: TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w600,
-                color: warna,
-                decoration: TextDecoration.underline,
-                decorationColor: warna,
-              ),
-            ),
-          ),
-          const SizedBox(width: 4),
-          Icon(Icons.open_in_new_rounded, size: 13, color: warna),
-        ],
-      ),
-    );
-  }
-}
-
-/// Daftar nilai vertikal: satu item per baris dengan penanda titik di kiri.
-/// Teks boleh turun baris, jadi label panjang tidak overflow.
-class _DaftarNilai extends StatelessWidget {
-  const _DaftarNilai({required this.items});
-
-  final List<String> items;
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: <Widget>[
-        for (int i = 0; i < items.length; i++)
-          Padding(
-            padding: EdgeInsets.only(top: i == 0 ? 0 : 4),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: <Widget>[
-                Padding(
-                  padding: const EdgeInsets.only(top: 6),
-                  child: Container(
-                    width: 6,
-                    height: 6,
-                    decoration: const BoxDecoration(
-                      color: AppTheme.warning,
-                      shape: BoxShape.circle,
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    items[i],
-                    style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                      color: AppTheme.textColor(context),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-      ],
-    );
-  }
-}
-
 // ======================================================================
 // StatusHeaderCard: ringkasan di bagian atas halaman detail
 // ======================================================================
 
 /// Satu badge kecil pada header (jenis, status, dsb).
 class StatusBadge {
-  const StatusBadge({required this.text, required this.color});
+  const StatusBadge({
+    required this.text,
+    required this.color,
+    this.ikon,
+    this.titik = false,
+  });
 
   final String text;
   final Color color;
+
+  /// Ikon atau titik kecil di depan teks (jangan keduanya).
+  final IconData? ikon;
+  final bool titik;
+}
+
+/// Satu pasangan label-nilai kecil di dasar [StatusHeaderCard].
+class HeaderMeta {
+  const HeaderMeta(this.label, this.value);
+
+  final String label;
+  final String? value;
 }
 
 /// Kartu header ringkasan di paling atas halaman detail: judul (nama
@@ -462,6 +879,8 @@ class StatusHeaderCard extends StatelessWidget {
     required this.badges,
     this.subtitle,
     this.errorMessage,
+    this.jenis,
+    this.meta = const <HeaderMeta>[],
   });
 
   final String title;
@@ -469,44 +888,156 @@ class StatusHeaderCard extends StatelessWidget {
   final String? subtitle;
   final String? errorMessage;
 
+  /// Chip jenis di atas judul (mis. OSS / NON OSS).
+  final StatusBadge? jenis;
+
+  /// Petugas, tanggal, dsb, di bawah garis pemisah.
+  final List<HeaderMeta> meta;
+
   @override
   Widget build(BuildContext context) {
-    return DetailCard(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: <Widget>[
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: <Widget>[
-              for (final StatusBadge b in badges) _BadgeChip(badge: b),
-            ],
+    final bool modeBaru = jenis != null || meta.isNotEmpty;
+    return DetailCard(child: modeBaru ? _isiBaru(context) : _isiLama(context));
+  }
+
+  @override
+  Widget _isiLama(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: <Widget>[
+            for (final StatusBadge b in badges) _BadgeChip(badge: b),
+          ],
+        ),
+        const SizedBox(height: 10),
+        Text(
+          title,
+          style: TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.w800,
+            color: AppTheme.textColor(context),
           ),
-          const SizedBox(height: 10),
+        ),
+        if (_terisi(subtitle)) ...<Widget>[
+          const SizedBox(height: 4),
           Text(
-            title,
+            subtitle!,
             style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.w800,
-              color: AppTheme.textColor(context),
+              fontSize: 12,
+              color: AppTheme.textSecondary(context),
             ),
           ),
-          if (_terisi(subtitle)) ...<Widget>[
-            const SizedBox(height: 4),
-            Text(
-              subtitle!,
-              style: TextStyle(
-                fontSize: 12,
-                color: AppTheme.textSecondary(context),
+        ],
+        if (_terisi(errorMessage)) ...<Widget>[
+          const SizedBox(height: 10),
+          _ErrorNote(message: errorMessage!),
+        ],
+      ],
+    );
+  }
+
+  Widget _isiBaru(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  if (jenis != null) ...<Widget>[
+                    _JenisChip(badge: jenis!),
+                    const SizedBox(height: 8),
+                  ],
+                  Text(
+                    title,
+                    style: TextStyle(
+                      fontSize: 20,
+                      height: 1.25,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: -0.3,
+                      color: AppTheme.textColor(context),
+                    ),
+                  ),
+                  if (_terisi(subtitle)) ...<Widget>[
+                    const SizedBox(height: 4),
+                    Text(
+                      subtitle!,
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: AppTheme.textSecondary(context),
+                      ),
+                    ),
+                  ],
+                ],
               ),
             ),
+            if (badges.isNotEmpty) ...<Widget>[
+              const SizedBox(width: 12),
+              ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 150),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: <Widget>[
+                    for (int i = 0; i < badges.length; i++) ...<Widget>[
+                      if (i > 0) const SizedBox(height: 6),
+                      _BadgeChip(badge: badges[i]),
+                    ],
+                  ],
+                ),
+              ),
+            ],
           ],
-          if (_terisi(errorMessage)) ...<Widget>[
-            const SizedBox(height: 10),
-            _ErrorNote(message: errorMessage!),
-          ],
+        ),
+        if (_terisi(errorMessage)) ...<Widget>[
+          const SizedBox(height: 10),
+          _ErrorNote(message: errorMessage!),
         ],
-      ),
+        if (meta.isNotEmpty) ...<Widget>[
+          const SizedBox(height: 12),
+          Divider(height: 1, color: AppTheme.border(context)),
+          const SizedBox(height: 12),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              for (int i = 0; i < meta.length; i++) ...<Widget>[
+                if (i > 0) const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: <Widget>[
+                      Text(
+                        meta[i].label,
+                        style: TextStyle(
+                          fontSize: 11.5,
+                          fontWeight: FontWeight.w500,
+                          color: AppTheme.textSecondary(context),
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        _terisi(meta[i].value) ? meta[i].value!.trim() : '-',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w700,
+                          color: AppTheme.textColor(context),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ],
+      ],
     );
   }
 }
@@ -558,17 +1089,66 @@ class _BadgeChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
         color: badge.color.withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: badge.color.withValues(alpha: 0.35)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: <Widget>[
+          if (badge.titik)
+            Container(
+              width: 6,
+              height: 6,
+              decoration: BoxDecoration(
+                color: badge.color,
+                shape: BoxShape.circle,
+              ),
+            )
+          else if (badge.ikon != null)
+            Icon(badge.ikon, size: 14, color: badge.color),
+          if (badge.titik || badge.ikon != null) const SizedBox(width: 5),
+          Flexible(
+            child: Text(
+              badge.text,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                fontSize: 11.5,
+                fontWeight: FontWeight.w700,
+                color: _teksDariWarna(context, badge.color),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _JenisChip extends StatelessWidget {
+  const _JenisChip({required this.badge});
+
+  final StatusBadge badge;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
+      decoration: BoxDecoration(
+        color: badge.color.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(6),
+        border: Border.all(color: badge.color.withValues(alpha: 0.3)),
       ),
       child: Text(
-        badge.text,
+        badge.text.toUpperCase(),
         style: TextStyle(
           fontSize: 11,
-          fontWeight: FontWeight.w700,
-          color: badge.color,
+          fontWeight: FontWeight.w800,
+          letterSpacing: 0.6,
+          color: _teksDariWarna(context, badge.color),
         ),
       ),
     );
@@ -662,6 +1242,9 @@ class FotoGallerySection extends StatelessWidget {
       icon: Icons.photo_library_outlined,
       title: 'Foto Dokumentasi',
       count: foto.length,
+      countSuffix: ' foto',
+      aksen: AppTheme.menuFoto,
+      aksenBg: AppTheme.menuFotoBg,
       child: GridView.builder(
         shrinkWrap: true,
         physics: const NeverScrollableScrollPhysics(),
@@ -860,6 +1443,8 @@ class OtaListSection extends StatelessWidget {
       icon: Icons.travel_explore_outlined,
       title: title,
       count: items.length,
+      aksen: AppTheme.menuOta,
+      aksenBg: AppTheme.menuOtaBg,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[

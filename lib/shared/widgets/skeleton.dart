@@ -601,3 +601,125 @@ class _RiwayatIconLineSkeleton extends StatelessWidget {
     );
   }
 }
+
+// Tempel di bagian "Layout per halaman" pada
+// lib/shared/widgets/skeleton.dart (setelah RiwayatSkeleton).
+
+/// Meniru RiwayatDetailPage (features/riwayat/pages/riwayat_detail_page.dart):
+/// header status, strip ringkasan, lalu kartu section berisi baris
+/// label + nilai. Kalau halaman aslinya berubah, ubah juga di sini.
+class RiwayatDetailSkeleton extends StatelessWidget {
+  const RiwayatDetailSkeleton({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      label: 'Memuat detail riwayat',
+      child: ExcludeSemantics(
+        child: SingleChildScrollView(
+          physics: const NeverScrollableScrollPhysics(),
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
+          child: const Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: <Widget>[
+              // Header: nama usaha + badge
+              SkeletonCard(
+                radius: 16,
+                padding: EdgeInsets.all(16),
+                margin: EdgeInsets.zero,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
+                    SkeletonBar(widthFactor: 0.7, height: 18),
+                    SizedBox(height: 12),
+                    Row(
+                      children: <Widget>[
+                        SkeletonBox(width: 56, height: 24, radius: 20),
+                        SizedBox(width: 8),
+                        SkeletonBox(width: 84, height: 24, radius: 20),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              SizedBox(height: 12),
+              // Strip ringkasan: petugas, tanggal, hasil
+              SkeletonCard(
+                radius: 14,
+                padding: EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                margin: EdgeInsets.zero,
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
+                    Expanded(child: _DetailRingkasanItemSkeleton()),
+                    SizedBox(width: 12),
+                    Expanded(child: _DetailRingkasanItemSkeleton()),
+                    SizedBox(width: 12),
+                    Expanded(child: _DetailRingkasanItemSkeleton()),
+                  ],
+                ),
+              ),
+              SizedBox(height: 12),
+              _DetailSectionSkeleton(rows: 6), // Informasi Usaha
+              SizedBox(height: 12),
+              _DetailSectionSkeleton(rows: 6), // Legalitas
+              SizedBox(height: 12),
+              _DetailSectionSkeleton(rows: 5), // Lokasi
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _DetailRingkasanItemSkeleton extends StatelessWidget {
+  const _DetailRingkasanItemSkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    return const Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        SkeletonBar(widthFactor: 0.5, height: 10),
+        SizedBox(height: 6),
+        SkeletonBar(widthFactor: 0.85, height: 13),
+      ],
+    );
+  }
+}
+
+class _DetailSectionSkeleton extends StatelessWidget {
+  const _DetailSectionSkeleton({required this.rows});
+
+  final int rows;
+
+  @override
+  Widget build(BuildContext context) {
+    return SkeletonCard(
+      radius: 16,
+      padding: const EdgeInsets.all(16),
+      margin: EdgeInsets.zero,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          // Judul section: ikon + teks
+          const Row(
+            children: <Widget>[
+              SkeletonBox(width: 20, height: 20, radius: 6),
+              SizedBox(width: 10),
+              SkeletonBox(width: 120, height: 14, radius: 6),
+            ],
+          ),
+          const SizedBox(height: 16),
+          for (int i = 0; i < rows; i++) ...<Widget>[
+            const SkeletonBar(widthFactor: 0.25, height: 10),
+            const SizedBox(height: 6),
+            SkeletonBar(widthFactor: i.isEven ? 0.7 : 0.5, height: 13),
+            if (i != rows - 1) const SizedBox(height: 14),
+          ],
+        ],
+      ),
+    );
+  }
+}
