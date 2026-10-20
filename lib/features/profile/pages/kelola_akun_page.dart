@@ -1,5 +1,6 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:ipardasbor/features/profile/models/kelola_akun.dart';
 
 import '../../../app/app_theme.dart';
@@ -312,6 +313,183 @@ class _KelolaAkunPageState extends State<KelolaAkunPage> {
     return 'USR-$tanggal-$unik';
   }
 
+  // ---- Kekuatan password (form Tambah/Edit Akun) ----
+  List<_RuleItem> _passRules(String t) => [
+    _RuleItem('8-32 karakter', t.length >= 8 && t.length <= 32),
+    _RuleItem('1 huruf besar', RegExp(r'[A-Z]').hasMatch(t)),
+    _RuleItem('1 huruf kecil', RegExp(r'[a-z]').hasMatch(t)),
+    _RuleItem('1 angka', RegExp(r'[0-9]').hasMatch(t)),
+    _RuleItem(
+      '1 simbol',
+      RegExp(r'[!@#\$%^&*(),.?":{}|<>_\-+=\[\];]').hasMatch(t),
+    ),
+    _RuleItem('Tanpa spasi', t.isNotEmpty && !t.contains(' ')),
+  ];
+
+  Widget _buildStrengthBox(String text) {
+    final List<_RuleItem> rules = _passRules(text);
+    final int met = rules.where((r) => r.isMet).length;
+    final bool empty = text.isEmpty;
+    final Color warna = empty
+        ? AppTheme.border(context)
+        : met <= 2
+        ? AppTheme.danger
+        : met <= 4
+        ? AppTheme.warning
+        : AppTheme.success;
+    final String label = empty
+        ? 'Belum diisi'
+        : met <= 2
+        ? 'Lemah'
+        : met <= 4
+        ? 'Sedang'
+        : 'Kuat';
+    final List<_RuleItem> belum = rules.where((r) => !r.isMet).toList();
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: AppTheme.surfaceMuted(context),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: AppTheme.border(context)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'Kekuatan password',
+                style: TextStyle(
+                  color: AppTheme.textColor(context),
+                  fontSize: 12.5,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              Text(
+                label,
+                style: TextStyle(
+                  color: warna,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Row(
+            children: [
+              for (int i = 0; i < 6; i++)
+                Expanded(
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 220),
+                    height: 6,
+                    margin: EdgeInsets.only(right: i == 5 ? 0 : 4),
+                    decoration: BoxDecoration(
+                      color: (!empty && i < met)
+                          ? warna
+                          : AppTheme.border(context),
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                  ),
+                ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          if (!empty && belum.isEmpty)
+            Row(
+              children: [
+                const Icon(
+                  Icons.check_circle_rounded,
+                  size: 16,
+                  color: AppTheme.success,
+                ),
+                const SizedBox(width: 6),
+                Text(
+                  'Semua persyaratan terpenuhi',
+                  style: TextStyle(
+                    color: AppTheme.success,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            )
+          else
+            Wrap(
+              spacing: 6,
+              runSpacing: 6,
+              children: belum.map(_buildRuleChip).toList(),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildRuleChip(_RuleItem item) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 6),
+      decoration: BoxDecoration(
+        color: AppTheme.surface(context),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: AppTheme.border(context)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.circle_outlined, size: 12, color: AppTheme.textMuted),
+          const SizedBox(width: 5),
+          Text(
+            item.label,
+            style: TextStyle(
+              fontSize: 11.5,
+              color: AppTheme.textSecondary(context),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMatchIndicator(String pass, String confirm) {
+    if (confirm.isEmpty) {
+      return Row(
+        children: [
+          Icon(Icons.info_outline_rounded, size: 14, color: AppTheme.textMuted),
+          const SizedBox(width: 6),
+          Text(
+            'Masukkan kembali password yang sama.',
+            style: TextStyle(color: AppTheme.textMuted, fontSize: 11.5),
+          ),
+        ],
+      );
+    }
+
+    final bool cocok = confirm == pass;
+    final Color warna = cocok ? AppTheme.success : AppTheme.danger;
+
+    return Row(
+      children: [
+        Icon(
+          cocok ? Icons.check_circle_rounded : Icons.cancel_rounded,
+          size: 14,
+          color: warna,
+        ),
+        const SizedBox(width: 6),
+        Text(
+          cocok ? 'Password cocok' : 'Password belum sama',
+          style: TextStyle(
+            color: warna,
+            fontSize: 11.5,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ],
+    );
+  }
+
   void _showFormModal({KelolaAkunModel? user}) {
     final isEdit = user != null;
     final formKey = GlobalKey<FormState>();
@@ -326,6 +504,11 @@ class _KelolaAkunPageState extends State<KelolaAkunPage> {
     final nohpCtrl = TextEditingController(text: user?.nohp ?? '');
     String selectedRole = user?.role ?? 'Operator';
 
+    final confirmCtrl = TextEditingController();
+    final passFocus = FocusNode();
+    final confirmFocus = FocusNode();
+    bool obscurePass = true;
+    bool obscureConfirm = true;
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -395,19 +578,104 @@ class _KelolaAkunPageState extends State<KelolaAkunPage> {
                       const SizedBox(height: 12),
                       TextFormField(
                         controller: passCtrl,
-                        obscureText: true,
+                        focusNode: passFocus,
+                        obscureText: obscurePass,
+                        inputFormatters: [
+                          FilteringTextInputFormatter.deny(RegExp(r'\s')),
+                          LengthLimitingTextInputFormatter(32),
+                        ],
                         decoration: InputDecoration(
                           labelText: isEdit
                               ? 'Password (Kosongkan jika tidak diubah)'
                               : 'Password',
                           border: const OutlineInputBorder(),
+                          suffixIcon: IconButton(
+                            icon: Icon(
+                              obscurePass
+                                  ? Icons.visibility_outlined
+                                  : Icons.visibility_off_outlined,
+                              size: 20,
+                            ),
+                            onPressed: () =>
+                                setModalState(() => obscurePass = !obscurePass),
+                          ),
                         ),
                         validator: (v) {
-                          if (!isEdit && (v == null || v.isEmpty)) {
-                            return 'Wajib diisi';
+                          if (v == null || v.isEmpty) {
+                            return isEdit ? null : 'Wajib diisi';
+                          }
+                          if (!_passRules(v).every((r) => r.isMet)) {
+                            return 'Lengkapi semua persyaratan password';
                           }
                           return null;
                         },
+                      ),
+                      // Card kekuatan password: muncul saat kolom Password atau
+                      // Konfirmasi diklik, dan tetap tampil selama password terisi.
+                      ListenableBuilder(
+                        listenable: Listenable.merge([
+                          passCtrl,
+                          confirmCtrl,
+                          passFocus,
+                          confirmFocus,
+                        ]),
+                        builder: (_, _) {
+                          final bool tampil =
+                              passFocus.hasFocus ||
+                              confirmFocus.hasFocus ||
+                              passCtrl.text.isNotEmpty;
+                          return AnimatedSize(
+                            duration: const Duration(milliseconds: 200),
+                            alignment: Alignment.topCenter,
+                            child: tampil
+                                ? Padding(
+                                    padding: const EdgeInsets.only(top: 12),
+                                    child: _buildStrengthBox(passCtrl.text),
+                                  )
+                                : const SizedBox(width: double.infinity),
+                          );
+                        },
+                      ),
+                      const SizedBox(height: 12),
+                      TextFormField(
+                        controller: confirmCtrl,
+                        focusNode: confirmFocus,
+                        obscureText: obscureConfirm,
+                        inputFormatters: [
+                          FilteringTextInputFormatter.deny(RegExp(r'\s')),
+                          LengthLimitingTextInputFormatter(32),
+                        ],
+                        decoration: InputDecoration(
+                          labelText: 'Konfirmasi Password',
+                          border: const OutlineInputBorder(),
+                          suffixIcon: IconButton(
+                            icon: Icon(
+                              obscureConfirm
+                                  ? Icons.visibility_outlined
+                                  : Icons.visibility_off_outlined,
+                              size: 20,
+                            ),
+                            onPressed: () => setModalState(
+                              () => obscureConfirm = !obscureConfirm,
+                            ),
+                          ),
+                        ),
+                        validator: (v) {
+                          if (passCtrl.text.isEmpty &&
+                              (v == null || v.isEmpty)) {
+                            return isEdit ? null : 'Wajib diisi';
+                          }
+                          if (v != passCtrl.text) return 'Password tidak sama';
+                          return null;
+                        },
+                      ),
+                      const SizedBox(height: 6),
+                      ListenableBuilder(
+                        listenable: Listenable.merge([passCtrl, confirmCtrl]),
+                        builder: (_, _) => _buildMatchIndicator(
+                          passCtrl.text,
+                          confirmCtrl.text,
+                        ),
                       ),
                       const SizedBox(height: 12),
                       DropdownButtonFormField<String>(
@@ -960,4 +1228,10 @@ class _KelolaAkunPageState extends State<KelolaAkunPage> {
       ],
     );
   }
+}
+
+class _RuleItem {
+  const _RuleItem(this.label, this.isMet);
+  final String label;
+  final bool isMet;
 }
