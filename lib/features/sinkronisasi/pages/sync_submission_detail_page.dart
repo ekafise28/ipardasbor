@@ -388,16 +388,17 @@ class _SubmissionDetailPageState extends State<SubmissionDetailPage> {
           padding: const EdgeInsets.fromLTRB(18, 18, 18, 16),
           children: [
             StatusHeaderCard(
+              jenis: StatusBadge(text: 'NON OSS', color: AppTheme.menuNonOss),
               title: _data.displayName,
               subtitle: 'Dibuat ${formatTanggalJam(_data.createdAt.toLocal())}',
               errorMessage: (!isDraft && failed) ? _data.lastError : null,
               badges: <StatusBadge>[
-                StatusBadge(text: 'NON OSS', color: AppTheme.menuNonOss),
                 StatusBadge(
                   text: isDraft
                       ? 'Draft'
                       : (failed ? 'Gagal Sync' : 'Menunggu Sync'),
                   color: statusColor,
+                  titik: true,
                 ),
               ],
             ),
