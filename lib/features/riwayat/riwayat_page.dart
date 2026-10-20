@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:ipardasbor/shared/pagination/pagination_bar.dart';
 import 'package:ipardasbor/shared/widgets/app_banner.dart';
 import 'package:ipardasbor/core/constants/bidang_usaha_constants.dart';
 import 'package:ipardasbor/shared/widgets/list_filters.dart';
@@ -55,6 +56,7 @@ class _RiwayatPageState extends State<RiwayatPage>
     super.initState();
     initBackToTop();
     _ctrl = PaginatedListController<RiwayatItem>(
+      paged: true,
       fetchPage: _ambilHalaman,
       idOf: (RiwayatItem e) => e.id,
       perPage: () => _filter.perPage,
@@ -275,6 +277,7 @@ class _RiwayatPageState extends State<RiwayatPage>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      bottomNavigationBar: _buildPaginasi(),
       backgroundColor: AppTheme.scaffoldColorDynamic(context),
       floatingActionButton: buildBackToTopFab(
         enabled:
@@ -399,20 +402,28 @@ class _RiwayatPageState extends State<RiwayatPage>
         physics: const AlwaysScrollableScrollPhysics(),
         keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
         padding: const EdgeInsets.only(top: 4, bottom: 24),
-        itemCount: items.length + (_ctrl.hasNext ? 1 : 0),
+        itemCount: items.length,
         itemBuilder: (BuildContext context, int index) {
-          if (index >= items.length) {
-            return LoadMoreFooter(
-              gagal: _ctrl.loadMoreError,
-              pesan: _ctrl.loadMoreMessage,
-              onCobaLagi: _ctrl.retryLoadMore,
-            );
-          }
-
-          final RiwayatItem item = items[index];
+          final RiwayatItem item =
+              items[index];
           return RiwayatCard(item: item, onTap: () => _bukaDetail(item));
         },
       ),
+    );
+  }
+
+  Widget? _buildPaginasi() {
+    // Sembunyi kalau error atau datanya muat dalam satu halaman terkecil.
+    if (_ctrl.error != null || _ctrl.total <= PaginationBar.opsi.first) {
+      return null;
+    }
+    return PaginationBar(
+      currentPage: _ctrl.currentPage,
+      totalPages: _ctrl.totalPages,
+      perPage: _filter.perPage,
+      enabled: !_ctrl.loadingFirst,
+      onPageChanged: _ctrl.goToPage,
+      onPerPageChanged: (int n) => _ubahFilter(_filter.copyWith(perPage: n)),
     );
   }
 }

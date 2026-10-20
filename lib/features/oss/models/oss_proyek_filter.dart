@@ -31,7 +31,7 @@ class OssProyekFilter {
     this.uraianRisiko,
     this.statusVerifikasi,
     this.nibNku = '',
-    this.perPage = 20,
+    this.perPage = 25,
   });
 
   final int? provinsiId;

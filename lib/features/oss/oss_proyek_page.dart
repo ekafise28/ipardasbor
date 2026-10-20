@@ -1,8 +1,9 @@
 import 'dart:async';
-import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:ipardasbor/shared/pagination/paginated_list_controller.dart';
+import 'package:ipardasbor/shared/pagination/pagination_bar.dart';
 import 'package:ipardasbor/shared/widgets/app_banner.dart';
 import 'package:ipardasbor/features/oss/pages/oss_proyek_filter_sheet.dart';
 import 'package:ipardasbor/shared/pagination/back_to_top_mixin.dart';
@@ -11,12 +12,10 @@ import 'package:ipardasbor/shared/widgets/list_filters.dart';
 import 'package:ipardasbor/shared/widgets/list_parts.dart';
 
 import '../../app/app_theme.dart';
-import '../../core/api/api_exception.dart';
 import '../../core/network/network_status.dart';
 
 import '../../shared/region/models/region_option.dart';
 
-import '../riwayat/models/riwayat_page_result.dart' show RiwayatPagination;
 import '../riwayat/pages/riwayat_detail_page.dart';
 
 import 'models/oss_proyek_filter.dart';
@@ -38,7 +37,9 @@ import 'package:ipardasbor/shared/ocr/ocr.dart';
 /// Daftar usaha akomodasi OSS yang perlu diverifikasi.
 ///
 /// Padanan tabel "Daftar Pengawasan OSS Akomodasi" di web: pencarian NIB/NKU,
-/// filter wilayah, infinite scroll, dan tarik untuk menyegarkan.
+/// filter wilayah, paginasi (10 / 25 / 50 per halaman), dan tarik untuk
+/// menyegarkan. Paginasi dikelola [PaginatedListController] dalam mode
+/// halaman, sama seperti halaman OTA dan Riwayat.
 class OssProyekPage extends StatefulWidget {
   const OssProyekPage({
     super.key,
@@ -77,9 +78,15 @@ class _OssProyekPageState extends State<OssProyekPage>
   Timer? _debounce;
 
   /// Satu controller untuk animasi masuk kartu (StaggeredEntrance). Diputar
-  /// ulang hanya saat daftar dimuat dari awal, bukan saat infinite scroll
-  /// atau tarik-untuk-menyegarkan.
+  /// ulang setiap daftar diganti skeleton (muat awal, ganti filter, pindah
+  /// halaman), bukan saat tarik-untuk-menyegarkan.
   late final AnimationController _entrance;
+
+  late final PaginatedListController<OssProyekItem> _ctrl;
+
+  /// Mengingat apakah controller sedang memuat, untuk mendeteksi saat muat
+  /// selesai dan memutar animasi masuk kartu.
+  bool _sedangMuat = true;
 
   /// Kartu yang baru selesai diverifikasi; disorot sekitar 2 detik.
   int? _highlightId;
@@ -90,22 +97,6 @@ class _OssProyekPageState extends State<OssProyekPage>
 
   /// Hitungan per status (belum / terverifikasi / tidak valid).
   OssProyekRingkasan? _ringkasan;
-  final List<OssProyekItem> _items = <OssProyekItem>[];
-  RiwayatPagination _pagination = RiwayatPagination.kosong;
-
-  bool _loadingAwal = true;
-  bool _loadingBerikutnya = false;
-
-  String? _pesanError;
-
-  /// Gagal memuat halaman berikutnya (infinite scroll). Selama true, scroll
-  /// tidak memicu muat ulang otomatis; user menekan "Coba lagi" di footer.
-  bool _gagalBerikutnya = false;
-  String? _pesanBerikutnya;
-
-  /// Naik setiap kali daftar dimuat ulang; respons lama diabaikan supaya
-  /// hasil pencarian yang terlambat tidak menimpa hasil yang lebih baru.
-  int _requestId = 0;
 
   @override
   void initState() {
@@ -119,7 +110,16 @@ class _OssProyekPageState extends State<OssProyekPage>
       kabupatenId: widget.kabupatenIdAwal,
     );
     initBackToTop();
-    _muatUlang();
+
+    _ctrl = PaginatedListController<OssProyekItem>(
+      paged: true,
+      fetchPage: _ambilHalaman,
+      idOf: (OssProyekItem e) => e.id,
+      perPage: () => _filter.perPage,
+      onLoaded: _setelahDimuat,
+      onSilentError: _snack,
+    )..addListener(_onCtrl);
+    _ctrl.reload();
   }
 
   @override
@@ -130,118 +130,49 @@ class _OssProyekPageState extends State<OssProyekPage>
     disposeBackToTop();
     _searchController.dispose();
     _searchFocus.dispose();
+    _ctrl
+      ..removeListener(_onCtrl)
+      ..dispose();
     super.dispose();
   }
 
+  /// Mode halaman tidak memuat otomatis saat scroll mencapai dasar.
   @override
-  void onNearBottom() {
-    _muatBerikutnya();
+  void onNearBottom() {}
+
+  /// Membaca filter terbaru setiap kali dipanggil.
+  Future<PageChunk<OssProyekItem>> _ambilHalaman(int page) async {
+    final OssProyekPageResult hasil = await _service.fetch(
+      filter: _filter,
+      page: page,
+      bidang: widget.bidang,
+    );
+    return PageChunk<OssProyekItem>(
+      items: hasil.items,
+      currentPage: hasil.pagination.currentPage,
+      hasNext: hasil.pagination.hasNextPage,
+      total: hasil.pagination.total,
+      meta: hasil,
+    );
   }
 
-  Future<void> _muatUlang({bool tampilkanLoading = true}) async {
-    final int id = ++_requestId;
+  /// Data tambahan dari respons; controller yang memberi tahu UI sesudahnya,
+  /// jadi tidak perlu setState di sini.
+  void _setelahDimuat(PageChunk<OssProyekItem> chunk) {
+    final OssProyekPageResult hasil = chunk.meta! as OssProyekPageResult;
+    _hasil = hasil;
+    _ringkasan = hasil.ringkasan ?? _ringkasan;
+  }
 
+  void _onCtrl() {
+    if (!mounted) return;
+    final bool baruSelesai = _sedangMuat && !_ctrl.loadingFirst;
+    _sedangMuat = _ctrl.loadingFirst;
     setState(() {
-      _loadingBerikutnya = false;
-      _gagalBerikutnya = false;
-      if (tampilkanLoading) {
-        _loadingAwal = true;
-        _pesanError = null;
-      }
+      // Daftar diganti skeleton: posisi scroll akan kembali ke 0.
+      if (_ctrl.loadingFirst) hideBackToTop();
     });
-
-    try {
-      final OssProyekPageResult hasil = await _service.fetch(
-        filter: _filter,
-        page: 1,
-        bidang: widget.bidang,
-      );
-      if (!mounted || id != _requestId) return;
-
-      setState(() {
-        _items
-          ..clear()
-          ..addAll(hasil.items);
-        _pagination = hasil.pagination;
-        _hasil = hasil;
-        _ringkasan = hasil.ringkasan ?? _ringkasan;
-        _loadingAwal = false;
-        _pesanError = null;
-      });
-
-      if (tampilkanLoading) {
-        _entrance.forward(from: 0);
-      } else if (!_entrance.isAnimating) {
-        _entrance.value = 1; // refresh diam-diam: tanpa animasi ulang.
-      }
-    } on ApiException catch (e) {
-      _tanganiError(id, pesanErrorRamah(e), tampilkanLoading);
-    }
-  }
-
-  void _tanganiError(int id, String pesan, bool tampilkanLoading) {
-    if (!mounted || id != _requestId) return;
-
-    // Saat menyegarkan diam-diam dan daftar sudah terisi, cukup snackbar.
-    if (!tampilkanLoading && _items.isNotEmpty) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(pesan)));
-      return;
-    }
-
-    setState(() {
-      _loadingAwal = false;
-      _pesanError = pesan;
-    });
-  }
-
-  Future<void> _muatBerikutnya() async {
-    if (_loadingBerikutnya ||
-        _loadingAwal ||
-        _gagalBerikutnya ||
-        !_pagination.hasNextPage) {
-      return;
-    }
-
-    final int id = _requestId;
-    setState(() => _loadingBerikutnya = true);
-
-    try {
-      final OssProyekPageResult hasil = await _service.fetch(
-        filter: _filter,
-        page: _pagination.currentPage + 1,
-        bidang: widget.bidang,
-      );
-      if (!mounted || id != _requestId) return;
-
-      setState(() {
-        _items.addAll(hasil.items);
-        _pagination = hasil.pagination;
-        _loadingBerikutnya = false;
-      });
-    } on ApiException catch (e) {
-      _gagalMuatBerikutnya(id, e.message);
-    } catch (_) {
-      _gagalMuatBerikutnya(id, 'Gagal memuat data berikutnya.');
-    }
-  }
-
-  void _gagalMuatBerikutnya(int id, String pesan) {
-    if (!mounted || id != _requestId) return;
-    setState(() {
-      _loadingBerikutnya = false;
-      _gagalBerikutnya = true;
-      _pesanBerikutnya = pesan;
-    });
-  }
-
-  void _cobaLagiBerikutnya() {
-    setState(() {
-      _gagalBerikutnya = false;
-      _pesanBerikutnya = null;
-    });
-    _muatBerikutnya();
+    if (baruSelesai && _ctrl.error == null) _entrance.forward(from: 0);
   }
 
   /// Menghapus SEMUA filter: pencarian, status, wilayah, dan opsi sheet.
@@ -256,8 +187,7 @@ class _OssProyekPageState extends State<OssProyekPage>
 
   void _terapkanPencarian(String value) {
     if (value.trim() == _filter.nibNku.trim()) return;
-    setState(() => _filter = _filter.copyWith(nibNku: value));
-    _muatUlang();
+    _ubahFilter(_filter.copyWith(nibNku: value));
   }
 
   void _onSearchChanged(String value) {
@@ -285,7 +215,7 @@ class _OssProyekPageState extends State<OssProyekPage>
   /// Mengganti filter lalu memuat ulang daftar dari halaman pertama.
   void _ubahFilter(OssProyekFilter baru) {
     setState(() => _filter = baru);
-    _muatUlang();
+    _ctrl.reload();
   }
 
   void _ubahStatus(String? status) {
@@ -456,6 +386,7 @@ class _OssProyekPageState extends State<OssProyekPage>
   }
 
   void _snack(String pesan) {
+    if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(pesan)));
   }
 
@@ -493,7 +424,8 @@ class _OssProyekPageState extends State<OssProyekPage>
     );
 
     if (tersimpan == true && mounted) {
-      await _segarkanItem(item);
+      // Mode halaman: memuat ulang halaman yang sedang dibuka saja.
+      await _ctrl.refreshItem(item);
       if (!mounted) return;
       _tandaiSelesai(item.id);
       unawaited(_segarkanRingkasan());
@@ -514,7 +446,7 @@ class _OssProyekPageState extends State<OssProyekPage>
     );
 
     if (tersimpan == true && mounted) {
-      await _muatUlang(tampilkanLoading: false);
+      await _ctrl.reload(showLoading: false);
       if (!mounted) return;
       _tandaiSelesai(null);
     }
@@ -526,7 +458,7 @@ class _OssProyekPageState extends State<OssProyekPage>
   void _tandaiSelesai(int? id) {
     OssProyekItem? ditemukan;
     if (id != null) {
-      for (final OssProyekItem e in _items) {
+      for (final OssProyekItem e in _ctrl.items) {
         if (e.id == id) {
           ditemukan = e;
           break;
@@ -556,16 +488,15 @@ class _OssProyekPageState extends State<OssProyekPage>
   }
 
   /// Memperbarui hitungan per status setelah ada verifikasi baru. Hanya
-  /// angka yang diambil; daftar dan posisi scroll tidak disentuh.
+  /// angka yang diambil; daftar dan halaman yang dibuka tidak disentuh.
   Future<void> _segarkanRingkasan() async {
-    final int id = _requestId;
     try {
       final OssProyekPageResult hasil = await _service.fetch(
         filter: _filter,
         page: 1,
         bidang: widget.bidang,
       );
-      if (!mounted || id != _requestId) return;
+      if (!mounted) return;
       final OssProyekRingkasan? baru = hasil.ringkasan;
       if (baru != null) setState(() => _ringkasan = baru);
     } catch (_) {
@@ -582,46 +513,20 @@ class _OssProyekPageState extends State<OssProyekPage>
     ).push(MaterialPageRoute<void>(builder: (_) => RiwayatDetailPage(id: id)));
   }
 
-  /// Memuat ulang HANYA halaman server yang memuat [item], lalu mengganti
-  /// irisan itu di daftar. Posisi scroll dan halaman lain tidak berubah.
-  ///
-  /// Kalau filter status aktif (mis. "Belum"), item yang baru diverifikasi
-  /// tidak lagi cocok dengan filter sehingga jumlah baris berubah; kasus itu
-  /// ditangani oleh cabang muat ulang penuh di bawah.
-  Future<void> _segarkanItem(OssProyekItem item) async {
-    final int index = _items.indexWhere((OssProyekItem e) => e.id == item.id);
-    if (index < 0) return;
-
-    final int perPage = _filter.perPage;
-    final int halaman = index ~/ perPage + 1;
-    final int awal = (halaman - 1) * perPage;
-
-    try {
-      final OssProyekPageResult hasil = await _service.fetch(
-        filter: _filter,
-        page: halaman,
-        bidang: widget.bidang,
-      );
-      if (!mounted) return;
-
-      final int akhir = math.min(awal + perPage, _items.length);
-
-      if (hasil.items.length != akhir - awal) {
-        await _muatUlang(tampilkanLoading: false);
-        return;
-      }
-
-      setState(() => _items.replaceRange(awal, akhir, hasil.items));
-    } catch (_) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            'Daftar belum diperbarui. Tarik ke bawah untuk menyegarkan.',
-          ),
-        ),
-      );
+  /// Bar paginasi di dasar layar. Disembunyikan saat error, atau saat seluruh
+  /// data muat dalam satu halaman terkecil (pilihan jumlah tak berguna).
+  Widget? _buildPaginasi() {
+    if (_ctrl.error != null || _ctrl.total == 0) {
+      return null;
     }
+    return PaginationBar(
+      currentPage: _ctrl.currentPage,
+      totalPages: _ctrl.totalPages,
+      perPage: _filter.perPage,
+      enabled: !_ctrl.loadingFirst,
+      onPageChanged: _ctrl.goToPage,
+      onPerPageChanged: (int n) => _ubahFilter(_filter.copyWith(perPage: n)),
+    );
   }
 
   @override
@@ -632,6 +537,7 @@ class _OssProyekPageState extends State<OssProyekPage>
     return Scaffold(
       backgroundColor: AppTheme.scaffoldColorDynamic(context),
       floatingActionButton: buildBackToTopFab(),
+      bottomNavigationBar: _buildPaginasi(),
       appBar: AppBar(
         backgroundColor: AppTheme.primaryDark,
         foregroundColor: Colors.white,
@@ -668,10 +574,10 @@ class _OssProyekPageState extends State<OssProyekPage>
               );
             },
           ),
-          if (h != null && _pesanError == null)
+          if (h != null && _ctrl.error == null)
             ListSummaryLine(
               provinsi: h.provinsiNama,
-              total: _pagination.total,
+              total: _ctrl.total,
               satuan: 'usaha',
               // Disembunyikan saat daftar disaring per status (angkanya
               // sudah ada di chip).
@@ -705,8 +611,8 @@ class _OssProyekPageState extends State<OssProyekPage>
       },
       onClear: _hapusPencarian,
       trailing: OcrFieldActions(
-        onPaste: _loadingAwal ? null : _tempelPencarian,
-        onScan: _loadingAwal ? null : _scanPencarian,
+        onPaste: _ctrl.loadingFirst ? null : _tempelPencarian,
+        onScan: _ctrl.loadingFirst ? null : _scanPencarian,
       ),
     );
   }
@@ -740,29 +646,29 @@ class _OssProyekPageState extends State<OssProyekPage>
   }
 
   Widget _buildBody(BuildContext context) {
-    if (_loadingAwal) {
+    if (_ctrl.loadingFirst) {
       return const OssProyekSkeleton();
     }
 
-    if (_pesanError != null) {
+    if (_ctrl.error != null) {
       return ConnectionErrorState(
         title: 'Daftar usaha gagal dimuat',
-        message: _pesanError!,
-        isRetrying: _loadingAwal,
-        onRetry: _muatUlang,
+        message: _ctrl.error!,
+        onRetry: _ctrl.reload,
       );
     }
 
-    final int jumlahBaris = _items.isEmpty ? 1 : _items.length;
+    final List<OssProyekItem> items = _ctrl.items;
+    final int jumlahBaris = items.isEmpty ? 1 : items.length;
 
     return RefreshIndicator(
-      onRefresh: () => _muatUlang(tampilkanLoading: false),
+      onRefresh: () => _ctrl.reload(showLoading: false),
       child: ListView.builder(
         controller: scroll,
         physics: const AlwaysScrollableScrollPhysics(),
         keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
         padding: const EdgeInsets.only(top: 4, bottom: 24),
-        itemCount: 1 + jumlahBaris + (_pagination.hasNextPage ? 1 : 0),
+        itemCount: 1 + jumlahBaris,
         itemBuilder: (BuildContext context, int index) {
           if (index == 0) {
             return ValueListenableBuilder<bool>(
@@ -772,21 +678,12 @@ class _OssProyekPageState extends State<OssProyekPage>
             );
           }
 
-          if (_items.isEmpty) {
+          if (items.isEmpty) {
             return _buildKosong();
           }
 
           final int i = index - 1;
-
-          if (i >= _items.length) {
-            return LoadMoreFooter(
-              gagal: _gagalBerikutnya,
-              pesan: _pesanBerikutnya,
-              onCobaLagi: _cobaLagiBerikutnya,
-            );
-          }
-
-          final OssProyekItem item = _items[i];
+          final OssProyekItem item = items[i];
           final Widget kartu = OssProyekCard(
             key: ValueKey<int>(item.id),
             item: item,

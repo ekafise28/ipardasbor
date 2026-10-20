@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:ipardasbor/app/app_theme.dart';
 import 'package:ipardasbor/core/constants/bidang_usaha_constants.dart';
-import '../../non_oss/non_oss_form_page.dart';
+import '../../features/non_oss/non_oss_form_page.dart';
 
-import '../oss_proyek_page.dart';
+import '../../features/oss/oss_proyek_page.dart';
 
 /// Tampilan visual satu bidang usaha (ikon dan warna kartu).
 typedef _Tampilan = ({IconData icon, Color warna});

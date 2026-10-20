@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:ipardasbor/shared/pagination/pagination_bar.dart';
 import 'package:ipardasbor/shared/widgets/app_banner.dart';
 import 'package:ipardasbor/features/oss/oss_proyek_page.dart';
 import 'package:ipardasbor/shared/pagination/back_to_top_mixin.dart';
@@ -63,6 +64,7 @@ class _BaselineOtaPageState extends State<BaselineOtaPage>
     initGpsCapture();
     _service = BaselineOtaService(ApiClient());
     _ctrl = PaginatedListController<BaselineOtaItem>(
+      paged: true,
       fetchPage: _ambilHalaman,
       idOf: (BaselineOtaItem e) => e.id,
       perPage: () => _filter.perPage,
@@ -375,6 +377,7 @@ class _BaselineOtaPageState extends State<BaselineOtaPage>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      bottomNavigationBar: _buildPaginasi(),
       backgroundColor: AppTheme.scaffoldColorDynamic(context),
       floatingActionButton: buildBackToTopFab(
         enabled:
@@ -550,14 +553,8 @@ class _BaselineOtaPageState extends State<BaselineOtaPage>
         controller: scroll,
         physics: const AlwaysScrollableScrollPhysics(),
         padding: const EdgeInsets.fromLTRB(16, 4, 16, 24),
-        itemCount: items.length + (_ctrl.hasNext ? 1 : 0),
+        itemCount: items.length, 
         itemBuilder: (context, index) {
-          if (index >= items.length) {
-            return LoadMoreFooter(
-              gagal: _ctrl.loadMoreError,
-              onCobaLagi: _ctrl.retryLoadMore,
-            );
-          }
           final BaselineOtaItem item = items[index];
           return BaselineOtaCard(
             item: item,
@@ -568,6 +565,20 @@ class _BaselineOtaPageState extends State<BaselineOtaPage>
           );
         },
       ),
+    );
+  }
+
+  Widget? _buildPaginasi() {
+    if (_ctrl.error != null || _ctrl.total == 0) {
+      return null;
+    }
+    return PaginationBar(
+      currentPage: _ctrl.currentPage,
+      totalPages: _ctrl.totalPages,
+      perPage: _filter.perPage,
+      enabled: !_ctrl.loadingFirst,
+      onPageChanged: _ctrl.goToPage,
+      onPerPageChanged: (int n) => _ubahFilter(() => _filter.perPage = n),
     );
   }
 }

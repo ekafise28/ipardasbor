@@ -10,7 +10,7 @@ class BaselineOtaFilter {
     this.platformOta,
     this.namaListing,
     this.status,
-    this.perPage = 50,
+    this.perPage = 25,
     this.lat,
     this.lng,
   });

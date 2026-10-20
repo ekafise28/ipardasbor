@@ -40,10 +40,15 @@ class PaginatedListController<T> extends ChangeNotifier {
     required this.fetchPage,
     required this.idOf,
     required this.perPage,
+    this.paged = false,
     this.onLoaded,
     this.onSilentError,
     this.errorMessage,
   });
+
+  /// true: daftar menampilkan SATU halaman server (navigasi halaman).
+  /// false: halaman ditumpuk (infinite scroll).
+  final bool paged;
 
   /// Mengambil halaman ke-[page] (mulai dari 1) dengan filter saat ini.
   final Future<PageChunk<T>> Function(int page) fetchPage;
@@ -80,6 +85,11 @@ class PaginatedListController<T> extends ChangeNotifier {
   bool _loadMoreError = false;
   String? _loadMoreMessage;
   String? _error;
+  int get totalPages {
+    final int ukuran = perPage();
+    if (ukuran <= 0 || _total <= 0) return 1;
+    return (_total + ukuran - 1) ~/ ukuran;
+  }
 
   List<T> get items => UnmodifiableListView<T>(_items);
   int get currentPage => _currentPage;
@@ -122,6 +132,9 @@ class PaginatedListController<T> extends ChangeNotifier {
   Future<void> reload({bool showLoading = true}) async {
     final int id = ++_requestId;
 
+    // mode halaman, muat ulang diam-diam tetap di halaman yang sama.
+    final int tujuan = paged && !showLoading ? _currentPage : 1;
+
     _loadingMore = false;
     _loadMoreError = false;
     _loadMoreMessage = null;
@@ -132,7 +145,11 @@ class PaginatedListController<T> extends ChangeNotifier {
     _notify();
 
     try {
-      final PageChunk<T> chunk = await fetchPage(1);
+      PageChunk<T> chunk = await fetchPage(tujuan);
+      if (paged && chunk.items.isEmpty && tujuan > 1 && chunk.total > 0) {
+        // Halaman ini sudah tidak ada (data berkurang): ke halaman terakhir.
+        chunk = await fetchPage((chunk.total + perPage() - 1) ~/ perPage());
+      }
       if (_disposed || id != _requestId) return;
 
       _items
@@ -160,6 +177,7 @@ class PaginatedListController<T> extends ChangeNotifier {
   /// Memuat halaman berikutnya. Aman dipanggil berulang dari listener
   /// scroll: diabaikan kalau sedang memuat, sedang gagal, atau sudah habis.
   Future<void> loadMore() async {
+    if (paged) return;
     if (_loadingMore || _loadingFirst || _loadMoreError || !_hasNext) return;
 
     final int id = _requestId;
@@ -203,6 +221,11 @@ class PaginatedListController<T> extends ChangeNotifier {
   /// item tersaring keluar atau pindah posisi), sehingga dipakai muat ulang
   /// penuh tanpa skeleton.
   Future<void> refreshItem(T item) async {
+    if (paged) {
+      // muat ulang halaman aktif saja
+      await reload(showLoading: false);
+      return;
+    }
     final Object id0 = idOf(item);
     final int index = _items.indexWhere((T e) => idOf(e) == id0);
     if (index < 0) {
@@ -245,6 +268,35 @@ class PaginatedListController<T> extends ChangeNotifier {
       onSilentError?.call(
         'Daftar belum diperbarui. Tarik ke bawah untuk menyegarkan.',
       );
+    }
+  }
+
+  /// Pindah ke halaman [page] (mode halaman). Daftar lama tetap utuh kalau gagal.
+  Future<void> goToPage(int page) async {
+    if (!paged || _loadingFirst) return;
+    final int tujuan = page < 1 ? 1 : (page > totalPages ? totalPages : page);
+    if (tujuan == _currentPage) return;
+
+    final int id = ++_requestId;
+    _loadingFirst = true; // memakai skeleton yang sudah ada
+    _notify();
+
+    try {
+      final PageChunk<T> chunk = await fetchPage(tujuan);
+      if (_disposed || id != _requestId) return;
+
+      _items
+        ..clear()
+        ..addAll(chunk.items);
+      _terapkan(chunk);
+      _loadingFirst = false;
+      onLoaded?.call(chunk);
+      _notify();
+    } catch (e) {
+      if (_disposed || id != _requestId) return;
+      _loadingFirst = false;
+      onSilentError?.call(_pesanMuat(e));
+      _notify();
     }
   }
 }
