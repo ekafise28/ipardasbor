@@ -1,29 +1,11 @@
+import 'dart:math';
 import 'package:flutter/material.dart';
+import 'package:ipardasbor/features/profile/models/kelola_akun.dart';
 
 import '../../../app/app_theme.dart';
-
-class _Pengguna {
-  const _Pengguna({
-    required this.nama,
-    required this.username,
-    required this.email,
-    required this.role,
-  });
-
-  final String nama;
-  final String username;
-  final String email;
-  final String role;
-
-  String get inisial {
-    final List<String> bagian = nama.split(' ');
-    final String a = bagian.first.isNotEmpty ? bagian.first[0] : '';
-    final String b = bagian.length > 1 && bagian[1].isNotEmpty
-        ? bagian[1][0]
-        : '';
-    return (a + b).toUpperCase();
-  }
-}
+import '../../../core/api/api_exception.dart';
+// import '../models/kelola_akun.dart';
+import '../services/profile_service.dart';
 
 class KelolaAkunPage extends StatefulWidget {
   const KelolaAkunPage({super.key});
@@ -33,106 +15,119 @@ class KelolaAkunPage extends StatefulWidget {
 }
 
 class _KelolaAkunPageState extends State<KelolaAkunPage> {
-  static const List<String> _filters = ['Semua', 'Admin', 'Editor', 'Pengguna'];
-
-  // Data dummy, nanti diganti data dari endpoint.
-  final List<_Pengguna> _data = [
-    const _Pengguna(
-      nama: 'Budi Pratama',
-      username: 'budi.pratama',
-      email: 'budi.pratama@example.com',
-      role: 'Admin',
-    ),
-    const _Pengguna(
-      nama: 'Siti Rahmawati',
-      username: 'siti.rahma',
-      email: 'siti.rahma@example.com',
-      role: 'Editor',
-    ),
-    const _Pengguna(
-      nama: 'Ahmad Fauzi',
-      username: 'ahmad.fauzi',
-      email: 'ahmad.fauzi@example.com',
-      role: 'Pengguna',
-    ),
-    const _Pengguna(
-      nama: 'Dewi Lestari',
-      username: 'dewi.lestari',
-      email: 'dewi.l@example.com',
-      role: 'Editor',
-    ),
-    const _Pengguna(
-      nama: 'Rian Wijaya',
-      username: 'rian.w',
-      email: 'rian.w@example.com',
-      role: 'Pengguna',
-    ),
+  static const List<String> _filters = [
+    'Semua',
+    'Admin',
+    'Operator',
+    'Dinas',
+    'Industri',
   ];
 
+  final ProfileService _profileService = ProfileService();
   final Set<String> _selected = <String>{};
   final TextEditingController _searchCtrl = TextEditingController();
 
-  bool _isCardView = true;
+  List<KelolaAkunModel> _data = [];
+  bool _isLoading = true;
+  String? _errorMessage;
+
   String _filter = 'Semua';
   String _query = '';
 
-  // Paginasi lokal: 3 akun per halaman.
-  static const int _perPage = 3;
+  // Paginasi lokal: 5 akun per halaman.
+  static const int _perPage = 25;
   int _page = 1;
 
   static const Color _merah = Color(0xFFC62828);
   static const Color _merahBg = Color(0x1FC62828);
 
   @override
+  void initState() {
+    super.initState();
+    _fetchUsers();
+  }
+
+  @override
   void dispose() {
     _searchCtrl.dispose();
+    _profileService.dispose();
     super.dispose();
   }
 
-  List<_Pengguna> get _filtered {
+  Future<void> _fetchUsers() async {
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
+
+    try {
+      final users = await _profileService.getKelolaAkunList();
+      setState(() {
+        _data = users;
+        _isLoading = false;
+      });
+    } on ApiException catch (e) {
+      setState(() {
+        _errorMessage = e.message;
+        _isLoading = false;
+      });
+    } catch (e) {
+      setState(() {
+        _errorMessage = 'Gagal memuat data akun: $e';
+        _isLoading = false;
+      });
+    }
+  }
+
+  List<KelolaAkunModel> get _filtered {
     final String q = _query.trim().toLowerCase();
     return _data.where((p) {
-      final bool cocokRole = _filter == 'Semua' || p.role == _filter;
+      final bool cocokRole =
+          _filter == 'Semua' || p.role.toLowerCase() == _filter.toLowerCase();
       final bool cocokCari =
           q.isEmpty ||
-              p.nama.toLowerCase().contains(q) ||
-              p.username.toLowerCase().contains(q) ||
-              p.role.toLowerCase().contains(q);
+          p.nama.toLowerCase().contains(q) ||
+          p.kodeUser.toLowerCase().contains(q) ||
+          p.email.toLowerCase().contains(q) ||
+          p.role.toLowerCase().contains(q);
       return cocokRole && cocokCari;
     }).toList();
   }
 
   int _countFor(String filter) {
     if (filter == 'Semua') return _data.length;
-    return _data.where((p) => p.role == filter).length;
+    return _data
+        .where((p) => p.role.toLowerCase() == filter.toLowerCase())
+        .length;
   }
 
   int _totalHalaman(int total) {
     return total == 0 ? 1 : (total / _perPage).ceil();
   }
 
-  /// (warna latar, warna teks) badge role, mengikuti tema aplikasi.
   (Color, Color) _warnaRole(String role) {
-    switch (role) {
-      case 'Admin':
+    switch (role.toLowerCase()) {
+      case 'admin':
+      case 'administrator':
         return (AppTheme.primaryColor, Colors.white);
-      case 'Editor':
+      case 'operator':
+      case 'editor':
         return (const Color(0x33F59E0B), const Color(0xFFB45309));
       default:
         return (
-        AppTheme.surfaceMuted(context),
-        AppTheme.textSecondary(context),
+          AppTheme.surfaceMuted(context),
+          AppTheme.textSecondary(context),
         );
     }
   }
 
-  void _toast(String message) {
+  void _toast(String message, {bool isError = false}) {
     ScaffoldMessenger.of(context)
       ..hideCurrentSnackBar()
       ..showSnackBar(
         SnackBar(
           content: Text(message, style: const TextStyle(color: Colors.white)),
-          backgroundColor: const Color(0xFF238636),
+          backgroundColor: isError ? _merah : const Color(0xFF238636),
           behavior: SnackBarBehavior.floating,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(14),
@@ -141,29 +136,29 @@ class _KelolaAkunPageState extends State<KelolaAkunPage> {
       );
   }
 
-  void _toggleSelect(_Pengguna p, bool? value) {
+  void _toggleSelect(KelolaAkunModel p, bool? value) {
     setState(() {
       if (value == true) {
-        _selected.add(p.username);
+        _selected.add(p.kodeUser);
       } else {
-        _selected.remove(p.username);
+        _selected.remove(p.kodeUser);
       }
     });
   }
 
   void _toggleSelectAll(bool? value) {
     setState(() {
-      for (final _Pengguna p in _filtered) {
+      for (final KelolaAkunModel p in _filtered) {
         if (value == true) {
-          _selected.add(p.username);
+          _selected.add(p.kodeUser);
         } else {
-          _selected.remove(p.username);
+          _selected.remove(p.kodeUser);
         }
       }
     });
   }
 
-  Future<void> _confirmDelete(String title, List<String> usernames) async {
+  Future<void> _confirmDelete(String title, List<String> kodeUsers) async {
     final bool? ya = await showModalBottomSheet<bool>(
       context: context,
       backgroundColor: AppTheme.surface(context),
@@ -235,7 +230,7 @@ class _KelolaAkunPageState extends State<KelolaAkunPage> {
                                 ),
                                 const TextSpan(
                                   text:
-                                  '? Tindakan ini tidak dapat dibatalkan.',
+                                      '? Tindakan ini tidak dapat dibatalkan.',
                                 ),
                               ],
                             ),
@@ -287,19 +282,236 @@ class _KelolaAkunPageState extends State<KelolaAkunPage> {
     );
 
     if (ya != true || !mounted) return;
-    setState(() {
-      _data.removeWhere((p) => usernames.contains(p.username));
-      _selected.removeAll(usernames);
-    });
-    _toast('Data berhasil dihapus');
+
+    try {
+      for (final kode in kodeUsers) {
+        await _profileService.deleteKelolaAkun(kode);
+      }
+      _toast('Data berhasil dihapus');
+      _selected.removeAll(kodeUsers);
+      _fetchUsers();
+    } on ApiException catch (e) {
+      _toast(e.message, isError: true);
+    } catch (e) {
+      _toast('Gagal menghapus data', isError: true);
+    }
+  }
+
+  String _buatKodeUser() {
+    final DateTime now = DateTime.now();
+    final String tanggal =
+        '${(now.year % 100).toString().padLeft(2, '0')}'
+        '${(now.month.toString().padLeft(2, '0'))}'
+        '${(now.day.toString().padLeft(2, '0'))}';
+    const String karakter = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    final Random acak = Random.secure();
+    final String unik = List.generate(
+      6,
+      (_) => karakter[acak.nextInt(karakter.length)],
+    ).join();
+    return 'USR-$tanggal-$unik';
+  }
+
+  void _showFormModal({KelolaAkunModel? user}) {
+    final isEdit = user != null;
+    final formKey = GlobalKey<FormState>();
+
+    final kodeCtrl = TextEditingController(
+      text: user?.kodeUser ?? _buatKodeUser(),
+    );
+    final namaCtrl = TextEditingController(text: user?.nama ?? '');
+    final emailCtrl = TextEditingController(text: user?.email ?? '');
+    final passCtrl = TextEditingController();
+    final jabatanCtrl = TextEditingController(text: user?.jabatan ?? '');
+    final nohpCtrl = TextEditingController(text: user?.nohp ?? '');
+    String selectedRole = user?.role ?? 'Operator';
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: AppTheme.surface(context),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (modalCtx) {
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            return Padding(
+              padding: EdgeInsets.only(
+                bottom: MediaQuery.of(modalCtx).viewInsets.bottom + 16,
+                top: 16,
+                left: 16,
+                right: 16,
+              ),
+              child: SingleChildScrollView(
+                child: Form(
+                  key: formKey,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        isEdit ? 'Edit Akun Pengguna' : 'Tambah Akun Baru',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w800,
+                          color: AppTheme.textColor(modalCtx),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      TextFormField(
+                        controller: kodeCtrl,
+                        readOnly: true,
+                        decoration: InputDecoration(
+                          labelText: 'Kode User',
+                          helperText: isEdit
+                              ? null
+                              : 'Dibuat otomatis setelah disimpan',
+                        ),
+                        validator: (v) =>
+                            v == null || v.isEmpty ? 'Wajib diisi' : null,
+                      ),
+                      const SizedBox(height: 12),
+                      TextFormField(
+                        controller: namaCtrl,
+                        decoration: const InputDecoration(
+                          labelText: 'Nama Lengkap',
+                          border: OutlineInputBorder(),
+                        ),
+                        validator: (v) =>
+                            v == null || v.isEmpty ? 'Wajib diisi' : null,
+                      ),
+                      const SizedBox(height: 12),
+                      TextFormField(
+                        controller: emailCtrl,
+                        keyboardType: TextInputType.emailAddress,
+                        decoration: const InputDecoration(
+                          labelText: 'Email',
+                          border: OutlineInputBorder(),
+                        ),
+                        validator: (v) =>
+                            v == null || v.isEmpty ? 'Wajib diisi' : null,
+                      ),
+                      const SizedBox(height: 12),
+                      TextFormField(
+                        controller: passCtrl,
+                        obscureText: true,
+                        decoration: InputDecoration(
+                          labelText: isEdit
+                              ? 'Password (Kosongkan jika tidak diubah)'
+                              : 'Password',
+                          border: const OutlineInputBorder(),
+                        ),
+                        validator: (v) {
+                          if (!isEdit && (v == null || v.isEmpty)) {
+                            return 'Wajib diisi';
+                          }
+                          return null;
+                        },
+                      ),
+                      const SizedBox(height: 12),
+                      DropdownButtonFormField<String>(
+                        value: selectedRole,
+                        decoration: const InputDecoration(
+                          labelText: 'Role / Peran',
+                          border: OutlineInputBorder(),
+                        ),
+                        items: ['Admin', 'Operator', 'Dinas', 'Industri']
+                            .map(
+                              (r) => DropdownMenuItem(value: r, child: Text(r)),
+                            )
+                            .toList(),
+                        onChanged: (val) {
+                          if (val != null)
+                            setModalState(() => selectedRole = val);
+                        },
+                      ),
+                      const SizedBox(height: 12),
+                      TextFormField(
+                        controller: jabatanCtrl,
+                        decoration: const InputDecoration(
+                          labelText: 'Jabatan (Opsional)',
+                          border: OutlineInputBorder(),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      TextFormField(
+                        controller: nohpCtrl,
+                        keyboardType: TextInputType.phone,
+                        decoration: const InputDecoration(
+                          labelText: 'No. HP (Opsional)',
+                          border: OutlineInputBorder(),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      SizedBox(
+                        width: double.infinity,
+                        height: 48,
+                        child: ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppTheme.primaryColor,
+                            foregroundColor: Colors.white,
+                          ),
+                          onPressed: () async {
+                            if (formKey.currentState!.validate()) {
+                              final payload = {
+                                'kode_user': kodeCtrl.text,
+                                'nama': namaCtrl.text,
+                                'email': emailCtrl.text,
+                                'role': selectedRole,
+                                if (passCtrl.text.isNotEmpty)
+                                  'password': passCtrl.text,
+                                if (jabatanCtrl.text.isNotEmpty)
+                                  'jabatan': jabatanCtrl.text,
+                                if (nohpCtrl.text.isNotEmpty)
+                                  'nohp': nohpCtrl.text,
+                              };
+
+                              Navigator.pop(modalCtx);
+
+                              try {
+                                if (isEdit) {
+                                  await _profileService.updateKelolaAkun(
+                                    user.kodeUser,
+                                    payload,
+                                  );
+                                  _toast('Akun berhasil diperbarui');
+                                } else {
+                                  await _profileService.createKelolaAkun(
+                                    payload,
+                                  );
+                                  _toast('Akun berhasil ditambahkan');
+                                }
+                                _fetchUsers();
+                              } on ApiException catch (e) {
+                                _toast(e.message, isError: true);
+                              } catch (e) {
+                                _toast('Gagal menyimpan data', isError: true);
+                              }
+                            }
+                          },
+                          child: Text(
+                            isEdit ? 'Simpan Perubahan' : 'Tambah Akun',
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    final List<_Pengguna> list = _filtered;
+    final List<KelolaAkunModel> list = _filtered;
     final int totalHalaman = _totalHalaman(list.length);
     if (_page > totalHalaman) _page = totalHalaman;
-    final List<_Pengguna> halaman = list
+    final List<KelolaAkunModel> halaman = list
         .skip((_page - 1) * _perPage)
         .take(_perPage)
         .toList();
@@ -311,47 +523,63 @@ class _KelolaAkunPageState extends State<KelolaAkunPage> {
         backgroundColor: AppTheme.primaryDark,
         foregroundColor: Colors.white,
         elevation: 0,
-        scrolledUnderElevation: 1,
       ),
-      body: Column(
-        children: [
-          _buildControls(),
-          _buildBulkBar(list),
-          Expanded(
-            child: ListView(
-              padding: const EdgeInsets.fromLTRB(16, 8, 16, 96),
-              children: [
-                if (list.isEmpty)
-                  Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 48),
-                    child: Center(
-                      child: Text(
-                        'Tidak ada pengguna ditemukan',
-                        style: TextStyle(
-                          color: AppTheme.textSecondary(context),
-                        ),
-                      ),
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : _errorMessage != null
+          ? Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(_errorMessage!, style: const TextStyle(color: _merah)),
+                  const SizedBox(height: 12),
+                  ElevatedButton(
+                    onPressed: _fetchUsers,
+                    child: const Text('Coba Lagi'),
+                  ),
+                ],
+              ),
+            )
+          : RefreshIndicator(
+              onRefresh: _fetchUsers,
+              child: Column(
+                children: [
+                  _buildControls(),
+                  _buildBulkBar(list),
+                  Expanded(
+                    child: ListView(
+                      padding: const EdgeInsets.fromLTRB(16, 8, 16, 96),
+                      children: [
+                        if (list.isEmpty)
+                          Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 48),
+                            child: Center(
+                              child: Text(
+                                'Tidak ada pengguna ditemukan',
+                                style: TextStyle(
+                                  color: AppTheme.textSecondary(context),
+                                ),
+                              ),
+                            ),
+                          )
+                        else
+                          ...List.generate(
+                            halaman.length,
+                            (i) => _buildCard(
+                              halaman[i],
+                              (_page - 1) * _perPage + i + 1,
+                            ),
+                          ),
+                        const SizedBox(height: 16),
+                        _buildPagination(list.length),
+                      ],
                     ),
-                  )
-                else if (_isCardView)
-                  ...List.generate(
-                    halaman.length,
-                        (i) => _buildCard(
-                      halaman[i],
-                      (_page - 1) * _perPage + i + 1,
-                    ),
-                  )
-                else
-                  _buildTable(halaman),
-                const SizedBox(height: 16),
-                _buildPagination(list.length),
-              ],
+                  ),
+                ],
+              ),
             ),
-          ),
-        ],
-      ),
       floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => _toast('Membuka formulir tambah akun'),
+        onPressed: () => _showFormModal(),
         backgroundColor: AppTheme.primaryColor,
         foregroundColor: Colors.white,
         icon: const Icon(Icons.add),
@@ -363,7 +591,6 @@ class _KelolaAkunPageState extends State<KelolaAkunPage> {
     );
   }
 
-  // ---- Bagian atas: pencarian, chip filter, view switcher ----
   Widget _buildControls() {
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
@@ -375,12 +602,9 @@ class _KelolaAkunPageState extends State<KelolaAkunPage> {
               _query = v;
               _page = 1;
             }),
-            style: TextStyle(
-              fontSize: 13,
-              color: AppTheme.textColor(context),
-            ),
+            style: TextStyle(fontSize: 13, color: AppTheme.textColor(context)),
             decoration: InputDecoration(
-              hintText: 'Cari nama, username, atau role...',
+              hintText: 'Cari nama, kode user, atau role...',
               hintStyle: TextStyle(color: AppTheme.textSecondary(context)),
               prefixIcon: Icon(
                 Icons.search,
@@ -390,33 +614,25 @@ class _KelolaAkunPageState extends State<KelolaAkunPage> {
               suffixIcon: _query.isEmpty
                   ? null
                   : IconButton(
-                icon: Icon(
-                  Icons.cancel,
-                  size: 18,
-                  color: AppTheme.textSecondary(context),
-                ),
-                onPressed: () {
-                  _searchCtrl.clear();
-                  setState(() {
-                    _query = '';
-                    _page = 1;
-                  });
-                },
-              ),
+                      icon: Icon(
+                        Icons.cancel,
+                        size: 18,
+                        color: AppTheme.textSecondary(context),
+                      ),
+                      onPressed: () {
+                        _searchCtrl.clear();
+                        setState(() {
+                          _query = '';
+                          _page = 1;
+                        });
+                      },
+                    ),
               filled: true,
               fillColor: AppTheme.surface(context),
               contentPadding: EdgeInsets.zero,
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
                 borderSide: BorderSide(color: AppTheme.border(context)),
-              ),
-              enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide(color: AppTheme.border(context)),
-              ),
-              focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: const BorderSide(color: AppTheme.primaryColor),
               ),
             ),
           ),
@@ -432,20 +648,6 @@ class _KelolaAkunPageState extends State<KelolaAkunPage> {
                     separatorBuilder: (_, _) => const SizedBox(width: 6),
                     itemBuilder: (context, i) => _buildChip(_filters[i]),
                   ),
-                ),
-              ),
-              const SizedBox(width: 8),
-              Container(
-                padding: const EdgeInsets.all(2),
-                decoration: BoxDecoration(
-                  color: AppTheme.surfaceMuted(context),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Row(
-                  children: [
-                    _buildViewToggle(Icons.view_agenda_outlined, true),
-                    _buildViewToggle(Icons.table_rows_outlined, false),
-                  ],
                 ),
               ),
             ],
@@ -493,33 +695,10 @@ class _KelolaAkunPageState extends State<KelolaAkunPage> {
     );
   }
 
-  Widget _buildViewToggle(IconData icon, bool cardMode) {
-    final bool aktif = _isCardView == cardMode;
-    return GestureDetector(
-      onTap: () => setState(() => _isCardView = cardMode),
-      child: Container(
-        width: 32,
-        height: 28,
-        decoration: BoxDecoration(
-          color: aktif ? AppTheme.surface(context) : Colors.transparent,
-          borderRadius: BorderRadius.circular(8),
-        ),
-        child: Icon(
-          icon,
-          size: 18,
-          color: aktif
-              ? AppTheme.primaryColor
-              : AppTheme.textSecondary(context),
-        ),
-      ),
-    );
-  }
-
-  // ---- Bar ringkasan + aksi massal ----
-  Widget _buildBulkBar(List<_Pengguna> list) {
+  Widget _buildBulkBar(List<KelolaAkunModel> list) {
     final int dipilih = _selected.length;
     final bool semuaDipilih =
-        list.isNotEmpty && list.every((p) => _selected.contains(p.username));
+        list.isNotEmpty && list.every((p) => _selected.contains(p.kodeUser));
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
@@ -539,7 +718,6 @@ class _KelolaAkunPageState extends State<KelolaAkunPage> {
                 value: semuaDipilih,
                 onChanged: _toggleSelectAll,
                 activeColor: AppTheme.primaryColor,
-                materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
               ),
             ),
             const SizedBox(width: 8),
@@ -562,10 +740,7 @@ class _KelolaAkunPageState extends State<KelolaAkunPage> {
             const Spacer(),
             if (dipilih > 0) ...[
               Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 8,
-                  vertical: 2,
-                ),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                 decoration: BoxDecoration(
                   color: AppTheme.primaryColor.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(20),
@@ -581,8 +756,6 @@ class _KelolaAkunPageState extends State<KelolaAkunPage> {
               ),
               const SizedBox(width: 4),
               IconButton(
-                tooltip: 'Hapus terpilih',
-                visualDensity: VisualDensity.compact,
                 style: IconButton.styleFrom(
                   backgroundColor: _merahBg,
                   foregroundColor: _merah,
@@ -600,8 +773,7 @@ class _KelolaAkunPageState extends State<KelolaAkunPage> {
     );
   }
 
-  // ---- Mode 1: kartu ----
-  Widget _buildCard(_Pengguna p, int nomor) {
+  Widget _buildCard(KelolaAkunModel p, int nomor) {
     final (Color roleBg, Color roleFg) = _warnaRole(p.role);
 
     return Container(
@@ -623,10 +795,9 @@ class _KelolaAkunPageState extends State<KelolaAkunPage> {
                     width: 24,
                     height: 24,
                     child: Checkbox(
-                      value: _selected.contains(p.username),
+                      value: _selected.contains(p.kodeUser),
                       onChanged: (v) => _toggleSelect(p, v),
                       activeColor: AppTheme.primaryColor,
-                      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
                     ),
                   ),
                   const SizedBox(height: 4),
@@ -645,7 +816,7 @@ class _KelolaAkunPageState extends State<KelolaAkunPage> {
                 radius: 22,
                 backgroundColor: AppTheme.primaryColor.withValues(alpha: 0.12),
                 child: Text(
-                  p.inisial,
+                  p.nama.isNotEmpty ? p.nama[0].toUpperCase() : 'U',
                   style: const TextStyle(
                     color: AppTheme.primaryColor,
                     fontWeight: FontWeight.w800,
@@ -697,7 +868,7 @@ class _KelolaAkunPageState extends State<KelolaAkunPage> {
                     Row(
                       children: [
                         Text(
-                          '@${p.username}',
+                          '@${p.kodeUser}',
                           style: const TextStyle(
                             fontSize: 11.5,
                             fontWeight: FontWeight.w600,
@@ -737,31 +908,21 @@ class _KelolaAkunPageState extends State<KelolaAkunPage> {
             children: [
               TextButton.icon(
                 style: TextButton.styleFrom(
-                  foregroundColor: AppTheme.textSecondary(context),
-                ),
-                onPressed: () => _toast('Detail: ${p.nama}'),
-                icon: const Icon(Icons.visibility_outlined, size: 18),
-                label: const Text('Detail', style: TextStyle(fontSize: 11.5)),
-              ),
-              const SizedBox(width: 4),
-              TextButton.icon(
-                style: TextButton.styleFrom(
                   backgroundColor: AppTheme.surfaceMuted(context),
                   foregroundColor: AppTheme.textColor(context),
                 ),
-                onPressed: () => _toast('Edit: ${p.nama}'),
+                onPressed: () => _showFormModal(user: p),
                 icon: const Icon(Icons.edit_outlined, size: 18),
                 label: const Text('Edit', style: TextStyle(fontSize: 11.5)),
               ),
               const SizedBox(width: 4),
               IconButton(
-                visualDensity: VisualDensity.compact,
                 style: IconButton.styleFrom(
                   backgroundColor: _merahBg,
                   foregroundColor: _merah,
                 ),
                 onPressed: () =>
-                    _confirmDelete('${p.nama} (@${p.username})', [p.username]),
+                    _confirmDelete('${p.nama} (@${p.kodeUser})', [p.kodeUser]),
                 icon: const Icon(Icons.delete_outline, size: 18),
               ),
             ],
@@ -771,189 +932,6 @@ class _KelolaAkunPageState extends State<KelolaAkunPage> {
     );
   }
 
-  // ---- Mode 2: tabel kompak, bisa digeser horizontal ----
-  Widget _buildTable(List<_Pengguna> list) {
-    return Container(
-      margin: const EdgeInsets.only(top: 10),
-      decoration: BoxDecoration(
-        color: AppTheme.surface(context),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppTheme.border(context)),
-      ),
-      clipBehavior: Clip.antiAlias,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Container(
-            color: AppTheme.surfaceMuted(context),
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-            child: Row(
-              children: [
-                Icon(
-                  Icons.swipe,
-                  size: 14,
-                  color: AppTheme.textSecondary(context),
-                ),
-                const SizedBox(width: 4),
-                Text(
-                  'Geser horizontal untuk melihat semua kolom',
-                  style: TextStyle(
-                    fontSize: 10.5,
-                    color: AppTheme.textSecondary(context),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: DataTable(
-              headingRowColor: WidgetStateProperty.all(
-                AppTheme.surfaceMuted(context),
-              ),
-              headingTextStyle: TextStyle(
-                fontSize: 11.5,
-                fontWeight: FontWeight.w800,
-                color: AppTheme.textColor(context),
-              ),
-              dataRowMinHeight: 56,
-              dataRowMaxHeight: 56,
-              columnSpacing: 20,
-              showCheckboxColumn: false,
-              columns: const [
-                DataColumn(label: Text('')),
-                DataColumn(label: Text('No')),
-                DataColumn(label: Text('Nama Lengkap')),
-                DataColumn(label: Text('Username')),
-                DataColumn(label: Text('Role')),
-                DataColumn(label: Text('Aksi')),
-              ],
-              rows: List.generate(list.length, (i) {
-                final _Pengguna p = list[i];
-                final (Color roleBg, Color roleFg) = _warnaRole(p.role);
-
-                return DataRow(
-                  cells: [
-                    DataCell(
-                      Checkbox(
-                        value: _selected.contains(p.username),
-                        onChanged: (v) => _toggleSelect(p, v),
-                        activeColor: AppTheme.primaryColor,
-                      ),
-                    ),
-                    DataCell(
-                      Text(
-                        '${(_page - 1) * _perPage + i + 1}',
-                        style: TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w700,
-                          color: AppTheme.textSecondary(context),
-                        ),
-                      ),
-                    ),
-                    DataCell(
-                      Row(
-                        children: [
-                          CircleAvatar(
-                            radius: 16,
-                            backgroundColor: AppTheme.primaryColor.withValues(
-                              alpha: 0.12,
-                            ),
-                            child: Text(
-                              p.inisial,
-                              style: const TextStyle(
-                                fontSize: 10,
-                                fontWeight: FontWeight.w800,
-                                color: AppTheme.primaryColor,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                p.nama,
-                                style: TextStyle(
-                                  fontSize: 13.5,
-                                  fontWeight: FontWeight.w700,
-                                  color: AppTheme.textColor(context),
-                                ),
-                              ),
-                              Text(
-                                p.email,
-                                style: TextStyle(
-                                  fontSize: 11,
-                                  color: AppTheme.textSecondary(context),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ),
-                    DataCell(
-                      Text(
-                        '@${p.username}',
-                        style: const TextStyle(
-                          fontSize: 11.5,
-                          fontWeight: FontWeight.w600,
-                          color: AppTheme.primaryColor,
-                        ),
-                      ),
-                    ),
-                    DataCell(
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 2,
-                        ),
-                        decoration: BoxDecoration(
-                          color: roleBg,
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        child: Text(
-                          p.role.toUpperCase(),
-                          style: TextStyle(
-                            fontSize: 10,
-                            fontWeight: FontWeight.w800,
-                            color: roleFg,
-                          ),
-                        ),
-                      ),
-                    ),
-                    DataCell(
-                      Row(
-                        children: [
-                          IconButton(
-                            tooltip: 'Edit',
-                            visualDensity: VisualDensity.compact,
-                            onPressed: () => _toast('Edit ${p.nama}'),
-                            icon: const Icon(Icons.edit_outlined, size: 18),
-                          ),
-                          IconButton(
-                            tooltip: 'Hapus',
-                            visualDensity: VisualDensity.compact,
-                            color: _merah,
-                            onPressed: () =>
-                                _confirmDelete(p.nama, [p.username]),
-                            icon: const Icon(Icons.delete_outline, size: 18),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                );
-              }),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // ---- Paginasi lokal (3 akun per halaman) ----
   Widget _buildPagination(int total) {
     final int totalHalaman = _totalHalaman(total);
     final int awal = total == 0 ? 0 : (_page - 1) * _perPage + 1;
@@ -961,101 +939,23 @@ class _KelolaAkunPageState extends State<KelolaAkunPage> {
 
     return Column(
       children: [
-        Text.rich(
-          TextSpan(
-            style: TextStyle(
-              fontSize: 11.5,
-              color: AppTheme.textSecondary(context),
-            ),
-            children: [
-              const TextSpan(text: 'Menampilkan '),
-              TextSpan(
-                text: total == 0 ? '0' : '$awal-$akhir',
-                style: TextStyle(
-                  fontWeight: FontWeight.w700,
-                  color: AppTheme.textColor(context),
-                ),
-              ),
-              const TextSpan(text: ' dari '),
-              TextSpan(
-                text: '$total',
-                style: TextStyle(
-                  fontWeight: FontWeight.w700,
-                  color: AppTheme.textColor(context),
-                ),
-              ),
-              const TextSpan(text: ' total akun'),
-            ],
-          ),
-        ),
+        Text('Menampilkan $awal-$akhir dari $total akun'),
         const SizedBox(height: 8),
-        Container(
-          padding: const EdgeInsets.all(4),
-          decoration: BoxDecoration(
-            color: AppTheme.surface(context),
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: AppTheme.border(context)),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextButton(
-                style: TextButton.styleFrom(
-                  foregroundColor: AppTheme.textColor(context),
-                ),
-                onPressed: _page > 1 ? () => setState(() => _page--) : null,
-                child: const Row(
-                  children: [
-                    Icon(Icons.chevron_left, size: 18),
-                    Text('Sebelumnya', style: TextStyle(fontSize: 11.5)),
-                  ],
-                ),
-              ),
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 4,
-                ),
-                decoration: BoxDecoration(
-                  color: AppTheme.surfaceMuted(context),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Text.rich(
-                  TextSpan(
-                    style: TextStyle(
-                      fontSize: 11.5,
-                      color: AppTheme.textColor(context),
-                    ),
-                    children: [
-                      const TextSpan(text: 'Hal '),
-                      TextSpan(
-                        text: '$_page',
-                        style: const TextStyle(
-                          fontWeight: FontWeight.w800,
-                          color: AppTheme.primaryColor,
-                        ),
-                      ),
-                      TextSpan(text: ' dari $totalHalaman'),
-                    ],
-                  ),
-                ),
-              ),
-              TextButton(
-                style: TextButton.styleFrom(
-                  foregroundColor: AppTheme.textColor(context),
-                ),
-                onPressed: _page < totalHalaman
-                    ? () => setState(() => _page++)
-                    : null,
-                child: const Row(
-                  children: [
-                    Text('Selanjutnya', style: TextStyle(fontSize: 11.5)),
-                    Icon(Icons.chevron_right, size: 18),
-                  ],
-                ),
-              ),
-            ],
-          ),
+        Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextButton(
+              onPressed: _page > 1 ? () => setState(() => _page--) : null,
+              child: const Text('Sebelumnya'),
+            ),
+            Text(' Hal $_page dari $totalHalaman '),
+            TextButton(
+              onPressed: _page < totalHalaman
+                  ? () => setState(() => _page++)
+                  : null,
+              child: const Text('Selanjutnya'),
+            ),
+          ],
         ),
       ],
     );

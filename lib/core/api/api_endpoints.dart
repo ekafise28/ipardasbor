@@ -51,6 +51,13 @@ class ApiEndpoints {
   // Dashboard
   static const String dashboard = '/mobile/dashboard';
 
+  // //Mobile - CRUD Kelola Akun
+  static const String users = '/mobile/users';
+  static String userDetail(String kodeUser) {
+    final encodedKode = Uri.encodeComponent(kodeUser);
+    return '/mobile/users/$encodedKode';
+  }
+
   static String detailProyekOss(String idProyek) {
     final encodedId = Uri.encodeComponent(idProyek);
 
