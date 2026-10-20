@@ -4,6 +4,7 @@ import 'package:ipardasbor/shared/bidang_usaha/pilih_bidang_page.dart';
 import 'package:ipardasbor/features/ota/baseline_ota_page.dart';
 import 'package:ipardasbor/features/notifications/notification_page.dart';
 import 'package:ipardasbor/features/notifications/services/notification_service.dart';
+import '../industri_pariwisata/industri_pariwisata_page.dart';
 
 import '../../app/app_theme.dart';
 import '../dashboard/dashboard_page.dart';
@@ -261,6 +262,14 @@ class _HomePageState extends State<HomePage>
         await Navigator.of(
           context,
         ).push(MaterialPageRoute<void>(builder: (_) => const SyncPage()));
+        break;
+
+      case 'Industri Pariwisata':
+        await Navigator.of(context).push(
+          MaterialPageRoute<void>(
+            builder: (_) => const IndustriPariwisataPage(),
+          ),
+        );
         break;
 
       default:
