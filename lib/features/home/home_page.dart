@@ -8,6 +8,7 @@ import '../industri_pariwisata/industri_pariwisata_page.dart';
 
 import '../../app/app_theme.dart';
 import '../dashboard/dashboard_page.dart';
+import '../peta_industri/peta_industri_page.dart';
 
 import '../sinkronisasi/sync_page.dart';
 import '../riwayat/riwayat_page.dart';
@@ -99,6 +100,14 @@ class _HomePageState extends State<HomePage>
     icon: Icons.bar_chart_rounded,
     color: AppTheme.menuDashboard,
     backgroundColor: AppTheme.menuDashboardBg,
+  );
+
+  static const MenuData _mPetaIndustri = MenuData(
+    title: 'Peta Industri',
+    description: 'Sebaran usaha pariwisata per provinsi',
+    icon: Icons.map_rounded,
+    color: AppTheme.menuNonOss,
+    backgroundColor: AppTheme.menuNonOssBg,
   );
 
   static const MenuData _mOss = MenuData(
@@ -193,6 +202,7 @@ class _HomePageState extends State<HomePage>
     _MenuGroup('Pengawasan', [_mOss, _mNonOss, _mOta]),
     _MenuGroup('Data & Akun', [
       _mDashboard,
+      _mPetaIndustri,
       _mRiwayat,
       _mSinkronisasi,
       _mProfil,
@@ -218,6 +228,12 @@ class _HomePageState extends State<HomePage>
         await Navigator.of(
           context,
         ).push(MaterialPageRoute<void>(builder: (_) => const DashboardPage()));
+        break;
+
+      case 'Peta Industri':
+        await Navigator.of(context).push(
+          MaterialPageRoute<void>(builder: (_) => const PetaIndustriPage()),
+        );
         break;
 
       case 'Validasi OSS':

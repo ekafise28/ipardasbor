@@ -26,6 +26,7 @@ class ApiCache {
   static const Set<String> _exact = <String>{
     '/mobile/me',
     '/mobile/dashboard',
+    '/mobile/peta-industri'
     '/mobile/oss/riwayat',
     '/mobile/oss/proyek',
     '/mobile/oss/baseline-ota',
@@ -33,6 +34,7 @@ class ApiCache {
   static const List<String> _prefix = <String>[
     '/mobile/oss/riwayat/',
     '/mobile/oss/proyek/',
+    '/mobile/peta-industri/',
   ];
 
   static final AesGcm _aes = AesGcm.with256bits();
