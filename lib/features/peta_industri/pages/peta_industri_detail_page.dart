@@ -137,22 +137,24 @@ class _PetaIndustriDetailPageState extends State<PetaIndustriDetailPage> {
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(teks)));
   }
 
-  /// Satu baris CSV. Nilai "-" (kosong di tampilan) diekspor kosong, dan nilai
-  /// berawalan = + - @ diberi tanda ' agar tidak dibaca sebagai rumus Excel.
+  /// Satu baris CSV. Aturan kutipnya meniru fputcsv di web: field diberi kutip
+  /// bila mengandung pemisah, koma, kutip, spasi, tab, atau baris baru.
+  /// Nilai "-" (kosong di tampilan) diekspor kosong, dan nilai berawalan
+  /// = + - @ diberi tanda ' agar tidak dibaca sebagai rumus Excel.
   String _barisCsv(List<String> kolom) {
+    final RegExp perluKutip = RegExp(r'[;,"\s]');
+
     final String baris = kolom
         .map((String v) {
           String s = v == '-' ? '' : v;
           if (RegExp(r'^[=+\-@]').hasMatch(s)) s = "'$s";
-          if (s.contains(';') ||
-              s.contains('"') ||
-              s.contains('\n') ||
-              s.contains('\r')) {
+          if (perluKutip.hasMatch(s)) {
             s = '"${s.replaceAll('"', '""')}"';
           }
           return s;
         })
         .join(';');
+
     return '$baris\r\n';
   }
 
