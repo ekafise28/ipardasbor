@@ -32,7 +32,7 @@ class IndustriPariwisataService {
   }
 
   /// Satu tabel peringkat Top 20 (dipakai di tahap berikutnya).
-  /// GET /summary?section=<pariwisata|kbli|provinsi|kota>&tahun[0]=...
+  /// GET `/summary?section=<pariwisata|kbli|provinsi|kota>&tahun[0]=...`
   Future<List<IndustriRankingRow>> fetchRanking(
     IndustriRankingSection section,
     IndustriFilter filter,

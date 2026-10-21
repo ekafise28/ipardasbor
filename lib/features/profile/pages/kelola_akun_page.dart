@@ -680,7 +680,7 @@ class _KelolaAkunPageState extends State<KelolaAkunPage> {
                       ),
                       const SizedBox(height: 12),
                       DropdownButtonFormField<String>(
-                        value: selectedRole,
+                        initialValue: selectedRole,
                         decoration: const InputDecoration(
                           labelText: 'Role / Peran',
                           border: OutlineInputBorder(),
@@ -691,8 +691,9 @@ class _KelolaAkunPageState extends State<KelolaAkunPage> {
                             )
                             .toList(),
                         onChanged: (val) {
-                          if (val != null)
+                          if (val != null) {
                             setModalState(() => selectedRole = val);
+                          }
                         },
                       ),
                       const SizedBox(height: 12),

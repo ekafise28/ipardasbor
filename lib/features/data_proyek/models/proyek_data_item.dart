@@ -37,8 +37,8 @@ class ProyekDataItem {
   /// "Kab. X, Provinsi Y" untuk baris lokasi di kartu.
   String get lokasi {
     final List<String> bagian = <String>[
-      if (kabKota != null) kabKota!,
-      if (provinsi != null) provinsi!,
+      ?kabKota,
+      ?provinsi,
     ];
     return bagian.isEmpty ? '-' : bagian.join(', ');
   }

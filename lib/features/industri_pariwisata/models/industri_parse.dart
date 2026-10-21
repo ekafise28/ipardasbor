@@ -21,6 +21,6 @@ String parseString(dynamic value, [String fallback = '-']) {
 /// Memastikan nilai berupa List. Selain itu -> list kosong.
 List<dynamic> parseList(dynamic value) => value is List ? value : const [];
 
-/// Memastikan nilai berupa Map<String, dynamic>. Selain itu -> map kosong.
+/// Memastikan nilai berupa Map `<String, dynamic>.` Selain itu -> map kosong.
 Map<String, dynamic> parseMap(dynamic value) =>
     value is Map ? Map<String, dynamic>.from(value) : <String, dynamic>{};
