@@ -54,6 +54,13 @@ class ApiEndpoints {
   // Peta Industri
   static const String petaIndustri = '/mobile/peta-industri';
 
+  // Data Proyek BKPM (IPAR Data)
+  static const String proyekData = '/mobile/proyek-data';
+  static const String proyekDataFilterOptions =
+      '/mobile/proyek-data/filter-options';
+
+  static const String proyekDataExport = '/mobile/proyek-data/export';
+
   static String petaIndustriGrafik(String provinsi) =>
       '$petaIndustri/${Uri.encodeComponent(provinsi)}/grafik';
 

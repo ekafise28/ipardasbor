@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:ipardasbor/features/data_proyek/data_proyek_page.dart';
 import 'package:ipardasbor/shared/bidang_usaha/pilih_bidang_page.dart';
 import 'package:ipardasbor/shared/region/services/wilayah_akses_service.dart';
 // import 'package:ipardasbor/features/oss/pages/oss_pilih_bidang_page.dart';
@@ -111,6 +112,14 @@ class _HomePageState extends State<HomePage>
     backgroundColor: AppTheme.menuNonOssBg,
   );
 
+  static const MenuData _mDataProyek = MenuData(
+    title: 'Data Proyek',
+    description: 'Penelusuran data proyek BKPM',
+    icon: Icons.manage_search_rounded,
+    color: AppTheme.menuNonOss,
+    backgroundColor: AppTheme.menuNonOssBg,
+  );
+
   static const MenuData _mOss = MenuData(
     title: 'Validasi OSS',
     description: 'Verifikasi proyek dan usaha OSS',
@@ -204,6 +213,7 @@ class _HomePageState extends State<HomePage>
     _MenuGroup('Data & Akun', [
       _mDashboard,
       _mPetaIndustri,
+      _mDataProyek,
       _mRiwayat,
       _mSinkronisasi,
       _mProfil,
@@ -235,6 +245,12 @@ class _HomePageState extends State<HomePage>
         await Navigator.of(context).push(
           MaterialPageRoute<void>(builder: (_) => const PetaIndustriPage()),
         );
+        break;
+
+      case 'Data Proyek':
+        await Navigator.of(
+          context,
+        ).push(MaterialPageRoute<void>(builder: (_) => const DataProyekPage()));
         break;
 
       case 'Validasi OSS':

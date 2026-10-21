@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:http/http.dart' as http;
 
@@ -19,6 +20,74 @@ class ApiClient {
   static const Duration _timeout = Duration(seconds: 30);
 
   static const Duration _timeoutDenganCache = Duration(seconds: 8);
+
+  // Menunggu server mulai mengirim (query bisa berat). Isi unduhan sendiri
+  // tidak dibatasi waktu selama datanya masih mengalir.
+  static const Duration _timeoutMulaiUnduh = Duration(seconds: 60);
+
+  /// Mengunduh respons (mis. CSV) langsung ke [file] tanpa memuat semuanya
+  /// ke memori. [onProgress] menerima jumlah byte dan jumlah baris yang
+  /// sudah diterima. Unduhan berhenti kalau [dibatalkan] mengembalikan true
+  /// (file parsial dibuang oleh pemanggil).
+  Future<void> downloadToFile(
+    String endpoint, {
+    required File file,
+    Map<String, dynamic>? queryParameters,
+    void Function(int byteDiterima, int barisDiterima)? onProgress,
+    bool Function()? dibatalkan,
+  }) async {
+    IOSink? sink;
+
+    try {
+      final http.Request request = http.Request(
+        'GET',
+        _buildUri(endpoint, queryParameters),
+      );
+      final Map<String, String> headers = await _headers();
+      headers['Accept'] = 'text/csv, application/json';
+      request.headers.addAll(headers);
+
+      final http.StreamedResponse response = await _client
+          .send(request)
+          .timeout(_timeoutMulaiUnduh);
+
+      if (response.statusCode < 200 || response.statusCode >= 300) {
+        // Pesan error (401, 403, 422, 429, 5xx) diproses seperti request biasa.
+        final http.Response penuh = await http.Response.fromStream(response);
+        await _processResponse(penuh, handleSessionExpired: true);
+        throw ApiException(
+          statusCode: response.statusCode,
+          message: 'Unduhan gagal.',
+        );
+      }
+
+      sink = file.openWrite();
+      int byte = 0;
+      int baris = 0;
+
+      await for (final List<int> bagian in response.stream) {
+        if (dibatalkan?.call() == true) break; // menutup koneksi
+        sink.add(bagian);
+        byte += bagian.length;
+        for (final int b in bagian) {
+          if (b == 10) baris++;
+        }
+        onProgress?.call(byte, baris);
+      }
+
+      await sink.flush();
+    } on TimeoutException {
+      throw const ApiException(
+        message: 'Waktu koneksi habis. Silakan periksa koneksi internet.',
+      );
+    } on http.ClientException {
+      throw const ApiException(
+        message: 'Unduhan terputus. Periksa koneksi internet.',
+      );
+    } finally {
+      await sink?.close();
+    }
+  }
 
   Uri _buildUri(String endpoint, [Map<String, dynamic>? queryParameters]) {
     final Uri uri = Uri.parse('${ApiEndpoints.baseUrl}$endpoint');
