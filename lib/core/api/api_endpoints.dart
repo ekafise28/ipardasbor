@@ -57,8 +57,14 @@ class ApiEndpoints {
   static String petaIndustriGrafik(String provinsi) =>
       '$petaIndustri/${Uri.encodeComponent(provinsi)}/grafik';
 
+  static String petaIndustriPerusahaan(String provinsi) =>
+      '/mobile/peta-industri/${Uri.encodeComponent(provinsi)}/perusahaan';
+
   static String petaIndustriDetail(String provinsi) =>
       '$petaIndustri/${Uri.encodeComponent(provinsi)}/detail';
+
+  static String petaIndustriEkspor(String provinsi) =>
+      '/mobile/peta-industri/${Uri.encodeComponent(provinsi)}/ekspor';
 
   // //Mobile - CRUD Kelola Akun
   static const String users = '/mobile/users';

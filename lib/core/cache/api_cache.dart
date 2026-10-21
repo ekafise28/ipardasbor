@@ -26,7 +26,7 @@ class ApiCache {
   static const Set<String> _exact = <String>{
     '/mobile/me',
     '/mobile/dashboard',
-    '/mobile/peta-industri'
+    '/mobile/peta-industri',
     '/mobile/oss/riwayat',
     '/mobile/oss/proyek',
     '/mobile/oss/baseline-ota',

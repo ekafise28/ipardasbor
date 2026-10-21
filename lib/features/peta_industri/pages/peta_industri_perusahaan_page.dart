@@ -1,0 +1,404 @@
+// lib/features/peta_industri/pages/peta_industri_perusahaan_page.dart
+
+import 'dart:async';
+
+import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
+import 'package:ipardasbor/app/app_theme.dart';
+import 'package:ipardasbor/shared/pagination/back_to_top_mixin.dart';
+import 'package:ipardasbor/shared/pagination/paginated_list_controller.dart';
+import 'package:ipardasbor/shared/pagination/pagination_bar.dart';
+
+import '../models/peta_detail_model.dart';
+import '../services/peta_industri_service.dart';
+import '../widgets/risiko_warna.dart';
+
+/// Daftar perusahaan di balik satu baris rekap (padanan halaman
+/// /home/daftarUsaha di web). Paginasi dan pencarian dilakukan di server.
+class PetaIndustriPerusahaanPage extends StatefulWidget {
+  const PetaIndustriPerusahaanPage({
+    super.key,
+    required this.provinsi,
+    required this.item,
+  });
+
+  final String provinsi;
+  final PetaRekapItem item;
+
+  @override
+  State<PetaIndustriPerusahaanPage> createState() =>
+      _PetaIndustriPerusahaanPageState();
+}
+
+class _PetaIndustriPerusahaanPageState
+    extends State<PetaIndustriPerusahaanPage>
+    with BackToTopMixin<PetaIndustriPerusahaanPage> {
+  final PetaIndustriService _service = PetaIndustriService();
+  final NumberFormat _angka = NumberFormat.decimalPattern('id_ID');
+  final NumberFormat _rupiah = NumberFormat.currency(
+    locale: 'id_ID',
+    symbol: 'Rp ',
+    decimalDigits: 0,
+  );
+  final TextEditingController _searchCtrl = TextEditingController();
+
+  late final PaginatedListController<PetaPerusahaanItem> _list;
+  Timer? _debounce;
+  int _perPage = 25;
+  String _search = '';
+
+  @override
+  void initState() {
+    super.initState();
+    initBackToTop();
+    _list = PaginatedListController<PetaPerusahaanItem>(
+      paged: true,
+      fetchPage: _ambil,
+      idOf: (PetaPerusahaanItem e) => e.id,
+      perPage: () => _perPage,
+      onSilentError: (String pesan) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(pesan)),
+        );
+      },
+    );
+    _list.reload();
+  }
+
+  @override
+  void dispose() {
+    _debounce?.cancel();
+    _searchCtrl.dispose();
+    _list.dispose();
+    disposeBackToTop();
+    super.dispose();
+  }
+
+  // Mode halaman tidak memuat otomatis saat gulir.
+  @override
+  void onNearBottom() {}
+
+  Future<PageChunk<PetaPerusahaanItem>> _ambil(int page) async {
+    final PetaPerusahaanHalaman hasil = await _service.ambilPerusahaan(
+      widget.provinsi,
+      kbli: widget.item.kbli,
+      risiko: widget.item.risiko,
+      page: page,
+      perPage: _perPage,
+      search: _search,
+    );
+
+    return PageChunk<PetaPerusahaanItem>(
+      items: hasil.items,
+      currentPage: hasil.page,
+      hasNext: hasil.hasMore,
+      total: hasil.total,
+    );
+  }
+
+  void _onSearchChanged(String value) {
+    setState(() {}); // memperbarui tombol hapus
+    _debounce?.cancel();
+    _debounce = Timer(const Duration(milliseconds: 500), () {
+      final String kata = value.trim();
+      if (kata == _search) return;
+      _search = kata;
+      jumpKeAtas();
+      _list.reload();
+    });
+  }
+
+  void _hapusPencarian() {
+    _searchCtrl.clear();
+    _debounce?.cancel();
+    setState(() => _search = '');
+    jumpKeAtas();
+    _list.reload();
+  }
+
+  Future<void> _gantiHalaman(int page) async {
+    await _list.goToPage(page);
+    jumpKeAtas();
+  }
+
+  void _gantiPerPage(int n) {
+    setState(() => _perPage = n);
+    jumpKeAtas();
+    _list.reload();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Daftar Perusahaan',
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
+            ),
+            Text(
+              '${widget.provinsi} • ${widget.item.kbli}',
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w500,
+                color: AppTheme.textSecondary(context),
+              ),
+            ),
+          ],
+        ),
+      ),
+      floatingActionButton: buildBackToTopFab(),
+      bottomNavigationBar: ListenableBuilder(
+        listenable: _list,
+        builder: (context, _) {
+          if (_list.error != null || (_list.total == 0 && !_list.loadingFirst)) {
+            return const SizedBox.shrink();
+          }
+          return PaginationBar(
+            currentPage: _list.currentPage,
+            totalPages: _list.totalPages,
+            perPage: _perPage,
+            total: _list.total,
+            enabled: !_list.loadingFirst,
+            onPageChanged: _gantiHalaman,
+            onPerPageChanged: _gantiPerPage,
+          );
+        },
+      ),
+      body: Column(
+        children: [
+          _buildSearchBar(),
+          _buildRingkasan(),
+          Expanded(
+            child: ListenableBuilder(
+              listenable: _list,
+              builder: (context, _) => _buildContent(),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSearchBar() {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 6),
+      child: TextField(
+        controller: _searchCtrl,
+        onChanged: _onSearchChanged,
+        textInputAction: TextInputAction.search,
+        decoration: InputDecoration(
+          hintText: 'Cari nama, NIB, atau alamat...',
+          prefixIcon: const Icon(Icons.search_rounded),
+          suffixIcon: _searchCtrl.text.isEmpty
+              ? null
+              : IconButton(
+                  tooltip: 'Hapus',
+                  icon: const Icon(Icons.close_rounded),
+                  onPressed: _hapusPencarian,
+                ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildRingkasan() {
+    final PetaRekapItem item = widget.item;
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
+      child: Row(
+        children: [
+          Expanded(
+            child: Text(
+              item.namaKbli,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                color: AppTheme.textColor(context),
+                fontSize: 13,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+          const SizedBox(width: 8),
+          _Chip(label: item.risiko, color: warnaRisiko(item.risiko)),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildContent() {
+    if (_list.loadingFirst) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    if (_list.error != null) {
+      return _buildPesan(
+        icon: Icons.cloud_off_rounded,
+        iconColor: AppTheme.danger,
+        pesan: _list.error!,
+        onRetry: _list.reload,
+      );
+    }
+
+    if (_list.items.isEmpty) {
+      return _buildPesan(
+        icon: Icons.search_off_rounded,
+        pesan: 'Perusahaan tidak ditemukan.',
+      );
+    }
+
+    final List<PetaPerusahaanItem> items = _list.items;
+
+    return ListView.builder(
+      controller: scroll,
+      padding: const EdgeInsets.fromLTRB(16, 4, 16, 24),
+      itemCount: items.length,
+      itemBuilder: (context, i) => _PerusahaanCard(
+        item: items[i],
+        angka: _angka,
+        rupiah: _rupiah,
+      ),
+    );
+  }
+
+  Widget _buildPesan({
+    required IconData icon,
+    required String pesan,
+    Color? iconColor,
+    Future<void> Function()? onRetry,
+  }) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(32),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 40, color: iconColor ?? AppTheme.textMuted),
+            const SizedBox(height: 12),
+            Text(
+              pesan,
+              textAlign: TextAlign.center,
+              style: TextStyle(color: AppTheme.textSecondary(context)),
+            ),
+            if (onRetry != null) ...[
+              const SizedBox(height: 16),
+              FilledButton.icon(
+                onPressed: onRetry,
+                icon: const Icon(Icons.refresh_rounded),
+                label: const Text('Coba lagi'),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _PerusahaanCard extends StatelessWidget {
+  const _PerusahaanCard({
+    required this.item,
+    required this.angka,
+    required this.rupiah,
+  });
+
+  final PetaPerusahaanItem item;
+  final NumberFormat angka;
+  final NumberFormat rupiah;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: AppTheme.surface(context),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: AppTheme.border(context)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            item.nama,
+            style: TextStyle(
+              color: AppTheme.textColor(context),
+              fontSize: 14,
+              fontWeight: FontWeight.w800,
+              height: 1.3,
+            ),
+          ),
+          const SizedBox(height: 6),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Icon(
+                Icons.place_outlined,
+                size: 15,
+                color: AppTheme.textSecondary(context),
+              ),
+              const SizedBox(width: 6),
+              Expanded(
+                child: Text(
+                  item.alamat,
+                  style: TextStyle(
+                    color: AppTheme.textSecondary(context),
+                    fontSize: 12.5,
+                    height: 1.35,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Wrap(
+            spacing: 6,
+            runSpacing: 6,
+            children: [
+              _Chip(label: 'NIB ${item.nib}', color: AppTheme.primaryColor),
+              _Chip(
+                label: rupiah.format(item.investasi),
+                color: AppTheme.success,
+              ),
+              _Chip(
+                label: '${angka.format(item.tenagaKerja)} tenaga kerja',
+                color: AppTheme.warning,
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _Chip extends StatelessWidget {
+  const _Chip({required this.label, required this.color});
+
+  final String label;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(
+          color: color,
+          fontSize: 11,
+          fontWeight: FontWeight.w700,
+        ),
+      ),
+    );
+  }
+}

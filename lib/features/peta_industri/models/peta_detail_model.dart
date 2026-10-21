@@ -59,11 +59,83 @@ class PetaRekapHalaman {
       items: rawItems is List
           ? rawItems
                 .whereType<Map>()
-                .map((e) => PetaRekapItem.fromJson(Map<String, dynamic>.from(e)))
+                .map(
+                  (e) => PetaRekapItem.fromJson(Map<String, dynamic>.from(e)),
+                )
                 .toList()
           : const <PetaRekapItem>[],
       page: _asInt(meta['page']),
       perPage: _asInt(meta['per_page']),
+      total: _asInt(meta['total']),
+      lastPage: _asInt(meta['last_page']),
+    );
+  }
+}
+
+/// Satu perusahaan pada daftar di balik satu baris rekap.
+class PetaPerusahaanItem {
+  const PetaPerusahaanItem({
+    required this.id,
+    required this.nama,
+    required this.alamat,
+    required this.nib,
+    required this.investasi,
+    required this.tenagaKerja,
+  });
+
+  final int id;
+  final String nama;
+  final String alamat;
+  final String nib;
+  final int investasi;
+  final int tenagaKerja;
+
+  factory PetaPerusahaanItem.fromJson(Map<String, dynamic> json) {
+    return PetaPerusahaanItem(
+      id: _asInt(json['id']),
+      nama: _asText(json['nama']),
+      alamat: _asText(json['alamat']),
+      nib: _asText(json['nib']),
+      investasi: _asInt(json['investasi']),
+      tenagaKerja: _asInt(json['tenaga_kerja']),
+    );
+  }
+}
+
+/// Satu halaman hasil GET /mobile/peta-industri/{provinsi}/perusahaan.
+class PetaPerusahaanHalaman {
+  const PetaPerusahaanHalaman({
+    required this.items,
+    required this.page,
+    required this.total,
+    required this.lastPage,
+  });
+
+  final List<PetaPerusahaanItem> items;
+  final int page;
+  final int total;
+  final int lastPage;
+
+  bool get hasMore => page < lastPage;
+
+  factory PetaPerusahaanHalaman.fromJson(Map<String, dynamic> json) {
+    final dynamic rawItems = json['items'];
+    final dynamic rawMeta = json['meta'];
+    final Map<String, dynamic> meta = rawMeta is Map
+        ? Map<String, dynamic>.from(rawMeta)
+        : const <String, dynamic>{};
+
+    return PetaPerusahaanHalaman(
+      items: rawItems is List
+          ? rawItems
+                .whereType<Map>()
+                .map(
+                  (e) =>
+                      PetaPerusahaanItem.fromJson(Map<String, dynamic>.from(e)),
+                )
+                .toList()
+          : const <PetaPerusahaanItem>[],
+      page: _asInt(meta['page']),
       total: _asInt(meta['total']),
       lastPage: _asInt(meta['last_page']),
     );

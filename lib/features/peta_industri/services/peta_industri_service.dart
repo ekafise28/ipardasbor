@@ -26,6 +26,36 @@ class PetaIndustriService {
     return PetaGrafikData.fromJson(_ambilData(response));
   }
 
+  /// Daftar perusahaan untuk satu baris rekap (provinsi + KBLI + risiko).
+  Future<PetaPerusahaanHalaman> ambilPerusahaan(
+    String provinsi, {
+    required String kbli,
+    required String risiko,
+    int page = 1,
+    int perPage = 25,
+    String search = '',
+  }) async {
+    final dynamic response = await _client.get(
+      ApiEndpoints.petaIndustriPerusahaan(provinsi),
+      queryParameters: <String, dynamic>{
+        'kbli': kbli,
+        'risiko': risiko,
+        'page': page,
+        'per_page': perPage,
+        'search': search,
+      },
+    );
+    return PetaPerusahaanHalaman.fromJson(_ambilData(response));
+  }
+
+  /// Seluruh baris rekap satu provinsi, untuk diekspor.
+  Future<List<PetaRekapItem>> ambilSemuaRekap(String provinsi) async {
+    final dynamic response = await _client.get(
+      ApiEndpoints.petaIndustriEkspor(provinsi),
+    );
+    return PetaRekapHalaman.fromJson(_ambilData(response)).items;
+  }
+
   /// Rekap berpaginasi.
   /// [sort]: jumlah | jenis_usaha | nama_kbli | kbli | risiko
   /// [dir]: asc | desc

@@ -1,10 +1,15 @@
 // lib/features/peta_industri/pages/peta_industri_detail_page.dart
 
 import 'dart:async';
+import 'dart:convert';
+import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:ipardasbor/app/app_theme.dart';
+import 'package:ipardasbor/features/peta_industri/pages/peta_industri_perusahaan_page.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:share_plus/share_plus.dart';
 
 import '../../../core/api/api_exception.dart';
 import '../models/peta_detail_model.dart';
@@ -55,6 +60,7 @@ class _PetaIndustriDetailPageState extends State<PetaIndustriDetailPage> {
   bool _hasMore = true;
   bool _loading = false;
   bool _loadMoreError = false;
+  bool _mengekspor = false;
   String? _error;
   int _urutIndex = 0;
   String _search = '';
@@ -62,6 +68,93 @@ class _PetaIndustriDetailPageState extends State<PetaIndustriDetailPage> {
   /// Penanda permintaan. Respons dari permintaan lama (mis. setelah pengguna
   /// mengganti kata kunci) diabaikan.
   int _generasi = 0;
+
+  Future<void> _ekspor() async {
+    if (_mengekspor) return;
+    setState(() => _mengekspor = true);
+
+    try {
+      final List<PetaRekapItem> data = await _service.ambilSemuaRekap(
+        widget.provinsi,
+      );
+
+      if (!mounted) return;
+      if (data.isEmpty) {
+        _pesan('Tidak ada data untuk diekspor.');
+        return;
+      }
+
+      // BOM + pemisah ";" sama seperti ekspor di web, agar terbuka benar di Excel.
+      final StringBuffer csv = StringBuffer('\uFEFF')
+        ..write(
+          _barisCsv(<String>[
+            'Jenis Usaha',
+            'Nama KBLI',
+            'KBLI',
+            'Risiko',
+            'Jumlah Proyek',
+          ]),
+        );
+      for (final PetaRekapItem e in data) {
+        csv.write(
+          _barisCsv(<String>[
+            e.jenisUsaha,
+            e.namaKbli,
+            e.kbli,
+            e.risiko,
+            e.jumlah.toString(),
+          ]),
+        );
+      }
+
+      final String slug = widget.provinsi
+          .toLowerCase()
+          .replaceAll(RegExp(r'[^a-z0-9]+'), '-')
+          .replaceAll(RegExp(r'^-+|-+$'), '');
+      final String stempel = DateFormat(
+        'yyyyMMdd-HHmmss',
+      ).format(DateTime.now());
+      final Directory dir = await getTemporaryDirectory();
+      final File file = File('${dir.path}/rekap-$slug-$stempel.csv');
+      await file.writeAsBytes(utf8.encode(csv.toString()), flush: true);
+
+      if (!mounted) return;
+      await SharePlus.instance.share(
+        ShareParams(
+          files: <XFile>[XFile(file.path, mimeType: 'text/csv')],
+          subject: 'Rekap Industri Pariwisata ${widget.provinsi}',
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      _pesan(pesanErrorRamah(e, fallback: 'Ekspor gagal. Silakan coba lagi.'));
+    } finally {
+      if (mounted) setState(() => _mengekspor = false);
+    }
+  }
+
+  void _pesan(String teks) {
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(teks)));
+  }
+
+  /// Satu baris CSV. Nilai "-" (kosong di tampilan) diekspor kosong, dan nilai
+  /// berawalan = + - @ diberi tanda ' agar tidak dibaca sebagai rumus Excel.
+  String _barisCsv(List<String> kolom) {
+    final String baris = kolom
+        .map((String v) {
+          String s = v == '-' ? '' : v;
+          if (RegExp(r'^[=+\-@]').hasMatch(s)) s = "'$s";
+          if (s.contains(';') ||
+              s.contains('"') ||
+              s.contains('\n') ||
+              s.contains('\r')) {
+            s = '"${s.replaceAll('"', '""')}"';
+          }
+          return s;
+        })
+        .join(';');
+    return '$baris\r\n';
+  }
 
   @override
   void initState() {
@@ -175,6 +268,24 @@ class _PetaIndustriDetailPageState extends State<PetaIndustriDetailPage> {
             ),
           ],
         ),
+        actions: [
+          _mengekspor
+              ? const Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 16),
+                  child: Center(
+                    child: SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    ),
+                  ),
+                )
+              : IconButton(
+                  tooltip: 'Ekspor Excel',
+                  icon: const Icon(Icons.file_download_outlined),
+                  onPressed: _ekspor,
+                ),
+        ],
       ),
       body: Column(
         children: [
@@ -300,7 +411,18 @@ class _PetaIndustriDetailPageState extends State<PetaIndustriDetailPage> {
       itemCount: _items.length + (adaFooter ? 1 : 0),
       itemBuilder: (context, i) {
         if (i < _items.length) {
-          return _RekapCard(item: _items[i], angka: _angka);
+          return _RekapCard(
+            item: _items[i],
+            angka: _angka,
+            onTap: () => Navigator.of(context).push(
+              MaterialPageRoute<void>(
+                builder: (_) => PetaIndustriPerusahaanPage(
+                  provinsi: widget.provinsi,
+                  item: _items[i],
+                ),
+              ),
+            ),
+          );
         }
 
         if (_loadMoreError) {
@@ -332,83 +454,105 @@ class _PetaIndustriDetailPageState extends State<PetaIndustriDetailPage> {
 }
 
 class _RekapCard extends StatelessWidget {
-  const _RekapCard({required this.item, required this.angka});
+  const _RekapCard({
+    required this.item,
+    required this.angka,
+    required this.onTap,
+  });
 
   final PetaRekapItem item;
   final NumberFormat angka;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
     final Color warna = warnaRisiko(item.risiko);
 
-    return Container(
-      margin: const EdgeInsets.only(bottom: 10),
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: Material(
         color: AppTheme.surface(context),
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppTheme.border(context)),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Expanded(
-            child: Column(
+        child: InkWell(
+          borderRadius: BorderRadius.circular(14),
+          onTap: onTap,
+          child: Ink(
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: AppTheme.border(context)),
+            ),
+            child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  item.jenisUsaha.toUpperCase(),
-                  style: const TextStyle(
-                    color: AppTheme.primaryColor,
-                    fontSize: 10.5,
-                    fontWeight: FontWeight.w800,
-                    letterSpacing: 0.5,
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        item.jenisUsaha.toUpperCase(),
+                        style: const TextStyle(
+                          color: AppTheme.primaryColor,
+                          fontSize: 10.5,
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: 0.5,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        item.namaKbli,
+                        style: TextStyle(
+                          color: AppTheme.textColor(context),
+                          fontSize: 14,
+                          fontWeight: FontWeight.w700,
+                          height: 1.3,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Wrap(
+                        spacing: 6,
+                        runSpacing: 6,
+                        children: [
+                          _Chip(
+                            label: 'KBLI ${item.kbli}',
+                            color: AppTheme.textSecondary(context),
+                          ),
+                          _Chip(label: item.risiko, color: warna),
+                        ],
+                      ),
+                    ],
                   ),
                 ),
-                const SizedBox(height: 4),
-                Text(
-                  item.namaKbli,
-                  style: TextStyle(
-                    color: AppTheme.textColor(context),
-                    fontSize: 14,
-                    fontWeight: FontWeight.w700,
-                    height: 1.3,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Wrap(
-                  spacing: 6,
-                  runSpacing: 6,
+                const SizedBox(width: 12),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
-                    _Chip(
-                      label: 'KBLI ${item.kbli}',
-                      color: AppTheme.textSecondary(context),
+                    Text(
+                      angka.format(item.jumlah),
+                      style: const TextStyle(
+                        color: AppTheme.primaryColor,
+                        fontSize: 18,
+                        fontWeight: FontWeight.w800,
+                      ),
                     ),
-                    _Chip(label: item.risiko, color: warna),
+                    const Text(
+                      'proyek',
+                      style: TextStyle(color: AppTheme.textMuted, fontSize: 11),
+                    ),
                   ],
+                ),
+                const SizedBox(width: 4),
+                const Padding(
+                  padding: EdgeInsets.only(top: 2),
+                  child: Icon(
+                    Icons.chevron_right_rounded,
+                    color: AppTheme.textMuted,
+                  ),
                 ),
               ],
             ),
           ),
-          const SizedBox(width: 12),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              Text(
-                angka.format(item.jumlah),
-                style: const TextStyle(
-                  color: AppTheme.primaryColor,
-                  fontSize: 18,
-                  fontWeight: FontWeight.w800,
-                ),
-              ),
-              const Text(
-                'proyek',
-                style: TextStyle(color: AppTheme.textMuted, fontSize: 11),
-              ),
-            ],
-          ),
-        ],
+        ),
       ),
     );
   }
