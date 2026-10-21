@@ -7,6 +7,7 @@ import '../../../app/app_theme.dart';
 import '../../../core/api/api_exception.dart';
 // import '../models/kelola_akun.dart';
 import '../services/profile_service.dart';
+import '../../../shared/widgets/skeleton.dart';
 
 class KelolaAkunPage extends StatefulWidget {
   const KelolaAkunPage({super.key});
@@ -793,7 +794,7 @@ class _KelolaAkunPageState extends State<KelolaAkunPage> {
         elevation: 0,
       ),
       body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
+          ? const KelolaAkunSkeleton()
           : _errorMessage != null
           ? Center(
               child: Column(

@@ -594,9 +594,7 @@ class _RiwayatIconLineSkeleton extends StatelessWidget {
       children: <Widget>[
         const SkeletonBox(width: 15, height: 15, radius: 4),
         const SizedBox(width: 6),
-        Expanded(
-          child: SkeletonBar(widthFactor: widthFactor, height: 12),
-        ),
+        Expanded(child: SkeletonBar(widthFactor: widthFactor, height: 12)),
       ],
     );
   }
@@ -719,6 +717,199 @@ class _DetailSectionSkeleton extends StatelessWidget {
             if (i != rows - 1) const SizedBox(height: 14),
           ],
         ],
+      ),
+    );
+  }
+}
+
+/// Meniru KelolaAkunPage (features/profile/pages/kelola_akun_page.dart):
+/// kolom cari, chip filter, bar jumlah akun, lalu kartu akun.
+/// Kalau halaman aslinya berubah, ubah juga di sini.
+class KelolaAkunSkeleton extends StatelessWidget {
+  const KelolaAkunSkeleton({super.key, this.itemCount = 5});
+
+  final int itemCount;
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      label: 'Memuat daftar akun',
+      child: ExcludeSemantics(
+        child: SingleChildScrollView(
+          physics: const NeverScrollableScrollPhysics(),
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+          child: Column(
+            children: <Widget>[
+              const SkeletonShimmer(
+                child: Column(
+                  children: <Widget>[
+                    // Kolom cari
+                    SkeletonBox(height: 48, radius: 12),
+                    SizedBox(height: 10),
+                    // Chip filter
+                    Row(
+                      children: <Widget>[
+                        SkeletonBox(width: 70, height: 34, radius: 20),
+                        SizedBox(width: 6),
+                        SkeletonBox(width: 60, height: 34, radius: 20),
+                        SizedBox(width: 6),
+                        SkeletonBox(width: 70, height: 34, radius: 20),
+                        SizedBox(width: 6),
+                        SkeletonBox(width: 60, height: 34, radius: 20),
+                      ],
+                    ),
+                    SizedBox(height: 8),
+                    // Bar jumlah akun
+                    SkeletonBox(height: 40, radius: 12),
+                  ],
+                ),
+              ),
+              for (int i = 0; i < itemCount; i++)
+                const _KelolaAkunCardSkeleton(),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _KelolaAkunCardSkeleton extends StatelessWidget {
+  const _KelolaAkunCardSkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    return const SkeletonCard(
+      margin: EdgeInsets.only(top: 10),
+      padding: EdgeInsets.all(12),
+      child: Column(
+        children: <Widget>[
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              // Checkbox + nomor
+              Column(
+                children: <Widget>[
+                  SkeletonBox(width: 24, height: 24, radius: 6),
+                  SizedBox(height: 4),
+                  SkeletonBox(width: 18, height: 10, radius: 6),
+                ],
+              ),
+              SizedBox(width: 8),
+              // Avatar
+              SkeletonBox(width: 44, height: 44, radius: 22),
+              SizedBox(width: 8),
+              // Nama + role, lalu kode dan email
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
+                    Row(
+                      children: <Widget>[
+                        Expanded(
+                          child: SkeletonBar(widthFactor: 0.6, height: 15),
+                        ),
+                        SizedBox(width: 8),
+                        SkeletonBox(width: 60, height: 20, radius: 20),
+                      ],
+                    ),
+                    SizedBox(height: 8),
+                    SkeletonBar(widthFactor: 0.8, height: 12),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          SizedBox(height: 8),
+          // Tombol Edit + Hapus
+          Align(
+            alignment: Alignment.centerRight,
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: <Widget>[
+                SkeletonBox(width: 76, height: 36, radius: 20),
+                SizedBox(width: 4),
+                SkeletonBox(width: 40, height: 40, radius: 20),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Meniru IndustriKpiCards
+/// (features/industri_pariwisata/widgets/industri_kpi_cards.dart):
+/// 3 kartu ringkasan, bertumpuk di HP dan sejajar di layar lebar.
+class IndustriKpiSkeleton extends StatelessWidget {
+  const IndustriKpiSkeleton({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      label: 'Memuat ringkasan usaha',
+      child: ExcludeSemantics(
+        child: LayoutBuilder(
+          builder: (BuildContext context, BoxConstraints constraints) {
+            if (constraints.maxWidth >= 700) {
+              return const Row(
+                children: <Widget>[
+                  Expanded(child: _IndustriKpiCardSkeleton()),
+                  SizedBox(width: 12),
+                  Expanded(child: _IndustriKpiCardSkeleton()),
+                  SizedBox(width: 12),
+                  Expanded(child: _IndustriKpiCardSkeleton()),
+                ],
+              );
+            }
+            return const Column(
+              children: <Widget>[
+                _IndustriKpiCardSkeleton(),
+                SizedBox(height: 12),
+                _IndustriKpiCardSkeleton(),
+                SizedBox(height: 12),
+                _IndustriKpiCardSkeleton(),
+              ],
+            );
+          },
+        ),
+      ),
+    );
+  }
+}
+
+class _IndustriKpiCardSkeleton extends StatelessWidget {
+  const _IndustriKpiCardSkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    return SkeletonCard(
+      radius: 18,
+      padding: const EdgeInsets.all(18),
+      margin: EdgeInsets.zero,
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(minHeight: 82),
+        child: const Row(
+          children: <Widget>[
+            // Kotak ikon
+            SkeletonBox(width: 48, height: 48, radius: 14),
+            SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: <Widget>[
+                  SkeletonBar(widthFactor: 0.5, height: 12),
+                  SizedBox(height: 8),
+                  SkeletonBox(width: 120, height: 26, radius: 6),
+                  SizedBox(height: 8),
+                  SkeletonBar(widthFactor: 0.85, height: 10),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

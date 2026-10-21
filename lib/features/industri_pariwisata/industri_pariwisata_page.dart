@@ -5,6 +5,7 @@
 import 'package:flutter/material.dart';
 
 import '../../app/app_theme.dart';
+import '../../shared/widgets/skeleton.dart';
 import '../../core/api/api_client.dart';
 import '../../core/api/api_exception.dart'; // untuk pesanErrorRamah()
 import 'industri_format.dart';
@@ -225,7 +226,10 @@ class _IndustriPariwisataPageState extends State<IndustriPariwisataPage> {
                       onReset: _reset,
                     ),
                     const SizedBox(height: 14),
-                    IndustriKpiCards(kpi: _data?.kpi),
+                    if (_data == null && _loading)
+                      const IndustriKpiSkeleton()
+                    else
+                      IndustriKpiCards(kpi: _data?.kpi),
                     // TODO tahap berikutnya: grafik dan tabel diletakkan di sini.
                   ],
                 ),
