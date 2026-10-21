@@ -81,6 +81,11 @@ class _PetaIndustriPageState extends State<PetaIndustriPage> {
         ),
         actions: [
           IconButton(
+            tooltip: 'Daftar provinsi',
+            onPressed: (_loading || _data == null) ? null : _bukaDaftar,
+            icon: const Icon(Icons.format_list_numbered_rounded),
+          ),
+          IconButton(
             tooltip: 'Muat ulang',
             onPressed: _loading ? null : _muat,
             icon: const Icon(Icons.refresh_rounded),
@@ -205,6 +210,27 @@ class _PetaIndustriPageState extends State<PetaIndustriPage> {
         ],
       ),
     );
+  }
+
+  Future<void> _bukaDaftar() async {
+    final PetaIndustriData? data = _data;
+    if (data == null || data.provinsi.isEmpty) return;
+
+    final PetaProvinsi? dipilih = await showModalBottomSheet<PetaProvinsi>(
+      context: context,
+      isScrollControlled: true,
+      useSafeArea: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (_) =>
+          _DaftarProvinsiSheet(daftar: data.provinsi, angka: _angka),
+    );
+
+    if (dipilih == null || !mounted) return;
+
+    _mapController.move(LatLng(dipilih.latitude, dipilih.longitude), 7);
+    _tampilkanInfo(dipilih);
   }
 
   void _bukaGrafik(PetaProvinsi p) {
@@ -394,6 +420,162 @@ class _IndustriPin extends StatelessWidget {
             color: Colors.white,
             size: 18,
           ),
+        ),
+      ),
+    );
+  }
+}
+
+class _DaftarProvinsiSheet extends StatefulWidget {
+  const _DaftarProvinsiSheet({required this.daftar, required this.angka});
+
+  final List<PetaProvinsi> daftar;
+  final NumberFormat angka;
+
+  @override
+  State<_DaftarProvinsiSheet> createState() => _DaftarProvinsiSheetState();
+}
+
+class _DaftarProvinsiSheetState extends State<_DaftarProvinsiSheet> {
+  final TextEditingController _cari = TextEditingController();
+  late final List<PetaProvinsi> _urut;
+  late final int _maks;
+  String _kata = '';
+
+  @override
+  void initState() {
+    super.initState();
+    // Peringkat tetap mengikuti jumlah, walau daftar sedang disaring.
+    _urut = List<PetaProvinsi>.of(widget.daftar)
+      ..sort((a, b) => b.total.compareTo(a.total));
+    _maks = _urut.isEmpty || _urut.first.total <= 0 ? 1 : _urut.first.total;
+  }
+
+  @override
+  void dispose() {
+    _cari.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final List<MapEntry<int, PetaProvinsi>> tampil =
+        <MapEntry<int, PetaProvinsi>>[
+          for (int i = 0; i < _urut.length; i++)
+            if (_kata.isEmpty || _urut[i].nama.toLowerCase().contains(_kata))
+              MapEntry<int, PetaProvinsi>(i + 1, _urut[i]),
+        ];
+
+    return Padding(
+      padding: EdgeInsets.only(bottom: MediaQuery.viewInsetsOf(context).bottom),
+      child: DraggableScrollableSheet(
+        expand: false,
+        initialChildSize: 0.8,
+        minChildSize: 0.5,
+        maxChildSize: 0.95,
+        builder: (context, scrollCtrl) => Column(
+          children: [
+            Center(
+              child: Container(
+                width: 40,
+                height: 4,
+                margin: const EdgeInsets.only(top: 12, bottom: 12),
+                decoration: BoxDecoration(
+                  color: AppTheme.border(context),
+                  borderRadius: BorderRadius.circular(4),
+                ),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+              child: TextField(
+                controller: _cari,
+                onChanged: (v) =>
+                    setState(() => _kata = v.trim().toLowerCase()),
+                decoration: InputDecoration(
+                  hintText: 'Cari provinsi...',
+                  prefixIcon: const Icon(Icons.search_rounded),
+                  suffixIcon: _kata.isEmpty
+                      ? null
+                      : IconButton(
+                          tooltip: 'Hapus',
+                          icon: const Icon(Icons.close_rounded),
+                          onPressed: () {
+                            _cari.clear();
+                            setState(() => _kata = '');
+                          },
+                        ),
+                ),
+              ),
+            ),
+            Expanded(
+              child: tampil.isEmpty
+                  ? Center(
+                      child: Text(
+                        'Provinsi tidak ditemukan.',
+                        style: TextStyle(
+                          color: AppTheme.textSecondary(context),
+                        ),
+                      ),
+                    )
+                  : ListView.builder(
+                      controller: scrollCtrl,
+                      padding: const EdgeInsets.fromLTRB(8, 0, 8, 16),
+                      itemCount: tampil.length,
+                      itemBuilder: (context, i) {
+                        final int peringkat = tampil[i].key;
+                        final PetaProvinsi p = tampil[i].value;
+
+                        return ListTile(
+                          onTap: () => Navigator.of(context).pop(p),
+                          leading: CircleAvatar(
+                            radius: 15,
+                            backgroundColor: AppTheme.tintBackground(
+                              context,
+                              AppTheme.primaryColor,
+                              AppTheme.menuDashboardBg,
+                            ),
+                            child: Text(
+                              '$peringkat',
+                              style: const TextStyle(
+                                color: AppTheme.primaryColor,
+                                fontSize: 11.5,
+                                fontWeight: FontWeight.w800,
+                              ),
+                            ),
+                          ),
+                          title: Text(
+                            p.nama,
+                            style: TextStyle(
+                              color: AppTheme.textColor(context),
+                              fontSize: 14,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                          subtitle: Padding(
+                            padding: const EdgeInsets.only(top: 6),
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(4),
+                              child: LinearProgressIndicator(
+                                value: p.total / _maks,
+                                minHeight: 5,
+                                backgroundColor: AppTheme.border(context),
+                              ),
+                            ),
+                          ),
+                          trailing: Text(
+                            widget.angka.format(p.total),
+                            style: const TextStyle(
+                              color: AppTheme.primaryColor,
+                              fontSize: 14,
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+            ),
+          ],
         ),
       ),
     );
