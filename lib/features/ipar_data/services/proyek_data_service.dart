@@ -69,7 +69,7 @@ class ProyekDataService {
     return file;
   }
 
-    final ProyekOfflineStore _offline = ProyekOfflineStore.instance;
+  final ProyekOfflineStore _offline = ProyekOfflineStore.instance;
 
   Future<ProyekDataPageResult> fetch({
     required ProyekDataFilter filter,
