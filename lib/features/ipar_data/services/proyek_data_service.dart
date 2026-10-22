@@ -14,12 +14,6 @@ import '../offline/proyek_offline_engine.dart';
 import '../offline/proyek_offline_meta.dart';
 import '../offline/proyek_offline_store.dart';
 
-// TODO(offline): endpoint /mobile/proyek-data belum terdaftar di ApiCache,
-// jadi semua request langsung ke server. Saat fitur unduh offline dibuat
-// (tombol manual, batas memori, progres), tambahkan method khusus unduhan
-// di sini (mis. unduh halaman 1..N sesuai filter, melapor progres lewat
-// callback) dan simpan hasilnya lewat ApiCache/OfflineDatabase.
-
 /// Akses data Data Proyek BKPM. Melempar [ApiException] kalau gagal;
 /// tangkap di level UI (pola sama dengan [OssProyekService]).
 class ProyekDataService {

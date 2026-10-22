@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:ipardasbor/features/data_proyek/data_proyek_page.dart';
+import 'package:ipardasbor/features/ipar_data/data_proyek_page.dart';
 import 'package:ipardasbor/shared/bidang_usaha/pilih_bidang_page.dart';
 import 'package:ipardasbor/shared/region/services/wilayah_akses_service.dart';
 // import 'package:ipardasbor/features/oss/pages/oss_pilih_bidang_page.dart';

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-import '../../data_proyek/offline/proyek_offline_meta.dart';
-import '../../data_proyek/offline/proyek_offline_store.dart';
+import '../../ipar_data/offline/proyek_offline_meta.dart';
+import '../../ipar_data/offline/proyek_offline_store.dart';
 import '../../../app/app_theme.dart';
 import '../../../core/cache/api_cache.dart';
 import '../../../core/cache/cache_preferences.dart';
