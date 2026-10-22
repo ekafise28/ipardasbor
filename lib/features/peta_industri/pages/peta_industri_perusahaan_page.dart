@@ -3,11 +3,16 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import 'package:ipardasbor/app/app_theme.dart';
+import 'package:ipardasbor/core/api/api_endpoints.dart';
+import 'package:ipardasbor/core/api/api_exception.dart';
 import 'package:ipardasbor/shared/pagination/back_to_top_mixin.dart';
 import 'package:ipardasbor/shared/pagination/paginated_list_controller.dart';
 import 'package:ipardasbor/shared/pagination/pagination_bar.dart';
+import 'package:ipardasbor/shared/utils/csv_export.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../models/peta_detail_model.dart';
 import '../services/peta_industri_service.dart';
@@ -30,8 +35,7 @@ class PetaIndustriPerusahaanPage extends StatefulWidget {
       _PetaIndustriPerusahaanPageState();
 }
 
-class _PetaIndustriPerusahaanPageState
-    extends State<PetaIndustriPerusahaanPage>
+class _PetaIndustriPerusahaanPageState extends State<PetaIndustriPerusahaanPage>
     with BackToTopMixin<PetaIndustriPerusahaanPage> {
   final PetaIndustriService _service = PetaIndustriService();
   final NumberFormat _angka = NumberFormat.decimalPattern('id_ID');
@@ -47,6 +51,10 @@ class _PetaIndustriPerusahaanPageState
   int _perPage = 25;
   String _search = '';
 
+  static const int _maksBaris = 50000;
+  bool _mengekspor = false;
+  int _terunduh = 0;
+
   @override
   void initState() {
     super.initState();
@@ -58,9 +66,9 @@ class _PetaIndustriPerusahaanPageState
       perPage: () => _perPage,
       onSilentError: (String pesan) {
         if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(pesan)),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(pesan)));
       },
     );
     _list.reload();
@@ -78,6 +86,149 @@ class _PetaIndustriPerusahaanPageState
   // Mode halaman tidak memuat otomatis saat gulir.
   @override
   void onNearBottom() {}
+
+  Future<void> _ekspor() async {
+    if (_mengekspor) return;
+
+    if (_list.total > _maksBaris) {
+      final bool lanjut = await _konfirmasiBatas();
+      if (!lanjut || !mounted) return;
+    }
+
+    setState(() {
+      _mengekspor = true;
+      _terunduh = 0;
+    });
+
+    try {
+      final List<PetaPerusahaanItem> semua = <PetaPerusahaanItem>[];
+      int afterId = 0;
+      bool terpotong = false;
+
+      while (true) {
+        final hasil = await _service.ambilPerusahaanEkspor(
+          widget.provinsi,
+          kbli: widget.item.kbli,
+          risiko: widget.item.risiko,
+          search: _search,
+          afterId: afterId,
+        );
+        if (!mounted) return;
+
+        semua.addAll(hasil.items);
+        setState(() => _terunduh = semua.length);
+
+        final int? berikutnya = hasil.berikutnya;
+        if (berikutnya == null) break;
+        if (semua.length >= _maksBaris) {
+          terpotong = true;
+          break;
+        }
+        afterId = berikutnya;
+      }
+
+      if (semua.isEmpty) {
+        _pesan(context, 'Tidak ada data untuk diekspor.');
+        return;
+      }
+
+      // Urutan nama seperti di web (server mengirim menurut id agar cepat).
+      semua.sort(
+        (a, b) => a.nama.toLowerCase().compareTo(b.nama.toLowerCase()),
+      );
+
+      final String judul =
+          'Daftar_Usaha_${widget.provinsi.trim().replaceAll(RegExp(r'\s+'), '_')}';
+      final String stempel = DateFormat(
+        'yyyyMMdd-HHmmss',
+      ).format(DateTime.now());
+
+      await bagikanCsv(
+        namaFile: '$judul-${widget.item.kbli}-$stempel.csv',
+        subjek: 'Daftar Usaha ${widget.provinsi} (KBLI ${widget.item.kbli})',
+        baris: <List<String>>[
+          <String>[judul, '', '', '', ''],
+          <String>[
+            'Nama Perusahaan',
+            'Alamat',
+            'NIB',
+            'Investasi',
+            'Tenaga Kerja',
+          ],
+          for (final PetaPerusahaanItem e in semua)
+            <String>[
+              e.nama,
+              e.alamat,
+              e.nib,
+              e.investasi.toString(),
+              e.tenagaKerja.toString(),
+            ],
+        ],
+      );
+
+      if (mounted && terpotong) {
+        _pesan(
+          context,
+          'Data baris melebihi batasan yaitu ${_angka.format(_maksBaris)}. '
+          'Untuk mengunduh lebih dari batasan, silakan unduh dari web.',
+        );
+      }
+    } catch (e) {
+      if (!mounted) return;
+      _pesan(
+        context,
+        pesanErrorRamah(e, fallback: 'Ekspor gagal. Silakan coba lagi.'),
+      );
+    } finally {
+      if (mounted) setState(() => _mengekspor = false);
+    }
+  }
+
+  /// Alamat halaman daftar usaha di web (padanan /home/daftarUsaha).
+  Uri _urlWeb() {
+    final String base = ApiEndpoints.baseUrl.replaceFirst(
+      RegExp(r'/api/?$'),
+      '',
+    );
+    return Uri.parse('$base/home/daftarUsaha').replace(
+      queryParameters: <String, String>{
+        'provinsi': widget.provinsi,
+        'kbli': widget.item.kbli,
+        'risiko': widget.item.risiko,
+      },
+    );
+  }
+
+  Future<bool> _konfirmasiBatas() async {
+    final bool? hasil = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Data melebihi batasan'),
+        content: Text(
+          'Data baris melebihi batasan yaitu ${_angka.format(_maksBaris)}. '
+          'Untuk mengunduh lebih dari batasan, silakan unduh dari web.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: const Text('Batal'),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.of(ctx).pop(false);
+              _buka(context, _urlWeb());
+            },
+            child: const Text('Buka web'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: Text('Unduh ${_angka.format(_maksBaris)} baris'),
+          ),
+        ],
+      ),
+    );
+    return hasil ?? false;
+  }
 
   Future<PageChunk<PetaPerusahaanItem>> _ambil(int page) async {
     final PetaPerusahaanHalaman hasil = await _service.ambilPerusahaan(
@@ -149,12 +300,45 @@ class _PetaIndustriPerusahaanPageState
             ),
           ],
         ),
+        actions: [
+          if (_mengekspor)
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Center(
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      _angka.format(_terunduh),
+                      style: const TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            )
+          else
+            IconButton(
+              tooltip: 'Ekspor Excel',
+              icon: const Icon(Icons.file_download_outlined),
+              onPressed: _ekspor,
+            ),
+        ],
       ),
       floatingActionButton: buildBackToTopFab(),
       bottomNavigationBar: ListenableBuilder(
         listenable: _list,
         builder: (context, _) {
-          if (_list.error != null || (_list.total == 0 && !_list.loadingFirst)) {
+          if (_list.error != null ||
+              (_list.total == 0 && !_list.loadingFirst)) {
             return const SizedBox.shrink();
           }
           return PaginationBar(
@@ -258,11 +442,8 @@ class _PetaIndustriPerusahaanPageState
       controller: scroll,
       padding: const EdgeInsets.fromLTRB(16, 4, 16, 24),
       itemCount: items.length,
-      itemBuilder: (context, i) => _PerusahaanCard(
-        item: items[i],
-        angka: _angka,
-        rupiah: _rupiah,
-      ),
+      itemBuilder: (context, i) =>
+          _PerusahaanCard(item: items[i], angka: _angka, rupiah: _rupiah),
     );
   }
 
@@ -371,7 +552,85 @@ class _PerusahaanCard extends StatelessWidget {
               ),
             ],
           ),
+          if (item.adaNib || item.telepon != null || item.adaLokasi) ...[
+            const SizedBox(height: 4),
+            Wrap(
+              spacing: 4,
+              children: [
+                if (item.adaNib)
+                  _AksiKecil(
+                    icon: Icons.copy_rounded,
+                    label: 'Salin NIB',
+                    onPressed: () async {
+                      await Clipboard.setData(ClipboardData(text: item.nib));
+                      if (context.mounted) _pesan(context, 'NIB disalin.');
+                    },
+                  ),
+                if (item.telepon != null)
+                  _AksiKecil(
+                    icon: Icons.call_rounded,
+                    label: 'Telepon',
+                    onPressed: () =>
+                        _buka(context, Uri(scheme: 'tel', path: item.telepon)),
+                  ),
+                if (item.adaLokasi)
+                  _AksiKecil(
+                    icon: Icons.map_rounded,
+                    label: 'Peta',
+                    onPressed: () => _buka(
+                      context,
+                      Uri.parse(
+                        'https://www.google.com/maps/search/?api=1'
+                        '&query=${item.latitude},${item.longitude}',
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          ],
         ],
+      ),
+    );
+  }
+}
+
+void _pesan(BuildContext context, String teks) {
+  ScaffoldMessenger.of(context)
+    ..hideCurrentSnackBar()
+    ..showSnackBar(SnackBar(content: Text(teks)));
+}
+
+Future<void> _buka(BuildContext context, Uri uri) async {
+  bool ok = false;
+  try {
+    ok = await launchUrl(uri, mode: LaunchMode.externalApplication);
+  } catch (_) {}
+  if (!ok && context.mounted) {
+    _pesan(context, 'Tidak ada aplikasi yang dapat membuka ini.');
+  }
+}
+
+class _AksiKecil extends StatelessWidget {
+  const _AksiKecil({
+    required this.icon,
+    required this.label,
+    required this.onPressed,
+  });
+
+  final IconData icon;
+  final String label;
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    return TextButton.icon(
+      onPressed: onPressed,
+      icon: Icon(icon, size: 16),
+      label: Text(label),
+      style: TextButton.styleFrom(
+        visualDensity: VisualDensity.compact,
+        padding: const EdgeInsets.symmetric(horizontal: 8),
+        textStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700),
       ),
     );
   }

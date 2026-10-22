@@ -47,6 +47,9 @@ class ApiCache {
         _exact.contains(endpoint) || _prefix.any(endpoint.startsWith);
     if (!boleh) return null;
 
+    // Potongan data ekspor tidak di-cache: besar dan hanya dipakai sekali.
+    if (endpoint.endsWith('/perusahaan/ekspor')) return null;
+
     // Mode "Dekat saya": koordinat berubah tiap saat, cache-nya tidak berguna.
     if (uri.queryParameters.containsKey('lat')) return null;
 
@@ -238,10 +241,6 @@ class ApiCache {
       nonceLength: 12,
       macLength: 16,
     );
-    return _aes.decrypt(
-      box,
-      secretKey: secret,
-      aad: utf8.encode('$uid|$key'),
-    );
+    return _aes.decrypt(box, secretKey: secret, aad: utf8.encode('$uid|$key'));
   }
 }

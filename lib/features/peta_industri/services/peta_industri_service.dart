@@ -12,6 +12,42 @@ class PetaIndustriService {
 
   final ApiClient _client;
 
+  /// Satu potongan data untuk ekspor. [berikutnya] null berarti sudah habis.
+  Future<({List<PetaPerusahaanItem> items, int? berikutnya})>
+  ambilPerusahaanEkspor(
+    String provinsi, {
+    required String kbli,
+    required String risiko,
+    String search = '',
+    int afterId = 0,
+  }) async {
+    final dynamic response = await _client.get(
+      ApiEndpoints.petaIndustriPerusahaanEkspor(provinsi),
+      queryParameters: <String, dynamic>{
+        'kbli': kbli,
+        'risiko': risiko,
+        'search': search,
+        'after_id': afterId,
+      },
+    );
+
+    final Map<String, dynamic> data = _ambilData(response);
+    final dynamic raw = data['items'];
+
+    return (
+      items: raw is List
+          ? raw
+                .whereType<Map>()
+                .map(
+                  (e) =>
+                      PetaPerusahaanItem.fromJson(Map<String, dynamic>.from(e)),
+                )
+                .toList()
+          : <PetaPerusahaanItem>[],
+      berikutnya: int.tryParse((data['next_after_id'] ?? '').toString()),
+    );
+  }
+
   /// Marker per provinsi (Batch 1).
   Future<PetaIndustriData> ambilPeta() async {
     final dynamic response = await _client.get(ApiEndpoints.petaIndustri);
@@ -64,6 +100,7 @@ class PetaIndustriService {
     int page = 1,
     int perPage = 25,
     String search = '',
+    String risiko = '',
     String sort = 'jumlah',
     String dir = 'desc',
   }) async {
@@ -73,6 +110,7 @@ class PetaIndustriService {
         'page': page,
         'per_page': perPage,
         'search': search,
+        'risiko': risiko,
         'sort': sort,
         'dir': dir,
       },

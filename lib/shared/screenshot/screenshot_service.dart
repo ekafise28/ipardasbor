@@ -22,7 +22,7 @@ class ScreenshotService {
   static const double _maxPx = 4096;
   static const double _maxRatio = 2.0; // sama seperti versi yang dulu berhasil
 
-  static Future<void> capture() async {
+  static Future<void> capture({GlobalKey? target}) async {
     if (capturing) return;
     capturing = true;
     try {
@@ -30,7 +30,8 @@ class ScreenshotService {
       if (ctx != null) FocusScope.of(ctx).unfocus();
       await WidgetsBinding.instance.endOfFrame;
 
-      final GlobalKey key = _pageKeys.isNotEmpty ? _pageKeys.last : rootKey;
+      final GlobalKey key =
+          target ?? (_pageKeys.isNotEmpty ? _pageKeys.last : rootKey);
       final box = key.currentContext?.findRenderObject();
       if (box is! RenderRepaintBoundary) {
         throw Exception('Halaman tidak bisa di-capture.');
@@ -87,10 +88,10 @@ class _FullPageCaptureState extends State<FullPageCapture> {
 
   @override
   Widget build(BuildContext context) => RepaintBoundary(
-        key: _key,
-        child: ColoredBox(
-          color: Theme.of(context).scaffoldBackgroundColor,
-          child: widget.child,
-        ),
-      );
+    key: _key,
+    child: ColoredBox(
+      color: Theme.of(context).scaffoldBackgroundColor,
+      child: widget.child,
+    ),
+  );
 }

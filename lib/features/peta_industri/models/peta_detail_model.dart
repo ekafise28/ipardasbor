@@ -81,6 +81,9 @@ class PetaPerusahaanItem {
     required this.nib,
     required this.investasi,
     required this.tenagaKerja,
+    this.telepon,
+    this.latitude,
+    this.longitude,
   });
 
   final int id;
@@ -90,7 +93,25 @@ class PetaPerusahaanItem {
   final int investasi;
   final int tenagaKerja;
 
+  /// null bila kosong atau tidak masuk akal.
+  final String? telepon;
+  final double? latitude;
+  final double? longitude;
+
+  bool get adaNib => nib != '-';
+  bool get adaLokasi => latitude != null && longitude != null;
+
   factory PetaPerusahaanItem.fromJson(Map<String, dynamic> json) {
+    final double? lat = _asKoordinat(json['latitude']);
+    final double? lng = _asKoordinat(json['longitude']);
+    final bool lokasiValid =
+        lat != null &&
+        lng != null &&
+        lat >= -11.5 &&
+        lat <= 6.5 &&
+        lng >= 94.5 &&
+        lng <= 141.5;
+
     return PetaPerusahaanItem(
       id: _asInt(json['id']),
       nama: _asText(json['nama']),
@@ -98,8 +119,23 @@ class PetaPerusahaanItem {
       nib: _asText(json['nib']),
       investasi: _asInt(json['investasi']),
       tenagaKerja: _asInt(json['tenaga_kerja']),
+      telepon: _asTelepon(json['telepon']),
+      latitude: lokasiValid ? lat : null,
+      longitude: lokasiValid ? lng : null,
     );
   }
+}
+
+double? _asKoordinat(dynamic value) =>
+    double.tryParse((value ?? '').toString().trim().replaceAll(',', '.'));
+
+/// Hanya angka dan "+"; kurang dari 8 digit dianggap bukan nomor telepon.
+String? _asTelepon(dynamic value) {
+  final String bersih = (value ?? '').toString().replaceAll(
+    RegExp(r'[^0-9+]'),
+    '',
+  );
+  return bersih.replaceAll('+', '').length >= 8 ? bersih : null;
 }
 
 /// Satu halaman hasil GET /mobile/peta-industri/{provinsi}/perusahaan.

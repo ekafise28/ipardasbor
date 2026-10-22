@@ -1,4 +1,5 @@
-// lib/features/peta_industri/peta_industri_page.dart
+import 'dart:async';
+import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
@@ -6,6 +7,8 @@ import 'package:intl/intl.dart';
 import 'package:ipardasbor/app/app_theme.dart';
 import 'package:ipardasbor/features/peta_industri/pages/peta_industri_detail_page.dart';
 import 'package:ipardasbor/features/peta_industri/pages/peta_industri_grafik_page.dart';
+import 'package:ipardasbor/shared/region/data/wilayah_local_database.dart';
+import 'package:ipardasbor/shared/region/services/wilayah_akses_service.dart';
 import 'package:latlong2/latlong.dart';
 
 import '../../core/api/api_exception.dart';
@@ -22,10 +25,17 @@ class PetaIndustriPage extends StatefulWidget {
   State<PetaIndustriPage> createState() => _PetaIndustriPageState();
 }
 
-class _PetaIndustriPageState extends State<PetaIndustriPage> {
+class _PetaIndustriPageState extends State<PetaIndustriPage>
+    with SingleTickerProviderStateMixin {
   final PetaIndustriService _service = PetaIndustriService();
   final MapController _mapController = MapController();
   final NumberFormat _angka = NumberFormat.decimalPattern('id_ID');
+
+  /// Nama provinsi (sudah dinormalisasi) yang menjadi wilayah kewenangan akun.
+  Set<String> _wilayahSaya = <String>{};
+
+  static String _norm(String s) =>
+      s.trim().toLowerCase().replaceAll(RegExp(r'\s+'), ' ');
 
   // Sama dengan web: setView([-2.5, 118], 5).
   static const LatLng _pusatIndonesia = LatLng(-2.5, 118);
@@ -37,13 +47,53 @@ class _PetaIndustriPageState extends State<PetaIndustriPage> {
   @override
   void initState() {
     super.initState();
+    _denyut = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1200),
+    );
     _muat();
+    _muatWilayahSaya();
   }
 
   @override
   void dispose() {
+    _denyut.dispose();
     _mapController.dispose();
     super.dispose();
+  }
+
+  late final AnimationController _denyut;
+  PetaProvinsi? _sorot;
+
+  /// Cincin berdenyut 3 kali di titik provinsi, lalu hilang sendiri.
+  void _sorotProvinsi(PetaProvinsi p) {
+    setState(() => _sorot = p);
+    _denyut.repeat(count: 3).whenComplete(() {
+      if (mounted) setState(() => _sorot = null);
+    });
+  }
+
+  /// Provinsi akses akun diambil dari ID lokal, lalu dicocokkan lewat nama
+  /// ke nama provinsi di data peta.
+  Future<void> _muatWilayahSaya() async {
+    try {
+      final akses = await WilayahAksesService.instance.current();
+      if (akses == null || akses.fullAccess || akses.provinsiIds.isEmpty) {
+        return;
+      }
+
+      final List<String?> nama = await Future.wait(
+        akses.provinsiIds.map(WilayahLocalDatabase.instance.provinceName),
+      );
+      if (!mounted) return;
+
+      setState(() {
+        _wilayahSaya = nama.whereType<String>().map(_norm).toSet();
+      });
+    } catch (e, st) {
+      debugPrint('[PETA] _muatWilayahSaya gagal: $e');
+      debugPrint('$st');
+    }
   }
 
   Future<void> _muat() async {
@@ -69,6 +119,13 @@ class _PetaIndustriPageState extends State<PetaIndustriPage> {
         _loading = false;
       });
     }
+  }
+
+  /// 32 (paling sedikit) sampai 48 (paling banyak). Akar kuadrat agar selisih
+  /// antarprovinsi tidak terlalu ekstrem.
+  double _ukuranPin(PetaProvinsi p, int maks) {
+    if (maks <= 0) return 38;
+    return 32 + 16 * math.sqrt(p.total / maks);
   }
 
   @override
@@ -108,6 +165,10 @@ class _PetaIndustriPageState extends State<PetaIndustriPage> {
 
   Widget _buildMap() {
     final List<PetaProvinsi> daftar = _data?.provinsi ?? const <PetaProvinsi>[];
+    final int maks = daftar.fold<int>(
+      0,
+      (int m, PetaProvinsi p) => p.total > m ? p.total : m,
+    );
 
     return FlutterMap(
       mapController: _mapController,
@@ -125,7 +186,29 @@ class _PetaIndustriPageState extends State<PetaIndustriPage> {
             // Gagal memuat tile (offline/lambat) adalah kondisi normal.
           },
         ),
-        MarkerLayer(markers: daftar.map(_buildMarker).toList()),
+        if (_sorot != null)
+          MarkerLayer(
+            markers: [
+              Marker(
+                point: LatLng(_sorot!.latitude, _sorot!.longitude),
+                width: 130,
+                height: 130,
+                child: _DenyutSorot(animasi: _denyut),
+              ),
+            ],
+          ),
+        MarkerLayer(
+          markers:
+              (<PetaProvinsi>[...daftar]..sort((a, b) {
+                    // Wilayah akun paling atas; selebihnya yang besar digambar dulu.
+                    final int sa = _wilayahSaya.contains(_norm(a.nama)) ? 1 : 0;
+                    final int sb = _wilayahSaya.contains(_norm(b.nama)) ? 1 : 0;
+                    if (sa != sb) return sa.compareTo(sb);
+                    return b.total.compareTo(a.total);
+                  }))
+                  .map((PetaProvinsi p) => _buildMarker(p, maks))
+                  .toList(),
+        ),
         const SimpleAttributionWidget(
           source: Text('OpenStreetMap contributors'),
         ),
@@ -133,16 +216,21 @@ class _PetaIndustriPageState extends State<PetaIndustriPage> {
     );
   }
 
-  Marker _buildMarker(PetaProvinsi p) {
+  Marker _buildMarker(PetaProvinsi p, int maks) {
+    final double ukuran = _ukuranPin(p, maks);
+
     return Marker(
       point: LatLng(p.latitude, p.longitude),
-      width: 42,
-      height: 42,
+      width: ukuran + 4,
+      height: ukuran + 4,
       // Ujung bawah pin berada tepat di koordinat.
       alignment: Alignment.topCenter,
       child: GestureDetector(
         onTap: () => _tampilkanInfo(p),
-        child: const _IndustriPin(),
+        child: _IndustriPin(
+          ukuran: ukuran,
+          milikSaya: _wilayahSaya.contains(_norm(p.nama)),
+        ),
       ),
     );
   }
@@ -230,6 +318,11 @@ class _PetaIndustriPageState extends State<PetaIndustriPage> {
     if (dipilih == null || !mounted) return;
 
     _mapController.move(LatLng(dipilih.latitude, dipilih.longitude), 7);
+    _sorotProvinsi(dipilih);
+
+    // Beri waktu denyut terlihat dulu sebelum sheet info menutupi peta.
+    await Future<void>.delayed(const Duration(milliseconds: 900));
+    if (!mounted) return;
     _tampilkanInfo(dipilih);
   }
 
@@ -380,45 +473,98 @@ class _PetaIndustriPageState extends State<PetaIndustriPage> {
   }
 }
 
-class _IndustriPin extends StatelessWidget {
-  const _IndustriPin();
+class _DenyutSorot extends StatelessWidget {
+  const _DenyutSorot({required this.animasi});
+
+  final Animation<double> animasi;
 
   @override
   Widget build(BuildContext context) {
-    // Meniru .tourism-marker di web: kotak membulat diputar -45 derajat
-    // (pin), ikon gedung di dalamnya diputar balik.
+    return IgnorePointer(
+      child: AnimatedBuilder(
+        animation: animasi,
+        builder: (context, _) {
+          final double t = animasi.value;
+          return Stack(
+            alignment: Alignment.center,
+            children: [
+              _cincin(t),
+              // Cincin kedua menyusul agar denyutnya terasa berlapis.
+              if (t >= 0.35) _cincin((t - 0.35) / 0.65),
+            ],
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _cincin(double t) {
+    final double ukuran = 24 + 100 * Curves.easeOut.transform(t);
+    final double alpha = 1 - t;
+
+    return Container(
+      width: ukuran,
+      height: ukuran,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        color: AppTheme.primaryColor.withValues(alpha: 0.18 * alpha),
+        border: Border.all(
+          color: const Color(0xFF16A3E0).withValues(alpha: alpha),
+          width: 3,
+        ),
+      ),
+    );
+  }
+}
+
+class _IndustriPin extends StatelessWidget {
+  const _IndustriPin({this.ukuran = 38, this.milikSaya = false});
+
+  final double ukuran;
+  final bool milikSaya;
+
+  @override
+  Widget build(BuildContext context) {
+    final List<Color> warna = milikSaya
+        ? const [Color(0xFFFFB74D), Color(0xFFF57C00)]
+        : const [Color(0xFF16A3E0), AppTheme.primaryColor];
+
     return Transform.rotate(
-      angle: -0.785398, // -45 derajat
+      angle: -0.785398,
       child: Container(
-        width: 38,
-        height: 38,
+        width: ukuran,
+        height: ukuran,
         decoration: BoxDecoration(
-          gradient: const LinearGradient(
+          gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
-            colors: [Color(0xFF16A3E0), AppTheme.primaryColor],
+            colors: warna,
           ),
           border: Border.all(color: Colors.white, width: 3),
-          borderRadius: const BorderRadius.only(
-            topLeft: Radius.circular(19),
-            topRight: Radius.circular(19),
-            bottomRight: Radius.circular(19),
-            bottomLeft: Radius.circular(5),
+          borderRadius: BorderRadius.only(
+            topLeft: Radius.circular(ukuran / 2),
+            topRight: Radius.circular(ukuran / 2),
+            bottomRight: Radius.circular(ukuran / 2),
+            bottomLeft: const Radius.circular(5),
           ),
-          boxShadow: const [
+          boxShadow: [
             BoxShadow(
-              color: Color(0x59054582),
+              color:
+                  (milikSaya
+                          ? const Color(0xFFF57C00)
+                          : const Color(0xFF054582))
+                      .withValues(alpha: 0.35),
               blurRadius: 10,
-              offset: Offset(0, 4),
+              offset: const Offset(0, 4),
             ),
           ],
         ),
         child: Transform.rotate(
           angle: 0.785398,
-          child: const Icon(
+          child: Icon(
             Icons.apartment_rounded,
             color: Colors.white,
-            size: 18,
+            size: ukuran * 0.47,
           ),
         ),
       ),

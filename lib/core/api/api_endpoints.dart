@@ -70,6 +70,9 @@ class ApiEndpoints {
   static String petaIndustriDetail(String provinsi) =>
       '$petaIndustri/${Uri.encodeComponent(provinsi)}/detail';
 
+  static String petaIndustriPerusahaanEkspor(String provinsi) =>
+    '${petaIndustriPerusahaan(provinsi)}/ekspor';
+
   static String petaIndustriEkspor(String provinsi) =>
       '/mobile/peta-industri/${Uri.encodeComponent(provinsi)}/ekspor';
 

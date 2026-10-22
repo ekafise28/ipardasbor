@@ -4,6 +4,7 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:ipardasbor/app/app_theme.dart';
+import 'package:ipardasbor/shared/screenshot/screenshot_service.dart';
 
 import '../../../core/api/api_exception.dart';
 import '../models/peta_grafik_model.dart';
@@ -139,7 +140,11 @@ class _PetaIndustriGrafikPageState extends State<PetaIndustriGrafikPage> {
               if (item is KategoriGrafik) {
                 return _KategoriHeader(kategori: item, angka: _angka);
               }
-              return _KbliCard(kbli: item as KbliGrafik, angka: _angka);
+              return _KbliCard(
+                kbli: item as KbliGrafik,
+                angka: _angka,
+                provinsi: widget.provinsi,
+              );
             },
           ),
         ),
@@ -271,14 +276,31 @@ class _KategoriHeader extends StatelessWidget {
   }
 }
 
-class _KbliCard extends StatelessWidget {
-  const _KbliCard({required this.kbli, required this.angka});
+class _KbliCard extends StatefulWidget {
+  const _KbliCard({
+    required this.kbli,
+    required this.angka,
+    required this.provinsi,
+  });
 
   final KbliGrafik kbli;
   final NumberFormat angka;
+  final String provinsi;
+
+  @override
+  State<_KbliCard> createState() => _KbliCardState();
+}
+
+class _KbliCardState extends State<_KbliCard> {
+  /// Hanya isi di dalam boundary ini yang masuk ke gambar. Tombol bagikan
+  /// sengaja berada di luarnya (saudara dalam Stack), jadi tidak ikut tertangkap.
+  final GlobalKey _gambar = GlobalKey();
 
   @override
   Widget build(BuildContext context) {
+    final KbliGrafik kbli = widget.kbli;
+    final NumberFormat angka = widget.angka;
+
     final List<PieChartSectionData> sections = kbli.risiko
         .where((r) => r.jumlah > 0)
         .map(
@@ -291,63 +313,114 @@ class _KbliCard extends StatelessWidget {
         )
         .toList();
 
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: AppTheme.surface(context),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppTheme.border(context)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Stack(
         children: [
-          Text(
-            '${kbli.kbli} - ${kbli.nama}',
-            style: TextStyle(
-              color: AppTheme.textColor(context),
-              fontSize: 13.5,
-              fontWeight: FontWeight.w800,
+          RepaintBoundary(
+            key: _gambar,
+            // Latar solid agar sudut membulat kartu tidak transparan di PNG.
+            child: ColoredBox(
+              color: AppTheme.scaffoldColorDynamic(context),
+              child: Padding(
+                padding: const EdgeInsets.all(4),
+                child: Container(
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: AppTheme.surface(context),
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: AppTheme.border(context)),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.only(right: 36),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              widget.provinsi.toUpperCase(),
+                              style: const TextStyle(
+                                color: AppTheme.primaryColor,
+                                fontSize: 10.5,
+                                fontWeight: FontWeight.w800,
+                                letterSpacing: 0.5,
+                              ),
+                            ),
+                            const SizedBox(height: 3),
+                            Text(
+                              '${kbli.kbli} - ${kbli.nama}',
+                              style: TextStyle(
+                                color: AppTheme.textColor(context),
+                                fontSize: 13.5,
+                                fontWeight: FontWeight.w800,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      Row(
+                        children: [
+                          SizedBox(
+                            width: 120,
+                            height: 120,
+                            child: Stack(
+                              alignment: Alignment.center,
+                              children: [
+                                PieChart(
+                                  PieChartData(
+                                    sections: sections,
+                                    sectionsSpace: 2,
+                                    centerSpaceRadius: 36,
+                                    pieTouchData: PieTouchData(enabled: false),
+                                  ),
+                                ),
+                                Text(
+                                  angka.format(kbli.total),
+                                  style: TextStyle(
+                                    color: AppTheme.textColor(context),
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w800,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: Column(
+                              children: [
+                                for (final RisikoJumlah r in kbli.risiko)
+                                  _LegendaRow(
+                                    risiko: r,
+                                    total: kbli.total,
+                                    angka: angka,
+                                  ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ),
             ),
           ),
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              SizedBox(
-                width: 120,
-                height: 120,
-                child: Stack(
-                  alignment: Alignment.center,
-                  children: [
-                    PieChart(
-                      PieChartData(
-                        sections: sections,
-                        sectionsSpace: 2,
-                        centerSpaceRadius: 36,
-                        pieTouchData: PieTouchData(enabled: false),
-                      ),
-                    ),
-                    Text(
-                      angka.format(kbli.total),
-                      style: TextStyle(
-                        color: AppTheme.textColor(context),
-                        fontSize: 13,
-                        fontWeight: FontWeight.w800,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Column(
-                  children: [
-                    for (final RisikoJumlah r in kbli.risiko)
-                      _LegendaRow(risiko: r, total: kbli.total, angka: angka),
-                  ],
-                ),
-              ),
-            ],
+          Positioned(
+            top: 10,
+            right: 10,
+            child: IconButton(
+              tooltip: 'Bagikan gambar',
+              padding: EdgeInsets.zero,
+              constraints: const BoxConstraints.tightFor(width: 36, height: 36),
+              iconSize: 20,
+              color: AppTheme.textSecondary(context),
+              icon: const Icon(Icons.ios_share_rounded),
+              onPressed: () => ScreenshotService.capture(target: _gambar),
+            ),
           ),
         ],
       ),

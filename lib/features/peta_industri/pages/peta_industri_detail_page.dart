@@ -1,15 +1,12 @@
 // lib/features/peta_industri/pages/peta_industri_detail_page.dart
 
 import 'dart:async';
-import 'dart:convert';
-import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:ipardasbor/app/app_theme.dart';
 import 'package:ipardasbor/features/peta_industri/pages/peta_industri_perusahaan_page.dart';
-import 'package:path_provider/path_provider.dart';
-import 'package:share_plus/share_plus.dart';
+import 'package:ipardasbor/shared/utils/csv_export.dart';
 
 import '../../../core/api/api_exception.dart';
 import '../models/peta_detail_model.dart';
@@ -46,6 +43,15 @@ class _PetaIndustriDetailPageState extends State<PetaIndustriDetailPage> {
     _OpsiUrut('Nama KBLI (A-Z)', 'nama_kbli', 'asc'),
     _OpsiUrut('Kode KBLI', 'kbli', 'asc'),
   ];
+
+  static const List<String> _opsiRisiko = <String>[
+    'Rendah',
+    'Menengah Rendah',
+    'Menengah Tinggi',
+    'Tinggi',
+  ];
+
+  String _risiko = ''; // kosong = semua
 
   final PetaIndustriService _service = PetaIndustriService();
   final NumberFormat _angka = NumberFormat.decimalPattern('id_ID');
@@ -84,47 +90,21 @@ class _PetaIndustriDetailPageState extends State<PetaIndustriDetailPage> {
         return;
       }
 
-      // BOM + pemisah ";" sama seperti ekspor di web, agar terbuka benar di Excel.
-      final StringBuffer csv = StringBuffer('\uFEFF')
-        ..write(
-          _barisCsv(<String>[
-            'Jenis Usaha',
-            'Nama KBLI',
-            'KBLI',
-            'Risiko',
-            'Jumlah Proyek',
-          ]),
-        );
-      for (final PetaRekapItem e in data) {
-        csv.write(
-          _barisCsv(<String>[
-            e.jenisUsaha,
-            e.namaKbli,
-            e.kbli,
-            e.risiko,
-            e.jumlah.toString(),
-          ]),
-        );
-      }
-
       final String slug = widget.provinsi
-          .toLowerCase()
-          .replaceAll(RegExp(r'[^a-z0-9]+'), '-')
-          .replaceAll(RegExp(r'^-+|-+$'), '');
-      final String stempel = DateFormat(
-        'yyyyMMdd-HHmmss',
-      ).format(DateTime.now());
-      final Directory dir = await getTemporaryDirectory();
-      final File file = File('${dir.path}/rekap-$slug-$stempel.csv');
-      await file.writeAsBytes(utf8.encode(csv.toString()), flush: true);
+    .toLowerCase()
+    .replaceAll(RegExp(r'[^a-z0-9]+'), '-')
+    .replaceAll(RegExp(r'^-+|-+$'), '');
+final String stempel = DateFormat('yyyyMMdd-HHmmss').format(DateTime.now());
 
-      if (!mounted) return;
-      await SharePlus.instance.share(
-        ShareParams(
-          files: <XFile>[XFile(file.path, mimeType: 'text/csv')],
-          subject: 'Rekap Industri Pariwisata ${widget.provinsi}',
-        ),
-      );
+await bagikanCsv(
+  namaFile: 'rekap-$slug-$stempel.csv',
+  subjek: 'Rekap Industri Pariwisata ${widget.provinsi}',
+  baris: <List<String>>[
+    <String>['Jenis Usaha', 'Nama KBLI', 'KBLI', 'Risiko', 'Jumlah Proyek'],
+    for (final PetaRekapItem e in data)
+      <String>[e.jenisUsaha, e.namaKbli, e.kbli, e.risiko, e.jumlah.toString()],
+  ],
+);
     } catch (e) {
       if (!mounted) return;
       _pesan(pesanErrorRamah(e, fallback: 'Ekspor gagal. Silakan coba lagi.'));
@@ -135,27 +115,6 @@ class _PetaIndustriDetailPageState extends State<PetaIndustriDetailPage> {
 
   void _pesan(String teks) {
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(teks)));
-  }
-
-  /// Satu baris CSV. Aturan kutipnya meniru fputcsv di web: field diberi kutip
-  /// bila mengandung pemisah, koma, kutip, spasi, tab, atau baris baru.
-  /// Nilai "-" (kosong di tampilan) diekspor kosong, dan nilai berawalan
-  /// = + - @ diberi tanda ' agar tidak dibaca sebagai rumus Excel.
-  String _barisCsv(List<String> kolom) {
-    final RegExp perluKutip = RegExp(r'[;,"\s]');
-
-    final String baris = kolom
-        .map((String v) {
-          String s = v == '-' ? '' : v;
-          if (RegExp(r'^[=+\-@]').hasMatch(s)) s = "'$s";
-          if (perluKutip.hasMatch(s)) {
-            s = '"${s.replaceAll('"', '""')}"';
-          }
-          return s;
-        })
-        .join(';');
-
-    return '$baris\r\n';
   }
 
   @override
@@ -221,6 +180,7 @@ class _PetaIndustriDetailPageState extends State<PetaIndustriDetailPage> {
         page: _page + 1,
         perPage: _perPage,
         search: _search,
+        risiko: _risiko,
         sort: urut.sort,
         dir: urut.dir,
       );
@@ -292,11 +252,51 @@ class _PetaIndustriDetailPageState extends State<PetaIndustriDetailPage> {
       body: Column(
         children: [
           _buildSearchBar(),
+          _buildFilterRisiko(),
           _buildInfoBar(),
           Expanded(child: _buildContent()),
         ],
       ),
     );
+  }
+
+  Widget _buildFilterRisiko() {
+    return SizedBox(
+      height: 46,
+      child: ListView(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+        children: [
+          Padding(
+            padding: const EdgeInsets.only(right: 8),
+            child: ChoiceChip(
+              label: const Text('Semua'),
+              selected: _risiko.isEmpty,
+              onSelected: (_) => _pilihRisiko(''),
+            ),
+          ),
+          for (final String r in _opsiRisiko)
+            Padding(
+              padding: const EdgeInsets.only(right: 8),
+              child: ChoiceChip(
+                avatar: CircleAvatar(
+                  radius: 5,
+                  backgroundColor: warnaRisiko(r),
+                ),
+                label: Text(r),
+                selected: _risiko == r,
+                onSelected: (_) => _pilihRisiko(r),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  void _pilihRisiko(String nilai) {
+    if (nilai == _risiko) return;
+    _risiko = nilai;
+    _muatAwal();
   }
 
   Widget _buildSearchBar() {
