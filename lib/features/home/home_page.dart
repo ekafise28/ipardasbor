@@ -114,7 +114,7 @@ class _HomePageState extends State<HomePage>
   );
 
   static const MenuData _mDataProyek = MenuData(
-    title: 'Data Proyek',
+    title: 'IPAR DATA',
     description: 'Penelusuran data proyek BKPM',
     icon: Icons.manage_search_rounded,
     color: AppTheme.menuNonOss,
@@ -248,7 +248,7 @@ class _HomePageState extends State<HomePage>
         );
         break;
 
-      case 'Data Proyek':
+      case 'IPAR DATA':
         await Navigator.of(
           context,
         ).push(MaterialPageRoute<void>(builder: (_) => const DataProyekPage()));
