@@ -1,4 +1,4 @@
-import 'package:ipardasbor/features/non_oss/offline/offline_database.dart';
+import 'package:ipardasbor/features/non_oss/offline/non_oss_queue_store.dart';
 import 'package:ipardasbor/features/notifications/services/notification_local_service.dart';
 import 'package:ipardasbor/features/notifications/services/notification_statusbar_controller.dart';
 
@@ -30,7 +30,7 @@ class NotificationTriggers {
   }
 
   static Future<void> _checkWaitingTooLong() async {
-    final List waiting = await OfflineDatabase.instance.getWaiting(limit: 500);
+    final List waiting = await NonOssQueueStore.instance.getWaiting(limit: 500);
     final int lama = waiting
         .where((d) => DateTime.now().difference(d.createdAt) > _waitingThreshold)
         .length;
@@ -59,7 +59,7 @@ class NotificationTriggers {
   }
 
   static Future<void> _checkDraftLingering() async {
-    final List drafts = await OfflineDatabase.instance.getDrafts(limit: 200);
+    final List drafts = await NonOssQueueStore.instance.getDrafts(limit: 200);
     final int lama = drafts
         .where((d) => DateTime.now().difference(d.updatedAt) > _draftThreshold)
         .length;

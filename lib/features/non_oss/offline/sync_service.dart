@@ -1,16 +1,16 @@
+import 'package:ipardasbor/features/non_oss/offline/non_oss_queue_store.dart';
 import 'package:ipardasbor/features/notifications/models/notification_item.dart';
 import 'package:ipardasbor/features/notifications/services/notification_service.dart';
 
 import '../services/non_oss_service.dart';
 import 'non_oss_local_data.dart';
-import 'offline_database.dart';
 
 class NonOssSyncService {
-  NonOssSyncService({required this.remote, OfflineDatabase? database})
-    : database = database ?? OfflineDatabase.instance;
+  NonOssSyncService({required this.remote, NonOssQueueStore? database})
+    : database = database ?? NonOssQueueStore.instance;
 
   final NonOssService remote;
-  final OfflineDatabase database;
+  final NonOssQueueStore database;
 
   static bool _running = false;
 
@@ -24,7 +24,7 @@ class NonOssSyncService {
     // (baik dari SyncPage maupun SubmissionDetailPage). Draft belum tentu
     // lengkap/valid, dan kalau lolos ke sini lalu gagal, statusnya akan
     // berubah jadi FAILED - yang membuatnya salah masuk ke grup "Menunggu
-    // Sinkronisasi" (lihat OfflineDatabase.getWaiting()).
+    // Sinkronisasi" (lihat NonOssQueueStore.getWaiting()).
     if (data.isDraft) {
       return false;
     }

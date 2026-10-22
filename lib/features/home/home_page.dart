@@ -1,5 +1,8 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:ipardasbor/features/ipar_data/data_proyek_page.dart';
+import 'package:ipardasbor/features/non_oss/offline/non_oss_queue_store.dart';
 import 'package:ipardasbor/shared/bidang_usaha/pilih_bidang_page.dart';
 import 'package:ipardasbor/shared/region/services/wilayah_akses_service.dart';
 // import 'package:ipardasbor/features/oss/pages/oss_pilih_bidang_page.dart';
@@ -29,7 +32,6 @@ import 'widgets/status_banner.dart';
 import 'widgets/welcome_card.dart';
 
 import '../../core/api/api_client.dart';
-import '../non_oss/offline/offline_database.dart';
 import '../non_oss/services/non_oss_service.dart';
 
 class HomePage extends StatefulWidget {
@@ -45,7 +47,7 @@ class _HomePageState extends State<HomePage>
 
   late final ApiClient _api;
   late final NonOssService _nonOssService;
-  final OfflineDatabase _database = OfflineDatabase.instance;
+  final NonOssQueueStore _database = NonOssQueueStore.instance;
 
   // Animasi masuk bertahap (kartu sambutan + menu).
   late final AnimationController _entrance;
@@ -76,6 +78,21 @@ class _HomePageState extends State<HomePage>
     super.dispose();
   }
 
+  bool _jenisProdukSegar = false;
+  bool _sedangMenyegarkan = false;
+
+  /// Unduh jenis produk semua bidang sekali per pembukaan aplikasi.
+  /// Kalau gagal, dicoba lagi pada refresh berikutnya.
+  Future<void> _segarkanJenisProduk() async {
+    if (_jenisProdukSegar || _sedangMenyegarkan) return;
+    _sedangMenyegarkan = true;
+    try {
+      _jenisProdukSegar = await _nonOssService.segarkanSemuaJenisProduk();
+    } finally {
+      _sedangMenyegarkan = false;
+    }
+  }
+
   /// Mengecek status koneksi ke SERVER (ping asli, bukan cuma jaringan
   /// device) dan menghitung seluruh data tersimpan lokal yang belum synced
   /// (draft + pending + failed). Dipanggil saat halaman dibuka, tiap 60
@@ -83,6 +100,7 @@ class _HomePageState extends State<HomePage>
   /// yang mungkin mengubah antrean (mis. Sinkronisasi, form Non-OSS).
   Future<void> _refreshSyncStatus() async {
     final bool online = await _nonOssService.isServerAvailable();
+    if (online) unawaited(_segarkanJenisProduk());
     final int count = await _database.countUnsynced();
     final int unread = await NotificationService.instance.countUnread();
 

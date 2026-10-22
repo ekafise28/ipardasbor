@@ -1,4 +1,4 @@
-import 'package:ipardasbor/features/non_oss/offline/offline_database.dart';
+import 'package:ipardasbor/features/non_oss/offline/non_oss_queue_store.dart';
 import 'package:ipardasbor/shared/region/services/wilayah_akses_service.dart';
 
 import '../../../app/app_navigator.dart';
@@ -63,7 +63,7 @@ class AuthService {
     // skema v2) diserahkan ke akun yang baru login. Gagal di sini tidak
     // boleh menggagalkan login.
     try {
-      await OfflineDatabase.instance.claimUnownedRows();
+      await NonOssQueueStore.instance.claimUnownedRows();
     } catch (_) {}
 
     // Muat wilayah kewenangan akun yang baru login.

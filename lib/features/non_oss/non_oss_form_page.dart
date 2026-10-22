@@ -95,8 +95,7 @@ class _NonOssFormPageState extends State<NonOssFormPage>
     return _data.photos.length != _jumlahFotoAwal;
   }
 
-  List<MapEntry<String, String>> _jenisProdukOptions =
-      JenisProdukAkomodasi.options;
+  List<MapEntry<String, String>> _jenisProdukOptions = const [];
 
   Future<void> _muatJenisProduk() async {
     if (_data.bidang == 'akomodasi') return;
@@ -276,6 +275,9 @@ class _NonOssFormPageState extends State<NonOssFormPage>
     _api = ApiClient();
     _regions = RegionService();
     _service = NonOssService(_api);
+    _jenisProdukOptions = _data.bidang == 'akomodasi'
+        ? JenisProdukAkomodasi.options
+        : const [];
     _muatJenisProduk();
     _offlineQueue = OfflineQueueService();
     // Inisialisasi controller dengan nilai awal dari _data, satu kali saja.

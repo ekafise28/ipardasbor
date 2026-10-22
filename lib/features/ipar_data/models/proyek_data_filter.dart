@@ -28,7 +28,7 @@ class ProyekDataFilter {
   /// Ringkasan singkat untuk label data offline, mis. "Bali · 2 kab/kota".
   String get ringkasan {
     final List<String> b = <String>[
-      if (provinsi != null) provinsi!,
+      ?provinsi,
       if (kota.isNotEmpty) '${kota.length} kab/kota',
       if (kbli.isNotEmpty) '${kbli.length} KBLI',
       if (statusModal.isNotEmpty) statusModal.join('/'),

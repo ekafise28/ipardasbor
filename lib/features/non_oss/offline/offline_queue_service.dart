@@ -1,22 +1,22 @@
+import 'package:ipardasbor/features/non_oss/offline/non_oss_queue_store.dart';
 import 'package:uuid/uuid.dart';
 
 import '../models/non_oss_form_data.dart';
 
 import 'non_oss_local_data.dart';
-import 'offline_database.dart';
 import 'permanent_photo_storage.dart';
 import 'sync_status.dart';
 
 class OfflineQueueService {
   OfflineQueueService({
-    OfflineDatabase? database,
+    NonOssQueueStore? database,
     PermanentPhotoStorage? photoStorage,
     Uuid? uuid,
-  }) : _database = database ?? OfflineDatabase.instance,
+  }) : _database = database ?? NonOssQueueStore.instance,
        _photoStorage = photoStorage ?? PermanentPhotoStorage(),
        _uuid = uuid ?? const Uuid();
 
-  final OfflineDatabase _database;
+  final NonOssQueueStore _database;
   final PermanentPhotoStorage _photoStorage;
   final Uuid _uuid;
 

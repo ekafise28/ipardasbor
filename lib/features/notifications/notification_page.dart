@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:ipardasbor/features/non_oss/offline/non_oss_local_data.dart';
-import 'package:ipardasbor/features/non_oss/offline/offline_database.dart';
+import 'package:ipardasbor/features/non_oss/offline/non_oss_queue_store.dart';
 import 'package:ipardasbor/features/non_oss/offline/offline_queue_service.dart';
 import 'package:ipardasbor/features/non_oss/offline/sync_service.dart';
 import 'package:ipardasbor/features/non_oss/services/non_oss_service.dart';
@@ -33,7 +33,7 @@ class _NotificationPageState extends State<NotificationPage> {
   void initState() {
     super.initState();
     _syncService = NonOssSyncService(remote: NonOssService(ApiClient()));
-    _queueService = OfflineQueueService(database: OfflineDatabase.instance);
+    _queueService = OfflineQueueService(database: NonOssQueueStore.instance);
     _muat();
   }
 
@@ -82,7 +82,7 @@ class _NotificationPageState extends State<NotificationPage> {
   Future<void> _bukaDetailAjuan(String? clientUuid) async {
     if (clientUuid == null) return;
 
-    final NonOssLocalData? data = await OfflineDatabase.instance
+    final NonOssLocalData? data = await NonOssQueueStore.instance
         .getByClientUuid(clientUuid);
 
     if (data == null) {

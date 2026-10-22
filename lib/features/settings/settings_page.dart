@@ -1,7 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:ipardasbor/features/non_oss/offline/offline_database.dart';
+import 'package:ipardasbor/features/non_oss/offline/non_oss_queue_store.dart';
 import 'package:ipardasbor/shared/region/services/wilayah_akses_service.dart';
 import 'package:ipardasbor/features/notifications/pages/notification_settings_page.dart';
 import 'package:ipardasbor/shared/screenshot/screenshot_button_controller.dart';
@@ -246,7 +246,7 @@ class _SettingsPageState extends State<SettingsPage> {
     // Data offline TIDAK dihapus saat logout (tersimpan per akun dan muncul
     // lagi saat akun ini masuk), tapi petugas perlu tahu bahwa data itu
     // belum sampai ke server.
-    final int belumTerkirim = await OfflineDatabase.instance.countUnsynced();
+    final int belumTerkirim = await NonOssQueueStore.instance.countUnsynced();
     if (!context.mounted) return;
 
     showDialog<void>(

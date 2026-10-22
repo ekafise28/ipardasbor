@@ -48,9 +48,8 @@ class ApiEndpoints {
     return '/mobile/oss/pengawasan/$encodedId/foto';
   }
 
-  // Bidang usaha
-  static String jenisProdukBidang(String bidang) =>
-      '/mobile/bidang-usaha/${Uri.encodeComponent(bidang)}/jenis-produk';
+  // Jenis Produk
+  static const String jenisProdukSemua = '/mobile/referensi/jenis-produk';
 
   // Manajemen Akomodasi (Tahap 1 + Tahap 2)
   static const String validasiAkomodasi = '/mobile/oss/validasi-akomodasi';
@@ -84,7 +83,6 @@ class ApiEndpoints {
   static const String proyekDataFilterOptions =
       '/mobile/proyek-data/filter-options';
   static const String proyekDataExport = '/mobile/proyek-data/export';
-  static const String proyekDataOffline = '/mobile/proyek-data/offline';
 
   // //Mobile - CRUD Kelola Akun
   static const String users = '/mobile/users';

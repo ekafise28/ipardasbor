@@ -6,7 +6,7 @@ import 'dart:typed_data';
 import 'package:cryptography/cryptography.dart';
 import 'package:sqflite/sqflite.dart';
 
-import '../../features/non_oss/offline/offline_database.dart';
+import '../database/app_database.dart';
 import '../storage/secure_storage.dart';
 import 'cache_preferences.dart';
 
@@ -20,9 +20,11 @@ class ApiCache {
   ApiCache._();
   static final ApiCache instance = ApiCache._();
 
-  static const String table = 'api_cache';
+  static const String table = AppDatabase.apiCacheTable;
 
-  /// Hanya GET dashboard, riwayat, profil, daftar OTA, dan daftar OSS proyek.
+  /// Hanya GET dashboard, riwayat, profil, daftar OTA, daftar OSS proyek, dan
+  /// Data Proyek (daftar + opsi filter). Data Proyek sengaja exact, bukan
+  /// prefix, supaya '/mobile/proyek-data/export' (CSV) tidak ikut ter-cache.
   static const Set<String> _exact = <String>{
     '/mobile/me',
     '/mobile/dashboard',
@@ -30,6 +32,8 @@ class ApiCache {
     '/mobile/oss/riwayat',
     '/mobile/oss/proyek',
     '/mobile/oss/baseline-ota',
+    '/mobile/proyek-data',
+    '/mobile/proyek-data/filter-options',
   };
   static const List<String> _prefix = <String>[
     '/mobile/oss/riwayat/',
@@ -59,12 +63,6 @@ class ApiCache {
     return '$endpoint?${params.map((e) => '${e.key}=${e.value}').join('&')}';
   }
 
-  Future<String?> _uid() async {
-    final String? id = await SecureStorage.getUserId();
-    if (id == null || id.trim().isEmpty) return null;
-    return id.trim();
-  }
-
   String _batasKedaluwarsa() => DateTime.now()
       .toUtc()
       .subtract(Duration(days: CachePreferences.instance.maxDays))
@@ -72,9 +70,9 @@ class ApiCache {
 
   Future<bool> has(String key) async {
     try {
-      final String? uid = await _uid();
+      final String? uid = await AppDatabase.currentUserId();
       if (uid == null) return false;
-      final Database db = await OfflineDatabase.instance.database;
+      final Database db = await AppDatabase.instance.database;
       final List<Map<String, Object?>> rows = await db.query(
         table,
         columns: <String>['cache_key'],
@@ -89,11 +87,11 @@ class ApiCache {
   }
 
   Future<CachedEntry?> read(String key) async {
-    final String? uid = await _uid();
+    final String? uid = await AppDatabase.currentUserId();
     if (uid == null) return null;
 
     try {
-      final Database db = await OfflineDatabase.instance.database;
+      final Database db = await AppDatabase.instance.database;
       final List<Map<String, Object?>> rows = await db.query(
         table,
         where: 'user_id = ? AND cache_key = ? AND saved_at >= ?',
@@ -128,7 +126,7 @@ class ApiCache {
     } catch (_) {
       // Rusak atau tidak bisa didekripsi: buang barisnya.
       try {
-        final Database db = await OfflineDatabase.instance.database;
+        final Database db = await AppDatabase.instance.database;
         await db.delete(
           table,
           where: 'user_id = ? AND cache_key = ?',
@@ -142,14 +140,14 @@ class ApiCache {
   Future<void> put(String key, dynamic data) async {
     if (data == null) return;
     try {
-      final String? uid = await _uid();
+      final String? uid = await AppDatabase.currentUserId();
       if (uid == null) return;
 
       final List<int> compressed = gzip.encode(utf8.encode(jsonEncode(data)));
       final Uint8List blob = await _encrypt(uid, key, compressed);
       final String now = DateTime.now().toUtc().toIso8601String();
 
-      final Database db = await OfflineDatabase.instance.database;
+      final Database db = await AppDatabase.instance.database;
       await db.insert(table, <String, Object?>{
         'user_id': uid,
         'cache_key': key,
@@ -187,10 +185,13 @@ class ApiCache {
     }
   }
 
-  /// Semua akun di perangkat. Dipanggil saat aplikasi dibuka.
+  /// Membuang cache yang sudah lewat batas "simpan data selama" (maxDays),
+  /// untuk SEMUA akun di perangkat ini, bukan hanya akun yang sedang login.
+  /// Dipanggil sekali saat aplikasi dibuka. Pembacaan cache juga menyaring
+  /// baris kedaluwarsa, jadi fungsi ini hanya membebaskan ruang.
   Future<void> pruneExpired() async {
     try {
-      final Database db = await OfflineDatabase.instance.database;
+      final Database db = await AppDatabase.instance.database;
       await db.delete(
         table,
         where: 'saved_at < ?',
@@ -199,10 +200,12 @@ class ApiCache {
     } catch (_) {}
   }
 
+  /// Total ukuran cache (byte, setelah dikompres dan dienkripsi) milik akun
+  /// yang sedang login. Dipakai halaman Data Offline; 0 kalau tidak ada sesi.
   Future<int> usageBytes() async {
-    final String? uid = await _uid();
+    final String? uid = await AppDatabase.currentUserId();
     if (uid == null) return 0;
-    final Database db = await OfflineDatabase.instance.database;
+    final Database db = await AppDatabase.instance.database;
     final List<Map<String, Object?>> rows = await db.rawQuery(
       'SELECT COALESCE(SUM(size_bytes), 0) AS total FROM $table WHERE user_id = ?',
       <Object?>[uid],
@@ -212,9 +215,9 @@ class ApiCache {
 
   /// Hapus cache akun yang sedang login.
   Future<void> clearForCurrentUser() async {
-    final String? uid = await _uid();
+    final String? uid = await AppDatabase.currentUserId();
     if (uid == null) return;
-    final Database db = await OfflineDatabase.instance.database;
+    final Database db = await AppDatabase.instance.database;
     await db.delete(table, where: 'user_id = ?', whereArgs: <Object?>[uid]);
   }
 

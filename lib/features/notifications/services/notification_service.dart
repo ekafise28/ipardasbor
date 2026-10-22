@@ -1,26 +1,19 @@
-import 'package:ipardasbor/features/non_oss/offline/offline_database.dart';
+import 'package:ipardasbor/core/database/app_database.dart';
 import 'package:ipardasbor/features/notifications/services/notification_category_preferences.dart';
 import 'package:ipardasbor/features/notifications/services/notification_local_service.dart';
 import 'package:ipardasbor/features/notifications/services/notification_statusbar_controller.dart';
 import 'package:sqflite/sqflite.dart';
 
-import '../../../../core/storage/secure_storage.dart';
 import '../models/notification_item.dart';
 
 /// Semua akses baca/tulis notifikasi dibatasi ke akun yang sedang login,
-/// pola sama persis dengan OfflineDatabase (lihat K1) - tanpa sesi login,
+/// pola sama persis dengan NonOssQueueStore - tanpa sesi login,
 /// baca mengembalikan kosong dan tulis diabaikan diam-diam.
 class NotificationService {
   NotificationService._();
   static final NotificationService instance = NotificationService._();
 
-  static const String table = 'notifications';
-
-  Future<String?> _currentUserId() async {
-    final String? id = await SecureStorage.getUserId();
-    if (id == null || id.trim().isEmpty) return null;
-    return id.trim();
-  }
+  static const String table = AppDatabase.notificationsTable;
 
   /// Membuat notifikasi baru, atau MENIMPA yang lama kalau [dedupeKey]
   /// sudah pernah dipakai (lewat UNIQUE INDEX di tabel) - waktu dan status
@@ -38,10 +31,10 @@ class NotificationService {
       return;
     }
 
-    final String? uid = await _currentUserId();
+    final String? uid = await AppDatabase.currentUserId();
     if (uid == null) return;
 
-    final Database db = await OfflineDatabase.instance.database;
+    final Database db = await AppDatabase.instance.database;
     final NotificationItem item = NotificationItem(
       type: type,
       title: title,
@@ -76,9 +69,9 @@ class NotificationService {
   /// lagi (mis. data yang tadinya gagal akhirnya berhasil terkirim) -
   /// membuang notifikasi terkait supaya tidak nyangkut di inbox.
   Future<void> resolve(String dedupeKey) async {
-    final String? uid = await _currentUserId();
+    final String? uid = await AppDatabase.currentUserId();
     if (uid == null) return;
-    final Database db = await OfflineDatabase.instance.database;
+    final Database db = await AppDatabase.instance.database;
     await db.delete(
       table,
       where: 'user_id = ? AND dedupe_key = ?',
@@ -90,10 +83,10 @@ class NotificationService {
     NotificationType? type,
     int limit = 100,
   }) async {
-    final String? uid = await _currentUserId();
+    final String? uid = await AppDatabase.currentUserId();
     if (uid == null) return const <NotificationItem>[];
 
-    final Database db = await OfflineDatabase.instance.database;
+    final Database db = await AppDatabase.instance.database;
     final List<Map<String, Object?>> rows = await db.query(
       table,
       where: type != null ? 'user_id = ? AND type = ?' : 'user_id = ?',
@@ -105,10 +98,10 @@ class NotificationService {
   }
 
   Future<int> countUnread() async {
-    final String? uid = await _currentUserId();
+    final String? uid = await AppDatabase.currentUserId();
     if (uid == null) return 0;
 
-    final Database db = await OfflineDatabase.instance.database;
+    final Database db = await AppDatabase.instance.database;
     final List<Map<String, Object?>> rows = await db.rawQuery(
       'SELECT COUNT(*) AS total FROM $table WHERE user_id = ? AND is_read = 0',
       <Object?>[uid],
@@ -117,9 +110,9 @@ class NotificationService {
   }
 
   Future<void> markRead(int id) async {
-    final String? uid = await _currentUserId();
+    final String? uid = await AppDatabase.currentUserId();
     if (uid == null) return;
-    final Database db = await OfflineDatabase.instance.database;
+    final Database db = await AppDatabase.instance.database;
     await db.update(
       table,
       <String, Object?>{'is_read': 1},
@@ -129,9 +122,9 @@ class NotificationService {
   }
 
   Future<void> markAllRead() async {
-    final String? uid = await _currentUserId();
+    final String? uid = await AppDatabase.currentUserId();
     if (uid == null) return;
-    final Database db = await OfflineDatabase.instance.database;
+    final Database db = await AppDatabase.instance.database;
     await db.update(
       table,
       <String, Object?>{'is_read': 1},
@@ -141,9 +134,9 @@ class NotificationService {
   }
 
   Future<void> deleteAll() async {
-    final String? uid = await _currentUserId();
+    final String? uid = await AppDatabase.currentUserId();
     if (uid == null) return;
-    final Database db = await OfflineDatabase.instance.database;
+    final Database db = await AppDatabase.instance.database;
     await db.delete(table, where: 'user_id = ?', whereArgs: <Object?>[uid]);
   }
 
@@ -151,10 +144,10 @@ class NotificationService {
   /// [hardCap] item terbaru per akun - pengaman kalau ada bug yang bikin
   /// notifikasi berulang tak terkendali walau anti-duplikat sudah ada.
   Future<void> prune({required int days, int hardCap = 200}) async {
-    final String? uid = await _currentUserId();
+    final String? uid = await AppDatabase.currentUserId();
     if (uid == null) return;
 
-    final Database db = await OfflineDatabase.instance.database;
+    final Database db = await AppDatabase.instance.database;
     final String cutoff =
         DateTime.now().subtract(Duration(days: days)).toIso8601String();
 

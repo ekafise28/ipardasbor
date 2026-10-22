@@ -8,13 +8,13 @@ import 'package:ipardasbor/shared/utils/formatters.dart';
 import 'package:ipardasbor/shared/utils/ota_utils.dart';
 import 'package:ipardasbor/shared/utils/ui_actions.dart';
 import 'package:ipardasbor/shared/widgets/form/status_ketidaksesuaian_selector.dart';
+import 'package:ipardasbor/features/non_oss/offline/non_oss_queue_store.dart';
 import '../../non_oss/services/non_oss_service.dart';
 
 import '../../../app/app_theme.dart';
 import '../../../shared/widgets/detail_cards.dart';
 
 import '../../non_oss/offline/non_oss_local_data.dart';
-import '../../non_oss/offline/offline_database.dart';
 import '../../non_oss/offline/offline_queue_service.dart';
 import '../../non_oss/offline/sync_service.dart';
 import '../../../shared/region/data/wilayah_local_database.dart';
@@ -213,7 +213,7 @@ class _SubmissionDetailPageState extends State<SubmissionDetailPage> {
     // markFailed. Tanpa refetch ini, angka di layar tetap versi lama
     // karena _data cuma snapshot saat halaman pertama dibuka.
     if (mounted) {
-      final NonOssLocalData? refreshed = await OfflineDatabase.instance
+      final NonOssLocalData? refreshed = await NonOssQueueStore.instance
           .getByClientUuid(_data.clientUuid);
       if (refreshed != null) {
         setState(() => _data = refreshed);

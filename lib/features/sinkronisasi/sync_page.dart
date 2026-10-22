@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:ipardasbor/features/non_oss/offline/non_oss_queue_store.dart';
 import 'package:ipardasbor/shared/widgets/app_banner.dart';
 import 'package:ipardasbor/shared/widgets/page_states.dart';
 
@@ -8,7 +9,6 @@ import '../../app/app_theme.dart';
 import '../../core/api/api_client.dart';
 
 import '../non_oss/offline/non_oss_local_data.dart';
-import '../non_oss/offline/offline_database.dart';
 import '../non_oss/offline/offline_queue_service.dart';
 import '../non_oss/offline/sync_service.dart';
 import '../non_oss/services/non_oss_service.dart';
@@ -35,7 +35,7 @@ class _SyncPageState extends State<SyncPage> {
   late final ApiClient _api;
   late final NonOssSyncService _syncService;
   late final OfflineQueueService _queueService;
-  final OfflineDatabase _database = OfflineDatabase.instance;
+  final NonOssQueueStore _database = NonOssQueueStore.instance;
 
   List<NonOssLocalData> _waitingData = <NonOssLocalData>[];
   List<NonOssLocalData> _draftData = <NonOssLocalData>[];

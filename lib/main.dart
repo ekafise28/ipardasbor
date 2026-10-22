@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:ipardasbor/features/non_oss/offline/auto_sync_controller.dart';
-import 'package:ipardasbor/features/non_oss/offline/offline_database.dart';
+import 'package:ipardasbor/features/non_oss/offline/non_oss_queue_store.dart';
 import 'package:ipardasbor/features/notifications/services/notification_category_preferences.dart';
 import 'package:ipardasbor/features/notifications/services/notification_local_service.dart';
 import 'package:ipardasbor/features/notifications/services/notification_retention_controller.dart';
@@ -28,7 +28,7 @@ void main() async {
   // Saat app baru dibuka tidak ada proses kirim yang berjalan, jadi semua
   // SYNCING sisa sesi sebelumnya aman dikembalikan ke PENDING.
   try {
-    await OfflineDatabase.instance.restoreInterruptedSyncs(
+    await NonOssQueueStore.instance.restoreInterruptedSyncs(
       staleAfter: Duration.zero,
     );
   } catch (_) {}

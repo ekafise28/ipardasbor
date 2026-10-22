@@ -18,6 +18,13 @@ String formatNumber(int value) {
   return result.toString();
 }
 
+/// Ukuran berkas: "512 B", "48 KB", "1,5 MB".
+String formatUkuranBytes(int bytes) {
+  if (bytes < 1024) return '$bytes B';
+  if (bytes < 1024 * 1024) return '${(bytes / 1024).toStringAsFixed(0)} KB';
+  return '${(bytes / (1024 * 1024)).toStringAsFixed(1)} MB';
+}
+
 /// "350 m", "2,4 km", "12 km".
 String formatJarak(double km) {
   if (km < 1) return '${(km * 1000).round()} m';

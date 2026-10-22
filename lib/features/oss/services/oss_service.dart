@@ -8,6 +8,7 @@ import '../../../core/api/api_endpoints.dart';
 import '../../../core/api/api_exception.dart';
 import '../models/oss_form_data.dart';
 import '../models/oss_validasi_result.dart';
+import '../../non_oss/services/non_oss_service.dart';
 
 class OssService {
   OssService(this._api);
@@ -20,7 +21,8 @@ class OssService {
     required String nib,
     required String kbli,
     required String nku,
-    String bidang = 'akomodasi',buka
+    String bidang = 'akomodasi',
+    buka,
   }) async {
     final dynamic response = await _api.post(
       ApiEndpoints.validasiOss,
@@ -50,19 +52,10 @@ class OssService {
   }
 
   /// Pilihan jenis produk (kode KBLI -> label) untuk satu bidang.
-  Future<List<MapEntry<String, String>>> jenisProduk(String bidang) async {
-    final dynamic response = await _api.get(
-      ApiEndpoints.jenisProdukBidang(bidang),
-    );
-
-    final dynamic data = response is Map ? response['data'] : null;
-    if (data is! List) return const <MapEntry<String, String>>[];
-
-    return data
-        .whereType<Map>()
-        .map((Map e) => MapEntry(e['kode'].toString(), e['label'].toString()))
-        .toList(growable: false);
-  }
+  /// Memakai penyimpanan bersama dengan Non-OSS (memori, perangkat, lalu seed),
+  /// jadi tetap tersedia saat offline.
+  Future<List<MapEntry<String, String>>> jenisProduk(String bidang) =>
+      NonOssService(_api).jenisProduk(bidang);
 
   /// Kirim data pengawasan OSS + foto dokumentasi (multipart), sama seperti
   /// alur Non-OSS. `data.toFields()` HARUS mengirim juga 'nib', 'kbli', 'nku'

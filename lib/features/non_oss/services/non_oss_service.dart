@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:http/http.dart' as http;
+import 'package:ipardasbor/core/constants/kbli_constants.dart';
 
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -34,44 +35,65 @@ class NonOssService {
 
   static String _kunciCache(String bidang) => 'jenis_produk_bidang_$bidang';
 
-  Future<List<MapEntry<String, String>>> jenisProduk(String bidang) async {
-    // 1) Cache memori (paling cepat).
-    final memori = _cacheJenisProduk[bidang];
-    if (memori != null) return memori;
-
-    // 2) Server. Kalau berhasil, simpan permanen.
+  /// Mengunduh jenis produk semua bidang dalam satu request lalu menyimpannya
+  /// di perangkat. Dipanggil otomatis dari Home. Return true kalau berhasil.
+  Future<bool> segarkanSemuaJenisProduk() async {
     try {
-      final dynamic response = await _api.get(
-        ApiEndpoints.jenisProdukBidang(bidang),
-      );
+      final dynamic response = await _api.get(ApiEndpoints.jenisProdukSemua);
       final dynamic data = response is Map ? response['data'] : null;
+      if (data is! Map) return false;
 
-      if (data is List) {
-        final hasil = data
+      final Map<String, List<MapEntry<String, String>>> baru =
+          <String, List<MapEntry<String, String>>>{};
+
+      data.forEach((dynamic bidang, dynamic nilai) {
+        if (nilai is! List) return;
+        final daftar = nilai
             .whereType<Map>()
             .map(
               (Map e) => MapEntry(e['kode'].toString(), e['label'].toString()),
             )
             .toList(growable: false);
+        if (daftar.isNotEmpty) baru[bidang.toString()] = daftar;
+      });
 
-        if (hasil.isNotEmpty) {
-          _cacheJenisProduk[bidang] = hasil;
-          await _simpanPermanen(bidang, hasil);
-          return hasil;
-        }
+      if (baru.isEmpty) return false;
+
+      for (final entry in baru.entries) {
+        _cacheJenisProduk[entry.key] = entry.value;
+        await _simpanPermanen(entry.key, entry.value);
       }
+      return true;
     } catch (_) {
-      // Lanjut ke salinan tersimpan di bawah.
+      return false; // diam-diam; salinan lama tetap dipakai
     }
+  }
 
-    // 3) Gagal/offline: pakai salinan terakhir yang tersimpan di perangkat.
+  Future<List<MapEntry<String, String>>> jenisProduk(String bidang) async {
+    // 1) Memori.
+    final memori = _cacheJenisProduk[bidang];
+    if (memori != null) return memori;
+
+    // 2) Salinan di perangkat (diisi otomatis dari Home saat online).
     final tersimpan = await _bacaPermanen(bidang);
     if (tersimpan.isNotEmpty) {
       _cacheJenisProduk[bidang] = tersimpan;
       return tersimpan;
     }
 
-    // Belum pernah berhasil dimuat sama sekali.
+    // 3) Belum ada salinan: unduh semua bidang sekaligus (hanya kalau online).
+    //    segarkanSemuaJenisProduk() sudah mengisi cache memori dan penyimpanan.
+    if (await isServerAvailable() && await segarkanSemuaJenisProduk()) {
+      final baru = _cacheJenisProduk[bidang];
+      if (baru != null) return baru;
+    }
+
+    // 4) Cadangan terakhir: daftar KBLI bawaan aplikasi (label = kode).
+    final seed = (KbliConstants.perBidang[bidang] ?? const <String>[])
+        .map((String k) => MapEntry(k, k))
+        .toList(growable: false);
+    if (seed.isNotEmpty) return seed;
+
     throw Exception('Daftar jenis produk belum pernah dimuat.');
   }
 

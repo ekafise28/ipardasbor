@@ -1,7 +1,8 @@
 import 'dart:async';
-import 'package:intl/intl.dart';
 
 import 'package:flutter/material.dart';
+import 'package:ipardasbor/core/cache/cache_status.dart';
+import 'package:ipardasbor/core/network/network_status.dart';
 import 'package:ipardasbor/features/ipar_data/widgets/data_proyek_unduh_sheet.dart';
 import 'package:ipardasbor/shared/pagination/back_to_top_mixin.dart';
 import 'package:ipardasbor/shared/pagination/paginated_list_controller.dart';
@@ -20,7 +21,6 @@ import 'services/proyek_data_service.dart';
 import 'widgets/data_proyek_card.dart';
 import 'widgets/data_proyek_detail_sheet.dart';
 import 'widgets/data_proyek_filter_sheet.dart';
-import 'widgets/data_proyek_offline_sheet.dart';
 
 /// Penelusuran data proyek dan pelaku usaha berdasarkan data BKPM
 /// (padanan halaman IPAR Data di web). Paginasi mode halaman (10/25/50).
@@ -81,9 +81,6 @@ class _DataProyekPageState extends State<DataProyekPage>
   /// Mode halaman tidak memuat otomatis saat scroll mencapai dasar.
   @override
   void onNearBottom() {}
-
-  void _bukaOffline() =>
-      showDataProyekOfflineSheet(context, filter: _filter, total: _ctrl.total);
 
   void _bukaUnduh() => showDataProyekUnduhSheet(
     context,
@@ -276,13 +273,6 @@ class _DataProyekPageState extends State<DataProyekPage>
                 ? null
                 : _bukaUnduh,
           ),
-          IconButton(
-            tooltip: 'Unduh untuk offline',
-            icon: const Icon(Icons.cloud_download_outlined),
-            onPressed: (_ctrl.loadingFirst || _ctrl.total == 0)
-                ? null
-                : _bukaOffline,
-          ),
           FilterAction(
             onPressed: _bukaFilter,
             activeCount: _filter.jumlahFilterSheet,
@@ -323,10 +313,8 @@ class _DataProyekPageState extends State<DataProyekPage>
               provinsi: _filter.provinsi ?? h.provinsiUser,
               total: _ctrl.total,
               satuan: 'proyek',
-              catatan: h.dariOffline
-                  ? 'Data offline, diunduh '
-                        '${DateFormat('dd/MM/yyyy HH:mm').format(h.waktuOffline!)}. '
-                        'Filter dan pencarian hanya berlaku pada data yang diunduh.'
+              catatan: CacheStatus.instance.isOffline
+                  ? 'Data tersimpan. Pencarian atau filter baru perlu internet.'
                   : null,
             ),
           Expanded(child: _buildBody(context)),
@@ -371,7 +359,10 @@ class _DataProyekPageState extends State<DataProyekPage>
     if (_ctrl.error != null) {
       return ConnectionErrorState(
         title: 'Data proyek gagal dimuat',
-        message: _ctrl.error!,
+        message: NetworkStatus.instance.value
+            ? 'Tidak ada internet dan data untuk pencarian atau filter ini '
+                  'belum tersimpan. Sambungkan internet, lalu coba lagi.'
+            : _ctrl.error!,
         onRetry: _ctrl.reload,
       );
     }
