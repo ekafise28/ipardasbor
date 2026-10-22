@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:intl/intl.dart';
 
 import 'package:flutter/material.dart';
 import 'package:ipardasbor/features/data_proyek/widgets/data_proyek_unduh_sheet.dart';
@@ -19,19 +20,10 @@ import 'services/proyek_data_service.dart';
 import 'widgets/data_proyek_card.dart';
 import 'widgets/data_proyek_detail_sheet.dart';
 import 'widgets/data_proyek_filter_sheet.dart';
+import 'widgets/data_proyek_offline_sheet.dart';
 
 /// Penelusuran data proyek dan pelaku usaha berdasarkan data BKPM
 /// (padanan halaman IPAR Data di web). Paginasi mode halaman (10/25/50).
-///
-/// TODO(offline): halaman ini belum punya cache offline. Rencana, dikerjakan
-/// belakangan:
-///  - Tombol "Unduh untuk offline" di AppBar. Manual, TIDAK otomatis.
-///  - Batas maksimal memori/ukuran unduhan (ikuti CachePreferences.maxBytes
-///    atau batas khusus yang bisa diatur user).
-///  - Progres unduhan (mis. "3 dari 10 halaman", persen) dan tombol batal.
-///  - Simpan lewat ApiCache/OfflineDatabase, terenkripsi per akun.
-///  - Saat offline, tampilkan hanya data yang sudah diunduh dan beri tahu
-///    bahwa filter/pencarian baru butuh koneksi.
 class DataProyekPage extends StatefulWidget {
   const DataProyekPage({super.key});
 
@@ -89,6 +81,9 @@ class _DataProyekPageState extends State<DataProyekPage>
   /// Mode halaman tidak memuat otomatis saat scroll mencapai dasar.
   @override
   void onNearBottom() {}
+
+  void _bukaOffline() =>
+      showDataProyekOfflineSheet(context, filter: _filter, total: _ctrl.total);
 
   void _bukaUnduh() => showDataProyekUnduhSheet(
     context,
@@ -281,7 +276,13 @@ class _DataProyekPageState extends State<DataProyekPage>
                 ? null
                 : _bukaUnduh,
           ),
-          // TODO(offline): tombol "Unduh untuk offline" (lihat catatan kelas).
+          IconButton(
+            tooltip: 'Unduh untuk offline',
+            icon: const Icon(Icons.cloud_download_outlined),
+            onPressed: (_ctrl.loadingFirst || _ctrl.total == 0)
+                ? null
+                : _bukaOffline,
+          ),
           FilterAction(
             onPressed: _bukaFilter,
             activeCount: _filter.jumlahFilterSheet,
@@ -322,6 +323,11 @@ class _DataProyekPageState extends State<DataProyekPage>
               provinsi: _filter.provinsi ?? h.provinsiUser,
               total: _ctrl.total,
               satuan: 'proyek',
+              catatan: h.dariOffline
+                  ? 'Data offline, diunduh '
+                        '${DateFormat('dd/MM/yyyy HH:mm').format(h.waktuOffline!)}. '
+                        'Filter dan pencarian hanya berlaku pada data yang diunduh.'
+                  : null,
             ),
           Expanded(child: _buildBody(context)),
         ],

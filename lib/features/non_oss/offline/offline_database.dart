@@ -20,7 +20,7 @@ class OfflineDatabase {
 
   static final OfflineDatabase instance = OfflineDatabase._();
   static const String table = 'non_oss_sync_queue';
-  static const int _schemaVersion = 4;
+  static const int _schemaVersion = 5;
   Database? _database;
 
   Future<Database> get database async => _database ??= await _open();
@@ -66,6 +66,7 @@ class OfflineDatabase {
         await _createNotificationsTable(db);
 
         await _createApiCacheTable(db);
+        await _createProyekOfflineTables(db);
       },
       onUpgrade: (Database db, int oldVersion, int newVersion) async {
         if (oldVersion < 2) {
@@ -92,6 +93,9 @@ class OfflineDatabase {
         if (oldVersion < 4) {
           await _createApiCacheTable(db);
         }
+        if (oldVersion < 5) {
+          await _createProyekOfflineTables(db);
+        }
       },
     );
   }
@@ -111,6 +115,26 @@ class OfflineDatabase {
     await db.execute(
       'CREATE INDEX idx_api_cache_access ON api_cache(user_id, last_access)',
     );
+  }
+
+  Future<void> _createProyekOfflineTables(Database db) async {
+    // Isi dataset Data Proyek yang diunduh manual (terenkripsi, per akun).
+    await db.execute('''
+      CREATE TABLE proyek_offline_chunk (
+        user_id TEXT NOT NULL,
+        chunk_no INTEGER NOT NULL,
+        data BLOB NOT NULL,
+        size_bytes INTEGER NOT NULL,
+        PRIMARY KEY (user_id, chunk_no)
+      )
+    ''');
+    await db.execute('''
+      CREATE TABLE proyek_offline_meta (
+        user_id TEXT NOT NULL PRIMARY KEY,
+        meta_json TEXT NOT NULL,
+        saved_at TEXT NOT NULL
+      )
+    ''');
   }
 
   Future<void> _createNotificationsTable(Database db) async {

@@ -36,6 +36,17 @@ class ApiEndpoints {
   static const String proyekOss = '/mobile/oss/proyek';
   static const String pengawasanOss = '/mobile/oss/pengawasan';
   static const String riwayatOss = '/mobile/oss/riwayat';
+  static String detailProyekOss(String idProyek) {
+    final encodedId = Uri.encodeComponent(idProyek);
+
+    return '/mobile/oss/proyek/$encodedId';
+  }
+
+  static String fotoPengawasanOss(dynamic idPengawasan) {
+    final encodedId = Uri.encodeComponent(idPengawasan.toString());
+
+    return '/mobile/oss/pengawasan/$encodedId/foto';
+  }
 
   // Bidang usaha
   static String jenisProdukBidang(String bidang) =>
@@ -53,14 +64,6 @@ class ApiEndpoints {
 
   // Peta Industri
   static const String petaIndustri = '/mobile/peta-industri';
-
-  // Data Proyek BKPM (IPAR Data)
-  static const String proyekData = '/mobile/proyek-data';
-  static const String proyekDataFilterOptions =
-      '/mobile/proyek-data/filter-options';
-
-  static const String proyekDataExport = '/mobile/proyek-data/export';
-
   static String petaIndustriGrafik(String provinsi) =>
       '$petaIndustri/${Uri.encodeComponent(provinsi)}/grafik';
 
@@ -71,28 +74,23 @@ class ApiEndpoints {
       '$petaIndustri/${Uri.encodeComponent(provinsi)}/detail';
 
   static String petaIndustriPerusahaanEkspor(String provinsi) =>
-    '${petaIndustriPerusahaan(provinsi)}/ekspor';
+      '${petaIndustriPerusahaan(provinsi)}/ekspor';
 
   static String petaIndustriEkspor(String provinsi) =>
       '/mobile/peta-industri/${Uri.encodeComponent(provinsi)}/ekspor';
+
+  // Data Proyek BKPM (IPAR Data)
+  static const String proyekData = '/mobile/proyek-data';
+  static const String proyekDataFilterOptions =
+      '/mobile/proyek-data/filter-options';
+  static const String proyekDataExport = '/mobile/proyek-data/export';
+  static const String proyekDataOffline = '/mobile/proyek-data/offline';
 
   // //Mobile - CRUD Kelola Akun
   static const String users = '/mobile/users';
   static String userDetail(String kodeUser) {
     final encodedKode = Uri.encodeComponent(kodeUser);
     return '/mobile/users/$encodedKode';
-  }
-
-  static String detailProyekOss(String idProyek) {
-    final encodedId = Uri.encodeComponent(idProyek);
-
-    return '/mobile/oss/proyek/$encodedId';
-  }
-
-  static String fotoPengawasanOss(dynamic idPengawasan) {
-    final encodedId = Uri.encodeComponent(idPengawasan.toString());
-
-    return '/mobile/oss/pengawasan/$encodedId/foto';
   }
 
   static Uri uri(String endpoint, {Map<String, dynamic>? queryParameters}) {

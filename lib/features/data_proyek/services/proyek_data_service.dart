@@ -8,6 +8,11 @@ import '../../../core/api/api_endpoints.dart';
 import '../models/proyek_data_filter.dart';
 import '../models/proyek_data_option.dart';
 import '../models/proyek_data_page_result.dart';
+import '../../../core/api/api_exception.dart';
+import '../../../core/cache/cache_status.dart';
+import '../offline/proyek_offline_engine.dart';
+import '../offline/proyek_offline_meta.dart';
+import '../offline/proyek_offline_store.dart';
 
 // TODO(offline): endpoint /mobile/proyek-data belum terdaftar di ApiCache,
 // jadi semua request langsung ke server. Saat fitur unduh offline dibuat
@@ -70,53 +75,81 @@ class ProyekDataService {
     return file;
   }
 
+    final ProyekOfflineStore _offline = ProyekOfflineStore.instance;
+
   Future<ProyekDataPageResult> fetch({
     required ProyekDataFilter filter,
     int page = 1,
   }) async {
-    final dynamic response = await _apiClient.get(
-      ApiEndpoints.proyekData,
-      queryParameters: filter.toQueryParameters(page),
-    );
+    try {
+      final dynamic response = await _apiClient.get(
+        ApiEndpoints.proyekData,
+        queryParameters: filter.toQueryParameters(page),
+      );
 
-    final Map<String, dynamic> body = response is Map<String, dynamic>
-        ? response
-        : <String, dynamic>{};
+      final Map<String, dynamic> body = response is Map<String, dynamic>
+          ? response
+          : <String, dynamic>{};
 
-    return ProyekDataPageResult.fromJson(
-      (body['data'] as Map<String, dynamic>?) ?? <String, dynamic>{},
-    );
+      final ProyekDataPageResult hasil = ProyekDataPageResult.fromJson(
+        (body['data'] as Map<String, dynamic>?) ?? <String, dynamic>{},
+      );
+      CacheStatus.instance.markLive();
+      return hasil;
+    } on ApiException catch (e) {
+      // Hanya gagal jaringan (tanpa status code) yang memakai data offline;
+      // error server (401/403/422/5xx) tetap ditampilkan apa adanya.
+      if (e.statusCode == null) {
+        final ProyekOfflineMeta? meta = await _offline.meta();
+        if (meta != null) {
+          final items = await _offline.muatSemua();
+          if (items.isNotEmpty) {
+            CacheStatus.instance.markFromCache(meta.savedAt);
+            return ProyekOfflineEngine(items).halaman(filter, page, meta);
+          }
+        }
+      }
+      rethrow;
+    }
   }
 
-  /// [provinsi] hanya dipakai untuk tipe kota. [q] untuk pencarian
-  /// (KBLI wajib minimal 2 karakter, kalau kurang server mengembalikan pesan).
   Future<ProyekDataOptionResult> fetchOptions({
     required ProyekDataOptionType tipe,
     String q = '',
     String? provinsi,
   }) async {
-    final dynamic response = await _apiClient.get(
-      ApiEndpoints.proyekDataFilterOptions,
-      queryParameters: <String, dynamic>{
-        'type': tipe.param,
-        'q': q.trim(),
-        'provinsi': provinsi,
-      },
-    );
+    try {
+      final dynamic response = await _apiClient.get(
+        ApiEndpoints.proyekDataFilterOptions,
+        queryParameters: <String, dynamic>{
+          'type': tipe.param,
+          'q': q.trim(),
+          'provinsi': provinsi,
+        },
+      );
 
-    final Map<String, dynamic> body = response is Map<String, dynamic>
-        ? response
-        : <String, dynamic>{};
+      final Map<String, dynamic> body = response is Map<String, dynamic>
+          ? response
+          : <String, dynamic>{};
 
-    final List<dynamic> mentah =
-        (body['data'] as List<dynamic>?) ?? const <dynamic>[];
+      final List<dynamic> mentah =
+          (body['data'] as List<dynamic>?) ?? const <dynamic>[];
 
-    return ProyekDataOptionResult(
-      options: mentah
-          .whereType<Map<String, dynamic>>()
-          .map(ProyekDataOption.fromJson)
-          .toList(),
-      message: body['message']?.toString(),
-    );
+      return ProyekDataOptionResult(
+        options: mentah
+            .whereType<Map<String, dynamic>>()
+            .map(ProyekDataOption.fromJson)
+            .toList(),
+        message: body['message']?.toString(),
+      );
+    } on ApiException catch (e) {
+      if (e.statusCode == null && await _offline.meta() != null) {
+        final items = await _offline.muatSemua();
+        if (items.isNotEmpty) {
+          return ProyekOfflineEngine(items).opsi(tipe, q, provinsi);
+        }
+      }
+      rethrow;
+    }
   }
 }

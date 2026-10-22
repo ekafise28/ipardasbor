@@ -33,7 +33,13 @@ class ProyekDataPageResult {
     required this.pagination,
     this.provinsiUser,
     this.aksesSemuaWilayah = false,
+    this.dariOffline = false, // baru
+    this.waktuOffline, // baru
   });
+
+  /// true kalau hasil ini berasal dari data yang diunduh manual.
+  final bool dariOffline;
+  final DateTime? waktuOffline;
 
   final List<ProyekDataItem> items;
   final ProyekDataPagination pagination;

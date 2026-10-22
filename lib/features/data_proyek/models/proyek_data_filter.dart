@@ -25,6 +25,20 @@ class ProyekDataFilter {
   final String search;
   final int perPage;
 
+  /// Ringkasan singkat untuk label data offline, mis. "Bali · 2 kab/kota".
+  String get ringkasan {
+    final List<String> b = <String>[
+      if (provinsi != null) provinsi!,
+      if (kota.isNotEmpty) '${kota.length} kab/kota',
+      if (kbli.isNotEmpty) '${kbli.length} KBLI',
+      if (statusModal.isNotEmpty) statusModal.join('/'),
+      if (risiko.isNotEmpty) 'Risiko ${risiko.join('/')}',
+      if (versiKbli != null) 'KBLI $versiKbli',
+      if (search.trim().isNotEmpty) 'Cari "${search.trim()}"',
+    ];
+    return b.isEmpty ? 'Semua data' : b.join(' · ');
+  }
+
   /// Jumlah kelompok filter di sheet yang aktif (untuk badge tombol filter).
   int get jumlahFilterSheet =>
       (provinsi != null ? 1 : 0) +

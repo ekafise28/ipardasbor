@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../data_proyek/offline/proyek_offline_meta.dart';
+import '../../data_proyek/offline/proyek_offline_store.dart';
 import '../../../app/app_theme.dart';
 import '../../../core/cache/api_cache.dart';
 import '../../../core/cache/cache_preferences.dart';
@@ -22,9 +24,17 @@ class _DataOfflinePageState extends State<DataOfflinePage> {
     _muatUkuran();
   }
 
+  ProyekOfflineMeta? _proyekMeta;
+
   Future<void> _muatUkuran() async {
     final int n = await ApiCache.instance.usageBytes();
-    if (mounted) setState(() => _terpakai = n);
+    final ProyekOfflineMeta? m = await ProyekOfflineStore.instance.meta();
+    if (mounted) {
+      setState(() {
+        _terpakai = n;
+        _proyekMeta = m;
+      });
+    }
   }
 
   String _format(int bytes) {
@@ -69,7 +79,20 @@ class _DataOfflinePageState extends State<DataOfflinePage> {
     if (!lanjut) return;
     await _pref.setEnabled(false);
     await ApiCache.instance.clearForCurrentUser();
+    await ProyekOfflineStore.instance.hapus();
     CacheStatus.instance.markLive();
+    await _muatUkuran();
+  }
+
+  Future<void> _hapusProyek() async {
+    final bool lanjut = await _konfirmasi(
+      'Hapus data Data Proyek offline?',
+      'Data Proyek yang diunduh untuk offline dihapus dari perangkat ini. '
+          'Anda bisa mengunduhnya lagi dari halaman Data Proyek.',
+      'Hapus',
+    );
+    if (!lanjut) return;
+    await ProyekOfflineStore.instance.hapus();
     await _muatUkuran();
   }
 
@@ -85,9 +108,9 @@ class _DataOfflinePageState extends State<DataOfflinePage> {
     CacheStatus.instance.markLive();
     await _muatUkuran();
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Data offline dihapus.')),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(const SnackBar(content: Text('Data offline dihapus.')));
   }
 
   Widget _kartu(List<Widget> anak) => Container(
@@ -159,7 +182,9 @@ class _DataOfflinePageState extends State<DataOfflinePage> {
                   labelText: 'Batas ukuran per akun',
                 ),
                 items: CachePreferences.pilihanMb
-                    .map((v) => DropdownMenuItem(value: v, child: Text('$v MB')))
+                    .map(
+                      (v) => DropdownMenuItem(value: v, child: Text('$v MB')),
+                    )
                     .toList(),
                 onChanged: _pref.enabled
                     ? (v) async {
@@ -176,36 +201,83 @@ class _DataOfflinePageState extends State<DataOfflinePage> {
                   labelText: 'Simpan data selama',
                 ),
                 items: CachePreferences.pilihanHari
-                    .map((v) => DropdownMenuItem(value: v, child: Text('$v hari')))
+                    .map(
+                      (v) => DropdownMenuItem(value: v, child: Text('$v hari')),
+                    )
                     .toList(),
-                onChanged: _pref.enabled ? (v) => v == null ? null : _pref.setMaxDays(v) : null,
+                onChanged: _pref.enabled
+                    ? (v) => v == null ? null : _pref.setMaxDays(v)
+                    : null,
               ),
             ]),
             const SizedBox(height: 12),
             _kartu([
               Text(
-                'Terpakai: ${_format(_terpakai)} dari ${_pref.maxMb} MB',
+                'Data Proyek offline',
                 style: TextStyle(
                   color: AppTheme.textColor(context),
+                  fontSize: 14.5,
                   fontWeight: FontWeight.w700,
                 ),
               ),
               const SizedBox(height: 4),
               Text(
-                'Data tetap tersimpan saat Anda keluar dari akun, dan hanya '
-                'bisa dibuka oleh akun ini.',
+                _proyekMeta == null
+                    ? 'Belum ada data yang diunduh. Unduh dari halaman Data '
+                          'Proyek (ikon awan di pojok atas).'
+                    : '${_proyekMeta!.baris} baris · '
+                          '${formatUkuranBytes(_proyekMeta!.ukuranBytes)} · '
+                          '${_proyekMeta!.ringkasanFilter}',
                 style: TextStyle(
                   color: AppTheme.textSecondary(context),
                   fontSize: 12,
                 ),
               ),
               const SizedBox(height: 12),
+              DropdownButtonFormField<int>(
+                initialValue: _pref.proyekOfflineMaxMb,
+                decoration: const InputDecoration(
+                  labelText: 'Batas ukuran Data Proyek offline',
+                  helperText: 'Berlaku untuk unduhan berikutnya.',
+                ),
+                items: CachePreferences.pilihanProyekMb
+                    .map(
+                      (v) => DropdownMenuItem(value: v, child: Text('$v MB')),
+                    )
+                    .toList(),
+                onChanged: _pref.enabled
+                    ? (v) => v == null ? null : _pref.setProyekOfflineMaxMb(v)
+                    : null,
+              ),
+              const SizedBox(height: 12),
               OutlinedButton.icon(
-                onPressed: _terpakai > 0 ? _hapus : null,
+                onPressed: _proyekMeta != null ? _hapusProyek : null,
                 icon: const Icon(Icons.delete_outline_rounded, size: 18),
-                label: const Text('Hapus data offline'),
+                label: const Text('Hapus Data Proyek offline'),
               ),
             ]),
+            Text(
+              'Terpakai: ${_format(_terpakai)} dari ${_pref.maxMb} MB',
+              style: TextStyle(
+                color: AppTheme.textColor(context),
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              'Data tetap tersimpan saat Anda keluar dari akun, dan hanya '
+              'bisa dibuka oleh akun ini.',
+              style: TextStyle(
+                color: AppTheme.textSecondary(context),
+                fontSize: 12,
+              ),
+            ),
+            const SizedBox(height: 12),
+            OutlinedButton.icon(
+              onPressed: _terpakai > 0 ? _hapus : null,
+              icon: const Icon(Icons.delete_outline_rounded, size: 18),
+              label: const Text('Hapus data offline'),
+            ),
           ],
         ),
       ),
