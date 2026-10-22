@@ -15,6 +15,9 @@ import 'models/industri_option.dart';
 import 'services/industri_pariwisata_service.dart';
 import 'widgets/industri_filter_panel.dart';
 import 'widgets/industri_kpi_cards.dart';
+import 'models/industri_ranking.dart';
+import 'widgets/industri_charts.dart';
+import 'widgets/industri_ranking_tables.dart';
 
 class IndustriPariwisataPage extends StatefulWidget {
   const IndustriPariwisataPage({super.key});
@@ -42,6 +45,9 @@ class _IndustriPariwisataPageState extends State<IndustriPariwisataPage> {
   // diabaikan supaya tidak menimpa hasil yang baru.
   int _requestId = 0;
   int _kotaRequestId = 0;
+
+  final Map<IndustriRankingSection, IndustriRankingState> _ranking = {};
+  int _rankingRequestId = 0;
 
   @override
   void initState() {
@@ -92,6 +98,7 @@ class _IndustriPariwisataPageState extends State<IndustriPariwisataPage> {
       );
       if (!mounted || requestId != _requestId) return; // jawaban usang
       setState(() => _data = result);
+      _loadRanking(); // 4 tabel peringkat dimuat setelah data utama berhasil
     } catch (e) {
       debugPrint('Industri - dashboard gagal: $e');
       if (!mounted || requestId != _requestId) return;
@@ -147,6 +154,44 @@ class _IndustriPariwisataPageState extends State<IndustriPariwisataPage> {
         pesanErrorRamah(e, fallback: 'Daftar kabupaten/kota gagal dimuat.'),
       );
     }
+  }
+
+  Future<void> _loadRanking() async {
+    final int id = ++_rankingRequestId;
+    setState(() {
+      for (final IndustriRankingSection s in IndustriRankingSection.values) {
+        _ranking[s] = const IndustriRankingState();
+      }
+    });
+    await Future.wait(
+      IndustriRankingSection.values.map((s) => _loadRankingOne(s, id)),
+    );
+  }
+
+  Future<void> _loadRankingOne(IndustriRankingSection s, int id) async {
+    try {
+      final rows = await _service.fetchRanking(s, _filter);
+      if (!mounted || id != _rankingRequestId) return;
+      setState(() {
+        _ranking[s] = IndustriRankingState(
+          status: IndustriRankingStatus.success,
+          rows: rows,
+        );
+      });
+    } catch (e) {
+      debugPrint('Industri - ranking ${s.key} gagal: $e');
+      if (!mounted || id != _rankingRequestId) return;
+      setState(() {
+        _ranking[s] = const IndustriRankingState(
+          status: IndustriRankingStatus.error,
+        );
+      });
+    }
+  }
+
+  void _retryRanking(IndustriRankingSection s) {
+    setState(() => _ranking[s] = const IndustriRankingState());
+    _loadRankingOne(s, _rankingRequestId);
   }
 
   void _reset() {
@@ -230,7 +275,15 @@ class _IndustriPariwisataPageState extends State<IndustriPariwisataPage> {
                       const IndustriKpiSkeleton()
                     else
                       IndustriKpiCards(kpi: _data?.kpi),
-                    // TODO tahap berikutnya: grafik dan tabel diletakkan di sini.
+                    // grafik dan tabel
+                    const SizedBox(height: 22),
+                    IndustriChartSection(data: _data, loading: _loading),
+                    const SizedBox(height: 22),
+                    IndustriRankingSectionView(
+                      states: _ranking,
+                      onRetry: _retryRanking,
+                    ),
+                    const SizedBox(height: 24),
                   ],
                 ),
               ),
