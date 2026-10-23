@@ -144,6 +144,23 @@ class AppTheme {
     }
   }
 
+  /// Warna tingkat risiko, sama dengan web: Rendah hijau, Menengah Rendah
+  /// oranye, Menengah Tinggi ungu, Tinggi merah. Null/tidak dikenal = abu-biru.
+  static Color warnaRisiko(String? risiko) {
+    switch (risiko?.trim().toLowerCase()) {
+      case 'rendah':
+        return const Color(0xFF4CAF50);
+      case 'menengah rendah':
+        return const Color(0xFFFF9800);
+      case 'menengah tinggi':
+        return const Color(0xFF9C27B0);
+      case 'tinggi':
+        return const Color(0xFFF44336);
+      default:
+        return const Color(0xFF90A4AE);
+    }
+  }
+
   // ---- Kategori sumber data (dashboard, grafik, peta) ----
   // Satu kategori = satu warna di semua tempat. Mengikuti warna menu di
   // Home: OSS biru, Non-OSS teal, OTA oranye. "Total" sengaja netral
@@ -247,7 +264,7 @@ class AppTheme {
     );
   }
 
-    /// Tema untuk halaman form (OSS, Non-OSS, validasi): warna utama dan gaya
+  /// Tema untuk halaman form (OSS, Non-OSS, validasi): warna utama dan gaya
   /// kolom isian tanpa latar terisi. Dipakai lewat
   /// `Theme(data: AppTheme.formTheme(context), child: ...)`.
   static ThemeData formTheme(BuildContext context) {

@@ -7,23 +7,6 @@ import '../models/proyek_data_item.dart';
 
 String rupiahProyek(int? v) => v == null ? '-' : 'Rp ${formatNumber(v)}';
 
-/// Warna per tingkat risiko. (Bisa diganti dengan risiko_warna.dart milik
-/// Peta Industri kalau ingin warnanya identik.)
-Color warnaRisikoProyek(String? risiko) {
-  switch (risiko?.toLowerCase()) {
-    case 'rendah':
-      return const Color(0xFF2E7D32);
-    case 'menengah rendah':
-      return const Color(0xFF9A8300);
-    case 'menengah tinggi':
-      return const Color(0xFFEF6C00);
-    case 'tinggi':
-      return AppTheme.danger;
-    default:
-      return AppTheme.textMuted;
-  }
-}
-
 class DataProyekCard extends StatelessWidget {
   const DataProyekCard({super.key, required this.item, required this.onTap});
 
@@ -32,7 +15,7 @@ class DataProyekCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final Color warna = warnaRisikoProyek(item.risiko);
+    final Color warna = AppTheme.warnaRisiko(item.risiko);
     final String tenagaKerja = item.jumlahTenagaKerja == null
         ? '-'
         : formatNumber(item.jumlahTenagaKerja!);

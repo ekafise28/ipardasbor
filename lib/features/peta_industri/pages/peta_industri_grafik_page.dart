@@ -5,11 +5,14 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:ipardasbor/app/app_theme.dart';
 import 'package:ipardasbor/shared/screenshot/screenshot_service.dart';
+import 'package:ipardasbor/shared/widgets/list_filters.dart' show StatusFilterOption, StatusFilterBar;
+import 'package:ipardasbor/shared/widgets/page_states.dart'
+    show EmptyListState, ConnectionErrorState;
+import 'package:ipardasbor/shared/widgets/skeleton.dart' show GrafikSkeleton;
 
 import '../../../core/api/api_exception.dart';
 import '../models/peta_grafik_model.dart';
 import '../services/peta_industri_service.dart';
-import '../widgets/risiko_warna.dart';
 
 /// Distribusi risiko proyek per KBLI untuk satu provinsi
 /// (padanan tombol "Grafik" di web).
@@ -103,14 +106,11 @@ class _PetaIndustriGrafikPageState extends State<PetaIndustriGrafikPage> {
   }
 
   Widget _buildBody() {
-    if (_loading) {
-      return const Center(child: CircularProgressIndicator());
-    }
+    if (_loading) return const GrafikSkeleton();
 
     if (_error != null) {
-      return _PesanState(
-        icon: Icons.cloud_off_rounded,
-        iconColor: AppTheme.danger,
+      return ConnectionErrorState(
+        title: 'Grafik gagal dimuat',
         message: _error!,
         onRetry: _muat,
       );
@@ -119,9 +119,12 @@ class _PetaIndustriGrafikPageState extends State<PetaIndustriGrafikPage> {
     final PetaGrafikData data = _data!;
 
     if (data.kategori.isEmpty) {
-      return const _PesanState(
-        icon: Icons.pie_chart_outline_rounded,
-        message: 'Belum ada data grafik untuk provinsi ini.',
+      return const SingleChildScrollView(
+        child: EmptyListState(
+          icon: Icons.pie_chart_outline_rounded,
+          title: 'Belum ada data grafik',
+          message: 'Belum ada data grafik untuk provinsi ini.',
+        ),
       );
     }
 
@@ -197,28 +200,22 @@ class _PetaIndustriGrafikPageState extends State<PetaIndustriGrafikPage> {
   }
 
   Widget _buildFilterKategori(PetaGrafikData data) {
-    return SizedBox(
-      height: 52,
-      child: ListView(
-        scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        children: [
-          Padding(
-            padding: const EdgeInsets.only(right: 8),
-            child: ChoiceChip(
-              label: const Text('Semua'),
-              selected: _kategoriTerpilih == null,
-              onSelected: (_) => setState(() => _kategoriTerpilih = null),
-            ),
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 6),
+      child: StatusFilterBar(
+        selected: _kategoriTerpilih,
+        onChanged: (String? v) => setState(() => _kategoriTerpilih = v),
+        options: <StatusFilterOption>[
+          const StatusFilterOption(
+            value: null,
+            label: 'Semua',
+            color: AppTheme.primaryColor,
           ),
           for (final KategoriGrafik k in data.kategori)
-            Padding(
-              padding: const EdgeInsets.only(right: 8),
-              child: ChoiceChip(
-                label: Text(k.nama),
-                selected: _kategoriTerpilih == k.nama,
-                onSelected: (_) => setState(() => _kategoriTerpilih = k.nama),
-              ),
+            StatusFilterOption(
+              value: k.nama,
+              label: k.nama,
+              color: AppTheme.primaryColor,
             ),
         ],
       ),
@@ -306,7 +303,7 @@ class _KbliCardState extends State<_KbliCard> {
         .map(
           (r) => PieChartSectionData(
             value: r.jumlah.toDouble(),
-            color: warnaRisiko(r.label),
+            color: AppTheme.warnaRisiko(r.label),
             radius: 20,
             showTitle: false,
           ),
@@ -451,7 +448,7 @@ class _LegendaRow extends StatelessWidget {
             width: 10,
             height: 10,
             decoration: BoxDecoration(
-              color: warnaRisiko(risiko.label),
+              color: AppTheme.warnaRisiko(risiko.label),
               shape: BoxShape.circle,
             ),
           ),
@@ -485,49 +482,6 @@ class _LegendaRow extends StatelessWidget {
             ),
           ),
         ],
-      ),
-    );
-  }
-}
-
-class _PesanState extends StatelessWidget {
-  const _PesanState({
-    required this.icon,
-    required this.message,
-    this.iconColor,
-    this.onRetry,
-  });
-
-  final IconData icon;
-  final String message;
-  final Color? iconColor;
-  final VoidCallback? onRetry;
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(32),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(icon, size: 40, color: iconColor ?? AppTheme.textMuted),
-            const SizedBox(height: 12),
-            Text(
-              message,
-              textAlign: TextAlign.center,
-              style: TextStyle(color: AppTheme.textSecondary(context)),
-            ),
-            if (onRetry != null) ...[
-              const SizedBox(height: 16),
-              FilledButton.icon(
-                onPressed: onRetry,
-                icon: const Icon(Icons.refresh_rounded),
-                label: const Text('Coba lagi'),
-              ),
-            ],
-          ],
-        ),
       ),
     );
   }

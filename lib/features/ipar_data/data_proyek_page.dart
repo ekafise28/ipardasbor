@@ -12,6 +12,7 @@ import 'package:ipardasbor/shared/widgets/app_banner.dart';
 import 'package:ipardasbor/shared/widgets/list_filters.dart';
 import 'package:ipardasbor/shared/widgets/list_parts.dart';
 import 'package:ipardasbor/shared/widgets/page_states.dart';
+import 'package:ipardasbor/shared/widgets/skeleton.dart' show DataProyekSkeleton;
 
 import '../../app/app_theme.dart';
 import 'models/proyek_data_filter.dart';
@@ -353,7 +354,7 @@ class _DataProyekPageState extends State<DataProyekPage>
 
   Widget _buildBody(BuildContext context) {
     if (_ctrl.loadingFirst) {
-      return const LoadingState(message: 'Memuat data proyek...');
+      return const DataProyekSkeleton();
     }
 
     if (_ctrl.error != null) {

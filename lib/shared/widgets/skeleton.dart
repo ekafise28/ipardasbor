@@ -223,6 +223,222 @@ class SkeletonList extends StatelessWidget {
 // skeleton-nya di sini.
 // ======================================================================
 
+/// Meniru _NotificationTile (features/notifications/notification_page.dart).
+class NotificationSkeleton extends StatelessWidget {
+  const NotificationSkeleton({super.key, this.itemCount = 6});
+
+  final int itemCount;
+
+  @override
+  Widget build(BuildContext context) {
+    return SkeletonList(
+      semanticsLabel: 'Memuat notifikasi',
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+      itemCount: itemCount,
+      itemBuilder: (BuildContext context, int index) =>
+          const _NotificationTileSkeleton(),
+    );
+  }
+}
+
+class _NotificationTileSkeleton extends StatelessWidget {
+  const _NotificationTileSkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    return const SkeletonCard(
+      margin: EdgeInsets.only(bottom: 8),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          // Ikon
+          SkeletonBox(width: 22, height: 22, radius: 11),
+          SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                // Judul, isi (2 baris), tanggal
+                SkeletonBar(widthFactor: 0.6, height: 14),
+                SizedBox(height: 6),
+                SkeletonBar(widthFactor: 0.95, height: 12),
+                SizedBox(height: 4),
+                SkeletonBar(widthFactor: 0.7, height: 12),
+                SizedBox(height: 8),
+                SkeletonBox(width: 90, height: 10, radius: 6),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Meniru SyncReadyCard (features/sinkronisasi/widgets/sync_ready_card.dart).
+/// Berupa Column, bukan ListView, karena dipakai di dalam
+/// SingleChildScrollView milik SyncPage.
+class SyncReadySkeleton extends StatelessWidget {
+  const SyncReadySkeleton({super.key, this.itemCount = 2});
+
+  final int itemCount;
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      label: 'Memuat data tertunda',
+      child: ExcludeSemantics(
+        child: Column(
+          children: <Widget>[
+            for (int i = 0; i < itemCount; i++) const _SyncReadyCardSkeleton(),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _SyncReadyCardSkeleton extends StatelessWidget {
+  const _SyncReadyCardSkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    return const SkeletonCard(
+      radius: 20,
+      margin: EdgeInsets.only(bottom: 12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          // Ikon + nama usaha + chip status
+          Row(
+            children: <Widget>[
+              SkeletonBox(width: 40, height: 40, radius: 12),
+              SizedBox(width: 10),
+              Expanded(child: SkeletonBar(widthFactor: 0.7, height: 16)),
+              SizedBox(width: 8),
+              SkeletonBox(width: 80, height: 24, radius: 20),
+            ],
+          ),
+          SizedBox(height: 12),
+          // Panel info (jenis, produk, tanggal, alamat)
+          SkeletonBox(height: 112, radius: 14),
+          SizedBox(height: 10),
+          // Foto + GPS
+          Row(
+            children: <Widget>[
+              SkeletonBox(width: 64, height: 14, radius: 6),
+              SizedBox(width: 14),
+              SkeletonBox(width: 64, height: 14, radius: 6),
+            ],
+          ),
+          SizedBox(height: 12),
+          // Tombol Lihat Detail + Sync
+          Row(
+            children: <Widget>[
+              Expanded(child: SkeletonBox(height: 44, radius: 12)),
+              SizedBox(width: 10),
+              Expanded(child: SkeletonBox(height: 44, radius: 12)),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Meniru PetaIndustriGrafikPage (features/peta_industri/pages/
+/// peta_industri_grafik_page.dart): bar ringkasan, chip kategori, header
+/// kategori, lalu kartu KBLI dengan pie chart dan legenda.
+class GrafikSkeleton extends StatelessWidget {
+  const GrafikSkeleton({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      label: 'Memuat grafik',
+      child: ExcludeSemantics(
+        child: SingleChildScrollView(
+          physics: const NeverScrollableScrollPhysics(),
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+          child: const Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              SkeletonShimmer(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
+                    // Bar ringkasan
+                    SkeletonBox(height: 46, radius: 12),
+                    SizedBox(height: 12),
+                    // Chip kategori
+                    Row(
+                      children: <Widget>[
+                        SkeletonBox(width: 64, height: 32, radius: 20),
+                        SizedBox(width: 8),
+                        SkeletonBox(width: 110, height: 32, radius: 20),
+                        SizedBox(width: 8),
+                        SkeletonBox(width: 90, height: 32, radius: 20),
+                      ],
+                    ),
+                    SizedBox(height: 18),
+                    // Header kategori
+                    SkeletonBar(widthFactor: 0.5, height: 14),
+                    SizedBox(height: 14),
+                  ],
+                ),
+              ),
+              _GrafikKbliCardSkeleton(),
+              _GrafikKbliCardSkeleton(),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _GrafikKbliCardSkeleton extends StatelessWidget {
+  const _GrafikKbliCardSkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    return const SkeletonCard(
+      margin: EdgeInsets.only(bottom: 12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          // Nama provinsi + judul KBLI
+          SkeletonBar(widthFactor: 0.3, height: 10),
+          SizedBox(height: 6),
+          SkeletonBar(widthFactor: 0.8, height: 14),
+          SizedBox(height: 12),
+          Row(
+            children: <Widget>[
+              // Pie chart
+              SkeletonBox(width: 120, height: 120, radius: 60),
+              SizedBox(width: 16),
+              // Legenda
+              Expanded(
+                child: Column(
+                  children: <Widget>[
+                    SkeletonBar(widthFactor: 1, height: 12),
+                    SizedBox(height: 10),
+                    SkeletonBar(widthFactor: 1, height: 12),
+                    SizedBox(height: 10),
+                    SkeletonBar(widthFactor: 1, height: 12),
+                    SizedBox(height: 10),
+                    SkeletonBar(widthFactor: 1, height: 12),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 /// Meniru OssProyekCard (features/oss/widgets/oss_proyek_card.dart).
 class OssProyekSkeleton extends StatelessWidget {
   const OssProyekSkeleton({super.key, this.itemCount = 4});
@@ -769,6 +985,203 @@ class KelolaAkunSkeleton extends StatelessWidget {
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+/// Meniru _RekapCard (features/peta_industri/pages/peta_industri_detail_page.dart).
+class RekapSkeleton extends StatelessWidget {
+  const RekapSkeleton({super.key, this.itemCount = 6});
+
+  final int itemCount;
+
+  @override
+  Widget build(BuildContext context) {
+    return SkeletonList(
+      semanticsLabel: 'Memuat rekap industri',
+      padding: const EdgeInsets.fromLTRB(16, 4, 16, 24),
+      itemCount: itemCount,
+      itemBuilder: (BuildContext context, int index) =>
+          const _RekapCardSkeleton(),
+    );
+  }
+}
+
+class _RekapCardSkeleton extends StatelessWidget {
+  const _RekapCardSkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    return const SkeletonCard(
+      margin: EdgeInsets.only(bottom: 10),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                // Jenis usaha (huruf kapital kecil)
+                SkeletonBar(widthFactor: 0.35, height: 10),
+                SizedBox(height: 8),
+                // Nama KBLI (2 baris)
+                SkeletonBar(widthFactor: 0.9, height: 14),
+                SizedBox(height: 6),
+                SkeletonBar(widthFactor: 0.6, height: 14),
+                SizedBox(height: 10),
+                // Chip KBLI + risiko
+                Row(
+                  children: <Widget>[
+                    SkeletonBox(width: 80, height: 20, radius: 20),
+                    SizedBox(width: 6),
+                    SkeletonBox(width: 96, height: 20, radius: 20),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          SizedBox(width: 12),
+          // Jumlah proyek
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: <Widget>[
+              SkeletonBox(width: 36, height: 20, radius: 6),
+              SizedBox(height: 4),
+              SkeletonBox(width: 30, height: 10, radius: 6),
+            ],
+          ),
+          SizedBox(width: 4),
+          // Chevron
+          SkeletonBox(width: 20, height: 20, radius: 10),
+        ],
+      ),
+    );
+  }
+}
+
+/// Meniru _PerusahaanCard
+/// (features/peta_industri/pages/peta_industri_perusahaan_page.dart).
+class PerusahaanSkeleton extends StatelessWidget {
+  const PerusahaanSkeleton({super.key, this.itemCount = 6});
+
+  final int itemCount;
+
+  @override
+  Widget build(BuildContext context) {
+    return SkeletonList(
+      semanticsLabel: 'Memuat daftar perusahaan',
+      padding: const EdgeInsets.fromLTRB(16, 4, 16, 24),
+      itemCount: itemCount,
+      itemBuilder: (BuildContext context, int index) =>
+          const _PerusahaanCardSkeleton(),
+    );
+  }
+}
+
+class _PerusahaanCardSkeleton extends StatelessWidget {
+  const _PerusahaanCardSkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    return const SkeletonCard(
+      margin: EdgeInsets.only(bottom: 10),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          // Nama perusahaan
+          SkeletonBar(widthFactor: 0.75, height: 14),
+          SizedBox(height: 8),
+          // Alamat
+          Row(
+            children: <Widget>[
+              SkeletonBox(width: 15, height: 15, radius: 4),
+              SizedBox(width: 6),
+              Expanded(child: SkeletonBar(widthFactor: 0.9, height: 12)),
+            ],
+          ),
+          SizedBox(height: 12),
+          // Chip NIB, investasi, tenaga kerja
+          Row(
+            children: <Widget>[
+              SkeletonBox(width: 70, height: 22, radius: 20),
+              SizedBox(width: 6),
+              SkeletonBox(width: 100, height: 22, radius: 20),
+              SizedBox(width: 6),
+              SkeletonBox(width: 90, height: 22, radius: 20),
+            ],
+          ),
+          SizedBox(height: 10),
+          // Aksi kecil (Salin NIB, Telepon, Peta)
+          Row(
+            children: <Widget>[
+              SkeletonBox(width: 80, height: 24, radius: 12),
+              SizedBox(width: 8),
+              SkeletonBox(width: 70, height: 24, radius: 12),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Meniru DataProyekCard (features/ipar_data/widgets/data_proyek_card.dart).
+/// Strip warna risiko di kiri sengaja tidak ditiru: SkeletonCard membungkus
+/// isinya dengan shimmer, dan strip warna tidak perlu ada saat memuat.
+class DataProyekSkeleton extends StatelessWidget {
+  const DataProyekSkeleton({super.key, this.itemCount = 5});
+
+  final int itemCount;
+
+  @override
+  Widget build(BuildContext context) {
+    return SkeletonList(
+      semanticsLabel: 'Memuat data proyek',
+      itemCount: itemCount,
+      itemBuilder: (BuildContext context, int index) =>
+          const _DataProyekCardSkeleton(),
+    );
+  }
+}
+
+class _DataProyekCardSkeleton extends StatelessWidget {
+  const _DataProyekCardSkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    return const SkeletonCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          // Nama perusahaan + chip risiko
+          Row(
+            children: <Widget>[
+              Expanded(child: SkeletonBox(height: 16, radius: 6)),
+              SizedBox(width: 12),
+              SkeletonBox(width: 84, height: 24, radius: 20),
+            ],
+          ),
+          SizedBox(height: 10),
+          // Blok NIB / KBLI
+          SkeletonBox(height: 72, radius: 10),
+          SizedBox(height: 12),
+          // Judul KBLI, lokasi, investasi
+          SkeletonBar(widthFactor: 0.9, height: 12),
+          SizedBox(height: 8),
+          SkeletonBar(widthFactor: 0.7, height: 12),
+          SizedBox(height: 8),
+          SkeletonBar(widthFactor: 0.5, height: 12),
+          SizedBox(height: 12),
+          // Chip status modal, skala usaha, versi KBLI
+          Row(
+            children: <Widget>[
+              SkeletonBox(width: 90, height: 22, radius: 20),
+              SizedBox(width: 6),
+              SkeletonBox(width: 70, height: 22, radius: 20),
+            ],
+          ),
+        ],
       ),
     );
   }

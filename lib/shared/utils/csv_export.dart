@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:intl/intl.dart' show DateFormat;
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 
@@ -12,15 +13,28 @@ String barisCsv(List<String> kolom) {
   final RegExp perluKutip = RegExp(r'[;,"\s]');
   final RegExp awalRumus = RegExp(r'^[=+\-@]');
 
-  final String baris = kolom.map((String v) {
-    String s = v == '-' ? '' : v;
-    if (awalRumus.hasMatch(s)) s = "'$s";
-    if (perluKutip.hasMatch(s)) s = '"${s.replaceAll('"', '""')}"';
-    return s;
-  }).join(';');
+  final String baris = kolom
+      .map((String v) {
+        String s = v == '-' ? '' : v;
+        if (awalRumus.hasMatch(s)) s = "'$s";
+        if (perluKutip.hasMatch(s)) s = '"${s.replaceAll('"', '""')}"';
+        return s;
+      })
+      .join(';');
 
   return '$baris\r\n';
 }
+
+/// Stempel waktu untuk nama file, mis. "20261023-101530".
+String stempelFile([DateTime? waktu]) =>
+    DateFormat('yyyyMMdd-HHmmss').format(waktu ?? DateTime.now());
+
+/// Mengubah teks (mis. nama provinsi) menjadi bagian nama file: huruf kecil,
+/// angka, dan tanda hubung. "DKI Jakarta" menjadi "dki-jakarta".
+String slugFile(String teks) => teks
+    .toLowerCase()
+    .replaceAll(RegExp(r'[^a-z0-9]+'), '-')
+    .replaceAll(RegExp(r'^-+|-+$'), '');
 
 /// Menulis CSV (BOM + ";" seperti ekspor di web) ke folder sementara lalu
 /// membuka lembar bagikan.

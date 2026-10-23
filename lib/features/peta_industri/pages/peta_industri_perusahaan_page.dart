@@ -3,7 +3,6 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import 'package:ipardasbor/app/app_theme.dart';
 import 'package:ipardasbor/core/api/api_endpoints.dart';
@@ -12,11 +11,18 @@ import 'package:ipardasbor/shared/pagination/back_to_top_mixin.dart';
 import 'package:ipardasbor/shared/pagination/paginated_list_controller.dart';
 import 'package:ipardasbor/shared/pagination/pagination_bar.dart';
 import 'package:ipardasbor/shared/utils/csv_export.dart';
-import 'package:url_launcher/url_launcher.dart';
+import 'package:ipardasbor/shared/utils/ui_actions.dart'
+    show tampilkanPesan, bukaTautan, salinKeClipboard;
+import 'package:ipardasbor/shared/widgets/list_filters.dart'
+    show ListSearchField;
+import 'package:ipardasbor/shared/widgets/list_parts.dart' show TintChip;
+import 'package:ipardasbor/shared/widgets/page_states.dart'
+    show ConnectionErrorState, EmptyListState;
+import 'package:ipardasbor/shared/widgets/skeleton.dart'
+    show PerusahaanSkeleton;
 
 import '../models/peta_detail_model.dart';
 import '../services/peta_industri_service.dart';
-import '../widgets/risiko_warna.dart';
 
 /// Daftar perusahaan di balik satu baris rekap (padanan halaman
 /// /home/daftarUsaha di web). Paginasi dan pencarian dilakukan di server.
@@ -65,10 +71,7 @@ class _PetaIndustriPerusahaanPageState extends State<PetaIndustriPerusahaanPage>
       idOf: (PetaPerusahaanItem e) => e.id,
       perPage: () => _perPage,
       onSilentError: (String pesan) {
-        if (!mounted) return;
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text(pesan)));
+        if (mounted) tampilkanPesan(context, pesan);
       },
     );
     _list.reload();
@@ -128,7 +131,7 @@ class _PetaIndustriPerusahaanPageState extends State<PetaIndustriPerusahaanPage>
       }
 
       if (semua.isEmpty) {
-        _pesan(context, 'Tidak ada data untuk diekspor.');
+        tampilkanPesan(context, 'Tidak ada data untuk diekspor.');
         return;
       }
 
@@ -139,12 +142,10 @@ class _PetaIndustriPerusahaanPageState extends State<PetaIndustriPerusahaanPage>
 
       final String judul =
           'Daftar_Usaha_${widget.provinsi.trim().replaceAll(RegExp(r'\s+'), '_')}';
-      final String stempel = DateFormat(
-        'yyyyMMdd-HHmmss',
-      ).format(DateTime.now());
 
       await bagikanCsv(
-        namaFile: '$judul-${widget.item.kbli}-$stempel.csv',
+        namaFile:
+            'daftar-usaha-${slugFile(widget.provinsi)}-${widget.item.kbli}-${stempelFile()}.csv',
         subjek: 'Daftar Usaha ${widget.provinsi} (KBLI ${widget.item.kbli})',
         baris: <List<String>>[
           <String>[judul, '', '', '', ''],
@@ -167,7 +168,7 @@ class _PetaIndustriPerusahaanPageState extends State<PetaIndustriPerusahaanPage>
       );
 
       if (mounted && terpotong) {
-        _pesan(
+        tampilkanPesan(
           context,
           'Data baris melebihi batasan yaitu ${_angka.format(_maksBaris)}. '
           'Untuk mengunduh lebih dari batasan, silakan unduh dari web.',
@@ -175,7 +176,7 @@ class _PetaIndustriPerusahaanPageState extends State<PetaIndustriPerusahaanPage>
       }
     } catch (e) {
       if (!mounted) return;
-      _pesan(
+      tampilkanPesan(
         context,
         pesanErrorRamah(e, fallback: 'Ekspor gagal. Silakan coba lagi.'),
       );
@@ -216,7 +217,7 @@ class _PetaIndustriPerusahaanPageState extends State<PetaIndustriPerusahaanPage>
           TextButton(
             onPressed: () {
               Navigator.of(ctx).pop(false);
-              _buka(context, _urlWeb());
+              bukaTautan(context, _urlWeb().toString());
             },
             child: const Text('Buka web'),
           ),
@@ -248,24 +249,26 @@ class _PetaIndustriPerusahaanPageState extends State<PetaIndustriPerusahaanPage>
     );
   }
 
-  void _onSearchChanged(String value) {
-    setState(() {}); // memperbarui tombol hapus
+  void _terapkanPencarian(String value) {
     _debounce?.cancel();
-    _debounce = Timer(const Duration(milliseconds: 500), () {
-      final String kata = value.trim();
-      if (kata == _search) return;
-      _search = kata;
-      jumpKeAtas();
-      _list.reload();
-    });
+    final String kata = value.trim();
+    if (kata == _search) return;
+    _search = kata;
+    jumpKeAtas();
+    _list.reload();
+  }
+
+  void _onSearchChanged(String value) {
+    _debounce?.cancel();
+    _debounce = Timer(
+      const Duration(milliseconds: 500),
+      () => _terapkanPencarian(value),
+    );
   }
 
   void _hapusPencarian() {
     _searchCtrl.clear();
-    _debounce?.cancel();
-    setState(() => _search = '');
-    jumpKeAtas();
-    _list.reload();
+    _terapkanPencarian('');
   }
 
   Future<void> _gantiHalaman(int page) async {
@@ -370,21 +373,12 @@ class _PetaIndustriPerusahaanPageState extends State<PetaIndustriPerusahaanPage>
   Widget _buildSearchBar() {
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 6),
-      child: TextField(
+      child: ListSearchField(
         controller: _searchCtrl,
+        hintText: 'Cari nama, NIB, atau alamat...',
         onChanged: _onSearchChanged,
-        textInputAction: TextInputAction.search,
-        decoration: InputDecoration(
-          hintText: 'Cari nama, NIB, atau alamat...',
-          prefixIcon: const Icon(Icons.search_rounded),
-          suffixIcon: _searchCtrl.text.isEmpty
-              ? null
-              : IconButton(
-                  tooltip: 'Hapus',
-                  icon: const Icon(Icons.close_rounded),
-                  onPressed: _hapusPencarian,
-                ),
-        ),
+        onSubmitted: _terapkanPencarian,
+        onClear: _hapusPencarian,
       ),
     );
   }
@@ -409,30 +403,33 @@ class _PetaIndustriPerusahaanPageState extends State<PetaIndustriPerusahaanPage>
             ),
           ),
           const SizedBox(width: 8),
-          _Chip(label: item.risiko, color: warnaRisiko(item.risiko)),
+          TintChip(
+            label: item.risiko,
+            color: AppTheme.warnaRisiko(item.risiko),
+          ),
         ],
       ),
     );
   }
 
   Widget _buildContent() {
-    if (_list.loadingFirst) {
-      return const Center(child: CircularProgressIndicator());
-    }
+    if (_list.loadingFirst) return const PerusahaanSkeleton();
 
     if (_list.error != null) {
-      return _buildPesan(
-        icon: Icons.cloud_off_rounded,
-        iconColor: AppTheme.danger,
-        pesan: _list.error!,
+      return ConnectionErrorState(
+        title: 'Daftar perusahaan gagal dimuat',
+        message: _list.error!,
         onRetry: _list.reload,
       );
     }
 
     if (_list.items.isEmpty) {
-      return _buildPesan(
-        icon: Icons.search_off_rounded,
-        pesan: 'Perusahaan tidak ditemukan.',
+      return const SingleChildScrollView(
+        child: EmptyListState(
+          icon: Icons.search_off_rounded,
+          title: 'Perusahaan tidak ditemukan',
+          message: 'Coba nama, NIB, atau alamat yang lain.',
+        ),
       );
     }
 
@@ -444,39 +441,6 @@ class _PetaIndustriPerusahaanPageState extends State<PetaIndustriPerusahaanPage>
       itemCount: items.length,
       itemBuilder: (context, i) =>
           _PerusahaanCard(item: items[i], angka: _angka, rupiah: _rupiah),
-    );
-  }
-
-  Widget _buildPesan({
-    required IconData icon,
-    required String pesan,
-    Color? iconColor,
-    Future<void> Function()? onRetry,
-  }) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(32),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(icon, size: 40, color: iconColor ?? AppTheme.textMuted),
-            const SizedBox(height: 12),
-            Text(
-              pesan,
-              textAlign: TextAlign.center,
-              style: TextStyle(color: AppTheme.textSecondary(context)),
-            ),
-            if (onRetry != null) ...[
-              const SizedBox(height: 16),
-              FilledButton.icon(
-                onPressed: onRetry,
-                icon: const Icon(Icons.refresh_rounded),
-                label: const Text('Coba lagi'),
-              ),
-            ],
-          ],
-        ),
-      ),
     );
   }
 }
@@ -541,12 +505,12 @@ class _PerusahaanCard extends StatelessWidget {
             spacing: 6,
             runSpacing: 6,
             children: [
-              _Chip(label: 'NIB ${item.nib}', color: AppTheme.primaryColor),
-              _Chip(
+              TintChip(label: 'NIB ${item.nib}', color: AppTheme.primaryColor),
+              TintChip(
                 label: rupiah.format(item.investasi),
                 color: AppTheme.success,
               ),
-              _Chip(
+              TintChip(
                 label: '${angka.format(item.tenagaKerja)} tenaga kerja',
                 color: AppTheme.warning,
               ),
@@ -557,32 +521,32 @@ class _PerusahaanCard extends StatelessWidget {
             Wrap(
               spacing: 4,
               children: [
+                // NIB
                 if (item.adaNib)
                   _AksiKecil(
                     icon: Icons.copy_rounded,
                     label: 'Salin NIB',
-                    onPressed: () async {
-                      await Clipboard.setData(ClipboardData(text: item.nib));
-                      if (context.mounted) _pesan(context, 'NIB disalin.');
-                    },
+                    onPressed: () => salinKeClipboard(context, item.nib, 'NIB'),
                   ),
+                //Telepon
                 if (item.telepon != null)
                   _AksiKecil(
                     icon: Icons.call_rounded,
                     label: 'Telepon',
-                    onPressed: () =>
-                        _buka(context, Uri(scheme: 'tel', path: item.telepon)),
+                    onPressed: () => bukaTautan(
+                      context,
+                      'tel:${item.telepon}',
+                      pesanGagal: 'Aplikasi telepon tidak dapat dibuka.',
+                    ),
                   ),
                 if (item.adaLokasi)
                   _AksiKecil(
                     icon: Icons.map_rounded,
                     label: 'Peta',
-                    onPressed: () => _buka(
+                    onPressed: () => bukaTautan(
                       context,
-                      Uri.parse(
-                        'https://www.google.com/maps/search/?api=1'
-                        '&query=${item.latitude},${item.longitude}',
-                      ),
+                      'https://www.google.com/maps/search/?api=1'
+                      '&query=${item.latitude},${item.longitude}',
                     ),
                   ),
               ],
@@ -591,22 +555,6 @@ class _PerusahaanCard extends StatelessWidget {
         ],
       ),
     );
-  }
-}
-
-void _pesan(BuildContext context, String teks) {
-  ScaffoldMessenger.of(context)
-    ..hideCurrentSnackBar()
-    ..showSnackBar(SnackBar(content: Text(teks)));
-}
-
-Future<void> _buka(BuildContext context, Uri uri) async {
-  bool ok = false;
-  try {
-    ok = await launchUrl(uri, mode: LaunchMode.externalApplication);
-  } catch (_) {}
-  if (!ok && context.mounted) {
-    _pesan(context, 'Tidak ada aplikasi yang dapat membuka ini.');
   }
 }
 
@@ -631,32 +579,6 @@ class _AksiKecil extends StatelessWidget {
         visualDensity: VisualDensity.compact,
         padding: const EdgeInsets.symmetric(horizontal: 8),
         textStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700),
-      ),
-    );
-  }
-}
-
-class _Chip extends StatelessWidget {
-  const _Chip({required this.label, required this.color});
-
-  final String label;
-  final Color color;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Text(
-        label,
-        style: TextStyle(
-          color: color,
-          fontSize: 11,
-          fontWeight: FontWeight.w700,
-        ),
       ),
     );
   }

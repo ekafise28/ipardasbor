@@ -36,7 +36,7 @@ class _DetailIsi extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final Color warna = warnaRisikoProyek(item.risiko);
+    final Color warna = AppTheme.warnaRisiko(item.risiko);
 
     return ListView(
       controller: controller,

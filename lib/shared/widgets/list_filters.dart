@@ -79,7 +79,7 @@ class ListSearchField extends StatelessWidget {
                           icon: const Icon(Icons.close_rounded, size: 20),
                           onPressed: onClear,
                         ),
-                        ?trailing,
+                      ?trailing,
                     ],
                   )
                 : null,
@@ -158,9 +158,7 @@ class StatusFilterBar extends StatelessWidget {
             ),
             selectedColor: o.color.withValues(alpha: 0.14),
             backgroundColor: AppTheme.surface(context),
-            side: BorderSide(
-              color: aktif ? o.color : AppTheme.border(context),
-            ),
+            side: BorderSide(color: aktif ? o.color : AppTheme.border(context)),
             visualDensity: VisualDensity.compact,
           );
         },
@@ -255,6 +253,191 @@ class FilterAction extends StatelessWidget {
         backgroundColor: Colors.amberAccent,
         textColor: Colors.black87,
         child: const Icon(Icons.filter_list_rounded),
+      ),
+    );
+  }
+}
+
+/// Label kecil di atas kolom filter.
+class FilterLabel extends StatelessWidget {
+  const FilterLabel(this.text, {super.key});
+
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Text(
+        text,
+        style: TextStyle(
+          fontSize: 12.5,
+          fontWeight: FontWeight.w700,
+          color: AppTheme.textSecondary(context),
+        ),
+      ),
+    );
+  }
+}
+
+/// Kerangka bottom sheet filter: latar, sudut atas membulat, handle, judul,
+/// isi yang bisa di-scroll, lalu tombol Reset dan Terapkan.
+/// Pakai bersama showModalBottomSheet dengan backgroundColor transparan.
+class FilterSheetFrame extends StatelessWidget {
+  const FilterSheetFrame({
+    super.key,
+    required this.title,
+    required this.children,
+    required this.onReset,
+    required this.onApply,
+  });
+
+  final String title;
+  final List<Widget> children;
+  final VoidCallback onReset;
+  final VoidCallback onApply;
+
+  @override
+  Widget build(BuildContext context) {
+    return SafeArea(
+      child: Container(
+        decoration: BoxDecoration(
+          color: AppTheme.surface(context),
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        child: SingleChildScrollView(
+          padding: EdgeInsets.only(
+            left: 20,
+            right: 20,
+            top: 16,
+            bottom: MediaQuery.of(context).viewInsets.bottom + 16,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              Center(
+                child: Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: Colors.black12,
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              Text(
+                title,
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w800,
+                  color: AppTheme.textColor(context),
+                ),
+              ),
+              const SizedBox(height: 16),
+              ...children,
+              const SizedBox(height: 4),
+              Row(
+                children: <Widget>[
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: onReset,
+                      child: const Text('Reset'),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: FilledButton(
+                      onPressed: onApply,
+                      child: const Text('Terapkan'),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Dropdown filter berlabel. [options] berupa pasangan (nilai, label).
+/// [semuaLabel] diisi = ada pilihan "semua" bernilai null.
+class FilterDropdown<T> extends StatelessWidget {
+  const FilterDropdown({
+    super.key,
+    required this.label,
+    required this.value,
+    required this.options,
+    required this.onChanged,
+    this.semuaLabel,
+    this.enabled = true,
+    this.loading = false,
+    this.helper,
+  });
+
+  final String label;
+  final T? value;
+  final List<(T, String)> options;
+  final ValueChanged<T?> onChanged;
+  final String? semuaLabel;
+  final bool enabled;
+  final bool loading;
+  final String? helper;
+
+  @override
+  Widget build(BuildContext context) {
+    // Nilai hanya dipakai kalau ada di daftar (hindari assertion Flutter
+    // saat daftar belum selesai dimuat).
+    final T? nilai = options.any(((T, String) o) => o.$1 == value)
+        ? value
+        : null;
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 14),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          FilterLabel(label),
+          DropdownButtonFormField<T?>(
+            // Key ikut berubah: initialValue hanya dibaca sekali.
+            key: ValueKey<String>('$label-$nilai-${options.length}-$enabled'),
+            initialValue: nilai,
+            isExpanded: true,
+            decoration: InputDecoration(
+              border: const OutlineInputBorder(),
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 12,
+                vertical: 8,
+              ),
+              helperText: helper,
+              helperMaxLines: 2,
+              suffixIcon: loading
+                  ? const Padding(
+                      padding: EdgeInsets.all(12),
+                      child: SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      ),
+                    )
+                  : null,
+            ),
+            hint: Text(semuaLabel ?? 'Pilih'),
+            items: <DropdownMenuItem<T?>>[
+              if (semuaLabel != null)
+                DropdownMenuItem<T?>(value: null, child: Text(semuaLabel!)),
+              for (final (T, String) o in options)
+                DropdownMenuItem<T?>(
+                  value: o.$1,
+                  child: Text(o.$2, overflow: TextOverflow.ellipsis),
+                ),
+            ],
+            onChanged: enabled ? onChanged : null,
+          ),
+        ],
       ),
     );
   }

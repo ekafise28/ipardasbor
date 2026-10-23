@@ -95,19 +95,27 @@ class _AkomodasiItemCardState extends State<AkomodasiItemCard>
   }
 
   Future<void> _muatWilayahAwal() async {
-    final provinces = await widget.regionService.provinces();
-    if (!mounted) return;
+    List<RegionOption> provinces = [],
+        regencies = [],
+        districts = [],
+        villages = [];
 
-    List<RegionOption> regencies = [], districts = [], villages = [];
+    try {
+      provinces = await widget.regionService.provinces();
+      if (!mounted) return;
 
-    if (_d.provinsiId != null) {
-      regencies = await widget.regionService.regencies(_d.provinsiId!);
-    }
-    if (_d.kabupatenId != null) {
-      districts = await widget.regionService.districts(_d.kabupatenId!);
-    }
-    if (_d.kecamatanId != null) {
-      villages = await widget.regionService.villages(_d.kecamatanId!);
+      if (_d.provinsiId != null) {
+        regencies = await widget.regionService.regencies(_d.provinsiId!);
+      }
+      if (_d.kabupatenId != null) {
+        districts = await widget.regionService.districts(_d.kabupatenId!);
+      }
+      if (_d.kecamatanId != null) {
+        villages = await widget.regionService.villages(_d.kecamatanId!);
+      }
+    } catch (_) {
+      // Daftar wilayah kosong: pengguna tetap bisa mengisi form dan
+      // dropdown tidak mengambang di spinner selamanya.
     }
 
     if (!mounted) return;
@@ -717,6 +725,7 @@ class _AkomodasiItemCardState extends State<AkomodasiItemCard>
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: DropdownButtonFormField<int>(
+        key: ValueKey<String>('$label-$nilai-${values.length}'),
         initialValue: nilai,
         isExpanded: true,
         decoration: InputDecoration(labelText: '$label *'),

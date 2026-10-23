@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:ipardasbor/shared/region/region_cascade.dart' show RegionCascade;
+import 'package:ipardasbor/shared/widgets/list_filters.dart' show FilterDropdown, FilterSheetFrame;
 
-import '../../../app/app_theme.dart';
 import '../../../shared/region/models/region_option.dart';
 import '../../../shared/region/services/region_service.dart';
 import '../models/baseline_ota_filter.dart';
@@ -23,193 +24,139 @@ class OssBaselineOtaFilterSheet extends StatefulWidget {
   final RegionService regionService;
 
   @override
-  State<OssBaselineOtaFilterSheet> createState() => _OssBaselineOtaFilterSheetState();
+  State<OssBaselineOtaFilterSheet> createState() =>
+      _OssBaselineOtaFilterSheetState();
 }
 
 class _OssBaselineOtaFilterSheetState extends State<OssBaselineOtaFilterSheet> {
   late BaselineOtaFilter _draft;
   late List<RegionOption> _kabupaten;
-  List<RegionOption> _kecamatan = [];
-  List<RegionOption> _kelurahan = [];
-  bool _loadingWilayah = false;
+  late final RegionCascade _cascade;
 
   @override
   void initState() {
     super.initState();
     _draft = widget.filter.copyWith();
     _kabupaten = widget.filterOptions.kabupaten;
-    if (_draft.kabupatenId != null) _muatKecamatan(_draft.kabupatenId!);
-    if (_draft.kecamatanId != null) _muatKelurahan(_draft.kecamatanId!);
-  }
-
-  Future<void> _muatKecamatan(int kabupatenId) async {
-    setState(() => _loadingWilayah = true);
-    try {
-      _kecamatan = await widget.regionService.districts(kabupatenId);
-    } finally {
-      if (mounted) setState(() => _loadingWilayah = false);
+    _cascade = RegionCascade(widget.regionService)..addListener(_onCascade);
+    if (_draft.kabupatenId != null) {
+      _cascade.muatKecamatan(_draft.kabupatenId);
+    }
+    if (_draft.kecamatanId != null) {
+      _cascade.muatKelurahan(_draft.kecamatanId);
     }
   }
 
-  Future<void> _muatKelurahan(int kecamatanId) async {
-    setState(() => _loadingWilayah = true);
-    try {
-      _kelurahan = await widget.regionService.villages(kecamatanId);
-    } finally {
-      if (mounted) setState(() => _loadingWilayah = false);
-    }
+  void _onCascade() {
+    if (mounted) setState(() {});
   }
 
   @override
+  void dispose() {
+    _cascade
+      ..removeListener(_onCascade)
+      ..dispose();
+    super.dispose();
+  }
+
+  Future<void> _pilihProvinsi(int? v) async {
+    setState(() {
+      _draft.provinsiId = v;
+      _draft.platformOta = null;
+      _draft.kabupatenId = null;
+      _draft.kecamatanId = null;
+      _draft.kelurahanId = null;
+      _kabupaten = <RegionOption>[];
+    });
+    _cascade.muatKecamatan(null);
+    if (v == null) return;
+    try {
+      final List<RegionOption> hasil = await widget.regionService.regencies(v);
+      if (mounted && _draft.provinsiId == v) {
+        setState(() => _kabupaten = hasil);
+      }
+    } catch (_) {}
+  }
+
+  void _pilihKabupaten(int? v) {
+    setState(() {
+      _draft.kabupatenId = v;
+      _draft.kecamatanId = null;
+      _draft.kelurahanId = null;
+    });
+    _cascade.muatKecamatan(v);
+  }
+
+  void _pilihKecamatan(int? v) {
+    setState(() {
+      _draft.kecamatanId = v;
+      _draft.kelurahanId = null;
+    });
+    _cascade.muatKelurahan(v);
+  }
+
+  void _reset() {
+    setState(() {
+      _draft = _draft.reset();
+      _kabupaten = widget.filterOptions.kabupaten;
+    });
+    _cascade.muatKecamatan(null);
+  }
+
+  List<(int, String)> _opsiRegion(List<RegionOption> daftar) => <(int, String)>[
+    for (final RegionOption o in daftar) (o.id, o.name),
+  ];
+
+  @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: EdgeInsets.only(
-        left: 16, right: 16, top: 16,
-        bottom: MediaQuery.of(context).viewInsets.bottom + 16,
-      ),
-      child: SingleChildScrollView(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Text('Filter Baseline OTA',
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800)),
-                TextButton(
-                  onPressed: () => setState(() => _draft = _draft.reset()),
-                  child: const Text('Reset'),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            // Hanya tampil kalau akun boleh mengakses lebih dari satu provinsi.
-            if (widget.filterOptions.provinsi.length > 1) ...[
-              DropdownButtonFormField<int>(
-                initialValue:
-                    widget.filterOptions.provinsi.any((p) => p.id == _draft.provinsiId)
-                        ? _draft.provinsiId
-                        : null,
-                isExpanded: true,
-                decoration: const InputDecoration(labelText: 'Provinsi'),
-                items: widget.filterOptions.provinsi
-                    .map((p) => DropdownMenuItem(value: p.id, child: Text(p.name)))
-                    .toList(),
-                onChanged: (v) async {
-                  setState(() {
-                    _draft.provinsiId = v;
-                    _draft.platformOta = null;
-                    _draft.kabupatenId = null;
-                    _draft.kecamatanId = null;
-                    _draft.kelurahanId = null;
-                    _kabupaten = [];
-                    _kecamatan = [];
-                    _kelurahan = [];
-                  });
-                  if (v != null) {
-                    try {
-                      final List<RegionOption> hasil =
-                          await widget.regionService.regencies(v);
-                      if (mounted) setState(() => _kabupaten = hasil);
-                    } catch (_) {}
-                  }
-                },
-              ),
-              const SizedBox(height: 10),
-            ],
-            DropdownButtonFormField<String>(
-              initialValue: _draft.platformOta,
-              isExpanded: true,
-              decoration: const InputDecoration(labelText: 'Platform OTA'),
-              items: [
-                const DropdownMenuItem(value: null, child: Text('Semua Platform')),
-                ...widget.filterOptions.platformOta.map(
-                  (p) => DropdownMenuItem(value: p, child: Text(p)),
-                ),
-              ],
-              onChanged: (v) => setState(() => _draft.platformOta = v),
-            ),
-            const SizedBox(height: 10),
-            DropdownButtonFormField<int>(
-              initialValue: _draft.kabupatenId,
-              isExpanded: true,
-              decoration: const InputDecoration(labelText: 'Kabupaten/Kota'),
-              items: [
-                const DropdownMenuItem(value: null, child: Text('Semua Kabupaten/Kota')),
-                ..._kabupaten.map(
-                  (k) => DropdownMenuItem(value: k.id, child: Text(k.name, overflow: TextOverflow.ellipsis)),
-                ),
-              ],
-              onChanged: (v) {
-                setState(() {
-                  _draft.kabupatenId = v;
-                  _draft.kecamatanId = null;
-                  _draft.kelurahanId = null;
-                  _kecamatan = [];
-                  _kelurahan = [];
-                });
-                if (v != null) _muatKecamatan(v);
-              },
-            ),
-            const SizedBox(height: 10),
-            DropdownButtonFormField<int>(
-              initialValue: _draft.kecamatanId,
-              isExpanded: true,
-              decoration: InputDecoration(
-                labelText: 'Kecamatan',
-                enabled: _draft.kabupatenId != null,
-              ),
-              items: [
-                const DropdownMenuItem(value: null, child: Text('Semua Kecamatan')),
-                ..._kecamatan.map(
-                  (k) => DropdownMenuItem(value: k.id, child: Text(k.name, overflow: TextOverflow.ellipsis)),
-                ),
-              ],
-              onChanged: _draft.kabupatenId == null
-                  ? null
-                  : (v) {
-                      setState(() {
-                        _draft.kecamatanId = v;
-                        _draft.kelurahanId = null;
-                        _kelurahan = [];
-                      });
-                      if (v != null) _muatKelurahan(v);
-                    },
-            ),
-            const SizedBox(height: 10),
-            DropdownButtonFormField<int>(
-              initialValue: _draft.kelurahanId,
-              isExpanded: true,
-              decoration: InputDecoration(
-                labelText: 'Kelurahan/Desa',
-                enabled: _draft.kecamatanId != null,
-              ),
-              items: [
-                const DropdownMenuItem(value: null, child: Text('Semua Kelurahan/Desa')),
-                ..._kelurahan.map(
-                  (k) => DropdownMenuItem(value: k.id, child: Text(k.name, overflow: TextOverflow.ellipsis)),
-                ),
-              ],
-              onChanged: _draft.kecamatanId == null
-                  ? null
-                  : (v) => setState(() => _draft.kelurahanId = v),
-            ),
-            const SizedBox(height: 20),
-            SizedBox(
-              width: double.infinity,
-              height: 48,
-              child: FilledButton(
-                onPressed: () => Navigator.pop(context, _draft),
-                style: FilledButton.styleFrom(
-                  backgroundColor: AppTheme.primaryColor,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
-                ),
-                child: const Text('Terapkan Filter', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w800)),
-              ),
-            ),
+    return FilterSheetFrame(
+      title: 'Filter Baseline OTA',
+      onReset: _reset,
+      onApply: () => Navigator.pop(context, _draft),
+      children: <Widget>[
+        // Hanya tampil kalau akun boleh mengakses lebih dari satu provinsi.
+        if (widget.filterOptions.provinsi.length > 1)
+          FilterDropdown<int>(
+            label: 'Provinsi',
+            value: _draft.provinsiId,
+            options: _opsiRegion(widget.filterOptions.provinsi),
+            onChanged: _pilihProvinsi,
+          ),
+        FilterDropdown<String>(
+          label: 'Platform OTA',
+          value: _draft.platformOta,
+          semuaLabel: 'Semua Platform',
+          options: <(String, String)>[
+            for (final String p in widget.filterOptions.platformOta) (p, p),
           ],
+          onChanged: (String? v) => setState(() => _draft.platformOta = v),
         ),
-      ),
+        FilterDropdown<int>(
+          label: 'Kabupaten/Kota',
+          value: _draft.kabupatenId,
+          semuaLabel: 'Semua Kabupaten/Kota',
+          options: _opsiRegion(_kabupaten),
+          onChanged: _pilihKabupaten,
+        ),
+        FilterDropdown<int>(
+          label: 'Kecamatan',
+          value: _draft.kecamatanId,
+          semuaLabel: 'Semua Kecamatan',
+          options: _opsiRegion(_cascade.kecamatan),
+          enabled: _draft.kabupatenId != null,
+          loading: _cascade.loadingKecamatan,
+          onChanged: _pilihKecamatan,
+        ),
+        FilterDropdown<int>(
+          label: 'Kelurahan/Desa',
+          value: _draft.kelurahanId,
+          semuaLabel: 'Semua Kelurahan/Desa',
+          options: _opsiRegion(_cascade.kelurahan),
+          enabled: _draft.kecamatanId != null,
+          loading: _cascade.loadingKelurahan,
+          onChanged: (int? v) => setState(() => _draft.kelurahanId = v),
+        ),
+      ],
     );
   }
 }

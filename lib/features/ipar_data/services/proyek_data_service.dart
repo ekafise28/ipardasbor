@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:intl/intl.dart';
+import 'package:ipardasbor/shared/utils/csv_export.dart' show stempelFile;
 import 'package:path_provider/path_provider.dart';
 
 import '../../../core/api/api_client.dart';
@@ -30,7 +31,7 @@ class ProyekDataService {
     bool Function()? dibatalkan,
   }) async {
     final Directory dir = await getTemporaryDirectory();
-    final String stempel = DateFormat('yyyyMMdd-HHmmss').format(DateTime.now());
+    final String stempel = stempelFile();
     final File file = File('${dir.path}/data-proyek-$stempel.csv');
 
     final Map<String, dynamic> params =

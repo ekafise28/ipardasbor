@@ -7,6 +7,7 @@ import 'package:ipardasbor/features/non_oss/offline/sync_service.dart';
 import 'package:ipardasbor/features/non_oss/services/non_oss_service.dart';
 import 'package:ipardasbor/features/sinkronisasi/pages/sync_submission_detail_page.dart';
 import 'package:ipardasbor/features/sinkronisasi/sync_page.dart';
+import 'package:ipardasbor/shared/widgets/skeleton.dart' show NotificationSkeleton;
 
 import '../../../app/app_theme.dart';
 import '../../../core/api/api_client.dart';
@@ -38,7 +39,6 @@ class _NotificationPageState extends State<NotificationPage> {
   }
 
   Future<void> _muat() async {
-    setState(() => _loading = true);
     final List<NotificationItem> semua = await NotificationService.instance
         .list(type: _filter, limit: 200);
     if (!mounted) return;
@@ -127,7 +127,7 @@ class _NotificationPageState extends State<NotificationPage> {
           _buildFilterBar(),
           Expanded(
             child: _loading
-                ? const Center(child: CircularProgressIndicator())
+                ? const NotificationSkeleton()
                 : _items.isEmpty
                 ? _buildEmpty()
                 : RefreshIndicator(

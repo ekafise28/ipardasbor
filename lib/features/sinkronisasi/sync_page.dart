@@ -3,7 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:ipardasbor/features/non_oss/offline/non_oss_queue_store.dart';
 import 'package:ipardasbor/shared/widgets/app_banner.dart';
-import 'package:ipardasbor/shared/widgets/page_states.dart';
+import 'package:ipardasbor/shared/widgets/skeleton.dart' show SyncReadySkeleton;
 
 import '../../app/app_theme.dart';
 import '../../core/api/api_client.dart';
@@ -332,7 +332,7 @@ class _SyncPageState extends State<SyncPage> {
                         ),
                         const SizedBox(height: 10),
                         if (_isLoading)
-                          const LoadingState(message: 'Memuat data tertunda...')
+                          const SyncReadySkeleton()
                         else if (_waitingData.isEmpty) ...<Widget>[
                           const AppBanner(
                             tone: BannerTone.success,
@@ -348,23 +348,22 @@ class _SyncPageState extends State<SyncPage> {
                             icon: const Icon(Icons.history_rounded, size: 18),
                             label: const Text('Lihat Riwayat'),
                           ),
-                        ] else
-                          ...<Widget>[
-                            for (final NonOssLocalData data in _waitingData)
-                              Padding(
-                                padding: const EdgeInsets.only(bottom: 12),
-                                child: SyncReadyCard(
-                                  key: ValueKey<String>(data.clientUuid),
-                                  data: data,
-                                  produkLabels: _produkLabels,
-                                  syncing:
-                                      _isSyncingAll ||
-                                      _syncingIds.contains(data.clientUuid),
-                                  onOpenDetail: () => _openDetail(data),
-                                  onSync: () => _syncOne(data),
-                                ),
+                        ] else ...<Widget>[
+                          for (final NonOssLocalData data in _waitingData)
+                            Padding(
+                              padding: const EdgeInsets.only(bottom: 12),
+                              child: SyncReadyCard(
+                                key: ValueKey<String>(data.clientUuid),
+                                data: data,
+                                produkLabels: _produkLabels,
+                                syncing:
+                                    _isSyncingAll ||
+                                    _syncingIds.contains(data.clientUuid),
+                                onOpenDetail: () => _openDetail(data),
+                                onSync: () => _syncOne(data),
                               ),
-                          ],
+                            ),
+                        ],
                         if (!_isLoading && _draftData.isNotEmpty) ...<Widget>[
                           const SizedBox(height: 14),
                           _buildSectionHeader(
@@ -425,10 +424,7 @@ class _SyncPageState extends State<SyncPage> {
               const SizedBox(width: 8),
               Container(
                 constraints: const BoxConstraints(minWidth: 22),
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 7,
-                  vertical: 2,
-                ),
+                padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
                 decoration: BoxDecoration(
                   color: AppTheme.primaryDark,
                   borderRadius: BorderRadius.circular(20),

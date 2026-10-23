@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:ipardasbor/shared/widgets/list_filters.dart'
+    show FilterLabel, FilterSheetFrame, FilterDropdown;
 
 import '../../../app/app_theme.dart';
 import '../../../core/constants/bidang_usaha_constants.dart';
@@ -92,158 +94,72 @@ class _RiwayatFilterSheetState extends State<_RiwayatFilterSheet> {
 
   @override
   Widget build(BuildContext context) {
-    return SafeArea(
-      child: Container(
-        padding: EdgeInsets.only(
-          left: 20,
-          right: 20,
-          top: 16,
-          bottom: MediaQuery.of(context).viewInsets.bottom + 16,
+    return FilterSheetFrame(
+      title: 'Filter Riwayat',
+      onReset: _reset,
+      onApply: _terapkan,
+      children: <Widget>[
+        FilterDropdown<String>(
+          label: 'Bidang Usaha',
+          value: _bidangUsaha,
+          semuaLabel: 'Semua bidang',
+          options: <(String, String)>[
+            for (final BidangUsahaOpsi b in BidangUsahaOpsi.daftar)
+              (b.slug, b.nama),
+          ],
+          onChanged: (String? v) => setState(() => _bidangUsaha = v),
         ),
-        decoration: BoxDecoration(
-          color: AppTheme.surface(context),
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+
+        FilterLabel('Sumber Data'),
+        Wrap(
+          spacing: 8,
+          children: <Widget>[
+            for (final String opsi in widget.options.sumberData)
+              ChoiceChip(
+                label: Text(opsi),
+                selected: _sumberData == opsi,
+                onSelected: (bool selected) {
+                  setState(() => _sumberData = selected ? opsi : null);
+                },
+              ),
+          ],
         ),
-        child: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: <Widget>[
-              Center(
-                child: Container(
-                  width: 40,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: Colors.black12,
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 16),
-              Text(
-                'Filter Riwayat',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w800,
-                  color: AppTheme.textColor(context),
-                ),
-              ),
-              const SizedBox(height: 16),
+        const SizedBox(height: 16),
 
-              _Label('Bidang Usaha'),
-              DropdownButtonFormField<String?>(
-                initialValue: _bidangUsaha,
-                isExpanded: true,
-                decoration: const InputDecoration(
-                  border: OutlineInputBorder(),
-                  contentPadding: EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 8,
-                  ),
-                ),
-                items: <DropdownMenuItem<String?>>[
-                  const DropdownMenuItem<String?>(
-                    value: null,
-                    child: Text('Semua bidang'),
-                  ),
-                  for (final BidangUsahaOpsi b in BidangUsahaOpsi.daftar)
-                    DropdownMenuItem<String?>(
-                      value: b.slug,
-                      child: Text(b.nama, overflow: TextOverflow.ellipsis),
-                    ),
-                ],
-                onChanged: (String? v) => setState(() => _bidangUsaha = v),
-              ),
-              const SizedBox(height: 16),
-
-              _Label('Sumber Data'),
-              Wrap(
-                spacing: 8,
-                children: <Widget>[
-                  for (final String opsi in widget.options.sumberData)
-                    ChoiceChip(
-                      label: Text(opsi),
-                      selected: _sumberData == opsi,
-                      onSelected: (bool selected) {
-                        setState(() => _sumberData = selected ? opsi : null);
-                      },
-                    ),
-                ],
-              ),
-              const SizedBox(height: 16),
-
-              _Label('Kabupaten/Kota'),
-              DropdownButtonFormField<int?>(
-                initialValue: _kabupatenId,
-                isExpanded: true,
-                decoration: const InputDecoration(
-                  border: OutlineInputBorder(),
-                  contentPadding: EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 8,
-                  ),
-                ),
-                hint: const Text('Semua kabupaten/kota'),
-                items: <DropdownMenuItem<int?>>[
-                  const DropdownMenuItem<int?>(
-                    value: null,
-                    child: Text('Semua kabupaten/kota'),
-                  ),
-                  for (final option in widget.options.kabupaten)
-                    DropdownMenuItem<int?>(
-                      value: option.id,
-                      child: Text(option.nama),
-                    ),
-                ],
-                onChanged: (int? value) => setState(() => _kabupatenId = value),
-              ),
-              const SizedBox(height: 16),
-
-              _Label('Rentang Tanggal'),
-              Row(
-                children: <Widget>[
-                  Expanded(
-                    child: _TanggalButton(
-                      label: _tanggalMulai == null
-                          ? 'Dari tanggal'
-                          : _formatTanggalSingkat(_tanggalMulai!),
-                      onTap: () => _pilihTanggal(mulai: true),
-                    ),
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: _TanggalButton(
-                      label: _tanggalSelesai == null
-                          ? 'Sampai tanggal'
-                          : _formatTanggalSingkat(_tanggalSelesai!),
-                      onTap: () => _pilihTanggal(mulai: false),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 24),
-
-              Row(
-                children: <Widget>[
-                  Expanded(
-                    child: OutlinedButton(
-                      onPressed: _reset,
-                      child: const Text('Reset'),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: FilledButton(
-                      onPressed: _terapkan,
-                      child: const Text('Terapkan'),
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
+        FilterDropdown<int>(
+          label: 'Kabupaten/Kota',
+          value: _kabupatenId,
+          semuaLabel: 'Semua kabupaten/kota',
+          options: <(int, String)>[
+            for (final o in widget.options.kabupaten) (o.id, o.nama),
+          ],
+          onChanged: (int? v) => setState(() => _kabupatenId = v),
         ),
-      ),
+
+        FilterLabel('Rentang Tanggal'),
+        Row(
+          children: <Widget>[
+            Expanded(
+              child: _TanggalButton(
+                label: _tanggalMulai == null
+                    ? 'Dari tanggal'
+                    : _formatTanggalSingkat(_tanggalMulai!),
+                onTap: () => _pilihTanggal(mulai: true),
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: _TanggalButton(
+                label: _tanggalSelesai == null
+                    ? 'Sampai tanggal'
+                    : _formatTanggalSingkat(_tanggalSelesai!),
+                onTap: () => _pilihTanggal(mulai: false),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+      ],
     );
   }
 
@@ -252,27 +168,6 @@ class _RiwayatFilterSheetState extends State<_RiwayatFilterSheet> {
     final String bulan = tanggal.month.toString().padLeft(2, '0');
 
     return '$hari/$bulan/${tanggal.year}';
-  }
-}
-
-class _Label extends StatelessWidget {
-  const _Label(this.text);
-
-  final String text;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
-      child: Text(
-        text,
-        style: TextStyle(
-          fontSize: 12.5,
-          fontWeight: FontWeight.w700,
-          color: AppTheme.textSecondary(context),
-        ),
-      ),
-    );
   }
 }
 

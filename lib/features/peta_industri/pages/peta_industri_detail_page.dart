@@ -6,12 +6,23 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:ipardasbor/app/app_theme.dart';
 import 'package:ipardasbor/features/peta_industri/pages/peta_industri_perusahaan_page.dart';
+import 'package:ipardasbor/shared/pagination/back_to_top_mixin.dart'
+    show BackToTopMixin;
+import 'package:ipardasbor/shared/pagination/paginated_list_controller.dart'
+    show PaginatedListController, PageChunk;
+import 'package:ipardasbor/shared/pagination/pagination_bar.dart';
 import 'package:ipardasbor/shared/utils/csv_export.dart';
+import 'package:ipardasbor/shared/utils/ui_actions.dart' show tampilkanPesan;
+import 'package:ipardasbor/shared/widgets/list_filters.dart'
+    show ListSearchField, StatusFilterBar, StatusFilterOption;
+import 'package:ipardasbor/shared/widgets/list_parts.dart' show TintChip;
+import 'package:ipardasbor/shared/widgets/page_states.dart'
+    show ConnectionErrorState, EmptyListState;
+import 'package:ipardasbor/shared/widgets/skeleton.dart' show RekapSkeleton;
 
 import '../../../core/api/api_exception.dart';
 import '../models/peta_detail_model.dart';
 import '../services/peta_industri_service.dart';
-import '../widgets/risiko_warna.dart';
 
 /// Rekap jenis usaha / KBLI / risiko / jumlah proyek untuk satu provinsi
 /// (padanan tombol "Detail" di web). Pencarian, pengurutan, dan paginasi
@@ -33,9 +44,8 @@ class _OpsiUrut {
   final String dir;
 }
 
-class _PetaIndustriDetailPageState extends State<PetaIndustriDetailPage> {
-  static const int _perPage = 25;
-
+class _PetaIndustriDetailPageState extends State<PetaIndustriDetailPage>
+    with BackToTopMixin<PetaIndustriDetailPage> {
   static const List<_OpsiUrut> _opsiUrut = <_OpsiUrut>[
     _OpsiUrut('Jumlah terbanyak', 'jumlah', 'desc'),
     _OpsiUrut('Jumlah tersedikit', 'jumlah', 'asc'),
@@ -55,25 +65,15 @@ class _PetaIndustriDetailPageState extends State<PetaIndustriDetailPage> {
 
   final PetaIndustriService _service = PetaIndustriService();
   final NumberFormat _angka = NumberFormat.decimalPattern('id_ID');
-  final ScrollController _scroll = ScrollController();
   final TextEditingController _searchCtrl = TextEditingController();
 
   Timer? _debounce;
 
-  final List<PetaRekapItem> _items = <PetaRekapItem>[];
-  int _page = 0;
-  int _total = 0;
-  bool _hasMore = true;
-  bool _loading = false;
-  bool _loadMoreError = false;
   bool _mengekspor = false;
-  String? _error;
   int _urutIndex = 0;
   String _search = '';
-
-  /// Penanda permintaan. Respons dari permintaan lama (mis. setelah pengguna
-  /// mengganti kata kunci) diabaikan.
-  int _generasi = 0;
+  late final PaginatedListController<PetaRekapItem> _list;
+  int _perPage = 25;
 
   Future<void> _ekspor() async {
     if (_mengekspor) return;
@@ -86,132 +86,144 @@ class _PetaIndustriDetailPageState extends State<PetaIndustriDetailPage> {
 
       if (!mounted) return;
       if (data.isEmpty) {
-        _pesan('Tidak ada data untuk diekspor.');
+        tampilkanPesan(context, 'Tidak ada data untuk diekspor.');
         return;
       }
 
-      final String slug = widget.provinsi
-    .toLowerCase()
-    .replaceAll(RegExp(r'[^a-z0-9]+'), '-')
-    .replaceAll(RegExp(r'^-+|-+$'), '');
-final String stempel = DateFormat('yyyyMMdd-HHmmss').format(DateTime.now());
-
-await bagikanCsv(
-  namaFile: 'rekap-$slug-$stempel.csv',
-  subjek: 'Rekap Industri Pariwisata ${widget.provinsi}',
-  baris: <List<String>>[
-    <String>['Jenis Usaha', 'Nama KBLI', 'KBLI', 'Risiko', 'Jumlah Proyek'],
-    for (final PetaRekapItem e in data)
-      <String>[e.jenisUsaha, e.namaKbli, e.kbli, e.risiko, e.jumlah.toString()],
-  ],
-);
+      await bagikanCsv(
+        namaFile: 'rekap-${slugFile(widget.provinsi)}-${stempelFile()}.csv',
+        subjek: 'Rekap Industri Pariwisata ${widget.provinsi}',
+        baris: <List<String>>[
+          <String>[
+            'Jenis Usaha',
+            'Nama KBLI',
+            'KBLI',
+            'Risiko',
+            'Jumlah Proyek',
+          ],
+          for (final PetaRekapItem e in data)
+            <String>[
+              e.jenisUsaha,
+              e.namaKbli,
+              e.kbli,
+              e.risiko,
+              e.jumlah.toString(),
+            ],
+        ],
+      );
     } catch (e) {
       if (!mounted) return;
-      _pesan(pesanErrorRamah(e, fallback: 'Ekspor gagal. Silakan coba lagi.'));
+      tampilkanPesan(
+        context,
+        pesanErrorRamah(e, fallback: 'Ekspor gagal. Silakan coba lagi.'),
+      );
     } finally {
       if (mounted) setState(() => _mengekspor = false);
     }
   }
 
-  void _pesan(String teks) {
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(teks)));
+  Future<PageChunk<PetaRekapItem>> _ambil(int page) async {
+    final _OpsiUrut urut = _opsiUrut[_urutIndex];
+    final PetaRekapHalaman hasil = await _service.ambilDetail(
+      widget.provinsi,
+      page: page,
+      perPage: _perPage,
+      search: _search,
+      risiko: _risiko,
+      sort: urut.sort,
+      dir: urut.dir,
+    );
+    return PageChunk<PetaRekapItem>(
+      items: hasil.items,
+      currentPage: hasil.page,
+      hasNext: hasil.hasMore,
+      total: hasil.total,
+    );
+  }
+
+  void _muatUlang() {
+    jumpKeAtas();
+    _list.reload();
+  }
+
+  Future<void> _gantiHalaman(int page) async {
+    await _list.goToPage(page);
+    jumpKeAtas();
+  }
+
+  void _gantiPerPage(int n) {
+    setState(() => _perPage = n);
+    _muatUlang();
   }
 
   @override
   void initState() {
     super.initState();
-    _scroll.addListener(_onScroll);
-    _muatAwal();
+    initBackToTop();
+    _list = PaginatedListController<PetaRekapItem>(
+      paged: true,
+      fetchPage: _ambil,
+      idOf: (PetaRekapItem e) => '${e.kbli}|${e.risiko}|${e.jenisUsaha}',
+      perPage: () => _perPage,
+      errorMessage: (Object e) => pesanErrorRamah(
+        e,
+        fallback: 'Detail gagal dimuat. Silakan coba lagi.',
+      ),
+      onSilentError: (String pesan) {
+        if (mounted) tampilkanPesan(context, pesan);
+      },
+    )..addListener(_onList);
+    _list.reload();
   }
 
   @override
   void dispose() {
     _debounce?.cancel();
-    _scroll.dispose();
     _searchCtrl.dispose();
+    _list
+      ..removeListener(_onList)
+      ..dispose();
+    disposeBackToTop();
     super.dispose();
   }
 
-  void _onScroll() {
-    if (!_scroll.hasClients || _loadMoreError) return;
-    if (_scroll.position.pixels >= _scroll.position.maxScrollExtent - 300) {
-      _muatBerikut();
-    }
+  /// Mode halaman tidak memuat otomatis saat gulir.
+  @override
+  void onNearBottom() {}
+
+  void _onList() {
+    if (!mounted) return;
+    setState(() {
+      if (_list.loadingFirst) hideBackToTop();
+    });
+  }
+
+  void _terapkanPencarian(String value) {
+    _debounce?.cancel();
+    final String kata = value.trim();
+    if (kata == _search) return;
+    _search = kata;
+    _muatUlang();
   }
 
   void _onSearchChanged(String value) {
     _debounce?.cancel();
-    _debounce = Timer(const Duration(milliseconds: 500), () {
-      final String kata = value.trim();
-      if (kata == _search) return;
-      _search = kata;
-      _muatAwal();
-    });
+    _debounce = Timer(
+      const Duration(milliseconds: 500),
+      () => _terapkanPencarian(value),
+    );
   }
 
-  Future<void> _muatAwal() async {
-    _generasi++;
-    setState(() {
-      _items.clear();
-      _page = 0;
-      _total = 0;
-      _hasMore = true;
-      _loading = false;
-      _loadMoreError = false;
-      _error = null;
-    });
-    await _muatBerikut();
-  }
-
-  Future<void> _muatBerikut() async {
-    if (_loading || !_hasMore) return;
-
-    final int generasi = _generasi;
-    final _OpsiUrut urut = _opsiUrut[_urutIndex];
-
-    setState(() {
-      _loading = true;
-      _loadMoreError = false;
-    });
-
-    try {
-      final PetaRekapHalaman hasil = await _service.ambilDetail(
-        widget.provinsi,
-        page: _page + 1,
-        perPage: _perPage,
-        search: _search,
-        risiko: _risiko,
-        sort: urut.sort,
-        dir: urut.dir,
-      );
-
-      if (!mounted || generasi != _generasi) return;
-      setState(() {
-        _items.addAll(hasil.items);
-        _page = hasil.page;
-        _total = hasil.total;
-        _hasMore = hasil.hasMore;
-        _loading = false;
-      });
-    } catch (e) {
-      if (!mounted || generasi != _generasi) return;
-      setState(() {
-        _loading = false;
-        if (_items.isEmpty) {
-          _error = pesanErrorRamah(
-            e,
-            fallback: 'Detail gagal dimuat. Silakan coba lagi.',
-          );
-        } else {
-          _loadMoreError = true;
-        }
-      });
-    }
+  void _hapusPencarian() {
+    _searchCtrl.clear();
+    _terapkanPencarian('');
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      floatingActionButton: buildBackToTopFab(),
+      bottomNavigationBar: _buildPaginasi(),
       appBar: AppBar(
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -260,35 +272,38 @@ await bagikanCsv(
     );
   }
 
+  Widget? _buildPaginasi() {
+    if (_list.error != null || _list.total == 0) return null;
+    return PaginationBar(
+      currentPage: _list.currentPage,
+      totalPages: _list.totalPages,
+      perPage: _perPage,
+      total: _list.total,
+      enabled: !_list.loadingFirst,
+      onPageChanged: _gantiHalaman,
+      onPerPageChanged: _gantiPerPage,
+    );
+  }
+
   Widget _buildFilterRisiko() {
-    return SizedBox(
-      height: 46,
-      child: ListView(
-        scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-        children: [
-          Padding(
-            padding: const EdgeInsets.only(right: 8),
-            child: ChoiceChip(
-              label: const Text('Semua'),
-              selected: _risiko.isEmpty,
-              onSelected: (_) => _pilihRisiko(''),
-            ),
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 6),
+      child: StatusFilterBar(
+        options: <StatusFilterOption>[
+          const StatusFilterOption(
+            value: null,
+            label: 'Semua',
+            color: AppTheme.primaryColor,
           ),
           for (final String r in _opsiRisiko)
-            Padding(
-              padding: const EdgeInsets.only(right: 8),
-              child: ChoiceChip(
-                avatar: CircleAvatar(
-                  radius: 5,
-                  backgroundColor: warnaRisiko(r),
-                ),
-                label: Text(r),
-                selected: _risiko == r,
-                onSelected: (_) => _pilihRisiko(r),
-              ),
+            StatusFilterOption(
+              value: r,
+              label: r,
+              color: AppTheme.warnaRisiko(r),
             ),
         ],
+        selected: _risiko.isEmpty ? null : _risiko,
+        onChanged: (String? v) => _pilihRisiko(v ?? ''),
       ),
     );
   }
@@ -296,32 +311,18 @@ await bagikanCsv(
   void _pilihRisiko(String nilai) {
     if (nilai == _risiko) return;
     _risiko = nilai;
-    _muatAwal();
+    _muatUlang();
   }
 
   Widget _buildSearchBar() {
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 6),
-      child: TextField(
+      child: ListSearchField(
         controller: _searchCtrl,
+        hintText: 'Cari jenis usaha, KBLI, atau risiko...',
         onChanged: _onSearchChanged,
-        textInputAction: TextInputAction.search,
-        decoration: InputDecoration(
-          hintText: 'Cari jenis usaha, KBLI, atau risiko...',
-          prefixIcon: const Icon(Icons.search_rounded),
-          suffixIcon: _searchCtrl.text.isEmpty
-              ? null
-              : IconButton(
-                  tooltip: 'Hapus',
-                  icon: const Icon(Icons.close_rounded),
-                  onPressed: () {
-                    _searchCtrl.clear();
-                    _debounce?.cancel();
-                    _search = '';
-                    _muatAwal();
-                  },
-                ),
-        ),
+        onSubmitted: _terapkanPencarian,
+        onClear: _hapusPencarian,
       ),
     );
   }
@@ -333,8 +334,8 @@ await bagikanCsv(
         children: [
           Expanded(
             child: Text(
-              _error == null && !(_loading && _items.isEmpty)
-                  ? '${_angka.format(_total)} baris'
+              _list.error == null && !_list.loadingFirst
+                  ? '${_angka.format(_list.total)} baris'
                   : '',
               style: TextStyle(
                 color: AppTheme.textSecondary(context),
@@ -348,7 +349,7 @@ await bagikanCsv(
             onSelected: (int i) {
               if (i == _urutIndex) return;
               setState(() => _urutIndex = i);
-              _muatAwal();
+              _muatUlang();
             },
             itemBuilder: (context) => <PopupMenuEntry<int>>[
               for (int i = 0; i < _opsiUrut.length; i++)
@@ -387,70 +388,41 @@ await bagikanCsv(
   }
 
   Widget _buildContent() {
-    if (_items.isEmpty) {
-      if (_loading) {
-        return const Center(child: CircularProgressIndicator());
-      }
-      if (_error != null) {
-        return _PesanState(
-          icon: Icons.cloud_off_rounded,
-          iconColor: AppTheme.danger,
-          message: _error!,
-          onRetry: _muatAwal,
-        );
-      }
-      return const _PesanState(
-        icon: Icons.search_off_rounded,
-        message: 'Data tidak ditemukan.',
+    if (_list.loadingFirst) return const RekapSkeleton();
+    if (_list.error != null) {
+      return ConnectionErrorState(
+        title: 'Rekap gagal dimuat',
+        message: _list.error!,
+        onRetry: _list.reload,
+      );
+    }
+    final List<PetaRekapItem> items = _list.items;
+    if (items.isEmpty) {
+      return const SingleChildScrollView(
+        child: EmptyListState(
+          icon: Icons.search_off_rounded,
+          title: 'Data tidak ditemukan',
+          message: 'Coba kata kunci atau filter risiko yang lain.',
+        ),
       );
     }
 
-    final bool adaFooter = _hasMore || _loadMoreError;
-
     return ListView.builder(
-      controller: _scroll,
+      controller: scroll,
       padding: const EdgeInsets.fromLTRB(16, 4, 16, 24),
-      itemCount: _items.length + (adaFooter ? 1 : 0),
-      itemBuilder: (context, i) {
-        if (i < _items.length) {
-          return _RekapCard(
-            item: _items[i],
-            angka: _angka,
-            onTap: () => Navigator.of(context).push(
-              MaterialPageRoute<void>(
-                builder: (_) => PetaIndustriPerusahaanPage(
-                  provinsi: widget.provinsi,
-                  item: _items[i],
-                ),
-              ),
-            ),
-          );
-        }
-
-        if (_loadMoreError) {
-          return Padding(
-            padding: const EdgeInsets.symmetric(vertical: 12),
-            child: Center(
-              child: TextButton.icon(
-                onPressed: _muatBerikut,
-                icon: const Icon(Icons.refresh_rounded),
-                label: const Text('Gagal memuat. Coba lagi'),
-              ),
-            ),
-          );
-        }
-
-        return const Padding(
-          padding: EdgeInsets.symmetric(vertical: 16),
-          child: Center(
-            child: SizedBox(
-              width: 22,
-              height: 22,
-              child: CircularProgressIndicator(strokeWidth: 2),
+      itemCount: items.length,
+      itemBuilder: (BuildContext context, int i) => _RekapCard(
+        item: items[i],
+        angka: _angka,
+        onTap: () => Navigator.of(context).push(
+          MaterialPageRoute<void>(
+            builder: (_) => PetaIndustriPerusahaanPage(
+              provinsi: widget.provinsi,
+              item: items[i],
             ),
           ),
-        );
-      },
+        ),
+      ),
     );
   }
 }
@@ -468,7 +440,7 @@ class _RekapCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final Color warna = warnaRisiko(item.risiko);
+    final Color warna = AppTheme.warnaRisiko(item.risiko);
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 10),
@@ -515,11 +487,11 @@ class _RekapCard extends StatelessWidget {
                         spacing: 6,
                         runSpacing: 6,
                         children: [
-                          _Chip(
+                          TintChip(
                             label: 'KBLI ${item.kbli}',
                             color: AppTheme.textSecondary(context),
                           ),
-                          _Chip(label: item.risiko, color: warna),
+                          TintChip(label: item.risiko, color: warna),
                         ],
                       ),
                     ],
@@ -554,75 +526,6 @@ class _RekapCard extends StatelessWidget {
               ],
             ),
           ),
-        ),
-      ),
-    );
-  }
-}
-
-class _Chip extends StatelessWidget {
-  const _Chip({required this.label, required this.color});
-
-  final String label;
-  final Color color;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Text(
-        label,
-        style: TextStyle(
-          color: color,
-          fontSize: 11,
-          fontWeight: FontWeight.w700,
-        ),
-      ),
-    );
-  }
-}
-
-class _PesanState extends StatelessWidget {
-  const _PesanState({
-    required this.icon,
-    required this.message,
-    this.iconColor,
-    this.onRetry,
-  });
-
-  final IconData icon;
-  final String message;
-  final Color? iconColor;
-  final VoidCallback? onRetry;
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(32),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(icon, size: 40, color: iconColor ?? AppTheme.textMuted),
-            const SizedBox(height: 12),
-            Text(
-              message,
-              textAlign: TextAlign.center,
-              style: TextStyle(color: AppTheme.textSecondary(context)),
-            ),
-            if (onRetry != null) ...[
-              const SizedBox(height: 16),
-              FilledButton.icon(
-                onPressed: onRetry,
-                icon: const Icon(Icons.refresh_rounded),
-                label: const Text('Coba lagi'),
-              ),
-            ],
-          ],
         ),
       ),
     );
