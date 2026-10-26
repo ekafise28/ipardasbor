@@ -258,31 +258,81 @@ class FilterAction extends StatelessWidget {
   }
 }
 
-/// Label kecil di atas kolom filter.
+/// Label kecil huruf kapital di atas kolom filter, dengan petunjuk opsional
+/// di kanan (mis. "Jawa Timur", "Siap Dipilih").
 class FilterLabel extends StatelessWidget {
-  const FilterLabel(this.text, {super.key});
+  const FilterLabel(this.text, {super.key, this.hint, this.hintColor});
 
   final String text;
+  final String? hint;
+  final Color? hintColor;
 
   @override
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
-      child: Text(
-        text,
-        style: TextStyle(
-          fontSize: 12.5,
-          fontWeight: FontWeight.w700,
-          color: AppTheme.textSecondary(context),
-        ),
+      child: Row(
+        children: <Widget>[
+          Expanded(
+            child: Text(
+              text.toUpperCase(),
+              style: TextStyle(
+                fontSize: 11.5,
+                fontWeight: FontWeight.w800,
+                letterSpacing: 0.6,
+                color: AppTheme.textSecondary(context),
+              ),
+            ),
+          ),
+          if (hint != null)
+            Text(
+              hint!,
+              style: TextStyle(
+                fontSize: 11.5,
+                fontWeight: FontWeight.w600,
+                color: hintColor ?? AppTheme.primaryColor,
+              ),
+            ),
+        ],
       ),
     );
   }
 }
 
-/// Kerangka bottom sheet filter: latar, sudut atas membulat, handle, judul,
-/// isi yang bisa di-scroll, lalu tombol Reset dan Terapkan.
-/// Pakai bersama showModalBottomSheet dengan backgroundColor transparan.
+/// Satu bagian filter: [FilterLabel] + isi + jarak bawah standar.
+class FilterSection extends StatelessWidget {
+  const FilterSection({
+    super.key,
+    required this.label,
+    required this.child,
+    this.hint,
+    this.hintColor,
+  });
+
+  final String label;
+  final String? hint;
+  final Color? hintColor;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          FilterLabel(label, hint: hint, hintColor: hintColor),
+          child,
+        ],
+      ),
+    );
+  }
+}
+
+/// Kerangka bottom sheet filter: handle, header (ikon, judul, badge Aktif,
+/// subjudul, tombol X), isi yang bisa di-scroll, dan footer tetap
+/// (Reset + Terapkan). Pakai dengan showModalBottomSheet yang
+/// isScrollControlled: true dan backgroundColor: Colors.transparent.
 class FilterSheetFrame extends StatelessWidget {
   const FilterSheetFrame({
     super.key,
@@ -290,74 +340,202 @@ class FilterSheetFrame extends StatelessWidget {
     required this.children,
     required this.onReset,
     required this.onApply,
+    this.subtitle,
+    this.icon,
+    this.activeCount = 0,
+    this.trailing,
+    this.onClose,
   });
 
   final String title;
+  final String? subtitle;
+  final IconData? icon;
+
+  /// Badge "N Aktif" di samping judul; disembunyikan saat 0.
+  final int activeCount;
+
+  /// Widget kecil opsional di samping badge (mis. chip "98 Riwayat").
+  final Widget? trailing;
+
   final List<Widget> children;
   final VoidCallback onReset;
   final VoidCallback onApply;
 
+  /// Null = menutup sheet tanpa hasil.
+  final VoidCallback? onClose;
+
   @override
   Widget build(BuildContext context) {
-    return SafeArea(
-      child: Container(
-        decoration: BoxDecoration(
-          color: AppTheme.surface(context),
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-        ),
-        child: SingleChildScrollView(
-          padding: EdgeInsets.only(
-            left: 20,
-            right: 20,
-            top: 16,
-            bottom: MediaQuery.of(context).viewInsets.bottom + 16,
+    final MediaQueryData mq = MediaQuery.of(context);
+    final double maxTinggi = (mq.size.height - mq.viewInsets.bottom) * 0.9;
+
+    return Padding(
+      padding: EdgeInsets.only(bottom: mq.viewInsets.bottom),
+      child: ConstrainedBox(
+        constraints: BoxConstraints(maxHeight: maxTinggi),
+        child: Container(
+          decoration: BoxDecoration(
+            color: AppTheme.surface(context),
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
           ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: <Widget>[
-              Center(
-                child: Container(
-                  width: 40,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: Colors.black12,
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 16),
-              Text(
-                title,
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w800,
-                  color: AppTheme.textColor(context),
-                ),
-              ),
-              const SizedBox(height: 16),
-              ...children,
-              const SizedBox(height: 4),
-              Row(
-                children: <Widget>[
-                  Expanded(
-                    child: OutlinedButton(
-                      onPressed: onReset,
-                      child: const Text('Reset'),
+          child: SafeArea(
+            top: false,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: <Widget>[
+                Center(
+                  child: Container(
+                    width: 40,
+                    height: 4,
+                    margin: const EdgeInsets.only(top: 10, bottom: 12),
+                    decoration: BoxDecoration(
+                      color: AppTheme.border(context),
+                      borderRadius: BorderRadius.circular(20),
                     ),
                   ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: FilledButton(
-                      onPressed: onApply,
-                      child: const Text('Terapkan'),
+                ),
+                _header(context),
+                Divider(height: 1, color: AppTheme.border(context)),
+                Flexible(
+                  child: SingleChildScrollView(
+                    keyboardDismissBehavior:
+                        ScrollViewKeyboardDismissBehavior.onDrag,
+                    padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: children,
+                    ),
+                  ),
+                ),
+                _footer(context),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _header(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 0, 12, 12),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          if (icon != null) ...<Widget>[
+            Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: AppTheme.primaryColor.withValues(alpha: 0.10),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Icon(icon, size: 21, color: AppTheme.primaryColor),
+            ),
+            const SizedBox(width: 12),
+          ],
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 4,
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  children: <Widget>[
+                    Text(
+                      title,
+                      style: TextStyle(
+                        fontSize: 17,
+                        fontWeight: FontWeight.w800,
+                        color: AppTheme.textColor(context),
+                      ),
+                    ),
+                    if (activeCount > 0)
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 2,
+                        ),
+                        decoration: BoxDecoration(
+                          color: AppTheme.primaryColor.withValues(alpha: 0.12),
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: Text(
+                          '$activeCount Aktif',
+                          style: const TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w700,
+                            color: AppTheme.primaryColor,
+                          ),
+                        ),
+                      ),
+                    ?trailing,
+                  ],
+                ),
+                if (subtitle != null) ...<Widget>[
+                  const SizedBox(height: 2),
+                  Text(
+                    subtitle!,
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: AppTheme.textSecondary(context),
                     ),
                   ),
                 ],
-              ),
-            ],
+              ],
+            ),
           ),
-        ),
+          const SizedBox(width: 8),
+          SizedBox(
+            width: 36,
+            height: 36,
+            child: IconButton.filledTonal(
+              tooltip: 'Tutup',
+              padding: EdgeInsets.zero,
+              iconSize: 18,
+              icon: const Icon(Icons.close_rounded),
+              onPressed: onClose ?? () => Navigator.of(context).pop(),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _footer(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(20, 12, 20, 12),
+      decoration: BoxDecoration(
+        border: Border(top: BorderSide(color: AppTheme.border(context))),
+      ),
+      child: Row(
+        children: <Widget>[
+          Expanded(
+            flex: 2,
+            child: OutlinedButton.icon(
+              onPressed: onReset,
+              style: OutlinedButton.styleFrom(
+                minimumSize: const Size.fromHeight(46),
+              ),
+              icon: const Icon(Icons.refresh_rounded, size: 18),
+              label: const Text('Reset'),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            flex: 3,
+            child: FilledButton.icon(
+              onPressed: onApply,
+              style: FilledButton.styleFrom(
+                minimumSize: const Size.fromHeight(46),
+              ),
+              icon: const Icon(Icons.check_circle_outline_rounded, size: 18),
+              label: const Text('Terapkan'),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -376,8 +554,14 @@ class FilterDropdown<T> extends StatelessWidget {
     this.enabled = true,
     this.loading = false,
     this.helper,
+    this.icon,
+    this.hint,
   });
 
+  final IconData? icon;
+
+  /// Petunjuk di kanan label (mis. "Siap Dipilih").
+  final String? hint;
   final String label;
   final T? value;
   final List<(T, String)> options;
@@ -400,18 +584,27 @@ class FilterDropdown<T> extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          FilterLabel(label),
+          FilterLabel(label, hint: hint),
           DropdownButtonFormField<T?>(
             // Key ikut berubah: initialValue hanya dibaca sekali.
             key: ValueKey<String>('$label-$nilai-${options.length}-$enabled'),
             initialValue: nilai,
             isExpanded: true,
             decoration: InputDecoration(
-              border: const OutlineInputBorder(),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(color: AppTheme.border(context)),
+              ),
               contentPadding: const EdgeInsets.symmetric(
                 horizontal: 12,
-                vertical: 8,
+                vertical: 10,
               ),
+              prefixIcon: icon == null
+                  ? null
+                  : Icon(icon, size: 19, color: AppTheme.primaryColor),
               helperText: helper,
               helperMaxLines: 2,
               suffixIcon: loading
@@ -439,6 +632,239 @@ class FilterDropdown<T> extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+/// Satu pilihan pada [FilterChoiceGroup]. [color] diisi = gaya berwarna
+/// (titik warna + tint saat dipilih); null = gaya netral (biru + centang).
+class FilterChoice {
+  const FilterChoice({required this.value, required this.label, this.color});
+
+  final String value;
+  final String label;
+  final Color? color;
+}
+
+/// Pilihan berbentuk chip. [multi] false = satu pilihan, true = banyak.
+/// [columns] diisi = grid lebar sama (mis. 3 untuk Semua/PMDN/PMA);
+/// null = wrap mengikuti lebar teks.
+class FilterChoiceGroup extends StatelessWidget {
+  const FilterChoiceGroup({
+    super.key,
+    required this.options,
+    required this.selected,
+    required this.onChanged,
+    this.multi = false,
+    this.semuaLabel = 'Semua',
+    this.columns,
+  });
+
+  final List<FilterChoice> options;
+  final List<String> selected;
+  final ValueChanged<List<String>> onChanged;
+  final bool multi;
+
+  /// Null = tanpa chip "Semua".
+  final String? semuaLabel;
+  final int? columns;
+
+  void _tekan(String value) {
+    if (selected.contains(value)) {
+      onChanged(selected.where((String e) => e != value).toList());
+    } else if (multi) {
+      onChanged(<String>[...selected, value]);
+    } else {
+      onChanged(<String>[value]);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final List<Widget> chips = <Widget>[
+      if (semuaLabel != null)
+        _ChoiceChip(
+          label: semuaLabel!,
+          aktif: selected.isEmpty,
+          onTap: () => onChanged(<String>[]),
+        ),
+      for (final FilterChoice o in options)
+        _ChoiceChip(
+          label: o.label,
+          color: o.color,
+          aktif: selected.contains(o.value),
+          onTap: () => _tekan(o.value),
+        ),
+    ];
+
+    const double jarak = 8;
+
+    if (columns == null) {
+      return Wrap(spacing: jarak, runSpacing: jarak, children: chips);
+    }
+
+    return LayoutBuilder(
+      builder: (BuildContext context, BoxConstraints c) {
+        final double lebar = (c.maxWidth - jarak * (columns! - 1)) / columns!;
+        return Wrap(
+          spacing: jarak,
+          runSpacing: jarak,
+          children: <Widget>[
+            for (final Widget w in chips) SizedBox(width: lebar, child: w),
+          ],
+        );
+      },
+    );
+  }
+}
+
+class _ChoiceChip extends StatelessWidget {
+  const _ChoiceChip({
+    required this.label,
+    required this.aktif,
+    required this.onTap,
+    this.color,
+  });
+
+  final String label;
+  final bool aktif;
+  final VoidCallback onTap;
+  final Color? color;
+
+  @override
+  Widget build(BuildContext context) {
+    final Color? w = color;
+    final Color latar;
+    final Color garis;
+    final Color teks;
+
+    if (w == null) {
+      latar = aktif ? AppTheme.primaryColor : AppTheme.surface(context);
+      garis = aktif ? AppTheme.primaryColor : AppTheme.border(context);
+      teks = aktif ? Colors.white : AppTheme.textColor(context);
+    } else {
+      latar = aktif ? w.withValues(alpha: 0.12) : AppTheme.surface(context);
+      garis = aktif ? w : AppTheme.border(context);
+      teks = aktif ? w : AppTheme.textColor(context);
+    }
+
+    return Material(
+      color: latar,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: BorderSide(color: garis, width: aktif ? 1.4 : 1),
+      ),
+      child: InkWell(
+        customBorder: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: <Widget>[
+              if (w == null && aktif) ...<Widget>[
+                const Icon(Icons.check_rounded, size: 16, color: Colors.white),
+                const SizedBox(width: 5),
+              ] else if (w != null) ...<Widget>[
+                Container(
+                  width: 8,
+                  height: 8,
+                  decoration: BoxDecoration(color: w, shape: BoxShape.circle),
+                ),
+                const SizedBox(width: 7),
+              ],
+              Flexible(
+                child: Text(
+                  label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 12.5,
+                    fontWeight: FontWeight.w700,
+                    color: teks,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Kolom tanggal: label kecil di atas, nilai di dalam kotak berikon.
+class FilterDateField extends StatelessWidget {
+  const FilterDateField({
+    super.key,
+    required this.label,
+    required this.placeholder,
+    required this.onTap,
+    this.text,
+  });
+
+  final String label;
+  final String placeholder;
+
+  /// Tanggal yang sudah diformat; null = tampilkan [placeholder].
+  final String? text;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final bool kosong = text == null;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 11.5,
+            color: AppTheme.textSecondary(context),
+          ),
+        ),
+        const SizedBox(height: 6),
+        InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(12),
+          child: Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+            decoration: BoxDecoration(
+              border: Border.all(color: AppTheme.border(context)),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Row(
+              children: <Widget>[
+                const Icon(
+                  Icons.calendar_today_outlined,
+                  size: 16,
+                  color: AppTheme.primaryColor,
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    text ?? placeholder,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: kosong ? FontWeight.w400 : FontWeight.w600,
+                      color: kosong
+                          ? AppTheme.textSecondary(context)
+                          : AppTheme.textColor(context),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
     );
   }
 }

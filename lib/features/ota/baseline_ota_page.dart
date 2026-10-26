@@ -165,9 +165,7 @@ class _BaselineOtaPageState extends State<BaselineOtaPage>
         await showModalBottomSheet<BaselineOtaFilter>(
           context: context,
           isScrollControlled: true,
-          shape: const RoundedRectangleBorder(
-            borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-          ),
+          backgroundColor: Colors.transparent,
           builder: (_) => OssBaselineOtaFilterSheet(
             filter: _filter,
             filterOptions: _filterOptions!,
@@ -249,7 +247,7 @@ class _BaselineOtaPageState extends State<BaselineOtaPage>
       (_filter.kabupatenId != null ? 1 : 0) +
       (_filter.kecamatanId != null ? 1 : 0) +
       (_filter.kelurahanId != null ? 1 : 0) +
-      ((_filter.platformOta ?? '').trim().isNotEmpty ? 1 : 0);
+      (_filter.platformOta.isNotEmpty ? 1 : 0);
 
   /// Filter sheet hanya mengembalikan ID, jadi nama kecamatan/kelurahan
   /// diambil ulang dari RegionService untuk label chip.
@@ -289,10 +287,14 @@ class _BaselineOtaPageState extends State<BaselineOtaPage>
         ?.name;
 
     return <FilterChipData>[
-      if ((_filter.platformOta ?? '').trim().isNotEmpty)
+      for (final String p in _filter.platformOta)
         FilterChipData(
-          label: _filter.platformOta!,
-          onRemove: () => _ubahFilter(() => _filter.platformOta = null),
+          label: p,
+          onRemove: () => _ubahFilter(
+            () => _filter.platformOta = _filter.platformOta
+                .where((String e) => e != p)
+                .toList(),
+          ),
         ),
       if (_filter.kabupatenId != null)
         FilterChipData(
@@ -553,7 +555,7 @@ class _BaselineOtaPageState extends State<BaselineOtaPage>
         controller: scroll,
         physics: const AlwaysScrollableScrollPhysics(),
         padding: const EdgeInsets.fromLTRB(16, 4, 16, 24),
-        itemCount: items.length, 
+        itemCount: items.length,
         itemBuilder: (context, index) {
           final BaselineOtaItem item = items[index];
           return BaselineOtaCard(

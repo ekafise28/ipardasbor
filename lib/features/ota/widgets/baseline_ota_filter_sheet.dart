@@ -1,6 +1,13 @@
 import 'package:flutter/material.dart';
-import 'package:ipardasbor/shared/region/region_cascade.dart' show RegionCascade;
-import 'package:ipardasbor/shared/widgets/list_filters.dart' show FilterDropdown, FilterSheetFrame;
+import 'package:ipardasbor/shared/region/region_cascade.dart'
+    show RegionCascade;
+import 'package:ipardasbor/shared/widgets/list_filters.dart'
+    show
+        FilterDropdown,
+        FilterSheetFrame,
+        FilterChoice,
+        FilterChoiceGroup,
+        FilterSection;
 
 import '../../../shared/region/models/region_option.dart';
 import '../../../shared/region/services/region_service.dart';
@@ -59,10 +66,16 @@ class _OssBaselineOtaFilterSheetState extends State<OssBaselineOtaFilterSheet> {
     super.dispose();
   }
 
+  int get _aktif =>
+      (_draft.kabupatenId != null ? 1 : 0) +
+      (_draft.kecamatanId != null ? 1 : 0) +
+      (_draft.kelurahanId != null ? 1 : 0) +
+      (_draft.platformOta.isNotEmpty ? 1 : 0);
+
   Future<void> _pilihProvinsi(int? v) async {
     setState(() {
       _draft.provinsiId = v;
-      _draft.platformOta = null;
+      _draft.platformOta = <String>[];
       _draft.kabupatenId = null;
       _draft.kecamatanId = null;
       _draft.kelurahanId = null;
@@ -97,8 +110,11 @@ class _OssBaselineOtaFilterSheetState extends State<OssBaselineOtaFilterSheet> {
 
   void _reset() {
     setState(() {
-      _draft = _draft.reset();
-      _kabupaten = widget.filterOptions.kabupaten;
+      _draft.platformOta = <String>[];
+      _draft.kabupatenId = null;
+      _draft.kecamatanId = null;
+      _draft.kelurahanId = null;
+      // provinsi tidak berubah, jadi daftar kabupaten tetap dipakai
     });
     _cascade.muatKecamatan(null);
   }
@@ -111,6 +127,9 @@ class _OssBaselineOtaFilterSheetState extends State<OssBaselineOtaFilterSheet> {
   Widget build(BuildContext context) {
     return FilterSheetFrame(
       title: 'Filter Baseline OTA',
+      subtitle: 'Verifikasi hasil scraping baseline OTA',
+      icon: Icons.tune_rounded,
+      activeCount: _aktif,
       onReset: _reset,
       onApply: () => Navigator.pop(context, _draft),
       children: <Widget>[
@@ -118,21 +137,31 @@ class _OssBaselineOtaFilterSheetState extends State<OssBaselineOtaFilterSheet> {
         if (widget.filterOptions.provinsi.length > 1)
           FilterDropdown<int>(
             label: 'Provinsi',
+            icon: Icons.map_outlined,
             value: _draft.provinsiId,
             options: _opsiRegion(widget.filterOptions.provinsi),
             onChanged: _pilihProvinsi,
           ),
-        FilterDropdown<String>(
+        FilterSection(
           label: 'Platform OTA',
-          value: _draft.platformOta,
-          semuaLabel: 'Semua Platform',
-          options: <(String, String)>[
-            for (final String p in widget.filterOptions.platformOta) (p, p),
-          ],
-          onChanged: (String? v) => setState(() => _draft.platformOta = v),
+          hint: _draft.platformOta.length > 1
+              ? '${_draft.platformOta.length} dipilih'
+              : null,
+          child: FilterChoiceGroup(
+            multi: true,
+            columns: 3,
+            options: <FilterChoice>[
+              for (final String p in widget.filterOptions.platformOta)
+                FilterChoice(value: p, label: p),
+            ],
+            selected: _draft.platformOta,
+            onChanged: (List<String> v) =>
+                setState(() => _draft.platformOta = v),
+          ),
         ),
         FilterDropdown<int>(
           label: 'Kabupaten/Kota',
+          icon: Icons.location_on_outlined,
           value: _draft.kabupatenId,
           semuaLabel: 'Semua Kabupaten/Kota',
           options: _opsiRegion(_kabupaten),
@@ -140,6 +169,7 @@ class _OssBaselineOtaFilterSheetState extends State<OssBaselineOtaFilterSheet> {
         ),
         FilterDropdown<int>(
           label: 'Kecamatan',
+          icon: Icons.apartment_rounded,
           value: _draft.kecamatanId,
           semuaLabel: 'Semua Kecamatan',
           options: _opsiRegion(_cascade.kecamatan),
@@ -149,6 +179,7 @@ class _OssBaselineOtaFilterSheetState extends State<OssBaselineOtaFilterSheet> {
         ),
         FilterDropdown<int>(
           label: 'Kelurahan/Desa',
+          icon: Icons.home_work_outlined,
           value: _draft.kelurahanId,
           semuaLabel: 'Semua Kelurahan/Desa',
           options: _opsiRegion(_cascade.kelurahan),

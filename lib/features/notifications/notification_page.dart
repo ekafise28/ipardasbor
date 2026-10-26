@@ -7,7 +7,11 @@ import 'package:ipardasbor/features/non_oss/offline/sync_service.dart';
 import 'package:ipardasbor/features/non_oss/services/non_oss_service.dart';
 import 'package:ipardasbor/features/sinkronisasi/pages/sync_submission_detail_page.dart';
 import 'package:ipardasbor/features/sinkronisasi/sync_page.dart';
-import 'package:ipardasbor/shared/widgets/skeleton.dart' show NotificationSkeleton;
+import 'package:ipardasbor/shared/widgets/list_filters.dart'
+    show StatusFilterBar, StatusFilterOption;
+import 'package:ipardasbor/shared/widgets/page_states.dart' show EmptyListState;
+import 'package:ipardasbor/shared/widgets/skeleton.dart'
+    show NotificationSkeleton;
 
 import '../../../app/app_theme.dart';
 import '../../../core/api/api_client.dart';
@@ -35,6 +39,25 @@ class _NotificationPageState extends State<NotificationPage> {
     super.initState();
     _syncService = NonOssSyncService(remote: NonOssService(ApiClient()));
     _queueService = OfflineQueueService(database: NonOssQueueStore.instance);
+    _muat();
+  }
+
+  static const String _kunciBelumDibaca = 'belum_dibaca';
+
+  /// Kunci chip yang sedang aktif; null = Semua.
+  String? get _kunciFilter {
+    if (_bukaFilterBelumDibaca) return _kunciBelumDibaca;
+    return _filter?.name;
+  }
+
+  void _pilihFilter(String? kunci) {
+    if (kunci == _kunciFilter) return;
+    setState(() {
+      _bukaFilterBelumDibaca = kunci == _kunciBelumDibaca;
+      _filter = NotificationType.values
+          .where((NotificationType t) => t.name == kunci)
+          .firstOrNull;
+    });
     _muat();
   }
 
@@ -150,92 +173,57 @@ class _NotificationPageState extends State<NotificationPage> {
   }
 
   Widget _buildFilterBar() {
-    final Map<String, VoidCallback> chips = {
-      'Semua': () {
-        setState(() {
-          _filter = null;
-          _bukaFilterBelumDibaca = false;
-        });
-        _muat();
-      },
-      'Belum dibaca': () {
-        setState(() {
-          _filter = null;
-          _bukaFilterBelumDibaca = true;
-        });
-        _muat();
-      },
-      'Gagal Sync': () {
-        setState(() {
-          _filter = NotificationType.syncFailed;
-          _bukaFilterBelumDibaca = false;
-        });
-        _muat();
-      },
-      'Menunggu Lama': () {
-        setState(() {
-          _filter = NotificationType.waitingTooLong;
-          _bukaFilterBelumDibaca = false;
-        });
-        _muat();
-      },
-      'Draft': () {
-        setState(() {
-          _filter = NotificationType.draftLingering;
-          _bukaFilterBelumDibaca = false;
-        });
-        _muat();
-      },
-    };
-
-    bool selected(String label) {
-      if (label == 'Semua') return _filter == null && !_bukaFilterBelumDibaca;
-      if (label == 'Belum dibaca') return _bukaFilterBelumDibaca;
-      if (label == 'Gagal Sync') return _filter == NotificationType.syncFailed;
-      if (label == 'Menunggu Lama') {
-        return _filter == NotificationType.waitingTooLong;
-      }
-      if (label == 'Draft') return _filter == NotificationType.draftLingering;
-      return false;
-    }
-
-    return SizedBox(
-      height: 48,
-      child: ListView(
-        scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-        children: chips.entries
-            .map(
-              (e) => Padding(
-                padding: const EdgeInsets.only(right: 8),
-                child: ChoiceChip(
-                  label: Text(e.key),
-                  selected: selected(e.key),
-                  onSelected: (_) => e.value(),
-                ),
-              ),
-            )
-            .toList(),
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 6),
+      child: StatusFilterBar(
+        selected: _kunciFilter,
+        onChanged: _pilihFilter,
+        options: <StatusFilterOption>[
+          const StatusFilterOption(
+            value: null,
+            label: 'Semua',
+            color: AppTheme.primaryColor,
+          ),
+          const StatusFilterOption(
+            value: _kunciBelumDibaca,
+            label: 'Belum dibaca',
+            color: AppTheme.primaryColor,
+          ),
+          StatusFilterOption(
+            value: NotificationType.syncFailed.name,
+            label: 'Gagal Sync',
+            color: AppTheme.danger,
+          ),
+          StatusFilterOption(
+            value: NotificationType.waitingTooLong.name,
+            label: 'Menunggu Lama',
+            color: AppTheme.warning,
+          ),
+          StatusFilterOption(
+            value: NotificationType.draftLingering.name,
+            label: 'Draft',
+            color: AppTheme.menuTentang,
+          ),
+        ],
       ),
     );
   }
 
   Widget _buildEmpty() {
+    final bool adaFilter = _kunciFilter != null;
+
     return ListView(
       physics: const AlwaysScrollableScrollPhysics(),
-      children: [
-        SizedBox(height: MediaQuery.of(context).size.height * 0.2),
-        Icon(
-          Icons.notifications_none_rounded,
-          size: 48,
-          color: AppTheme.textMuted,
-        ),
-        const SizedBox(height: 10),
-        Center(
-          child: Text(
-            'Belum ada notifikasi.',
-            style: TextStyle(color: AppTheme.textSecondary(context)),
-          ),
+      children: <Widget>[
+        EmptyListState(
+          icon: Icons.notifications_none_rounded,
+          title: adaFilter ? 'Tidak ada yang cocok' : 'Belum ada notifikasi',
+          message: adaFilter
+              ? 'Tidak ada notifikasi untuk filter ini.'
+              : 'Pemberitahuan sinkronisasi dan draft akan muncul di sini.',
+          actionLabel: adaFilter ? 'Tampilkan semua' : null,
+          actionIcon: Icons.restart_alt_rounded,
+          onAction: adaFilter ? () => _pilihFilter(null) : null,
         ),
       ],
     );

@@ -1,7 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:ipardasbor/app/app_theme.dart';
 import 'package:ipardasbor/shared/widgets/list_filters.dart'
-    show FilterSheetFrame, FilterLabel;
+    show
+        FilterSheetFrame,
+        FilterLabel,
+        FilterChoiceGroup,
+        FilterChoice,
+        FilterSection;
 
 import '../models/proyek_data_filter.dart';
 import '../models/proyek_data_option.dart';
@@ -53,6 +58,92 @@ class _FilterSheetState extends State<_FilterSheet> {
   late List<String> _status = <String>[...widget.filter.statusModal];
   late List<String> _risiko = <String>[...widget.filter.risiko];
   late int? _versi = widget.filter.versiKbli;
+
+  List<ProyekDataOption>? _opsiStatus;
+  List<ProyekDataOption>? _opsiRisiko;
+  bool _opsiGagal = false;
+
+  int get _aktif =>
+      (_tampilProvinsi && _provinsi != null ? 1 : 0) +
+      (_kota.isNotEmpty ? 1 : 0) +
+      (_kbli.isNotEmpty ? 1 : 0) +
+      (_status.isNotEmpty ? 1 : 0) +
+      (_risiko.isNotEmpty ? 1 : 0) +
+      (_versi != null ? 1 : 0);
+
+  @override
+  void initState() {
+    super.initState();
+    _muatOpsi();
+  }
+
+  Future<void> _muatOpsi() async {
+    setState(() => _opsiGagal = false);
+    try {
+      final List<ProyekDataOptionResult> hasil =
+          await Future.wait<ProyekDataOptionResult>(
+            <Future<ProyekDataOptionResult>>[
+              widget.service.fetchOptions(tipe: ProyekDataOptionType.status),
+              widget.service.fetchOptions(tipe: ProyekDataOptionType.risiko),
+            ],
+          );
+      if (!mounted) return;
+      setState(() {
+        _opsiStatus = hasil[0].options;
+        _opsiRisiko = hasil[1].options;
+      });
+    } catch (_) {
+      if (mounted) setState(() => _opsiGagal = true);
+    }
+  }
+
+  /// Chip pilihan dari server (banyak pilihan). [warna] opsional untuk gaya
+  /// berwarna (risiko).
+  Widget _pilihan({
+    required List<ProyekDataOption>? opsi,
+    required List<String> terpilih,
+    required ValueChanged<List<String>> simpan,
+    Color Function(ProyekDataOption o)? warna,
+  }) {
+    if (_opsiGagal) {
+      return Row(
+        children: <Widget>[
+          Expanded(
+            child: Text(
+              'Pilihan gagal dimuat.',
+              style: TextStyle(
+                fontSize: 12.5,
+                color: AppTheme.textSecondary(context),
+              ),
+            ),
+          ),
+          TextButton(onPressed: _muatOpsi, child: const Text('Coba lagi')),
+        ],
+      );
+    }
+    if (opsi == null) {
+      return const SizedBox(
+        height: 40,
+        child: Align(
+          alignment: Alignment.centerLeft,
+          child: SizedBox(
+            width: 18,
+            height: 18,
+            child: CircularProgressIndicator(strokeWidth: 2),
+          ),
+        ),
+      );
+    }
+    return FilterChoiceGroup(
+      multi: true,
+      options: <FilterChoice>[
+        for (final ProyekDataOption o in opsi)
+          FilterChoice(value: o.value, label: o.label, color: warna?.call(o)),
+      ],
+      selected: terpilih,
+      onChanged: (List<String> v) => setState(() => simpan(v)),
+    );
+  }
 
   bool get _tampilProvinsi => widget.provinsiTerkunci == null;
   bool get _kotaAktif => !_tampilProvinsi || _provinsi != null;
@@ -129,17 +220,23 @@ class _FilterSheetState extends State<_FilterSheet> {
   Widget build(BuildContext context) {
     return FilterSheetFrame(
       title: 'Filter Data Proyek',
+      subtitle: 'Penelusuran data proyek BKPM',
+      icon: Icons.tune_rounded,
+      activeCount: _aktif,
       onReset: _reset,
       onApply: _terapkan,
       children: <Widget>[
         if (_tampilProvinsi)
           _PilihField(
             label: 'Provinsi',
+            icon: Icons.map_outlined,
             ringkasan: _provinsi ?? 'Pilih provinsi',
             onTap: _pilihProvinsi,
           ),
         _PilihField(
           label: 'Kabupaten/Kota',
+          icon: Icons.location_on_outlined,
+          hint: widget.provinsiTerkunci,
           ringkasan: _ringkas(_kota, 'Semua kabupaten/kota'),
           onTap: _kotaAktif
               ? () => _pilihMulti(
@@ -153,7 +250,8 @@ class _FilterSheetState extends State<_FilterSheet> {
           helper: _kotaAktif ? null : 'Pilih provinsi dulu.',
         ),
         _PilihField(
-          label: 'KBLI',
+          label: 'KBLI (Klasifikasi Baku Lapangan Usaha)',
+          icon: Icons.search_rounded,
           ringkasan: _ringkas(_kbli, 'Semua KBLI'),
           onTap: () => _pilihMulti(
             title: 'KBLI',
@@ -162,44 +260,37 @@ class _FilterSheetState extends State<_FilterSheet> {
             simpan: (List<String> v) => _kbli = v,
           ),
           helper:
-              'Memilih kode mencakup semua versi KBLI. Untuk satu '
-              'versi saja, gunakan Versi KBLI di bawah.',
+              'Memilih kode mencakup semua versi KBLI. Untuk satu versi '
+              'saja, gunakan Versi KBLI di bawah.',
         ),
-        FilterLabel('Versi KBLI'),
-        Wrap(
-          spacing: 8,
-          children: <Widget>[
-            for (final (int? v, String teks) in <(int?, String)>[
-              (null, 'Semua'),
-              (2020, '2020'),
-              (2025, '2025'),
-            ])
-              ChoiceChip(
-                label: Text(teks),
-                selected: _versi == v,
-                onSelected: (_) => setState(() => _versi = v),
-              ),
-          ],
+        FilterSection(
+          label: 'Versi KBLI',
+          child: FilterChoiceGroup(
+            columns: 3,
+            options: const <FilterChoice>[
+              FilterChoice(value: '2020', label: '2020'),
+              FilterChoice(value: '2025', label: '2025'),
+            ],
+            selected: <String>[?_versi?.toString()],
+            onChanged: (List<String> v) =>
+                setState(() => _versi = v.isEmpty ? null : int.parse(v.first)),
+          ),
         ),
-        const SizedBox(height: 14),
-        _PilihField(
+        FilterSection(
           label: 'Penanaman Modal',
-          ringkasan: _ringkas(_status, 'Semua'),
-          onTap: () => _pilihMulti(
-            title: 'Penanaman Modal',
-            tipe: ProyekDataOptionType.status,
-            saat: _status,
+          child: _pilihan(
+            opsi: _opsiStatus,
+            terpilih: _status,
             simpan: (List<String> v) => _status = v,
           ),
         ),
-        _PilihField(
-          label: 'Risiko',
-          ringkasan: _ringkas(_risiko, 'Semua tingkat risiko'),
-          onTap: () => _pilihMulti(
-            title: 'Risiko',
-            tipe: ProyekDataOptionType.risiko,
-            saat: _risiko,
+        FilterSection(
+          label: 'Tingkat Risiko',
+          child: _pilihan(
+            opsi: _opsiRisiko,
+            terpilih: _risiko,
             simpan: (List<String> v) => _risiko = v,
+            warna: (ProyekDataOption o) => AppTheme.warnaRisiko(o.label),
           ),
         ),
       ],
@@ -207,46 +298,52 @@ class _FilterSheetState extends State<_FilterSheet> {
   }
 }
 
-/// Kolom yang tampak seperti dropdown tetapi membuka pemilih. [onTap] null
-/// berarti dinonaktifkan.
 class _PilihField extends StatelessWidget {
   const _PilihField({
     required this.label,
     required this.ringkasan,
     required this.onTap,
+    this.icon,
+    this.hint,
     this.helper,
   });
 
   final String label;
   final String ringkasan;
   final VoidCallback? onTap;
+  final IconData? icon;
+  final String? hint;
   final String? helper;
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 14),
+    return FilterSection(
+      label: label,
+      hint: hint,
       child: Opacity(
         opacity: onTap == null ? 0.5 : 1,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
-            FilterLabel(label),
             InkWell(
               onTap: onTap,
-              borderRadius: BorderRadius.circular(4),
+              borderRadius: BorderRadius.circular(12),
               child: Container(
                 width: double.infinity,
                 padding: const EdgeInsets.symmetric(
                   horizontal: 12,
-                  vertical: 14,
+                  vertical: 13,
                 ),
                 decoration: BoxDecoration(
                   border: Border.all(color: AppTheme.border(context)),
-                  borderRadius: BorderRadius.circular(4),
+                  borderRadius: BorderRadius.circular(12),
                 ),
                 child: Row(
                   children: <Widget>[
+                    if (icon != null) ...<Widget>[
+                      Icon(icon, size: 19, color: AppTheme.primaryColor),
+                      const SizedBox(width: 10),
+                    ],
                     Expanded(
                       child: Text(
                         ringkasan,

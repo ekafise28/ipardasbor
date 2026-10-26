@@ -1,6 +1,5 @@
 import 'dart:io';
 
-import 'package:intl/intl.dart';
 import 'package:ipardasbor/shared/utils/csv_export.dart' show stempelFile;
 import 'package:path_provider/path_provider.dart';
 

@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:ipardasbor/shared/widgets/list_filters.dart'
-    show FilterLabel, FilterSheetFrame, FilterDropdown;
+    show FilterLabel, FilterSheetFrame, FilterDropdown, FilterDateField, FilterChoice, FilterChoiceGroup, FilterSection;
 
-import '../../../app/app_theme.dart';
 import '../../../core/constants/bidang_usaha_constants.dart';
 
 import '../models/riwayat_filter.dart';
@@ -42,6 +41,13 @@ class _RiwayatFilterSheetState extends State<_RiwayatFilterSheet> {
   late int? _kabupatenId = widget.filter.kabupatenId;
   late DateTime? _tanggalMulai = widget.filter.tanggalMulai;
   late DateTime? _tanggalSelesai = widget.filter.tanggalSelesai;
+
+  /// Jumlah bagian yang terisi di sheet ini (rentang tanggal dihitung satu).
+  int get _aktif =>
+      (_sumberData != null ? 1 : 0) +
+      (_bidangUsaha != null ? 1 : 0) +
+      (_kabupatenId != null ? 1 : 0) +
+      ((_tanggalMulai != null || _tanggalSelesai != null) ? 1 : 0);
 
   Future<void> _pilihTanggal({required bool mulai}) async {
     final DateTime sekarang = DateTime.now();
@@ -96,11 +102,15 @@ class _RiwayatFilterSheetState extends State<_RiwayatFilterSheet> {
   Widget build(BuildContext context) {
     return FilterSheetFrame(
       title: 'Filter Riwayat',
+      subtitle: 'Data Pengawasan yang Telah Dilakukan',
+      icon: Icons.tune_rounded,
+      activeCount: _aktif,
       onReset: _reset,
       onApply: _terapkan,
       children: <Widget>[
         FilterDropdown<String>(
           label: 'Bidang Usaha',
+          icon: Icons.apartment_rounded,
           value: _bidangUsaha,
           semuaLabel: 'Semua bidang',
           options: <(String, String)>[
@@ -109,56 +119,58 @@ class _RiwayatFilterSheetState extends State<_RiwayatFilterSheet> {
           ],
           onChanged: (String? v) => setState(() => _bidangUsaha = v),
         ),
-
-        FilterLabel('Sumber Data'),
-        Wrap(
-          spacing: 8,
-          children: <Widget>[
-            for (final String opsi in widget.options.sumberData)
-              ChoiceChip(
-                label: Text(opsi),
-                selected: _sumberData == opsi,
-                onSelected: (bool selected) {
-                  setState(() => _sumberData = selected ? opsi : null);
-                },
-              ),
-          ],
+        FilterSection(
+          label: 'Sumber Data',
+          hint: _sumberData == null ? null : 'Tersaring: $_sumberData',
+          child: FilterChoiceGroup(
+            options: <FilterChoice>[
+              for (final String o in widget.options.sumberData)
+                FilterChoice(value: o, label: o),
+            ],
+            selected: <String>[?_sumberData],
+            onChanged: (List<String> v) =>
+                setState(() => _sumberData = v.isEmpty ? null : v.first),
+          ),
         ),
-        const SizedBox(height: 16),
-
         FilterDropdown<int>(
           label: 'Kabupaten/Kota',
+          icon: Icons.location_on_outlined,
           value: _kabupatenId,
           semuaLabel: 'Semua kabupaten/kota',
           options: <(int, String)>[
-            for (final o in widget.options.kabupaten) (o.id, o.nama),
+            for (final option in widget.options.kabupaten)
+              (option.id, option.nama),
           ],
           onChanged: (int? v) => setState(() => _kabupatenId = v),
         ),
-
-        FilterLabel('Rentang Tanggal'),
-        Row(
-          children: <Widget>[
-            Expanded(
-              child: _TanggalButton(
-                label: _tanggalMulai == null
-                    ? 'Dari tanggal'
-                    : _formatTanggalSingkat(_tanggalMulai!),
-                onTap: () => _pilihTanggal(mulai: true),
+        FilterSection(
+          label: 'Rentang Tanggal Pengawasan',
+          child: Row(
+            children: <Widget>[
+              Expanded(
+                child: FilterDateField(
+                  label: 'Dari Tanggal',
+                  placeholder: 'Pilih tanggal',
+                  text: _tanggalMulai == null
+                      ? null
+                      : _formatTanggalSingkat(_tanggalMulai!),
+                  onTap: () => _pilihTanggal(mulai: true),
+                ),
               ),
-            ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: _TanggalButton(
-                label: _tanggalSelesai == null
-                    ? 'Sampai tanggal'
-                    : _formatTanggalSingkat(_tanggalSelesai!),
-                onTap: () => _pilihTanggal(mulai: false),
+              const SizedBox(width: 10),
+              Expanded(
+                child: FilterDateField(
+                  label: 'Sampai Tanggal',
+                  placeholder: 'Pilih tanggal',
+                  text: _tanggalSelesai == null
+                      ? null
+                      : _formatTanggalSingkat(_tanggalSelesai!),
+                  onTap: () => _pilihTanggal(mulai: false),
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
-        const SizedBox(height: 12),
       ],
     );
   }
@@ -168,21 +180,5 @@ class _RiwayatFilterSheetState extends State<_RiwayatFilterSheet> {
     final String bulan = tanggal.month.toString().padLeft(2, '0');
 
     return '$hari/$bulan/${tanggal.year}';
-  }
-}
-
-class _TanggalButton extends StatelessWidget {
-  const _TanggalButton({required this.label, required this.onTap});
-
-  final String label;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return OutlinedButton.icon(
-      onPressed: onTap,
-      icon: const Icon(Icons.calendar_today_outlined, size: 16),
-      label: Text(label, overflow: TextOverflow.ellipsis),
-    );
   }
 }

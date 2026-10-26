@@ -7,7 +7,7 @@ class BaselineOtaFilter {
     this.kabupatenId,
     this.kecamatanId,
     this.kelurahanId,
-    this.platformOta,
+    this.platformOta = const <String>[],
     this.namaListing,
     this.status,
     this.perPage = 25,
@@ -19,7 +19,11 @@ class BaselineOtaFilter {
   int? kabupatenId;
   int? kecamatanId;
   int? kelurahanId;
-  String? platformOta;
+
+  /// Kosong = semua platform. Mutable, tetapi selalu ganti seluruh list
+  /// (jangan add/remove) karena nilai awalnya const.
+  List<String> platformOta;
+
   String? namaListing;
 
   /// null = semua status, atau 'BELUM' / 'SUDAH'.
@@ -30,7 +34,7 @@ class BaselineOtaFilter {
       kabupatenId != null ||
       kecamatanId != null ||
       kelurahanId != null ||
-      (platformOta ?? '').trim().isNotEmpty ||
+      platformOta.isNotEmpty ||
       (namaListing ?? '').trim().isNotEmpty ||
       status != null;
 
@@ -48,20 +52,23 @@ class BaselineOtaFilter {
     bool clearKecamatan = false,
     int? kelurahanId,
     bool clearKelurahan = false,
-    String? platformOta,
+    List<String>? platformOta,
     bool clearPlatformOta = false,
     String? namaListing,
     String? status,
     bool clearStatus = false,
     int? perPage,
-    double? lat, double? lng,
+    double? lat,
+    double? lng,
   }) {
     return BaselineOtaFilter(
       provinsiId: provinsiId ?? this.provinsiId,
       kabupatenId: clearKabupaten ? null : (kabupatenId ?? this.kabupatenId),
       kecamatanId: clearKecamatan ? null : (kecamatanId ?? this.kecamatanId),
       kelurahanId: clearKelurahan ? null : (kelurahanId ?? this.kelurahanId),
-      platformOta: clearPlatformOta ? null : (platformOta ?? this.platformOta),
+      platformOta: clearPlatformOta
+          ? const <String>[]
+          : List<String>.of(platformOta ?? this.platformOta),
       namaListing: namaListing ?? this.namaListing,
       status: clearStatus ? null : (status ?? this.status),
       perPage: perPage ?? this.perPage,
@@ -70,24 +77,29 @@ class BaselineOtaFilter {
     );
   }
 
-  BaselineOtaFilter reset() =>
-    BaselineOtaFilter(provinsiId: provinsiId, perPage: perPage, lat: lat, lng: lng);
+  BaselineOtaFilter reset() => BaselineOtaFilter(
+    provinsiId: provinsiId,
+    perPage: perPage,
+    lat: lat,
+    lng: lng,
+  );
 
   /// _buildUri() di ApiClient sudah otomatis membuang value null/kosong,
-  /// jadi di sini tidak perlu filter manual.
+  /// jadi di sini tidak perlu filter manual. Platform dikirim "A|B|C"
+  /// (ApiClient tidak mengirim array), sama dengan filter Data Proyek.
   Map<String, dynamic> toQueryParams(int page) {
-    return {
+    return <String, dynamic>{
       'page': page,
       'per_page': perPage,
       'provinsi_id': provinsiId,
       'kabupaten_id': kabupatenId,
       'kecamatan_id': kecamatanId,
       'kelurahan_id': kelurahanId,
-      'platform_ota': platformOta,
+      'platform_ota': platformOta.join('|'),
       'nama_listing': namaListing,
       'status': status,
       'lat': lat,
-'lng': lng,
+      'lng': lng,
     };
   }
 }
