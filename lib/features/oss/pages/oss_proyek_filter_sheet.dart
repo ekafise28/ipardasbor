@@ -63,9 +63,11 @@ class _OssProyekFilterSheetState extends State<_OssProyekFilterSheet> {
   late int? _kabupatenId = widget.filter.kabupatenId;
   late int? _kecamatanId = widget.filter.kecamatanId;
   late int? _kelurahanId = widget.filter.kelurahanId;
-  late String? _statusModal = widget.filter.statusPenanamanModal;
-  late String? _skalaUsaha = widget.filter.uraianSkalaUsaha;
-  late String? _risiko = widget.filter.uraianRisiko;
+  late List<String> _statusModal = <String>[
+    ...widget.filter.statusPenanamanModal,
+  ];
+  late List<String> _skalaUsaha = <String>[...widget.filter.uraianSkalaUsaha];
+  late List<String> _risiko = <String>[...widget.filter.uraianRisiko];
   late final RegionCascade _cascade = RegionCascade(RegionService());
 
   /// Jumlah bagian yang terisi di sheet (provinsi tidak dihitung, sama dengan
@@ -74,9 +76,9 @@ class _OssProyekFilterSheetState extends State<_OssProyekFilterSheet> {
       (_kabupatenId != null ? 1 : 0) +
       (_kecamatanId != null ? 1 : 0) +
       (_kelurahanId != null ? 1 : 0) +
-      (_statusModal != null ? 1 : 0) +
-      (_skalaUsaha != null ? 1 : 0) +
-      (_risiko != null ? 1 : 0);
+      (_statusModal.isNotEmpty ? 1 : 0) +
+      (_skalaUsaha.isNotEmpty ? 1 : 0) +
+      (_risiko.isNotEmpty ? 1 : 0);
 
   /// True kalau provinsi diganti di sheet tapi belum diterapkan. Pilihan
   /// kabupaten dari backend masih milik provinsi lama, jadi dikunci dulu.
@@ -135,9 +137,9 @@ class _OssProyekFilterSheetState extends State<_OssProyekFilterSheet> {
       _kabupatenId = null;
       _kecamatanId = null;
       _kelurahanId = null;
-      _statusModal = null;
-      _skalaUsaha = null;
-      _risiko = null;
+      _statusModal = <String>[];
+      _skalaUsaha = <String>[];
+      _risiko = <String>[];
     });
     _cascade.muatKecamatan(null);
   }
@@ -154,11 +156,11 @@ class _OssProyekFilterSheetState extends State<_OssProyekFilterSheet> {
         kelurahanId: _kelurahanId,
         clearKelurahanId: _kelurahanId == null,
         statusPenanamanModal: _statusModal,
-        clearStatusPenanamanModal: _statusModal == null,
+        clearStatusPenanamanModal: _statusModal.isEmpty,
         uraianSkalaUsaha: _skalaUsaha,
-        clearUraianSkalaUsaha: _skalaUsaha == null,
+        clearUraianSkalaUsaha: _skalaUsaha.isEmpty,
         uraianRisiko: _risiko,
-        clearUraianRisiko: _risiko == null,
+        clearUraianRisiko: _risiko.isEmpty,
       ),
     );
   }
@@ -211,7 +213,7 @@ class _OssProyekFilterSheetState extends State<_OssProyekFilterSheet> {
           onChanged: _pilihKecamatan,
           semuaLabel: 'Semua kecamatan',
           enabled: !_provinsiBerubah && _kabupatenId != null,
-          loading: _cascade.loadingKecamatan,          
+          loading: _cascade.loadingKecamatan,
           helper: _kabupatenId == null ? 'Pilih kabupaten/kota dulu.' : null,
         ),
         FilterDropdown<int>(
@@ -228,33 +230,31 @@ class _OssProyekFilterSheetState extends State<_OssProyekFilterSheet> {
         FilterSection(
           label: 'Status Penanaman Modal',
           child: FilterChoiceGroup(
+            multi: true,
             options: <FilterChoice>[
               for (final String o in OssProyekOpsi.statusPenanamanModal)
                 FilterChoice(value: o, label: o),
             ],
-            selected: <String>[?_statusModal],
-            onChanged: (List<String> v) =>
-                setState(() => _statusModal = v.isEmpty ? null : v.first),
+            selected: _statusModal,
+            onChanged: (List<String> v) => setState(() => _statusModal = v),
           ),
         ),
         FilterSection(
           label: 'Skala Usaha',
           child: FilterChoiceGroup(
+            multi: true,
             options: <FilterChoice>[
               for (final String o in OssProyekOpsi.skalaUsaha)
-                FilterChoice(
-                  value: o,
-                  label: o.replaceFirst('Usaha ', ''), // nilai tetap utuh
-                ),
+                FilterChoice(value: o, label: o.replaceFirst('Usaha ', '')),
             ],
-            selected: <String>[?_skalaUsaha],
-            onChanged: (List<String> v) =>
-                setState(() => _skalaUsaha = v.isEmpty ? null : v.first),
+            selected: _skalaUsaha,
+            onChanged: (List<String> v) => setState(() => _skalaUsaha = v),
           ),
         ),
         FilterSection(
           label: 'Tingkat Risiko Proyek',
           child: FilterChoiceGroup(
+            multi: true,
             columns: 2,
             semuaLabel: null,
             options: <FilterChoice>[
@@ -265,9 +265,8 @@ class _OssProyekFilterSheetState extends State<_OssProyekFilterSheet> {
                   color: AppTheme.warnaRisiko(o),
                 ),
             ],
-            selected: <String>[?_risiko],
-            onChanged: (List<String> v) =>
-                setState(() => _risiko = v.isEmpty ? null : v.first),
+            selected: _risiko,
+            onChanged: (List<String> v) => setState(() => _risiko = v),
           ),
         ),
       ],

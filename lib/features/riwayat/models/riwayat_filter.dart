@@ -4,9 +4,12 @@
 /// filter diubah dari UI (dropdown, date picker, search box).
 class RiwayatFilter {
   const RiwayatFilter({
-    this.sumberData,
+    this.sumberData = const <String>[],
     this.statusVerifikasi,
     this.bidangUsaha,
+    this.hasilValidasi,
+    this.memilikiNib = const <String>[],
+    this.terdaftarOta,
     this.kabupatenId,
     this.tanggalMulai,
     this.tanggalSelesai,
@@ -14,40 +17,58 @@ class RiwayatFilter {
     this.perPage = 25,
   });
 
-  final String? sumberData;
+  final List<String> sumberData;
   final String? statusVerifikasi;
   final String? bidangUsaha;
+  final String? hasilValidasi;
+  final List<String> memilikiNib;
+  final String? terdaftarOta;
+
   final int? kabupatenId;
+
   final DateTime? tanggalMulai;
   final DateTime? tanggalSelesai;
+
   final String search;
   final int perPage;
 
   bool get hasActiveFilter =>
-      sumberData != null ||
+      sumberData.isNotEmpty ||
       statusVerifikasi != null ||
       bidangUsaha != null ||
       kabupatenId != null ||
       tanggalMulai != null ||
       tanggalSelesai != null ||
+      hasilValidasi != null ||
+      memilikiNib.isNotEmpty ||
+      terdaftarOta != null ||
       search.trim().isNotEmpty;
 
   /// Jumlah filter dari sheet (tanpa pencarian teks dan status, yang
   /// punya kontrol sendiri). Rentang tanggal dihitung satu, sama seperti
   /// chipnya.
   int get jumlahFilterSheet =>
-      (sumberData != null ? 1 : 0) +
+      (sumberData.isNotEmpty ? 1 : 0) +
       (bidangUsaha != null ? 1 : 0) +
       (kabupatenId != null ? 1 : 0) +
+      (hasilValidasi != null ? 1 : 0) +
+      (memilikiNib.isNotEmpty ? 1 : 0) +
+      (terdaftarOta != null ? 1 : 0) +
       ((tanggalMulai != null || tanggalSelesai != null) ? 1 : 0);
 
   RiwayatFilter copyWith({
-    String? sumberData,
+    List<String>? sumberData,
     bool clearSumberData = false,
     String? statusVerifikasi,
     bool clearStatusVerifikasi = false,
     String? bidangUsaha,
     bool clearBidangUsaha = false,
+    String? hasilValidasi,
+    bool clearHasilValidasi = false,
+    List<String>? memilikiNib,
+    bool clearMemilikiNib = false,
+    String? terdaftarOta,
+    bool clearTerdaftarOta = false,
     int? kabupatenId,
     bool clearKabupatenId = false,
     DateTime? tanggalMulai,
@@ -58,11 +79,22 @@ class RiwayatFilter {
     int? perPage,
   }) {
     return RiwayatFilter(
-      sumberData: clearSumberData ? null : (sumberData ?? this.sumberData),
+      sumberData: clearSumberData
+          ? const <String>[]
+          : (sumberData ?? this.sumberData),
       statusVerifikasi: clearStatusVerifikasi
           ? null
           : (statusVerifikasi ?? this.statusVerifikasi),
       bidangUsaha: clearBidangUsaha ? null : (bidangUsaha ?? this.bidangUsaha),
+      hasilValidasi: clearHasilValidasi
+          ? null
+          : (hasilValidasi ?? this.hasilValidasi),
+      memilikiNib: clearMemilikiNib
+          ? const <String>[]
+          : (memilikiNib ?? this.memilikiNib),
+      terdaftarOta: clearTerdaftarOta
+          ? null
+          : (terdaftarOta ?? this.terdaftarOta),
       kabupatenId: clearKabupatenId ? null : (kabupatenId ?? this.kabupatenId),
       tanggalMulai: clearTanggalMulai
           ? null
@@ -81,9 +113,12 @@ class RiwayatFilter {
   /// jadi tidak perlu difilter manual di sini.
   Map<String, dynamic> toQueryParameters(int page) {
     return <String, dynamic>{
-      'sumber_data': sumberData,
+      'sumber_data': sumberData.join('|'),
       'status_verifikasi': statusVerifikasi,
       'bidang_usaha': bidangUsaha,
+      'hasil_validasi': hasilValidasi,
+      'memiliki_nib': memilikiNib.join('|'),
+      'terdaftar_ota': terdaftarOta,
       'kabupaten_id': kabupatenId,
       'tanggal_mulai': _formatTanggal(tanggalMulai),
       'tanggal_selesai': _formatTanggal(tanggalSelesai),
