@@ -1,5 +1,5 @@
 /// Opsi tetap untuk filter proyek OSS. Harus sama persis dengan
-/// Rule::in() di backend (mobileProyekIndex)
+/// daftar yang diizinkan di backend (mobileProyekIndex)
 class OssProyekOpsi {
   const OssProyekOpsi._();
 
@@ -26,9 +26,9 @@ class OssProyekFilter {
     this.kabupatenId,
     this.kecamatanId,
     this.kelurahanId,
-    this.statusPenanamanModal,
-    this.uraianSkalaUsaha,
-    this.uraianRisiko,
+    this.statusPenanamanModal = const <String>[],
+    this.uraianSkalaUsaha = const <String>[],
+    this.uraianRisiko = const <String>[],
     this.statusVerifikasi,
     this.nibNku = '',
     this.perPage = 25,
@@ -38,9 +38,11 @@ class OssProyekFilter {
   final int? kabupatenId;
   final int? kecamatanId;
   final int? kelurahanId;
-  final String? statusPenanamanModal;
-  final String? uraianSkalaUsaha;
-  final String? uraianRisiko;
+
+  /// Kosong = semua. Dikirim ke server sebagai "A|B|C".
+  final List<String> statusPenanamanModal;
+  final List<String> uraianSkalaUsaha;
+  final List<String> uraianRisiko;
 
   /// null = semua, atau salah satu dari OssProyekOpsi.status*.
   final String? statusVerifikasi;
@@ -51,23 +53,21 @@ class OssProyekFilter {
       kabupatenId != null ||
       kecamatanId != null ||
       kelurahanId != null ||
-      statusPenanamanModal != null ||
-      uraianSkalaUsaha != null ||
-      uraianRisiko != null ||
+      statusPenanamanModal.isNotEmpty ||
+      uraianSkalaUsaha.isNotEmpty ||
+      uraianRisiko.isNotEmpty ||
       statusVerifikasi != null ||
       nibNku.trim().isNotEmpty;
 
-  /// Jumlah filter yang diatur lewat sheet filter (untuk badge di AppBar).
+  /// Jumlah bagian filter yang diatur lewat sheet (untuk badge di AppBar).
   /// Status verifikasi dan pencarian punya kontrolnya sendiri di halaman.
   int get jumlahFilterSheet =>
-      <Object?>[
-        kabupatenId,
-        kecamatanId,
-        kelurahanId,
-        statusPenanamanModal,
-        uraianSkalaUsaha,
-        uraianRisiko,
-      ].where((Object? e) => e != null).length;
+      (kabupatenId != null ? 1 : 0) +
+      (kecamatanId != null ? 1 : 0) +
+      (kelurahanId != null ? 1 : 0) +
+      (statusPenanamanModal.isNotEmpty ? 1 : 0) +
+      (uraianSkalaUsaha.isNotEmpty ? 1 : 0) +
+      (uraianRisiko.isNotEmpty ? 1 : 0);
 
   OssProyekFilter copyWith({
     int? provinsiId,
@@ -78,11 +78,11 @@ class OssProyekFilter {
     bool clearKecamatanId = false,
     int? kelurahanId,
     bool clearKelurahanId = false,
-    String? statusPenanamanModal,
+    List<String>? statusPenanamanModal,
     bool clearStatusPenanamanModal = false,
-    String? uraianSkalaUsaha,
+    List<String>? uraianSkalaUsaha,
     bool clearUraianSkalaUsaha = false,
-    String? uraianRisiko,
+    List<String>? uraianRisiko,
     bool clearUraianRisiko = false,
     String? statusVerifikasi,
     bool clearStatusVerifikasi = false,
@@ -95,13 +95,13 @@ class OssProyekFilter {
       kecamatanId: clearKecamatanId ? null : (kecamatanId ?? this.kecamatanId),
       kelurahanId: clearKelurahanId ? null : (kelurahanId ?? this.kelurahanId),
       statusPenanamanModal: clearStatusPenanamanModal
-          ? null
+          ? const <String>[]
           : (statusPenanamanModal ?? this.statusPenanamanModal),
       uraianSkalaUsaha: clearUraianSkalaUsaha
-          ? null
+          ? const <String>[]
           : (uraianSkalaUsaha ?? this.uraianSkalaUsaha),
       uraianRisiko: clearUraianRisiko
-          ? null
+          ? const <String>[]
           : (uraianRisiko ?? this.uraianRisiko),
       statusVerifikasi: clearStatusVerifikasi
           ? null
@@ -121,9 +121,10 @@ class OssProyekFilter {
       'kabupaten_id': kabupatenId,
       'kecamatan_id': kecamatanId,
       'kelurahan_id': kelurahanId,
-      'status_penanaman_modal': statusPenanamanModal,
-      'uraian_skala_usaha': uraianSkalaUsaha,
-      'uraian_risiko_proyek': uraianRisiko,
+      // ApiClient tidak mengirim array, jadi digabung "A|B|C".
+      'status_penanaman_modal': statusPenanamanModal.join('|'),
+      'uraian_skala_usaha': uraianSkalaUsaha.join('|'),
+      'uraian_risiko_proyek': uraianRisiko.join('|'),
       'status_verifikasi': statusVerifikasi,
       'nib_nku': angka.isEmpty ? null : angka,
       'per_page': perPage,

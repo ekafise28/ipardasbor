@@ -1,6 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:ipardasbor/app/app_theme.dart' show AppTheme;
 import 'package:ipardasbor/shared/widgets/list_filters.dart'
-    show FilterLabel, FilterSheetFrame, FilterDropdown, FilterDateField, FilterChoice, FilterChoiceGroup, FilterSection;
+    show
+        FilterLabel,
+        FilterSheetFrame,
+        FilterDropdown,
+        FilterDateField,
+        FilterChoice,
+        FilterChoiceGroup,
+        FilterSection;
 
 import '../../../core/constants/bidang_usaha_constants.dart';
 
@@ -36,17 +44,23 @@ class _RiwayatFilterSheet extends StatefulWidget {
 }
 
 class _RiwayatFilterSheetState extends State<_RiwayatFilterSheet> {
-  late String? _sumberData = widget.filter.sumberData;
+  late List<String> _sumberData = <String>[...widget.filter.sumberData];
   late String? _bidangUsaha = widget.filter.bidangUsaha;
   late int? _kabupatenId = widget.filter.kabupatenId;
   late DateTime? _tanggalMulai = widget.filter.tanggalMulai;
   late DateTime? _tanggalSelesai = widget.filter.tanggalSelesai;
+  late String? _hasilValidasi = widget.filter.hasilValidasi;
+  late List<String> _memilikiNib = <String>[...widget.filter.memilikiNib];
+  late String? _terdaftarOta = widget.filter.terdaftarOta;
 
   /// Jumlah bagian yang terisi di sheet ini (rentang tanggal dihitung satu).
   int get _aktif =>
-      (_sumberData != null ? 1 : 0) +
+      (_sumberData.isNotEmpty ? 1 : 0) +
       (_bidangUsaha != null ? 1 : 0) +
       (_kabupatenId != null ? 1 : 0) +
+      (_hasilValidasi != null ? 1 : 0) +
+      (_memilikiNib.isNotEmpty ? 1 : 0) +
+      (_terdaftarOta != null ? 1 : 0) +
       ((_tanggalMulai != null || _tanggalSelesai != null) ? 1 : 0);
 
   Future<void> _pilihTanggal({required bool mulai}) async {
@@ -73,8 +87,11 @@ class _RiwayatFilterSheetState extends State<_RiwayatFilterSheet> {
 
   void _reset() {
     setState(() {
-      _sumberData = null;
+      _sumberData = <String>[];
       _bidangUsaha = null;
+      _hasilValidasi = null;
+      _memilikiNib = <String>[];
+      _terdaftarOta = null;
       _kabupatenId = null;
       _tanggalMulai = null;
       _tanggalSelesai = null;
@@ -84,9 +101,15 @@ class _RiwayatFilterSheetState extends State<_RiwayatFilterSheet> {
   void _terapkan() {
     final RiwayatFilter hasil = widget.filter.copyWith(
       sumberData: _sumberData,
-      clearSumberData: _sumberData == null,
+      clearSumberData: _sumberData.isEmpty,
       bidangUsaha: _bidangUsaha,
       clearBidangUsaha: _bidangUsaha == null,
+      hasilValidasi: _hasilValidasi,
+      clearHasilValidasi: _hasilValidasi == null,
+      memilikiNib: _memilikiNib,
+      clearMemilikiNib: _memilikiNib.isEmpty,
+      terdaftarOta: _terdaftarOta,
+      clearTerdaftarOta: _terdaftarOta == null,
       kabupatenId: _kabupatenId,
       clearKabupatenId: _kabupatenId == null,
       tanggalMulai: _tanggalMulai,
@@ -120,15 +143,60 @@ class _RiwayatFilterSheetState extends State<_RiwayatFilterSheet> {
           onChanged: (String? v) => setState(() => _bidangUsaha = v),
         ),
         FilterSection(
-          label: 'Sumber Data',          
+          label: 'Sumber Data',
           child: FilterChoiceGroup(
+            multi: true,
             options: <FilterChoice>[
               for (final String o in widget.options.sumberData)
                 FilterChoice(value: o, label: o),
             ],
-            selected: <String>[?_sumberData],
+            selected: _sumberData,
+            onChanged: (List<String> v) => setState(() => _sumberData = v),
+          ),
+        ),
+        FilterSection(
+          label: 'Hasil Validasi',
+          child: FilterChoiceGroup(
+            options: const <FilterChoice>[
+              FilterChoice(
+                value: 'VALID',
+                label: 'Valid',
+                color: AppTheme.success,
+              ),
+              FilterChoice(
+                value: 'TIDAK_VALID',
+                label: 'Tidak valid',
+                color: AppTheme.danger,
+              ),
+            ],
+            selected: <String>[?_hasilValidasi],
             onChanged: (List<String> v) =>
-                setState(() => _sumberData = v.isEmpty ? null : v.first),
+                setState(() => _hasilValidasi = v.isEmpty ? null : v.first),
+          ),
+        ),
+        FilterSection(
+          label: 'Kepemilikan NIB',
+          child: FilterChoiceGroup(
+            multi: true,
+            options: const <FilterChoice>[
+              FilterChoice(value: 'YA', label: 'Memiliki'),
+              FilterChoice(value: 'TIDAK', label: 'Tidak ada'),
+              FilterChoice(value: 'TIDAK TAHU', label: 'Tidak tahu'),
+            ],
+            selected: _memilikiNib,
+            onChanged: (List<String> v) => setState(() => _memilikiNib = v),
+          ),
+        ),
+        FilterSection(
+          label: 'Terdaftar di OTA',
+          child: FilterChoiceGroup(
+            options: const <FilterChoice>[
+              FilterChoice(value: 'YA', label: 'Terdaftar'),
+              FilterChoice(value: 'TIDAK', label: 'Tidak terdaftar'),
+            ],
+            selected: <String>[?_terdaftarOta],
+            onChanged: (List<String> v) =>
+                setState(() => _terdaftarOta = v.isEmpty ? null : v.first),
           ),
         ),
         FilterDropdown<int>(

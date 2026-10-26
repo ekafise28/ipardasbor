@@ -287,28 +287,43 @@ class _OssProyekPageState extends State<OssProyekPage>
         ),
       );
     }
-    if (f.statusPenanamanModal != null) {
+    for (final String s in f.statusPenanamanModal) {
       chips.add(
         FilterChipData(
-          label: f.statusPenanamanModal!,
-          onRemove: () =>
-              _ubahFilter(f.copyWith(clearStatusPenanamanModal: true)),
+          label: s,
+          onRemove: () => _ubahFilter(
+            f.copyWith(
+              statusPenanamanModal: f.statusPenanamanModal
+                  .where((String e) => e != s)
+                  .toList(),
+            ),
+          ),
         ),
       );
     }
-    if (f.uraianSkalaUsaha != null) {
+    for (final String s in f.uraianSkalaUsaha) {
       chips.add(
         FilterChipData(
-          label: f.uraianSkalaUsaha!,
-          onRemove: () => _ubahFilter(f.copyWith(clearUraianSkalaUsaha: true)),
+          label: s,
+          onRemove: () => _ubahFilter(
+            f.copyWith(
+              uraianSkalaUsaha: f.uraianSkalaUsaha
+                  .where((String e) => e != s)
+                  .toList(),
+            ),
+          ),
         ),
       );
     }
-    if (f.uraianRisiko != null) {
+    for (final String r in f.uraianRisiko) {
       chips.add(
         FilterChipData(
-          label: 'Risiko ${f.uraianRisiko!}',
-          onRemove: () => _ubahFilter(f.copyWith(clearUraianRisiko: true)),
+          label: 'Risiko $r',
+          onRemove: () => _ubahFilter(
+            f.copyWith(
+              uraianRisiko: f.uraianRisiko.where((String e) => e != r).toList(),
+            ),
+          ),
         ),
       );
     }

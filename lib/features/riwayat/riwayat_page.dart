@@ -218,12 +218,15 @@ class _RiwayatPageState extends State<RiwayatPage>
     final RiwayatFilter f = _filter;
 
     return <FilterChipData>[
-      if (f.sumberData != null)
+      for (final String s in f.sumberData)
         FilterChipData(
-          label: f.sumberData!,
-          onRemove: () => _ubahFilter(f.copyWith(clearSumberData: true)),
+          label: s,
+          onRemove: () => _ubahFilter(
+            f.copyWith(
+              sumberData: f.sumberData.where((String e) => e != s).toList(),
+            ),
+          ),
         ),
-      // DIHAPUS: chip statusVerifikasi, sekarang ada di StatusFilterBar.
       if (f.bidangUsaha != null)
         FilterChipData(
           label: BidangUsahaOpsi.namaDari(f.bidangUsaha) ?? f.bidangUsaha!,
@@ -233,6 +236,29 @@ class _RiwayatPageState extends State<RiwayatPage>
         FilterChipData(
           label: _namaKabupaten(f.kabupatenId!),
           onRemove: () => _ubahFilter(f.copyWith(clearKabupatenId: true)),
+        ),
+      if (f.hasilValidasi != null)
+        FilterChipData(
+          label: f.hasilValidasi == 'VALID' ? 'Valid' : 'Tidak valid',
+          onRemove: () => _ubahFilter(f.copyWith(clearHasilValidasi: true)),
+        ),
+      for (final String n in f.memilikiNib)
+        FilterChipData(
+          label: switch (n) {
+            'YA' => 'Memiliki NIB',
+            'TIDAK' => 'Tanpa NIB',
+            _ => 'Tidak tahu NIB',
+          },
+          onRemove: () => _ubahFilter(
+            f.copyWith(
+              memilikiNib: f.memilikiNib.where((String e) => e != n).toList(),
+            ),
+          ),
+        ),
+      if (f.terdaftarOta != null)
+        FilterChipData(
+          label: f.terdaftarOta == 'YA' ? 'Terdaftar OTA' : 'Tidak di OTA',
+          onRemove: () => _ubahFilter(f.copyWith(clearTerdaftarOta: true)),
         ),
       if (f.tanggalMulai != null || f.tanggalSelesai != null)
         FilterChipData(
@@ -404,8 +430,7 @@ class _RiwayatPageState extends State<RiwayatPage>
         padding: const EdgeInsets.only(top: 4, bottom: 24),
         itemCount: items.length,
         itemBuilder: (BuildContext context, int index) {
-          final RiwayatItem item =
-              items[index];
+          final RiwayatItem item = items[index];
           return RiwayatCard(item: item, onTap: () => _bukaDetail(item));
         },
       ),
