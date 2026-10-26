@@ -48,6 +48,7 @@ class _BaselineOtaPageState extends State<BaselineOtaPage>
   final RegionService _regions = RegionService();
 
   final TextEditingController _searchCtrl = TextEditingController();
+  Timer? _debounce;
 
   BaselineOtaFilter _filter = BaselineOtaFilter();
   BaselineOtaFilterOptions? _filterOptions;
@@ -77,6 +78,7 @@ class _BaselineOtaPageState extends State<BaselineOtaPage>
 
   @override
   void dispose() {
+    _debounce?.cancel();
     _ctrl
       ..removeListener(_onCtrl)
       ..dispose();
@@ -180,10 +182,27 @@ class _BaselineOtaPageState extends State<BaselineOtaPage>
     }
   }
 
-  void _cari(String keyword) {
-    FocusScope.of(context).unfocus();
-    _filter.namaListing = keyword.trim().isEmpty ? null : keyword.trim();
+  /// Menerapkan kata kunci. Tidak memuat ulang kalau kata kuncinya sama.
+  void _terapkanPencarian(String keyword) {
+    _debounce?.cancel();
+    final String? baru = keyword.trim().isEmpty ? null : keyword.trim();
+    if (baru == _filter.namaListing) return;
+    _filter.namaListing = baru;
+    jumpKeAtas();
     _ctrl.reload();
+  }
+
+  void _onSearchChanged(String value) {
+    _debounce?.cancel();
+    _debounce = Timer(
+      const Duration(milliseconds: 500),
+      () => _terapkanPencarian(value),
+    );
+  }
+
+  void _hapusPencarian() {
+    _searchCtrl.clear();
+    _terapkanPencarian('');
   }
 
   void _setStatus(String? status) {
@@ -408,11 +427,12 @@ class _BaselineOtaPageState extends State<BaselineOtaPage>
             child: ListSearchField(
               controller: _searchCtrl,
               hintText: 'Cari listing, alamat, platform...',
-              onSubmitted: _cari,
-              onClear: () {
-                _searchCtrl.clear();
-                _cari('');
+              onChanged: _onSearchChanged,
+              onSubmitted: (String v) {
+                FocusScope.of(context).unfocus();
+                _terapkanPencarian(v);
               },
+              onClear: _hapusPencarian,
             ),
           ),
           _buildBarisFilterCepat(),
