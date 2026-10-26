@@ -13,6 +13,7 @@ import 'services/okupansi_service.dart';
 import 'widgets/okupansi_charts.dart';
 import 'widgets/okupansi_filter_panel.dart';
 import 'widgets/okupansi_kpi_cards.dart';
+import '../../../shared/widgets/list_parts.dart';
 
 class OkupansiAkomodasiPage extends StatefulWidget {
   const OkupansiAkomodasiPage({super.key});
@@ -142,7 +143,14 @@ class _OkupansiAkomodasiPageState extends State<OkupansiAkomodasiPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Okupansi Akomodasi')),
+      appBar: AppBar(
+        backgroundColor: AppTheme.primaryDark,
+        foregroundColor: Colors.white,
+        title: const TwoLineTitle(
+          title: 'Okupansi Akomodasi',
+          subtitle: 'Dashboard Operasional',
+        ),
+      ),
       body: SafeArea(
         top: false,
         child: Column(

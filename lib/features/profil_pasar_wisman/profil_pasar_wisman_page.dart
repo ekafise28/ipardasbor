@@ -13,6 +13,7 @@ import 'services/rekap_service.dart';
 import 'widgets/rekap_charts.dart';
 import 'widgets/rekap_filter_panel.dart';
 import 'widgets/rekap_kpi_cards.dart';
+import '../../../shared/widgets/list_parts.dart';
 
 class ProfilPasarWismanPage extends StatefulWidget {
   const ProfilPasarWismanPage({super.key});
@@ -140,7 +141,14 @@ class _ProfilPasarWismanPageState extends State<ProfilPasarWismanPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Profil Pasar Wisatawan Mancanegara')),
+      appBar: AppBar(
+        backgroundColor: AppTheme.primaryDark,
+        foregroundColor: Colors.white,
+        title: const TwoLineTitle(
+          title: 'Profil Pasar Wisatawan Mancanegara',
+          subtitle: 'Dashboard Wisman Rekap',
+        ),
+      ),
       body: SafeArea(
         top: false,
         child: Column(

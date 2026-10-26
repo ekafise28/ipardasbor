@@ -9,11 +9,11 @@ import 'package:ipardasbor/shared/region/services/wilayah_akses_service.dart';
 import 'package:ipardasbor/features/ota/baseline_ota_page.dart';
 import 'package:ipardasbor/features/notifications/notification_page.dart';
 import 'package:ipardasbor/features/notifications/services/notification_service.dart';
-import '../industri_pariwisata/industri_pariwisata_page.dart';
-import '../wisatawan_mancanegara/wisatawan_mancanegara_page.dart';
-import '../profil_pasar_wisman/profil_pasar_wisman_page.dart';
-import '../okupansi_akomodasi/okupansi_akomodasi_page.dart';
-
+// import '../industri_pariwisata/industri_pariwisata_page.dart';
+// import '../wisatawan_mancanegara/wisatawan_mancanegara_page.dart';
+// import '../profil_pasar_wisman/profil_pasar_wisman_page.dart';
+// import '../okupansi_akomodasi/okupansi_akomodasi_page.dart';
+import '../dashboard/dashboard_hub_page.dart';
 import '../../app/app_theme.dart';
 import '../dashboard/dashboard_page.dart';
 import '../peta_industri/peta_industri_page.dart';
@@ -197,37 +197,6 @@ class _HomePageState extends State<HomePage>
     backgroundColor: AppTheme.menuProfilBg,
   );
 
-  static const MenuData _mIndustriPariwisata = MenuData(
-    title: 'Industri Pariwisata',
-    description: 'Data usaha & industri pariwisata',
-    icon: Icons.apartment_rounded,
-    color: AppTheme.menuNonOss,
-    backgroundColor: AppTheme.menuNonOssBg,
-  );
-
-  static const MenuData _mWisman = MenuData(
-    title: 'Wisatawan Mancanegara',
-    description: 'Kunjungan wisman',
-    icon: Icons.flight_land_rounded,
-    color: AppTheme.menuOta,
-    backgroundColor: AppTheme.menuOtaBg,
-  );
-
-  static const MenuData _mProfilPasarWisman = MenuData(
-    title: 'Profil Pasar Wisatwawan Mancanegara',
-    description: 'Profil pasar wisatawan mancanegara',
-    icon: Icons.pie_chart_rounded,
-    color: AppTheme.menuRiwayat,
-    backgroundColor: AppTheme.menuRiwayatBg,
-  );
-
-  static const MenuData _mOkupansi = MenuData(
-    title: 'Okupansi Akomodasi',
-    description: 'Tingkat hunian akomodasi',
-    icon: Icons.hotel_rounded,
-    color: AppTheme.menuSinkronisasi,
-    backgroundColor: AppTheme.menuSinkronisasiBg,
-  );
   // 3 + 4 menu: pas mengisi grid 4 kolom tanpa baris yang timpang.
   static const List<_MenuGroup> _groups = [
     _MenuGroup('Pengawasan', [_mOss, _mNonOss, _mOta]),
@@ -239,11 +208,6 @@ class _HomePageState extends State<HomePage>
       _mSinkronisasi,
       _mProfil,
       _mKelolaAkun,
-      //Menu Bakal Masuk Ke Dashboard
-      _mIndustriPariwisata,
-      _mWisman,
-      _mProfilPasarWisman,
-      _mOkupansi,
     ]),
   ];
 
@@ -257,9 +221,9 @@ class _HomePageState extends State<HomePage>
   Future<void> _openMenu(BuildContext context, MenuData menu) async {
     switch (menu.title) {
       case 'Dashboard':
-        await Navigator.of(
-          context,
-        ).push(MaterialPageRoute<void>(builder: (_) => const DashboardPage()));
+        await Navigator.of(context).push(
+          MaterialPageRoute<void>(builder: (_) => const DashboardHubPage()),
+        );
         break;
 
       case 'Peta Industri':
@@ -318,38 +282,38 @@ class _HomePageState extends State<HomePage>
         ).push(MaterialPageRoute<void>(builder: (_) => const SyncPage()));
         break;
 
-      case 'Industri Pariwisata':
-        await Navigator.of(context).push(
-          MaterialPageRoute<void>(
-            builder: (_) => const IndustriPariwisataPage(),
-          ),
-        );
-        break;
+      // case 'Industri Pariwisata':
+      //   await Navigator.of(context).push(
+      //     MaterialPageRoute<void>(
+      //       builder: (_) => const IndustriPariwisataPage(),
+      //     ),
+      //   );
+      //   break;
 
-      case 'Wisatawan Mancanegara':
-        await Navigator.of(context).push(
-          MaterialPageRoute<void>(
-            builder: (_) => const WisatawanMancanegaraPage(),
-          ),
-        );
-        break;
+      // case 'Wisatawan Mancanegara':
+      //   await Navigator.of(context).push(
+      //     MaterialPageRoute<void>(
+      //       builder: (_) => const WisatawanMancanegaraPage(),
+      //     ),
+      //   );
+      //   break;
 
-      case 'Profil Pasar Wisatwawan Mancanegara':
-        await Navigator.of(context).push(
-          MaterialPageRoute<void>(
-            builder: (_) => const ProfilPasarWismanPage(),
-          ),
-        );
-        break;
+      // case 'Profil Pasar Wisatwawan Mancanegara':
+      //   await Navigator.of(context).push(
+      //     MaterialPageRoute<void>(
+      //       builder: (_) => const ProfilPasarWismanPage(),
+      //     ),
+      //   );
+      //   break;
 
-      // Judul harus SAMA PERSIS dengan `title` di MenuData.
-      case 'Okupansi Akomodasi':
-        await Navigator.of(context).push(
-          MaterialPageRoute<void>(
-            builder: (_) => const OkupansiAkomodasiPage(),
-          ),
-        );
-        break;
+      // // Judul harus SAMA PERSIS dengan `title` di MenuData.
+      // case 'Okupansi Akomodasi':
+      //   await Navigator.of(context).push(
+      //     MaterialPageRoute<void>(
+      //       builder: (_) => const OkupansiAkomodasiPage(),
+      //     ),
+      //   );
+      //   break;
 
       default:
         await Navigator.of(context).push(

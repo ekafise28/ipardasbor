@@ -8,6 +8,7 @@ import '../../../core/api/api_exception.dart';
 // import '../models/kelola_akun.dart';
 import '../services/profile_service.dart';
 import '../../../shared/widgets/skeleton.dart';
+import '../../../shared/widgets/list_parts.dart';
 
 class KelolaAkunPage extends StatefulWidget {
   const KelolaAkunPage({super.key});
@@ -789,10 +790,12 @@ class _KelolaAkunPageState extends State<KelolaAkunPage> {
     return Scaffold(
       backgroundColor: AppTheme.scaffoldColorDynamic(context),
       appBar: AppBar(
-        title: const Text('Kelola Akun'),
         backgroundColor: AppTheme.primaryDark,
         foregroundColor: Colors.white,
-        elevation: 0,
+        title: const TwoLineTitle(
+          title: 'Kelola Akun',
+          subtitle: 'Tambah, edit, dan hapus akun pengguna',
+        ),
       ),
       body: _isLoading
           ? const KelolaAkunSkeleton()

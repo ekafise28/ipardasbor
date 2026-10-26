@@ -5,6 +5,8 @@ import 'package:ipardasbor/features/non_oss/offline/non_oss_queue_store.dart';
 import 'package:ipardasbor/shared/region/services/wilayah_akses_service.dart';
 import 'package:ipardasbor/features/notifications/pages/notification_settings_page.dart';
 import 'package:ipardasbor/shared/screenshot/screenshot_button_controller.dart';
+import '../keamanan/keamanan_page.dart';
+import '../keamanan/services/biometric_service.dart';
 
 import '../../app/app_theme.dart';
 import '../authentication/models/auth_user.dart';
@@ -53,7 +55,7 @@ class _SettingsPageState extends State<SettingsPage> {
     ),
     MenuData(
       title: 'Keamanan',
-      description: 'Kelola PIN, biometrik, dan sesi login',
+      description: 'Kelola Face Unlock dan Sidik Jari',
       icon: Icons.security_rounded,
       color: AppTheme.menuKeamanan,
       backgroundColor: AppTheme.menuKeamananBg,
@@ -226,6 +228,12 @@ class _SettingsPageState extends State<SettingsPage> {
       ).push(MaterialPageRoute<void>(builder: (_) => const DataOfflinePage()));
       return;
     }
+    if (menu.title == 'Keamanan') {
+      Navigator.of(
+        context,
+      ).push(MaterialPageRoute<void>(builder: (_) => const KeamananPage()));
+      return;
+    }
 
     Navigator.of(context).push(
       MaterialPageRoute<void>(
@@ -305,6 +313,9 @@ class _SettingsPageState extends State<SettingsPage> {
                     onPressed: () async {
                       Navigator.pop(dialogContext);
                       await WilayahAksesService.instance.clear();
+                      // Matikan kunci biometrik supaya akun berikutnya
+                      // tidak ikut terkunci.
+                      await BiometricService.instance.setEnabled(false);
                       await AuthService().logout();
                       if (context.mounted) {
                         Navigator.pushNamedAndRemoveUntil(

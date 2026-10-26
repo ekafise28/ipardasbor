@@ -7,6 +7,7 @@ import 'package:ipardasbor/features/notifications/services/notification_service.
 import 'package:ipardasbor/features/notifications/services/notification_triggers.dart';
 import 'package:ipardasbor/shared/screenshot/screenshot_button_controller.dart';
 import 'package:ipardasbor/shared/screenshot/screenshot_fab.dart';
+import '../features/keamanan/app_lock_gate.dart';
 
 import '../core/api/api_client.dart';
 import '../features/authentication/login_page.dart';
@@ -53,7 +54,7 @@ class _IparAppState extends State<IparApp> with WidgetsBindingObserver {
     WidgetsBinding.instance.addObserver(this);
   }
 
-    void _onNetworkChanged() {
+  void _onNetworkChanged() {
     // value true = offline. Sync hanya saat kembali online.
     if (NetworkStatus.instance.isOffline) return;
     if (!AutoSyncController.instance.isEnabled) return;
@@ -100,10 +101,12 @@ class _IparAppState extends State<IparApp> with WidgetsBindingObserver {
           theme: AppTheme.lightTheme,
           darkTheme: AppTheme.darkTheme,
           themeMode: themeMode,
-          builder: (context, child) => ValueListenableBuilder<bool>(
-            valueListenable: ScreenshotButtonController.instance,
-            builder: (_, aktif, _) =>
-                ScreenshotOverlay(enabled: aktif, child: child!),
+          builder: (context, child) => AppLockGate(
+            child: ValueListenableBuilder<bool>(
+              valueListenable: ScreenshotButtonController.instance,
+              builder: (_, aktif, _) =>
+                  ScreenshotOverlay(enabled: aktif, child: child!),
+            ),
           ),
           initialRoute: '/',
           routes: {

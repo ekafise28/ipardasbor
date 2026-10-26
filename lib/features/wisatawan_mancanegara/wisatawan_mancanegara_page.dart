@@ -13,6 +13,7 @@ import 'services/wisman_service.dart';
 import 'widgets/wisman_charts.dart';
 import 'widgets/wisman_filter_panel.dart';
 import 'widgets/wisman_kpi_cards.dart';
+import '../../../shared/widgets/list_parts.dart';
 
 class WisatawanMancanegaraPage extends StatefulWidget {
   const WisatawanMancanegaraPage({super.key});
@@ -141,7 +142,14 @@ class _WisatawanMancanegaraPageState extends State<WisatawanMancanegaraPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Wisatawan Mancanegara')),
+      appBar: AppBar(
+        backgroundColor: AppTheme.primaryDark,
+        foregroundColor: Colors.white,
+        title: const TwoLineTitle(
+          title: 'Wisatawan Mancanegara',
+          subtitle: 'Dashboard Operasional',
+        ),
+      ),
       body: SafeArea(
         top: false,
         child: Column(

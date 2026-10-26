@@ -404,8 +404,7 @@ class _RiwayatPageState extends State<RiwayatPage>
         padding: const EdgeInsets.only(top: 4, bottom: 24),
         itemCount: items.length,
         itemBuilder: (BuildContext context, int index) {
-          final RiwayatItem item =
-              items[index];
+          final RiwayatItem item = items[index];
           return RiwayatCard(item: item, onTap: () => _bukaDetail(item));
         },
       ),

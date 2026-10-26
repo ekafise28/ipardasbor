@@ -18,6 +18,7 @@ import 'widgets/industri_kpi_cards.dart';
 import 'models/industri_ranking.dart';
 import 'widgets/industri_charts.dart';
 import 'widgets/industri_ranking_tables.dart';
+import '../../../shared/widgets/list_parts.dart';
 
 class IndustriPariwisataPage extends StatefulWidget {
   const IndustriPariwisataPage({super.key});
@@ -237,7 +238,14 @@ class _IndustriPariwisataPageState extends State<IndustriPariwisataPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Industri Pariwisata')),
+      appBar: AppBar(
+        backgroundColor: AppTheme.primaryDark,
+        foregroundColor: Colors.white,
+        title: const TwoLineTitle(
+          title: 'Industri Pariwisata',
+          subtitle: 'Executive Dashboard',
+        ),
+      ),
       body: SafeArea(
         top: false,
         child: Column(
