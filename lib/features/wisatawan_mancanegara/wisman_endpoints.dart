@@ -1,4 +1,4 @@
-// Alamat API dashboard operasional Wisman (padanan route
+// Alamat API dashboard operasional Wisman (route
 // dashboard-operasional.wisman.* di web, dipasang di prefix /mobile).
 
 class WismanEndpoints {

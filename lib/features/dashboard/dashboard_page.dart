@@ -363,9 +363,7 @@ class _DashboardPageState extends State<DashboardPage>
             title: 'Legalitas NIB $_labelBidang',
             subtitle: 'Kepemilikan NIB berdasarkan Kabupaten/Kota.',
             chartData: ChartSeriesData.fromDynamic(
-              dashboard
-                  .charts
-                  .district,
+              dashboard.charts.district,
               seriesConfig: const [
                 MapEntry('nib_ya', AppTheme.answerYes),
                 MapEntry('nib_tidak', AppTheme.answerNo),
@@ -391,7 +389,7 @@ class _DashboardPageState extends State<DashboardPage>
               AppTheme.answerUnknown,
               AppTheme.categoryTotal,
             ],
-            rows: dashboard.districtRecap.map((row) {              
+            rows: dashboard.districtRecap.map((row) {
               return [
                 row['nama_kabupaten']?.toString() ?? '-',
                 row['nib_ya']?.toString() ?? '0',
@@ -411,9 +409,7 @@ class _DashboardPageState extends State<DashboardPage>
             title: 'Status Pendaftaran Platform OTA',
             subtitle: 'Perbandingan usaha terdaftar dan tidak terdaftar OTA.',
             chartData: ChartSeriesData.fromDynamic(
-              dashboard
-                  .charts
-                  .district,
+              dashboard.charts.district,
               seriesConfig: const [
                 MapEntry('ota_ya', AppTheme.categoryOta),
                 MapEntry('ota_tidak', AppTheme.answerNone),
@@ -437,8 +433,7 @@ class _DashboardPageState extends State<DashboardPage>
             ],
             rows: dashboard.districtRecap.map((row) {
               return [
-                row['nama_kabupaten']?.toString() ??
-                    '-',
+                row['nama_kabupaten']?.toString() ?? '-',
                 row['ota_ya']?.toString() ?? '0',
                 row['ota_tidak']?.toString() ?? '0',
                 row['total']?.toString() ?? '0',

@@ -11,6 +11,8 @@ import 'package:ipardasbor/features/notifications/notification_page.dart';
 import 'package:ipardasbor/features/notifications/services/notification_service.dart';
 import '../industri_pariwisata/industri_pariwisata_page.dart';
 import '../wisatawan_mancanegara/wisatawan_mancanegara_page.dart';
+import '../profil_pasar_wisman/profil_pasar_wisman_page.dart';
+import '../okupansi_akomodasi/okupansi_akomodasi_page.dart';
 
 import '../../app/app_theme.dart';
 import '../dashboard/dashboard_page.dart';
@@ -212,7 +214,7 @@ class _HomePageState extends State<HomePage>
   );
 
   static const MenuData _mProfilPasarWisman = MenuData(
-    title: 'Profil Pasar Wisman',
+    title: 'Profil Pasar Wisatwawan Mancanegara',
     description: 'Profil pasar wisatawan mancanegara',
     icon: Icons.pie_chart_rounded,
     color: AppTheme.menuRiwayat,
@@ -328,6 +330,23 @@ class _HomePageState extends State<HomePage>
         await Navigator.of(context).push(
           MaterialPageRoute<void>(
             builder: (_) => const WisatawanMancanegaraPage(),
+          ),
+        );
+        break;
+
+      case 'Profil Pasar Wisatwawan Mancanegara':
+        await Navigator.of(context).push(
+          MaterialPageRoute<void>(
+            builder: (_) => const ProfilPasarWismanPage(),
+          ),
+        );
+        break;
+
+      // Judul harus SAMA PERSIS dengan `title` di MenuData.
+      case 'Okupansi Akomodasi':
+        await Navigator.of(context).push(
+          MaterialPageRoute<void>(
+            builder: (_) => const OkupansiAkomodasiPage(),
           ),
         );
         break;
