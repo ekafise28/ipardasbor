@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:local_auth/local_auth.dart';
 
 import '../../core/api/api_exception.dart';
+import '../keamanan/services/biometric_service.dart';
+import '../keamanan/services/face_login_store.dart';
 import 'services/auth_service.dart';
 
 class LoginPage extends StatefulWidget {
@@ -18,9 +21,11 @@ class _LoginPageState extends State<LoginPage> {
   final TextEditingController _passwordController = TextEditingController();
 
   final AuthService _authService = AuthService();
+  final BiometricService _bio = BiometricService.instance;
 
   bool _hidePassword = true;
   bool _isLoading = false;
+  bool _faceLoginReady = false;
 
   static const Color _navyDark = Color(0xFF071C3D);
   static const Color _navyLight = Color(0xFF173B70);
@@ -28,6 +33,24 @@ class _LoginPageState extends State<LoginPage> {
   static const Color _inputColor = Color(0xFF637A9D);
   static const Color _cyanColor = Color(0xFF1EB5E9);
   static const Color _goldColor = Color(0xFFE7B94E);
+
+  @override
+  void initState() {
+    super.initState();
+    _cekFaceLogin();
+  }
+
+  /// Tombol wajah tampil kalau Face Unlock aktif di Keamanan, kredensial
+  /// sudah tersimpan, dan HP menyerahkan wajah ke aplikasi.
+  Future<void> _cekFaceLogin() async {
+    final bool aktif = await _bio.isEnabled();
+    final bool ada = await FaceLoginStore.instance.exists();
+    final Set<BiometricType> t = await _bio.types();
+    final bool bisa =
+        t.contains(BiometricType.face) || t.contains(BiometricType.weak);
+    if (!mounted) return;
+    setState(() => _faceLoginReady = aktif && ada && bisa);
+  }
 
   @override
   void dispose() {
@@ -39,40 +62,96 @@ class _LoginPageState extends State<LoginPage> {
 
   Future<void> _login() async {
     FocusScope.of(context).unfocus();
+    if (_isLoading || !_formKey.currentState!.validate()) return;
 
-    if (_isLoading || !_formKey.currentState!.validate()) {
+    await _prosesLogin(_loginController.text.trim(), _passwordController.text);
+  }
+
+  Future<void> _loginDenganWajah() async {
+    if (_isLoading) return;
+
+    final bool ok = await _bio.authenticate(
+      'Verifikasi wajah untuk masuk',
+      biometricOnly: true,
+    );
+    if (!ok || !mounted) return;
+
+    final ({String id, String password})? cred = await FaceLoginStore.instance
+        .read();
+    if (cred == null) {
+      setState(() => _faceLoginReady = false);
       return;
     }
 
-    setState(() {
-      _isLoading = true;
-    });
+    await _prosesLogin(cred.id, cred.password, dariWajah: true);
+  }
+
+  Future<void> _prosesLogin(
+    String id,
+    String password, {
+    bool dariWajah = false,
+  }) async {
+    setState(() => _isLoading = true);
 
     try {
-      await _authService.login(
-        login: _loginController.text.trim(),
-        password: _passwordController.text,
-      );
+      await _authService.login(login: id, password: password);
+      if (!mounted) return;
 
+      if (!dariWajah) await _tawarkanSimpanWajah(id, password);
       if (!mounted) return;
 
       Navigator.pushNamedAndRemoveUntil(context, '/home', (route) => false);
     } on ApiException catch (error) {
       if (!mounted) return;
-
-      _showError(error.message);
+      _showError(
+        dariWajah
+            ? '${error.message}\nJika password sudah diganti, login manual '
+                  'lalu simpan ulang untuk Face Unlock.'
+            : error.message,
+      );
     } catch (_) {
       if (!mounted) return;
-
       _showError(
         'Login gagal diproses. Periksa koneksi internet lalu coba kembali.',
       );
     } finally {
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
-      }
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  /// Setelah login password sukses, tawarkan simpan kredensial untuk wajah.
+  /// Hanya muncul kalau Face Unlock sudah diaktifkan di Keamanan.
+  Future<void> _tawarkanSimpanWajah(String id, String password) async {
+    if (!await _bio.isEnabled()) return;
+
+    final ({String id, String password})? cred = await FaceLoginStore.instance
+        .read();
+    if (cred != null && cred.id == id && cred.password == password) return;
+    if (!mounted) return;
+
+    final bool? simpan = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Masuk dengan wajah?'),
+        content: const Text(
+          'Simpan akun ini di HP (terenkripsi) supaya login berikutnya '
+          'cukup dengan Face Unlock.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Nanti'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Simpan'),
+          ),
+        ],
+      ),
+    );
+
+    if (simpan == true) {
+      await FaceLoginStore.instance.save(id, password);
     }
   }
 
@@ -463,6 +542,29 @@ class _LoginPageState extends State<LoginPage> {
               ),
             ),
           ),
+
+          // TOMBOL FACE UNLOCK
+          if (_faceLoginReady) ...[
+            const SizedBox(height: 14),
+            SizedBox(
+              height: 52,
+              child: OutlinedButton.icon(
+                onPressed: _isLoading ? null : _loginDenganWajah,
+                icon: const Icon(Icons.face_unlock_rounded, size: 22),
+                label: const Text(
+                  'Masuk dengan Face Unlock',
+                  style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14),
+                ),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: Colors.white,
+                  side: BorderSide(color: Colors.white.withValues(alpha: 0.6)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(13),
+                  ),
+                ),
+              ),
+            ),
+          ],
           const SizedBox(height: 19),
           const Row(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -514,4 +616,8 @@ class _LoginPageState extends State<LoginPage> {
       ],
     );
   }
+}
+
+class FaceLoginStore {
+  static get instance => null;
 }

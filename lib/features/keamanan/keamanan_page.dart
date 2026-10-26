@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:ipardasbor/features/authentication/login_page.dart';
 import 'package:local_auth/local_auth.dart';
 
 import '../../app/app_theme.dart';
 import '../../shared/widgets/list_parts.dart';
 import 'services/biometric_service.dart';
+import 'services/face_login_store.dart';
 
 class KeamananPage extends StatefulWidget {
   const KeamananPage({super.key});
@@ -29,9 +31,15 @@ class _KeamananPageState extends State<KeamananPage> {
   Future<void> _load() async {
     final Set<BiometricType> types = await _bio.types();
     final bool enabled = await _bio.isEnabled();
+    debugPrint('Biometrik terdeteksi: $types'); // buat cek di terminal
     if (!mounted) return;
     setState(() {
-      _hasFace = types.contains(BiometricType.face);
+      // Face Unlock Samsung (2D) sering dilaporkan sebagai `weak`.
+      // Sidik jari lo tidak terdaftar, jadi weak/strong di sini
+      // kemungkinan besar wajah.
+      _hasFace =
+          types.contains(BiometricType.face) ||
+          types.contains(BiometricType.weak);
       _hasAnyBiometric = types.isNotEmpty;
       _faceEnabled = enabled && _hasFace;
       _loading = false;
@@ -47,6 +55,7 @@ class _KeamananPageState extends State<KeamananPage> {
       if (!ok || !mounted) return;
     }
     await _bio.setEnabled(value);
+    if (!value) await FaceLoginStore.instance.clear();
     if (!mounted) return;
     setState(() => _faceEnabled = value);
   }

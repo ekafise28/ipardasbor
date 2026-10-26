@@ -6,7 +6,7 @@ import 'package:ipardasbor/shared/region/services/wilayah_akses_service.dart';
 import 'package:ipardasbor/features/notifications/pages/notification_settings_page.dart';
 import 'package:ipardasbor/shared/screenshot/screenshot_button_controller.dart';
 import '../keamanan/keamanan_page.dart';
-import '../keamanan/services/biometric_service.dart';
+// import '../keamanan/services/biometric_service.dart';
 
 import '../../app/app_theme.dart';
 import '../authentication/models/auth_user.dart';
@@ -315,7 +315,7 @@ class _SettingsPageState extends State<SettingsPage> {
                       await WilayahAksesService.instance.clear();
                       // Matikan kunci biometrik supaya akun berikutnya
                       // tidak ikut terkunci.
-                      await BiometricService.instance.setEnabled(false);
+
                       await AuthService().logout();
                       if (context.mounted) {
                         Navigator.pushNamedAndRemoveUntil(
