@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:ipardasbor/app/app_theme.dart';
 import 'package:ipardasbor/shared/utils/formatters.dart';
+import 'package:ipardasbor/shared/widgets/detail_cards.dart'
+    show BarisTile, Baris, KotakBaris;
 import 'package:ipardasbor/shared/widgets/list_parts.dart';
 
 import '../models/proyek_data_item.dart';
@@ -74,61 +76,35 @@ class _DetailIsi extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 8),
-        _Baris(
-          label: 'Judul KBLI',
-          value: item.judulKbli == null
-              ? '-'
-              : item.versiKbli == null
-              ? item.judulKbli!
-              : '${item.judulKbli} (KBLI ${item.versiKbli})',
+        Divider(height: 1, color: AppTheme.border(context)),
+        BarisTile(
+          baris: Baris(
+            'Judul KBLI',
+            item.judulKbli == null
+                ? null
+                : item.versiKbli == null
+                ? item.judulKbli!
+                : '${item.judulKbli} (KBLI ${item.versiKbli})',
+            kotak: KotakBaris.netral,
+          ),
         ),
-        _Baris(label: 'Investasi', value: rupiahProyek(item.jumlahInvestasi)),
-        _Baris(
-          label: 'Tenaga kerja',
-          value: item.jumlahTenagaKerja == null
-              ? '-'
-              : '${formatNumber(item.jumlahTenagaKerja!)} orang',
+        BarisTile(
+          baris: Baris('Investasi', rupiahProyek(item.jumlahInvestasi)),
         ),
-        _Baris(label: 'Alamat usaha', value: item.alamat ?? '-'),
-        _Baris(label: 'Kabupaten/Kota', value: item.kabKota ?? '-'),
-        _Baris(label: 'Provinsi', value: item.provinsi ?? '-'),
+        BarisTile(
+          baris: Baris(
+            'Tenaga kerja',
+            item.jumlahTenagaKerja == null
+                ? null
+                : '${formatNumber(item.jumlahTenagaKerja!)} orang',
+          ),
+        ),
+        BarisTile(baris: Baris('Kabupaten/Kota', item.kabKota)),
+        BarisTile(baris: Baris('Provinsi', item.provinsi)),
+        BarisTile(
+          baris: Baris('Alamat usaha', item.alamat, kotak: KotakBaris.netral),
+        ),
       ],
-    );
-  }
-}
-
-class _Baris extends StatelessWidget {
-  const _Baris({required this.label, required this.value});
-
-  final String label;
-  final String value;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(top: 12),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: <Widget>[
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 11.5,
-              fontWeight: FontWeight.w700,
-              color: AppTheme.textSecondary(context),
-            ),
-          ),
-          const SizedBox(height: 2),
-          Text(
-            value,
-            style: TextStyle(
-              fontSize: 14,
-              height: 1.35,
-              color: AppTheme.textColor(context),
-            ),
-          ),
-        ],
-      ),
     );
   }
 }

@@ -211,13 +211,7 @@ class _OssProyekFilterSheetState extends State<_OssProyekFilterSheet> {
           onChanged: _pilihKecamatan,
           semuaLabel: 'Semua kecamatan',
           enabled: !_provinsiBerubah && _kabupatenId != null,
-          loading: _cascade.loadingKecamatan,
-          hint:
-              _kabupatenId != null &&
-                  !_provinsiBerubah &&
-                  !_cascade.loadingKecamatan
-              ? 'Siap dipilih'
-              : null,
+          loading: _cascade.loadingKecamatan,          
           helper: _kabupatenId == null ? 'Pilih kabupaten/kota dulu.' : null,
         ),
         FilterDropdown<int>(

@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:ipardasbor/core/constants/ota_platform_constants.dart';
 import 'package:ipardasbor/shared/widgets/app_banner.dart';
+import 'package:ipardasbor/shared/widgets/detail_cards.dart'
+    show BarisTile, Baris, KotakBaris;
 
 import '../../../app/app_theme.dart';
 
@@ -210,7 +212,7 @@ class _AkomodasiReviewPageState extends State<AkomodasiReviewPage> {
                 _ReviewSection(
                   icon: Icons.assignment_ind_outlined,
                   title: 'Tahap 1 - Identitas Manajemen Akomodasi',
-                  child: _tahap1Content(),
+                  rows: _tahap1Rows(),
                 ),
                 for (int i = 0; i < widget.akomodasi.length; i++)
                   _ReviewSection(
@@ -218,10 +220,11 @@ class _AkomodasiReviewPageState extends State<AkomodasiReviewPage> {
                     title:
                         'Akomodasi ${i + 1} - ${widget.akomodasi[i].namaBrand.trim().isEmpty ? '(belum ada nama)' : widget.akomodasi[i].namaBrand}',
                     initiallyExpanded: false,
-                    child: _akomodasiContent(
+                    rows: _akomodasiRows(
                       widget.akomodasi[i],
                       _wilayahAkomodasi[i],
                     ),
+                    footer: _fotoStrip(widget.akomodasi[i]),
                   ),
                 const SizedBox(height: 8),
                 SizedBox(
@@ -289,40 +292,42 @@ class _AkomodasiReviewPageState extends State<AkomodasiReviewPage> {
     );
   }
 
-  Widget _tahap1Content() {
+  List<Baris> _tahap1Rows() {
     final t = widget.tahap1;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _kv('NIB', t.nib),
-        _kv('KBLI', t.kbli),
-        _kv('NKU', t.nku),
-        _kv('Status Validasi', t.isValid ? 'Valid' : 'Tidak Valid'),
-        if (!t.isValid)
-          _kv('Status Ketidaksesuaian', t.statusKetidaksesuaian.join(', ')),
-        if (!t.isValid && t.keteranganKetidaksesuaian.trim().isNotEmpty)
-          _kv('Keterangan', t.keteranganKetidaksesuaian),
-        const Divider(height: 24),
-        _kv('Nama Pemilik', t.namaPemilik),
-        _kv('Nama Brand', t.namaBrand),
-        const Divider(height: 24),
-        _kv('Wilayah', _wilayahTahap1),
-        _kv('Alamat', t.alamat),
-        _kv('Koordinat', '${t.latitude}, ${t.longitude}'),
-        const Divider(height: 24),
-        _kv('NPWPD', t.npwpd.isEmpty ? '-' : t.npwpd),
-        _kv('Website', t.website.isEmpty ? '-' : t.website),
-        _kv('No. HP', t.noHp),
-        _kv('Email', t.email.isEmpty ? '-' : t.email),
-        _kv(
-          'Tanggal Pengawasan',
-          DateFormat('dd-MM-yyyy').format(t.tanggalPengawasan),
+    return <Baris>[
+      Baris('NIB', t.nib, kode: true),
+      Baris('KBLI', t.kbli, kode: true),
+      Baris('NKU', t.nku, kode: true),
+      Baris(
+        'Status Validasi',
+        t.isValid ? 'Valid' : 'Tidak Valid',
+        warnaLencana: t.isValid ? AppTheme.success : AppTheme.danger,
+      ),
+      if (!t.isValid)
+        Baris.chips('Status Ketidaksesuaian', t.statusKetidaksesuaian),
+      if (!t.isValid && t.keteranganKetidaksesuaian.trim().isNotEmpty)
+        Baris(
+          'Keterangan',
+          t.keteranganKetidaksesuaian,
+          kotak: KotakBaris.netral,
         ),
-      ],
-    );
+      Baris('Nama Pemilik', t.namaPemilik),
+      Baris('Nama Brand', t.namaBrand),
+      Baris('Wilayah', _wilayahTahap1, kotak: KotakBaris.netral),
+      Baris('Alamat', t.alamat, kotak: KotakBaris.netral),
+      Baris.koordinat(t.latitude, t.longitude),
+      Baris('NPWPD', t.npwpd),
+      Baris('Website', t.website),
+      Baris('No. HP', t.noHp),
+      Baris('Email', t.email),
+      Baris(
+        'Tanggal Pengawasan',
+        DateFormat('dd-MM-yyyy').format(t.tanggalPengawasan),
+      ),
+    ];
   }
 
-  Widget _akomodasiContent(AkomodasiItemData a, String wilayah) {
+  List<Baris> _akomodasiRows(AkomodasiItemData a, String wilayah) {
     final String jenisProdukLabel = JenisProdukAkomodasi.options
         .firstWhere(
           (e) => e.key == a.jenisProduk,
@@ -330,58 +335,76 @@ class _AkomodasiReviewPageState extends State<AkomodasiReviewPage> {
         )
         .value;
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _kv('Kepemilikan NIB', a.memilikiNib),
-        if (a.memilikiNibYa) ...[
-          _kv('NIB', a.nib),
-          _kv('KBLI', a.kbli),
-          _kv('NKU', a.nku),
-          _kv('Status Live-Check', switch (a.validasiStatus) {
+    return <Baris>[
+      Baris('Kepemilikan NIB', a.memilikiNib),
+      if (a.memilikiNibYa) ...<Baris>[
+        Baris('NIB', a.nib, kode: true),
+        Baris('KBLI', a.kbli, kode: true),
+        Baris('NKU', a.nku, kode: true),
+        Baris(
+          'Status Live-Check',
+          switch (a.validasiStatus) {
             AkomodasiValidasiStatus.valid => 'Valid',
             AkomodasiValidasiStatus.tidakValid => 'Tidak Valid',
             _ => 'Belum dicek',
-          }),
-        ],
-        if (a.statusKetidaksesuaian.isNotEmpty)
-          _kv('Status Ketidaksesuaian', a.statusKetidaksesuaian.join(', ')),
-        if (a.keteranganKetidaksesuaian.trim().isNotEmpty)
-          _kv('Keterangan', a.keteranganKetidaksesuaian),
-        const Divider(height: 24),
-        _kv('Nama Pemilik', a.namaPemilik),
-        _kv('Nama Brand', a.namaBrand),
-        _kv('Jenis Produk', jenisProdukLabel),
-        const Divider(height: 24),
-        _kv('Wilayah', wilayah),
-        _kv('Alamat', a.alamat),
-        _kv('Koordinat', '${a.latitude}, ${a.longitude}'),
-        const Divider(height: 24),
-        _kv('NPWPD', a.npwpd.isEmpty ? '-' : a.npwpd),
-        _kv('Website', a.website.isEmpty ? '-' : a.website),
-        _kv('No. HP', a.noHp),
-        _kv('Email', a.email.isEmpty ? '-' : a.email),
-        const Divider(height: 24),
-        _kv('Terdaftar OTA', a.terdaftarOta),
-        if (a.terdaftarOtaYa)
-          ...a.otaUrls.entries
-              .where((e) => e.value.any((u) => u.trim().isNotEmpty))
-              .map(
-                (e) => _kv(
-                  OtaPlatform.labelDari(e.key),
-                  e.value.where((u) => u.trim().isNotEmpty).join(', '),
-                ),
-              ),
-        const Divider(height: 24),
+          },
+          warnaLencana: switch (a.validasiStatus) {
+            AkomodasiValidasiStatus.valid => AppTheme.success,
+            AkomodasiValidasiStatus.tidakValid => AppTheme.danger,
+            _ => null,
+          },
+        ),
+      ],
+      if (a.statusKetidaksesuaian.isNotEmpty)
+        Baris.chips('Status Ketidaksesuaian', a.statusKetidaksesuaian),
+      if (a.keteranganKetidaksesuaian.trim().isNotEmpty)
+        Baris(
+          'Keterangan',
+          a.keteranganKetidaksesuaian,
+          kotak: KotakBaris.netral,
+        ),
+      Baris('Nama Pemilik', a.namaPemilik),
+      Baris('Nama Brand', a.namaBrand),
+      Baris('Jenis Produk', jenisProdukLabel),
+      Baris('Wilayah', wilayah, kotak: KotakBaris.netral),
+      Baris('Alamat', a.alamat, kotak: KotakBaris.netral),
+      Baris.koordinat(a.latitude, a.longitude),
+      Baris('NPWPD', a.npwpd),
+      Baris('Website', a.website),
+      Baris('No. HP', a.noHp),
+      Baris('Email', a.email),
+      Baris('Terdaftar OTA', a.terdaftarOta),
+      if (a.terdaftarOtaYa)
+        for (final e in a.otaUrls.entries)
+          if (e.value.any((u) => u.trim().isNotEmpty))
+            Baris(
+              OtaPlatform.labelDari(e.key),
+              e.value.where((u) => u.trim().isNotEmpty).join('\n'),
+              kotak: KotakBaris.netral,
+            ),
+    ];
+  }
+
+  Widget _fotoStrip(AkomodasiItemData a) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
         Text(
           'Foto (${a.photos.length})',
-          style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 12.5),
+          style: TextStyle(
+            fontWeight: FontWeight.w700,
+            fontSize: 12.5,
+            color: AppTheme.textColor(context),
+          ),
         ),
         const SizedBox(height: 8),
         if (a.photos.isEmpty)
-          const Text(
+          Text(
             'Belum ada foto.',
-            style: TextStyle(fontSize: 12, color: Colors.grey),
+            style: TextStyle(
+              fontSize: 12,
+              color: AppTheme.textSecondary(context),
+            ),
           )
         else
           SizedBox(
@@ -404,50 +427,21 @@ class _AkomodasiReviewPageState extends State<AkomodasiReviewPage> {
       ],
     );
   }
-
-  Widget _kv(String label, String value) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          SizedBox(
-            width: 140,
-            child: Text(
-              label,
-              style: TextStyle(
-                fontSize: 12.5,
-                fontWeight: FontWeight.w600,
-                color: AppTheme.textSecondary(context),
-              ),
-            ),
-          ),
-          Expanded(
-            child: Text(
-              value.trim().isEmpty ? '-' : value,
-              style: TextStyle(
-                fontSize: 12.5,
-                color: AppTheme.textColor(context),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 }
 
 class _ReviewSection extends StatefulWidget {
   const _ReviewSection({
     required this.icon,
     required this.title,
-    required this.child,
+    required this.rows,
+    this.footer,
     this.initiallyExpanded = true,
   });
 
   final IconData icon;
   final String title;
-  final Widget child;
+  final List<Baris> rows;
+  final Widget? footer;
   final bool initiallyExpanded;
 
   @override
@@ -459,35 +453,40 @@ class _ReviewSectionState extends State<_ReviewSection> {
 
   @override
   Widget build(BuildContext context) {
-    final Color border = AppTheme.border(context);
-    final Color surface = AppTheme.surface(context);
-
     return Container(
       margin: const EdgeInsets.only(bottom: 14),
       decoration: BoxDecoration(
-        color: surface,
+        color: AppTheme.surface(context),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: border),
+        border: Border.all(color: AppTheme.border(context)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
+        children: <Widget>[
           InkWell(
             onTap: () => setState(() => _expanded = !_expanded),
             borderRadius: BorderRadius.circular(16),
-            child: Container(
-              width: double.infinity,
+            child: Padding(
               padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
-              decoration: BoxDecoration(
-                color: AppTheme.surfaceMuted(context),
-                borderRadius: BorderRadius.vertical(
-                  top: const Radius.circular(15),
-                  bottom: _expanded ? Radius.zero : const Radius.circular(15),
-                ),
-              ),
               child: Row(
-                children: [
-                  Icon(widget.icon, color: AppTheme.primaryColor, size: 20),
+                children: <Widget>[
+                  Container(
+                    width: 28,
+                    height: 28,
+                    decoration: BoxDecoration(
+                      color: AppTheme.tintBackground(
+                        context,
+                        AppTheme.primaryColor,
+                        AppTheme.menuDashboardBg,
+                      ),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Icon(
+                      widget.icon,
+                      size: 16,
+                      color: AppTheme.primaryColor,
+                    ),
+                  ),
                   const SizedBox(width: 10),
                   Expanded(
                     child: Text(
@@ -505,8 +504,29 @@ class _ReviewSectionState extends State<_ReviewSection> {
               ),
             ),
           ),
-          if (_expanded)
-            Padding(padding: const EdgeInsets.all(14), child: widget.child),
+          if (_expanded) ...<Widget>[
+            Divider(height: 1, color: AppTheme.border(context)),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(14, 4, 14, 14),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  for (int i = 0; i < widget.rows.length; i++) ...<Widget>[
+                    if (i > 0)
+                      Divider(
+                        height: 1,
+                        color: AppTheme.border(context).withValues(alpha: 0.7),
+                      ),
+                    BarisTile(baris: widget.rows[i]),
+                  ],
+                  if (widget.footer != null) ...<Widget>[
+                    const SizedBox(height: 12),
+                    widget.footer!,
+                  ],
+                ],
+              ),
+            ),
+          ],
         ],
       ),
     );

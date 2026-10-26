@@ -120,8 +120,7 @@ class _RiwayatFilterSheetState extends State<_RiwayatFilterSheet> {
           onChanged: (String? v) => setState(() => _bidangUsaha = v),
         ),
         FilterSection(
-          label: 'Sumber Data',
-          hint: _sumberData == null ? null : 'Tersaring: $_sumberData',
+          label: 'Sumber Data',          
           child: FilterChoiceGroup(
             options: <FilterChoice>[
               for (final String o in widget.options.sumberData)
