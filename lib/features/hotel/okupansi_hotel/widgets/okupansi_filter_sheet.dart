@@ -4,7 +4,6 @@ import 'package:ipardasbor/shared/widgets/list_filters.dart'
     show FilterSheetFrame, FilterSection, FilterChoiceGroup, FilterChoice;
 
 import '../models/okupansi_hotel_data.dart';
-import '../services/okupansi_hotel_service.dart';
 
 typedef OkupansiPilihan = ({List<int> tahun, List<String> provinsi});
 
@@ -12,7 +11,7 @@ typedef OkupansiPilihan = ({List<int> tahun, List<String> provinsi});
 /// pilihan baru saat "Terapkan", atau null kalau ditutup.
 Future<OkupansiPilihan?> showOkupansiFilterSheet(
   BuildContext context, {
-  required OkupansiHotelService service,
+  required Future<OkupansiHotelOptions> Function() loadOptions,
   required List<int> tahun,
   required List<String> provinsi,
 }) {
@@ -20,18 +19,22 @@ Future<OkupansiPilihan?> showOkupansiFilterSheet(
     context: context,
     isScrollControlled: true,
     backgroundColor: Colors.transparent,
-    builder: (_) => _FilterSheet(service: service, tahun: tahun, provinsi: provinsi),
+    builder: (_) => _FilterSheet(
+      loadOptions: loadOptions,
+      tahun: tahun,
+      provinsi: provinsi,
+    ),
   );
 }
 
 class _FilterSheet extends StatefulWidget {
   const _FilterSheet({
-    required this.service,
+    required this.loadOptions,
     required this.tahun,
     required this.provinsi,
   });
 
-  final OkupansiHotelService service;
+  final Future<OkupansiHotelOptions> Function() loadOptions;
   final List<int> tahun;
   final List<String> provinsi;
 
@@ -55,7 +58,7 @@ class _FilterSheetState extends State<_FilterSheet> {
   Future<void> _muat() async {
     setState(() => _gagal = false);
     try {
-      final OkupansiHotelOptions o = await widget.service.fetchOptions();
+      final OkupansiHotelOptions o = await widget.loadOptions();
       if (!mounted) return;
       setState(() => _opsi = o);
     } catch (_) {
@@ -108,7 +111,8 @@ class _FilterSheetState extends State<_FilterSheet> {
         _tahun = <int>[];
         _provinsi = <String>[];
       }),
-      onApply: () => Navigator.of(context).pop((tahun: _tahun, provinsi: _provinsi)),
+      onApply: () =>
+          Navigator.of(context).pop((tahun: _tahun, provinsi: _provinsi)),
       children: <Widget>[
         FilterSection(
           label: 'Tahun',
@@ -119,11 +123,14 @@ class _FilterSheetState extends State<_FilterSheet> {
               semuaLabel: 'Terbaru',
               columns: 3,
               options: <FilterChoice>[
-                for (final int t in o.tahun) FilterChoice(value: '$t', label: '$t'),
+                for (final int t in o.tahun)
+                  FilterChoice(value: '$t', label: '$t'),
               ],
               selected: <String>[for (final int t in _tahun) '$t'],
               onChanged: (List<String> v) => setState(
-                () => _tahun = v.map(int.parse).toList()..sort((int a, int b) => b.compareTo(a)),
+                () =>
+                    _tahun = v.map(int.parse).toList()
+                      ..sort((int a, int b) => b.compareTo(a)),
               ),
             ),
           ),
@@ -136,7 +143,8 @@ class _FilterSheetState extends State<_FilterSheet> {
               multi: true,
               semuaLabel: 'Semua',
               options: <FilterChoice>[
-                for (final String p in o.provinsi) FilterChoice(value: p, label: p),
+                for (final String p in o.provinsi)
+                  FilterChoice(value: p, label: p),
               ],
               selected: _provinsi,
               onChanged: (List<String> v) => setState(() => _provinsi = v),

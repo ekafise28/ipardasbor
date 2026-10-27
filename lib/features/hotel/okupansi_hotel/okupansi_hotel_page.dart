@@ -156,7 +156,7 @@ class _OkupansiHotelPageState extends State<OkupansiHotelPage>
   Future<void> _bukaFilter() async {
     final OkupansiPilihan? p = await showOkupansiFilterSheet(
       context,
-      service: _service,
+      loadOptions: _service.fetchOptions,
       tahun: _filter.tahun,
       provinsi: _filter.provinsi,
     );

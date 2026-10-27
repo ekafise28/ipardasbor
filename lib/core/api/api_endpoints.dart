@@ -92,6 +92,16 @@ class ApiEndpoints {
   static const String okupansiHotel = '/mobile/okupansi-hotel';
   static const String okupansiHotelFilters = '/mobile/okupansi-hotel/filters';
 
+  // BPS - Okupansi Akomodasi Bintang
+  static const String okupansiBintang = '/mobile/bps/okupansi-bintang';
+  static const String okupansiBintangFilters =
+      '/mobile/bps/okupansi-bintang/filters';
+
+  // BPS - Okupansi Akomodasi Non-Bintang
+  static const String okupansiNonBintang = '/mobile/bps/okupansi-non-bintang';
+  static const String okupansiNonBintangFilters =
+      '/mobile/bps/okupansi-non-bintang/filters';
+
   // //Mobile - CRUD Kelola Akun
   static const String users = '/mobile/users';
   static String userDetail(String kodeUser) {

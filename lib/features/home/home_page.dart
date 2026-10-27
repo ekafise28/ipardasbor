@@ -1,11 +1,16 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:ipardasbor/features/bps/akomodasi_bintang/okupansi_bintang_page.dart'
+    show OkupansiBintangPage;
+import 'package:ipardasbor/features/bps/akomodasi_non_bintang/okupansi_non_bintang_page.dart'
+    show OkupansiNonBintangPage;
 import 'package:ipardasbor/features/hotel/data_hotel/data_hotel_page.dart'
     show DataHotelPage;
 import 'package:ipardasbor/features/ipar_data/data_proyek_page.dart';
 import 'package:ipardasbor/features/pengawasan/non_oss/offline/non_oss_queue_store.dart';
-import 'package:ipardasbor/features/hotel/okupansi_hotel/okupansi_hotel_page.dart' show OkupansiHotelPage;
+import 'package:ipardasbor/features/hotel/okupansi_hotel/okupansi_hotel_page.dart'
+    show OkupansiHotelPage;
 import 'package:ipardasbor/shared/bidang_usaha/pilih_bidang_page.dart';
 import 'package:ipardasbor/shared/region/services/wilayah_akses_service.dart';
 // import 'package:ipardasbor/features/oss/pages/oss_pilih_bidang_page.dart';
@@ -160,6 +165,22 @@ class _HomePageState extends State<HomePage>
     backgroundColor: AppTheme.menuKeamananBg,
   );
 
+  static const MenuData _mOkupansiBintang = MenuData(
+    title: 'Okupansi Bintang',
+    description: 'Okupansi akomodasi bintang (BPS)',
+    icon: Icons.hotel_class_rounded,
+    color: AppTheme.menuOta,
+    backgroundColor: AppTheme.menuOtaBg,
+  );
+
+  static const MenuData _mOkupansiNonBintang = MenuData(
+    title: 'Okupansi Non-Bintang',
+    description: 'Okupansi akomodasi non-bintang (BPS)',
+    icon: Icons.home_work_rounded,
+    color: AppTheme.menuOta,
+    backgroundColor: AppTheme.menuOtaBg,
+  );
+
   static const MenuData _mOss = MenuData(
     title: 'Validasi OSS',
     description: 'Verifikasi proyek dan usaha OSS',
@@ -229,6 +250,7 @@ class _HomePageState extends State<HomePage>
       _mProfil,
       _mKelolaAkun,
     ]),
+    _MenuGroup('BPS', [_mOkupansiBintang, _mOkupansiNonBintang]),
   ];
 
   /// Angka badge per menu. Saat ini hanya Sinkronisasi (data belum terkirim).
@@ -267,6 +289,20 @@ class _HomePageState extends State<HomePage>
       case 'Okupansi Hotel':
         await Navigator.of(context).push(
           MaterialPageRoute<void>(builder: (_) => const OkupansiHotelPage()),
+        );
+        break;
+
+      case 'Okupansi Bintang':
+        await Navigator.of(context).push(
+          MaterialPageRoute<void>(builder: (_) => const OkupansiBintangPage()),
+        );
+        break;
+
+      case 'Okupansi Non-Bintang':
+        await Navigator.of(context).push(
+          MaterialPageRoute<void>(
+            builder: (_) => const OkupansiNonBintangPage(),
+          ),
         );
         break;
 
