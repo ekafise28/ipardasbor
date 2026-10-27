@@ -1,11 +1,11 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:ipardasbor/features/data_hotel/data_hotel_page.dart'
+import 'package:ipardasbor/features/hotel/data_hotel/data_hotel_page.dart'
     show DataHotelPage;
 import 'package:ipardasbor/features/ipar_data/data_proyek_page.dart';
 import 'package:ipardasbor/features/pengawasan/non_oss/offline/non_oss_queue_store.dart';
-import 'package:ipardasbor/features/okupansi_hotel/okupansi_hotel_page.dart' show OkupansiHotelPage;
+import 'package:ipardasbor/features/hotel/okupansi_hotel/okupansi_hotel_page.dart' show OkupansiHotelPage;
 import 'package:ipardasbor/shared/bidang_usaha/pilih_bidang_page.dart';
 import 'package:ipardasbor/shared/region/services/wilayah_akses_service.dart';
 // import 'package:ipardasbor/features/oss/pages/oss_pilih_bidang_page.dart';

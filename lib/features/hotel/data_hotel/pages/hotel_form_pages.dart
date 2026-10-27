@@ -3,7 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:ipardasbor/app/app_theme.dart';
 import 'package:ipardasbor/shared/widgets/detail_cards.dart' show DetailCard;
 
-import '../../../core/api/api_exception.dart';
+import '../../../../core/api/api_exception.dart';
 import '../models/hotel_item.dart';
 import '../services/data_hotel_service.dart';
 

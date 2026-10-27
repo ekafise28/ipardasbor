@@ -3,7 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:ipardasbor/core/cache/cache_status.dart';
 import 'package:ipardasbor/core/network/network_status.dart';
-import 'package:ipardasbor/features/data_hotel/pages/hotel_form_pages.dart'
+import 'package:ipardasbor/features/hotel/data_hotel/pages/hotel_form_pages.dart'
     show HotelFormPage;
 import 'package:ipardasbor/shared/pagination/back_to_top_mixin.dart';
 import 'package:ipardasbor/shared/pagination/paginated_list_controller.dart';
@@ -15,7 +15,7 @@ import 'package:ipardasbor/shared/widgets/page_states.dart';
 import 'package:ipardasbor/shared/widgets/skeleton.dart'
     show DataProyekSkeleton;
 
-import '../../app/app_theme.dart';
+import '../../../app/app_theme.dart';
 import 'models/hotel_filter.dart';
 import 'models/hotel_item.dart';
 import 'models/hotel_page_result.dart';
@@ -24,8 +24,8 @@ import 'widgets/hotel_card.dart';
 import 'widgets/hotel_detail_sheet.dart';
 import 'widgets/hotel_filter_sheet.dart';
 import 'widgets/hotel_provinsi_chart.dart';
-import '../../core/api/api_exception.dart' show pesanErrorRamah;
-import '../../core/storage/secure_storage.dart';
+import '../../../core/api/api_exception.dart' show pesanErrorRamah;
+import '../../../core/storage/secure_storage.dart';
 
 /// Data hotel (padanan halaman data-hotel di web): grafik jumlah hotel per
 /// provinsi, pencarian, filter provinsi, dan detail. CRUD Admin ditambahkan

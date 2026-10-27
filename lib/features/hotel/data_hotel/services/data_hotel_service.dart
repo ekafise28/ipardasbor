@@ -1,5 +1,5 @@
-import '../../../core/api/api_client.dart';
-import '../../../core/api/api_endpoints.dart';
+import '../../../../core/api/api_client.dart';
+import '../../../../core/api/api_endpoints.dart';
 import '../models/hotel_filter.dart';
 import '../models/hotel_item.dart';
 import '../models/hotel_page_result.dart';
