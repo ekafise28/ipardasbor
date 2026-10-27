@@ -23,12 +23,12 @@ class BiometricService {
     try {
       return await _auth.authenticate(
         localizedReason: alasan,
-        options: AuthenticationOptions(
-          biometricOnly: biometricOnly,
-          stickyAuth: true,
-        ),
+        biometricOnly: biometricOnly,
+        persistAcrossBackgrounding: true,
       );
     } on PlatformException {
+      return false;
+    } on LocalAuthException {
       return false;
     }
   }

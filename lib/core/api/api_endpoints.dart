@@ -84,6 +84,14 @@ class ApiEndpoints {
       '/mobile/proyek-data/filter-options';
   static const String proyekDataExport = '/mobile/proyek-data/export';
 
+  // Data Hotel
+  static const String dataHotel = '/mobile/data-hotel';
+  static String dataHotelDetail(int id) => '$dataHotel/$id';
+
+  // Okupansi Hotel (dipakai Batch 2B)
+  static const String okupansiHotel = '/mobile/okupansi-hotel';
+  static const String okupansiHotelFilters = '/mobile/okupansi-hotel/filters';
+
   // //Mobile - CRUD Kelola Akun
   static const String users = '/mobile/users';
   static String userDetail(String kodeUser) {

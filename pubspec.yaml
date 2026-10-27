@@ -37,6 +37,7 @@ dependencies:
   package_info_plus: ^10.2.2
   cryptography: ^2.9.0
   camera: ^0.12.1
+  local_auth: ^3.0.2
 
 flutter_launcher_icons:
   android: true

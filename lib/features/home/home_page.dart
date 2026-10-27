@@ -1,8 +1,11 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:ipardasbor/features/data_hotel/data_hotel_page.dart'
+    show DataHotelPage;
 import 'package:ipardasbor/features/ipar_data/data_proyek_page.dart';
 import 'package:ipardasbor/features/non_oss/offline/non_oss_queue_store.dart';
+import 'package:ipardasbor/features/okupansi_hotel/okupansi_hotel_page.dart' show OkupansiHotelPage;
 import 'package:ipardasbor/shared/bidang_usaha/pilih_bidang_page.dart';
 import 'package:ipardasbor/shared/region/services/wilayah_akses_service.dart';
 // import 'package:ipardasbor/features/oss/pages/oss_pilih_bidang_page.dart';
@@ -141,6 +144,22 @@ class _HomePageState extends State<HomePage>
     backgroundColor: AppTheme.menuNonOssBg,
   );
 
+  static const MenuData _mDataHotel = MenuData(
+    title: 'Data Hotel',
+    description: 'Hotel, karyawan, dan kapasitas',
+    icon: Icons.hotel_rounded,
+    color: AppTheme.menuTampilan,
+    backgroundColor: AppTheme.menuTampilanBg,
+  );
+
+  static const MenuData _mOkupansiHotel = MenuData(
+    title: 'Okupansi Hotel',
+    description: 'Tingkat okupansi per provinsi dan hotel',
+    icon: Icons.analytics_outlined,
+    color: AppTheme.menuKeamanan,
+    backgroundColor: AppTheme.menuKeamananBg,
+  );
+
   static const MenuData _mOss = MenuData(
     title: 'Validasi OSS',
     description: 'Verifikasi proyek dan usaha OSS',
@@ -197,14 +216,15 @@ class _HomePageState extends State<HomePage>
     backgroundColor: AppTheme.menuProfilBg,
   );
 
-  // 3 + 4 menu: pas mengisi grid 4 kolom tanpa baris yang timpang.
+  // 4 + 8 menu: pas mengisi grid 4 kolom tanpa baris yang timpang.
   static const List<_MenuGroup> _groups = [
-    _MenuGroup('Pengawasan', [_mOss, _mNonOss, _mOta]),
+    _MenuGroup('Pengawasan', [_mOss, _mNonOss, _mOta, _mRiwayat]),
     _MenuGroup('Data & Akun', [
       _mDashboard,
       _mPetaIndustri,
       _mDataProyek,
-      _mRiwayat,
+      _mDataHotel,
+      _mOkupansiHotel,
       _mSinkronisasi,
       _mProfil,
       _mKelolaAkun,
@@ -236,6 +256,18 @@ class _HomePageState extends State<HomePage>
         await Navigator.of(
           context,
         ).push(MaterialPageRoute<void>(builder: (_) => const DataProyekPage()));
+        break;
+
+      case 'Data Hotel':
+        await Navigator.of(
+          context,
+        ).push(MaterialPageRoute<void>(builder: (_) => const DataHotelPage()));
+        break;
+
+      case 'Okupansi Hotel':
+        await Navigator.of(context).push(
+          MaterialPageRoute<void>(builder: (_) => const OkupansiHotelPage()),
+        );
         break;
 
       case 'Validasi OSS':
