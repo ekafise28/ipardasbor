@@ -12,10 +12,10 @@ import '../features/keamanan/app_lock_gate.dart';
 import '../core/api/api_client.dart';
 import '../features/authentication/login_page.dart';
 import '../features/home/home_page.dart';
-import '../features/non_oss/offline/sync_service.dart';
-import '../features/non_oss/services/non_oss_service.dart';
+import '../features/pengawasan/non_oss/offline/sync_service.dart';
+import '../features/pengawasan/non_oss/services/non_oss_service.dart';
 import '../features/splash/splash_page.dart';
-import '../features/non_oss/offline/auto_sync_controller.dart';
+import '../features/pengawasan/non_oss/offline/auto_sync_controller.dart';
 
 import 'app_navigator.dart';
 import 'app_theme.dart';

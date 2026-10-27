@@ -1,7 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:ipardasbor/features/non_oss/offline/non_oss_queue_store.dart';
+import 'package:ipardasbor/features/pengawasan/non_oss/offline/non_oss_queue_store.dart';
 import 'package:ipardasbor/shared/region/services/wilayah_akses_service.dart';
 import 'package:ipardasbor/features/notifications/pages/notification_settings_page.dart';
 import 'package:ipardasbor/shared/screenshot/screenshot_button_controller.dart';
@@ -21,9 +21,9 @@ import '../home/widgets/menu_list_tile.dart';
 
 import 'widgets/profile_preview_card.dart';
 
-import '../non_oss/offline/auto_sync_controller.dart';
-import '../non_oss/offline/sync_service.dart';
-import '../non_oss/services/non_oss_service.dart';
+import '../pengawasan/non_oss/offline/auto_sync_controller.dart';
+import '../pengawasan/non_oss/offline/sync_service.dart';
+import '../pengawasan/non_oss/services/non_oss_service.dart';
 import '../../core/api/api_client.dart';
 
 class SettingsPage extends StatefulWidget {

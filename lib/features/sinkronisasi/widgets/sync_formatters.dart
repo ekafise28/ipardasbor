@@ -1,6 +1,6 @@
 import 'package:intl/intl.dart';
 import 'package:ipardasbor/core/constants/bidang_usaha_constants.dart';
-import 'package:ipardasbor/features/non_oss/offline/non_oss_local_data.dart';
+import 'package:ipardasbor/features/pengawasan/non_oss/offline/non_oss_local_data.dart';
 
 /// Pembantu tampilan untuk halaman Sinkronisasi: mengubah isi payload
 /// mentah menjadi teks yang mudah dibaca petugas.

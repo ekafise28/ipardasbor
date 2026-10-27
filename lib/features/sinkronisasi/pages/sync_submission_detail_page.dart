@@ -2,24 +2,24 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:ipardasbor/core/constants/ota_platform_constants.dart';
-import 'package:ipardasbor/features/oss/models/oss_jenis_produk_akomodasi.dart';
+import 'package:ipardasbor/features/pengawasan/oss/models/oss_jenis_produk_akomodasi.dart';
 import 'package:ipardasbor/features/sinkronisasi/widgets/sync_table.dart';
 import 'package:ipardasbor/shared/utils/formatters.dart';
 import 'package:ipardasbor/shared/utils/ota_utils.dart';
 import 'package:ipardasbor/shared/utils/ui_actions.dart';
 import 'package:ipardasbor/shared/widgets/form/status_ketidaksesuaian_selector.dart';
-import 'package:ipardasbor/features/non_oss/offline/non_oss_queue_store.dart';
-import '../../non_oss/services/non_oss_service.dart';
+import 'package:ipardasbor/features/pengawasan/non_oss/offline/non_oss_queue_store.dart';
+import '../../pengawasan/non_oss/services/non_oss_service.dart';
 
 import '../../../app/app_theme.dart';
 import '../../../shared/widgets/detail_cards.dart';
 
-import '../../non_oss/offline/non_oss_local_data.dart';
-import '../../non_oss/offline/offline_queue_service.dart';
-import '../../non_oss/offline/sync_service.dart';
+import '../../pengawasan/non_oss/offline/non_oss_local_data.dart';
+import '../../pengawasan/non_oss/offline/offline_queue_service.dart';
+import '../../pengawasan/non_oss/offline/sync_service.dart';
 import '../../../shared/region/data/wilayah_local_database.dart';
-import '../../non_oss/non_oss_form_page.dart';
-import '../../non_oss/offline/draft_completeness.dart';
+import '../../pengawasan/non_oss/non_oss_form_page.dart';
+import '../../pengawasan/non_oss/offline/draft_completeness.dart';
 
 import '../../../core/constants/bidang_usaha_constants.dart';
 

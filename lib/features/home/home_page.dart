@@ -4,12 +4,12 @@ import 'package:flutter/material.dart';
 import 'package:ipardasbor/features/data_hotel/data_hotel_page.dart'
     show DataHotelPage;
 import 'package:ipardasbor/features/ipar_data/data_proyek_page.dart';
-import 'package:ipardasbor/features/non_oss/offline/non_oss_queue_store.dart';
+import 'package:ipardasbor/features/pengawasan/non_oss/offline/non_oss_queue_store.dart';
 import 'package:ipardasbor/features/okupansi_hotel/okupansi_hotel_page.dart' show OkupansiHotelPage;
 import 'package:ipardasbor/shared/bidang_usaha/pilih_bidang_page.dart';
 import 'package:ipardasbor/shared/region/services/wilayah_akses_service.dart';
 // import 'package:ipardasbor/features/oss/pages/oss_pilih_bidang_page.dart';
-import 'package:ipardasbor/features/ota/baseline_ota_page.dart';
+import 'package:ipardasbor/features/pengawasan/ota/baseline_ota_page.dart';
 import 'package:ipardasbor/features/notifications/notification_page.dart';
 import 'package:ipardasbor/features/notifications/services/notification_service.dart';
 // import '../industri_pariwisata/industri_pariwisata_page.dart';
@@ -22,7 +22,7 @@ import '../dashboard/dashboard_page.dart';
 import '../peta_industri/peta_industri_page.dart';
 
 import '../sinkronisasi/sync_page.dart';
-import '../riwayat/riwayat_page.dart';
+import '../pengawasan/riwayat/riwayat_page.dart';
 
 import 'models/menu_data.dart';
 import 'pages/feature_placeholder_page.dart';
@@ -37,7 +37,7 @@ import 'widgets/status_banner.dart';
 import 'widgets/welcome_card.dart';
 
 import '../../core/api/api_client.dart';
-import '../non_oss/services/non_oss_service.dart';
+import '../pengawasan/non_oss/services/non_oss_service.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});

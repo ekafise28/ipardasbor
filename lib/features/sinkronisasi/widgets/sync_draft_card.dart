@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:ipardasbor/app/app_theme.dart';
-import 'package:ipardasbor/features/non_oss/offline/draft_completeness.dart';
-import 'package:ipardasbor/features/non_oss/offline/non_oss_local_data.dart';
+import 'package:ipardasbor/features/pengawasan/non_oss/offline/draft_completeness.dart';
+import 'package:ipardasbor/features/pengawasan/non_oss/offline/non_oss_local_data.dart';
 
 import 'sync_formatters.dart';
 

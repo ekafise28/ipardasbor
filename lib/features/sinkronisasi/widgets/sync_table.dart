@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:ipardasbor/app/app_theme.dart';
-import 'package:ipardasbor/features/non_oss/offline/draft_completeness.dart';
-import 'package:ipardasbor/features/non_oss/offline/non_oss_local_data.dart';
+import 'package:ipardasbor/features/pengawasan/non_oss/offline/draft_completeness.dart';
+import 'package:ipardasbor/features/pengawasan/non_oss/offline/non_oss_local_data.dart';
 
 // Catatan: tampilan tabel lama (SyncTable dan SubmissionRow) sudah diganti
 // kartu: lihat sync_ready_card.dart dan sync_draft_card.dart. File ini

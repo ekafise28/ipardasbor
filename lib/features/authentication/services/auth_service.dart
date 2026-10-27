@@ -1,4 +1,4 @@
-import 'package:ipardasbor/features/non_oss/offline/non_oss_queue_store.dart';
+import 'package:ipardasbor/features/pengawasan/non_oss/offline/non_oss_queue_store.dart';
 import 'package:ipardasbor/shared/region/services/wilayah_akses_service.dart';
 
 import '../../../app/app_navigator.dart';

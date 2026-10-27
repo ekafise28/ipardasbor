@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:ipardasbor/features/non_oss/offline/auto_sync_controller.dart';
-import 'package:ipardasbor/features/non_oss/offline/non_oss_queue_store.dart';
+import 'package:ipardasbor/features/pengawasan/non_oss/offline/auto_sync_controller.dart';
+import 'package:ipardasbor/features/pengawasan/non_oss/offline/non_oss_queue_store.dart';
 import 'package:ipardasbor/features/notifications/services/notification_category_preferences.dart';
 import 'package:ipardasbor/features/notifications/services/notification_local_service.dart';
 import 'package:ipardasbor/features/notifications/services/notification_retention_controller.dart';

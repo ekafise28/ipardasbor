@@ -1,20 +1,20 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:ipardasbor/features/non_oss/offline/non_oss_queue_store.dart';
+import 'package:ipardasbor/features/pengawasan/non_oss/offline/non_oss_queue_store.dart';
 import 'package:ipardasbor/shared/widgets/app_banner.dart';
 import 'package:ipardasbor/shared/widgets/skeleton.dart' show SyncReadySkeleton;
 
 import '../../app/app_theme.dart';
 import '../../core/api/api_client.dart';
 
-import '../non_oss/offline/non_oss_local_data.dart';
-import '../non_oss/offline/offline_queue_service.dart';
-import '../non_oss/offline/sync_service.dart';
-import '../non_oss/services/non_oss_service.dart';
-import '../non_oss/non_oss_form_page.dart';
-import '../oss/models/oss_jenis_produk_akomodasi.dart';
-import '../riwayat/riwayat_page.dart';
+import '../pengawasan/non_oss/offline/non_oss_local_data.dart';
+import '../pengawasan/non_oss/offline/offline_queue_service.dart';
+import '../pengawasan/non_oss/offline/sync_service.dart';
+import '../pengawasan/non_oss/services/non_oss_service.dart';
+import '../pengawasan/non_oss/non_oss_form_page.dart';
+import '../pengawasan/oss/models/oss_jenis_produk_akomodasi.dart';
+import '../pengawasan/riwayat/riwayat_page.dart';
 
 import 'pages/sync_submission_detail_page.dart';
 import 'widgets/sync_bottom_bar.dart';
