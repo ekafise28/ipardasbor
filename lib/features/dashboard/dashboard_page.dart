@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import 'package:ipardasbor/features/pengawasan/non_oss/offline/non_oss_queue_store.dart';
 import 'package:ipardasbor/shared/widgets/app_banner.dart';
 import 'package:ipardasbor/core/constants/bidang_usaha_constants.dart';
 import 'package:ipardasbor/features/dashboard/models/dashboard_insight.dart';
@@ -44,6 +45,9 @@ class _DashboardPageState extends State<DashboardPage>
   String? _errorMessage;
 
   String? _selectedProvince;
+
+  // Jumlah draft Non-OSS di perangkat (tidak ada di server).
+  int _localDraftCount = 0;
 
   DashboardFilterValues _filterValues = DashboardFilterValues.empty;
 
@@ -96,10 +100,15 @@ class _DashboardPageState extends State<DashboardPage>
 
       if (!mounted) return;
 
+      // Draft hanya ada di perangkat, jadi dihitung setelah data server ada.
+      final int localDraft = await _hitungDraftLokal(result);
+      if (!mounted) return;
+
       final bool isFirstData = _dashboard == null;
 
       setState(() {
         _dashboard = result;
+        _localDraftCount = localDraft;
         _selectedProvince = result.province.slug;
         _isLoading = false;
         _errorMessage = null;
@@ -133,6 +142,27 @@ class _DashboardPageState extends State<DashboardPage>
             'Koneksi ke server gagal. Pastikan internet aktif dan server '
             'dapat diakses.';
       });
+    }
+  }
+
+  /// Draft hanya ada di SQLite perangkat (tidak dikirim ke server), jadi
+  /// dihitung terpisah lalu digabung di tampilan. Kegagalan membaca database
+  /// lokal tidak boleh membuat dashboard gagal dimuat.
+  Future<int> _hitungDraftLokal(DashboardData data) async {
+    // Draft berasal dari form Non-OSS saja.
+    final String? sumber = _filterValues.dataSource;
+    if (sumber != null && sumber.isNotEmpty && sumber != 'NON OSS') return 0;
+
+    try {
+      return await NonOssQueueStore.instance.countDraftsForDashboard(
+        provinceId: data.province.id,
+        districtId: _filterValues.districtId,
+        bidangUsaha: _filterValues.bidangUsaha,
+        startDate: _filterValues.startDateApiFormat,
+        endDate: _filterValues.endDateApiFormat,
+      );
+    } catch (_) {
+      return 0;
     }
   }
 
@@ -519,6 +549,16 @@ class _DashboardPageState extends State<DashboardPage>
   /// verifikasi selesai, jumlah selesai/draft, periode, dan pilihan provinsi.
   Widget _buildKpiHeader(DashboardData dashboard) {
     final DashboardSummary summary = dashboard.summary;
+
+    // Draft lokal belum ada di server, jadi ditambahkan ke total dan Draft.
+    final int totalDenganDraft = summary.total + _localDraftCount;
+    final int draftTotal = summary.draft + _localDraftCount;
+    final double persenSelesai = totalDenganDraft <= 0
+        ? 0.0
+        : (summary.completed * 100 / totalDenganDraft)
+              .clamp(0.0, 100.0)
+              .toDouble();
+
     final List<ProvinceOption> provinces = dashboard.filterOptions.provinces;
     final List<DistrictOption> districts = dashboard.filterOptions.districts;
     // Terisi hanya kalau akses user terkunci ke satu kabupaten/kota.
@@ -580,7 +620,7 @@ class _DashboardPageState extends State<DashboardPage>
                       fit: BoxFit.scaleDown,
                       alignment: Alignment.centerLeft,
                       child: CountUpText(
-                        value: summary.total,
+                        value: totalDenganDraft,
                         style: const TextStyle(
                           color: Colors.white,
                           fontSize: 40,
@@ -620,7 +660,7 @@ class _DashboardPageState extends State<DashboardPage>
                 ),
               ),
               const SizedBox(width: 12),
-              _RingGauge(percentage: summary.completedPercentage),
+              _RingGauge(percentage: persenSelesai),
             ],
           ),
           const SizedBox(height: 18),
@@ -638,7 +678,7 @@ class _DashboardPageState extends State<DashboardPage>
                 child: _KpiPill(
                   icon: Icons.edit_note_rounded,
                   label: 'Draft',
-                  value: summary.draft,
+                  value: draftTotal,
                 ),
               ),
             ],
