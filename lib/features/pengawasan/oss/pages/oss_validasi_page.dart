@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:ipardasbor/shared/utils/ui_actions.dart';
 import 'package:ipardasbor/shared/widgets/app_banner.dart';
@@ -58,6 +60,32 @@ class _OssValidasiPageState extends State<OssValidasiPage> {
   String? _kbliDesc;
   bool _submitting = false;
 
+  Timer? _timer;
+  int _detik = 0;
+
+  void _mulaiProses() {
+    _detik = 0;
+    _timer?.cancel();
+    _timer = Timer.periodic(const Duration(seconds: 1), (_) {
+      if (!mounted) return;
+      setState(() => _detik++);
+    });
+    setState(() => _submitting = true);
+  }
+
+  void _akhiriProses() {
+    _timer?.cancel();
+    _timer = null;
+    setState(() => _submitting = false);
+  }
+
+  // Perkiraan berdasarkan lama menunggu, bukan status asli dari server.
+  String get _teksTahap {
+    if (_detik < 4) return 'Menghubungi server...';
+    if (_detik < 10) return 'Menunggu respons API OSS...';
+    return 'OSS belum merespons, mencoba ulang otomatis...';
+  }
+
   TextEditingController _ctrlFor(OcrFieldType type) => switch (type) {
     OcrFieldType.nib => _nibCtrl,
     OcrFieldType.nku => _nkuCtrl,
@@ -99,6 +127,7 @@ class _OssValidasiPageState extends State<OssValidasiPage> {
 
   @override
   void dispose() {
+    _timer?.cancel();
     _nibCtrl.dispose();
     _kbliCtrl.dispose();
     _nkuCtrl.dispose();
@@ -199,7 +228,7 @@ class _OssValidasiPageState extends State<OssValidasiPage> {
 
     if (!await NetworkGuard.pastikanOnline(context)) return;
     if (!mounted) return;
-    setState(() => _submitting = true);
+    _mulaiProses();
 
     try {
       final OssValidasiResult hasilApi = await _ossService.validasi(
@@ -210,7 +239,7 @@ class _OssValidasiPageState extends State<OssValidasiPage> {
       );
 
       if (!mounted) return;
-      setState(() => _submitting = false);
+      _akhiriProses();
 
       // kbli_desc (khusus KBLI 55900) tetap dari pilihan user di halaman
       // ini - backend tidak menentukan jenis usaha spesifiknya.
@@ -238,7 +267,7 @@ class _OssValidasiPageState extends State<OssValidasiPage> {
       }
     } catch (e) {
       if (!mounted) return;
-      setState(() => _submitting = false);
+      _akhiriProses();
 
       final String pesan = _ossService.isConnectionFailure(e)
           ? 'Tidak dapat terhubung ke server. Periksa koneksi internet.'
@@ -374,7 +403,7 @@ class _OssValidasiPageState extends State<OssValidasiPage> {
                   hintText: 'Masukkan NIB',
                   prefixIcon: const Icon(Icons.credit_card_outlined, size: 20),
                   // OCR: ikon scan per field
-                  suffixIcon: _ocrSuffix(OcrFieldType.nib),                    
+                  suffixIcon: _ocrSuffix(OcrFieldType.nib),
                 ),
                 keyboardType: TextInputType.number,
                 validator: _requiredValidator,
@@ -393,7 +422,7 @@ class _OssValidasiPageState extends State<OssValidasiPage> {
                       : null,
                   helperMaxLines: 2,
                   // OCR: ikon scan per field
-                  suffixIcon: _ocrSuffix(OcrFieldType.kbli),                     
+                  suffixIcon: _ocrSuffix(OcrFieldType.kbli),
                 ),
                 keyboardType: TextInputType.number,
                 maxLength: 5,
@@ -486,6 +515,54 @@ class _OssValidasiPageState extends State<OssValidasiPage> {
                   validator: (v) => v == null ? 'Wajib dipilih.' : null,
                 ),
               ],
+              if (_submitting)
+                Container(
+                  margin: const EdgeInsets.only(top: 16),
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: AppTheme.surfaceMuted(context),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: AppTheme.border(context)),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              _teksTahap,
+                              style: TextStyle(
+                                fontWeight: FontWeight.w700,
+                                color: AppTheme.textColor(context),
+                              ),
+                            ),
+                          ),
+                          Text(
+                            '$_detik dtk',
+                            style: TextStyle(
+                              fontWeight: FontWeight.w800,
+                              color: AppTheme.primaryColor,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 10),
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(4),
+                        child: const LinearProgressIndicator(minHeight: 5),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'Proses bisa memakan waktu hingga 30 detik. Jangan tutup halaman ini.',
+                        style: TextStyle(
+                          fontSize: 11.5,
+                          color: AppTheme.textSecondary(context),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               const SizedBox(height: 20),
               ValueListenableBuilder<bool>(
                 valueListenable: NetworkStatus.instance,
@@ -516,7 +593,7 @@ class _OssValidasiPageState extends State<OssValidasiPage> {
                           ),
                     label: Text(
                       _submitting
-                          ? 'Memeriksa...'
+                          ? 'Memeriksa... ${_detik}s'
                           : (offline
                                 ? 'Perlu koneksi internet'
                                 : 'Cek Validasi'),
