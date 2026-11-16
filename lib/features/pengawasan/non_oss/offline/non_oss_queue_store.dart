@@ -1,3 +1,5 @@
+import 'dart:convert' show jsonDecode;
+
 import 'package:sqflite/sqflite.dart';
 
 import '../../../../core/database/app_database.dart';
@@ -111,6 +113,73 @@ class NonOssQueueStore {
       limit: limit,
     );
     return rows.map(NonOssLocalData.fromDatabase).toList(growable: false);
+  }
+
+  /// Jumlah draft akun yang sedang login yang cocok dengan filter dashboard.
+  /// Wilayah dan tanggal ada di payload_json (bukan kolom tersendiri), jadi
+  /// penyaringan dilakukan di Dart. Jumlah draft per perangkat kecil.
+  Future<int> countDraftsForDashboard({
+    required int provinceId,
+    int? districtId,
+    String? bidangUsaha,
+    String? startDate, // yyyy-MM-dd
+    String? endDate, // yyyy-MM-dd
+  }) async {
+    final String? uid = await AppDatabase.currentUserId();
+    if (uid == null) return 0;
+
+    final Database db = await _db;
+    final List<Map<String, Object?>> rows = await db.query(
+      _table,
+      columns: <String>['payload_json'],
+      where: 'user_id = ? AND sync_status = ?',
+      whereArgs: <Object?>[uid, SyncStatus.draft.value],
+    );
+
+    int total = 0;
+    for (final Map<String, Object?> row in rows) {
+      final Map<String, dynamic> payload;
+      try {
+        payload =
+            jsonDecode(row['payload_json'] as String) as Map<String, dynamic>;
+      } catch (_) {
+        continue;
+      }
+
+      int? angka(String key) => int.tryParse(payload[key]?.toString() ?? '');
+
+      final int? provDraft = angka('provinsi_id');
+      if (provDraft == null) {
+        // Draft belum memilih wilayah (mis. akun admin tanpa daerah).
+        // Tetap dihitung, kecuali filter kabupaten/kota sedang aktif.
+        if (districtId != null) continue;
+      } else {
+        if (provDraft != provinceId) continue;
+        if (districtId != null && angka('kabupaten_id') != districtId) {
+          continue;
+        }
+      }
+
+      if (bidangUsaha != null && bidangUsaha.isNotEmpty) {
+        // Draft lama tanpa bidang_usaha dianggap akomodasi.
+        final String bidang =
+            payload['bidang_usaha']?.toString() ?? 'akomodasi';
+        if (bidang != bidangUsaha) continue;
+      }
+
+      final String tanggal = payload['tanggal_pengawasan']?.toString() ?? '';
+      if (startDate != null &&
+          (tanggal.isEmpty || tanggal.compareTo(startDate) < 0)) {
+        continue;
+      }
+      if (endDate != null &&
+          (tanggal.isEmpty || tanggal.compareTo(endDate) > 0)) {
+        continue;
+      }
+
+      total++;
+    }
+    return total;
   }
 
   /// Klaim atomik: hanya berhasil kalau baris masih PENDING/FAILED.
