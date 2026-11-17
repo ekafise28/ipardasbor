@@ -6,7 +6,7 @@ import '../models/okupansi_hotel_filter.dart';
 /// Akses API Okupansi Hotel. Melempar ApiException; tangkap di level UI.
 class OkupansiHotelService {
   OkupansiHotelService({ApiClient? apiClient})
-    : _api = apiClient ?? ApiClient();
+    : _api = apiClient ?? ApiClient.shared;
 
   final ApiClient _api;
 

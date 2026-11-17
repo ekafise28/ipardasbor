@@ -8,7 +8,7 @@ import '../models/wisman_bps_filter.dart';
 
 /// Akses API Wisatawan Mancanegara (BPS). Melempar ApiException; tangkap di UI.
 class WismanBpsService {
-  WismanBpsService({ApiClient? apiClient}) : _api = apiClient ?? ApiClient();
+  WismanBpsService({ApiClient? apiClient}) : _api = apiClient ?? ApiClient.shared;
 
   final ApiClient _api;
 

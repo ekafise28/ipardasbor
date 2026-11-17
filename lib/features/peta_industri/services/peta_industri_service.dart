@@ -8,7 +8,7 @@ import '../models/peta_grafik_model.dart';
 import '../models/peta_industri_model.dart';
 
 class PetaIndustriService {
-  PetaIndustriService({ApiClient? client}) : _client = client ?? ApiClient();
+  PetaIndustriService({ApiClient? client}) : _client = client ?? ApiClient.shared;
 
   final ApiClient _client;
 

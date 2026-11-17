@@ -37,7 +37,7 @@ class _NotificationPageState extends State<NotificationPage> {
   @override
   void initState() {
     super.initState();
-    _syncService = NonOssSyncService(remote: NonOssService(ApiClient()));
+    _syncService = NonOssSyncService(remote: NonOssService(ApiClient.shared));
     _queueService = OfflineQueueService(database: NonOssQueueStore.instance);
     _muat();
   }

@@ -13,9 +13,19 @@ import '../cache/api_cache.dart';
 import '../cache/cache_status.dart';
 
 class ApiClient {
-  ApiClient({http.Client? client}) : _client = client ?? http.Client();
+    ApiClient({http.Client? client})
+    : _client = client ?? http.Client(),
+      _isShared = false;
+
+  ApiClient._bersama() : _client = http.Client(), _isShared = true;
+
+  /// Satu klien untuk seluruh aplikasi: koneksi dipakai ulang (hemat
+  /// handshake TLS) dan tidak ada lagi klien yang lupa ditutup. Tidak perlu
+  /// di-close; [close] pada instance ini sengaja tidak melakukan apa-apa.
+  static final ApiClient shared = ApiClient._bersama();
 
   final http.Client _client;
+  final bool _isShared;
 
   static const Duration _timeout = Duration(seconds: 30);
 
@@ -362,6 +372,7 @@ class ApiClient {
   }
 
   void close() {
+    if (_isShared) return;
     _client.close();
   }
 }

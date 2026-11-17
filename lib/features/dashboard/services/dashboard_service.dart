@@ -4,7 +4,7 @@ import '../../../core/api/api_exception.dart';
 import '../models/dashboard_data.dart';
 
 class DashboardService {
-  DashboardService({ApiClient? apiClient}) : _api = apiClient ?? ApiClient();
+  DashboardService({ApiClient? apiClient}) : _api = apiClient ?? ApiClient.shared;
 
   final ApiClient _api;
 

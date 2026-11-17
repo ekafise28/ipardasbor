@@ -37,7 +37,7 @@ class _AkomodasiFormPageState extends State<AkomodasiFormPage> {
   @override
   void initState() {
     super.initState();
-    _api = ApiClient();
+    _api = ApiClient.shared;
     _service = AkomodasiService(_api);
   }
 

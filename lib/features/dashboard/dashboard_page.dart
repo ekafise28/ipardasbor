@@ -64,7 +64,6 @@ class _DashboardPageState extends State<DashboardPage>
   @override
   void dispose() {
     _entrance.dispose();
-    _dashboardService.dispose();
     super.dispose();
   }
 

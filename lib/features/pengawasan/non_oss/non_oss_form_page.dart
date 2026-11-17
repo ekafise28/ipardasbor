@@ -272,7 +272,7 @@ class _NonOssFormPageState extends State<NonOssFormPage>
     _snapshotAwal = Map<String, String>.from(_data.toFields());
     _jumlahFotoAwal = _data.photos.length;
 
-    _api = ApiClient();
+    _api = ApiClient.shared;
     _regions = RegionService();
     _service = NonOssService(_api);
     _jenisProdukOptions = _data.bidang == 'akomodasi'

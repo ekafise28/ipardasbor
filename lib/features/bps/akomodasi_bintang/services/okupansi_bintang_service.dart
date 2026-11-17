@@ -9,7 +9,7 @@ import '../models/okupansi_bintang_filter.dart';
 /// Akses API Okupansi Akomodasi Bintang. Melempar ApiException; tangkap di UI.
 class OkupansiBintangService {
   OkupansiBintangService({ApiClient? apiClient})
-    : _api = apiClient ?? ApiClient();
+    : _api = apiClient ?? ApiClient.shared;
 
   final ApiClient _api;
 

@@ -53,7 +53,7 @@ class _IndustriPariwisataPageState extends State<IndustriPariwisataPage> {
   @override
   void initState() {
     super.initState();
-    _api = ApiClient();
+    _api = ApiClient.shared;
     _service = IndustriPariwisataService(_api);
 
     // Seperti di web: opsi filter dan data dashboard dimuat bersamaan.

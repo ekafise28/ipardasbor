@@ -34,7 +34,7 @@ class _IparAppState extends State<IparApp> with WidgetsBindingObserver {
   void initState() {
     super.initState();
 
-    _nonOssSync = NonOssSyncService(remote: NonOssService(ApiClient()));
+    _nonOssSync = NonOssSyncService(remote: NonOssService(ApiClient.shared));
 
     // Sinkronisasi otomatis (saat app dibuka & saat koneksi berubah) HANYA
     // berjalan kalau user mengaktifkannya lewat toggle di halaman Settings

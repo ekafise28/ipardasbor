@@ -39,7 +39,7 @@ class _WisatawanMancanegaraPageState extends State<WisatawanMancanegaraPage> {
   @override
   void initState() {
     super.initState();
-    _api = ApiClient();
+    _api = ApiClient.shared;
     _service = WismanService(_api);
     _mulai();
   }

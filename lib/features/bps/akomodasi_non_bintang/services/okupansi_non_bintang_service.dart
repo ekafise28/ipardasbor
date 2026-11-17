@@ -9,7 +9,7 @@ import '../models/okupansi_non_bintang_filter.dart';
 /// Akses API Okupansi Non-Bintang. Melempar ApiException; tangkap di UI.
 class OkupansiNonBintangService {
   OkupansiNonBintangService({ApiClient? apiClient})
-    : _api = apiClient ?? ApiClient();
+    : _api = apiClient ?? ApiClient.shared;
 
   final ApiClient _api;
 

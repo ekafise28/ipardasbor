@@ -63,7 +63,7 @@ class _BaselineOtaPageState extends State<BaselineOtaPage>
   void initState() {
     super.initState();
     initGpsCapture();
-    _service = BaselineOtaService(ApiClient());
+    _service = BaselineOtaService(ApiClient.shared);
     _ctrl = PaginatedListController<BaselineOtaItem>(
       paged: true,
       fetchPage: _ambilHalaman,

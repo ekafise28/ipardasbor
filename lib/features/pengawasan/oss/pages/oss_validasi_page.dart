@@ -111,7 +111,7 @@ class _OssValidasiPageState extends State<OssValidasiPage> {
   @override
   void initState() {
     super.initState();
-    _api = ApiClient();
+    _api = ApiClient.shared;
     _ossService = OssService(_api);
 
     _nibCtrl.text = (widget.initialNib ?? '').trim();

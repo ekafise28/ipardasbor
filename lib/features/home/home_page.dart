@@ -65,7 +65,7 @@ class _HomePageState extends State<HomePage>
   void initState() {
     super.initState();
     WilayahAksesService.instance.refresh(); // tanpa await, berjalan di latar
-    _api = ApiClient();
+    _api = ApiClient.shared;
     _nonOssService = NonOssService(_api);
 
     _entrance = AnimationController(

@@ -7,7 +7,7 @@ import '../models/hotel_page_result.dart';
 /// Akses API Data Hotel. Melempar ApiException; tangkap di level UI.
 class DataHotelService {
   DataHotelService({ApiClient? apiClient})
-    : _api = apiClient ?? ApiClient();
+    : _api = apiClient ?? ApiClient.shared;
 
   final ApiClient _api;
 

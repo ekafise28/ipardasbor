@@ -407,7 +407,7 @@ class _SettingsPageState extends State<SettingsPage> {
                   // menunggu app dibuka ulang / koneksi berubah dulu.
                   if (value) {
                     final NonOssSyncService syncService = NonOssSyncService(
-                      remote: NonOssService(ApiClient()),
+                      remote: NonOssService(ApiClient.shared),
                     );
                     unawaited(syncService.syncWaiting().catchError((_) {}));
                   }

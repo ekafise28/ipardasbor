@@ -55,7 +55,7 @@ class _AkomodasiReviewPageState extends State<AkomodasiReviewPage> {
   @override
   void initState() {
     super.initState();
-    _api = ApiClient();
+    _api = ApiClient.shared;
     _service = AkomodasiService(_api);
     _muatSemuaWilayah();
   }

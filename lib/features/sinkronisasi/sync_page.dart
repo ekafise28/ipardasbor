@@ -53,7 +53,7 @@ class _SyncPageState extends State<SyncPage> {
   @override
   void initState() {
     super.initState();
-    _api = ApiClient();
+    _api = ApiClient.shared;
     _syncService = NonOssSyncService(remote: NonOssService(_api));
     _queueService = OfflineQueueService(database: _database);
     _loadAllData();

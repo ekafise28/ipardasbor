@@ -10,7 +10,7 @@ import '../models/riwayat_detail.dart';
 /// endpoint atau bentuk mentah response JSON.
 class RiwayatService {
   RiwayatService({ApiClient? apiClient})
-    : _apiClient = apiClient ?? ApiClient();
+    : _apiClient = apiClient ?? ApiClient.shared;
 
   final ApiClient _apiClient;
 

@@ -120,7 +120,7 @@ class _OssFormPageState extends State<OssFormPage>
     }
 
     _regions = RegionService();
-    _api = ApiClient();
+    _api = ApiClient.shared;
     _ossService = OssService(_api);
 
     _namaPemilikCtrl = TextEditingController();

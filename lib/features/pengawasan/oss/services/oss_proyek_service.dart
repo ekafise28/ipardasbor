@@ -9,7 +9,7 @@ import '../models/oss_proyek_page_result.dart';
 /// pesannya tampil ke petugas (pola sama dengan [RiwayatService]).
 class OssProyekService {
   OssProyekService({ApiClient? apiClient})
-    : _apiClient = apiClient ?? ApiClient();
+    : _apiClient = apiClient ?? ApiClient.shared;
 
   final ApiClient _apiClient;
 

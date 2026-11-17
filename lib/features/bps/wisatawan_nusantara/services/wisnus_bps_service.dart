@@ -8,7 +8,7 @@ import '../models/wisnus_bps_filter.dart';
 
 /// Akses API Wisatawan Nusantara (BPS). Melempar ApiException; tangkap di UI.
 class WisnusBpsService {
-  WisnusBpsService({ApiClient? apiClient}) : _api = apiClient ?? ApiClient();
+  WisnusBpsService({ApiClient? apiClient}) : _api = apiClient ?? ApiClient.shared;
 
   final ApiClient _api;
 

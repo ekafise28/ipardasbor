@@ -13,7 +13,7 @@ import '../models/proyek_data_page_result.dart';
 /// tangkap di level UI (pola sama dengan [OssProyekService]).
 class ProyekDataService {
   ProyekDataService({ApiClient? apiClient})
-    : _apiClient = apiClient ?? ApiClient();
+    : _apiClient = apiClient ?? ApiClient.shared;
 
   final ApiClient _apiClient;
 

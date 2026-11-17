@@ -38,7 +38,7 @@ class _OkupansiAkomodasiPageState extends State<OkupansiAkomodasiPage> {
   @override
   void initState() {
     super.initState();
-    _api = ApiClient();
+    _api = ApiClient.shared;
     _service = OkupansiService(_api);
     _mulai();
   }

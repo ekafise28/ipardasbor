@@ -5,7 +5,7 @@
 
 // class ProfileService {
 //   ProfileService({ApiClient? apiClient})
-//     : _apiClient = apiClient ?? ApiClient();
+//     : _apiClient = apiClient ?? ApiClient.shared;
 
 //   final ApiClient _apiClient;
 
@@ -71,7 +71,7 @@ import '../models/kelola_akun.dart';
 
 class ProfileService {
   ProfileService({ApiClient? apiClient})
-    : _apiClient = apiClient ?? ApiClient();
+    : _apiClient = apiClient ?? ApiClient.shared;
 
   final ApiClient _apiClient;
 
