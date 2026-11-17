@@ -25,6 +25,28 @@ class ApiClient {
   // tidak dibatasi waktu selama datanya masih mengalir.
   static const Duration _timeoutMulaiUnduh = Duration(seconds: 60);
 
+  static const String _pesanTimeout =
+      'Waktu koneksi habis. Silakan periksa koneksi internet.';
+  static const String _pesanTerputus =
+      'Tidak dapat terhubung ke server. Periksa koneksi internet.';
+
+  /// Menjalankan [aksi] dan menerjemahkan kegagalan jaringan (timeout,
+  /// koneksi putus) menjadi [ApiException] berpesan ramah. Error dari server
+  /// (401, 422, 5xx, dst) sudah berupa ApiException dari [_processResponse]
+  /// dan diteruskan apa adanya.
+  Future<T> _guard<T>(
+    Future<T> Function() aksi, {
+    String pesanTimeout = _pesanTimeout,
+  }) async {
+    try {
+      return await aksi();
+    } on TimeoutException {
+      throw ApiException(message: pesanTimeout);
+    } on http.ClientException {
+      throw const ApiException(message: _pesanTerputus);
+    }
+  }
+
   /// Mengunduh respons (mis. CSV) langsung ke [file] tanpa memuat semuanya
   /// ke memori. [onProgress] menerima jumlah byte dan jumlah baris yang
   /// sudah diterima. Unduhan berhenti kalau [dibatalkan] mengembalikan true
@@ -77,9 +99,7 @@ class ApiClient {
 
       await sink.flush();
     } on TimeoutException {
-      throw const ApiException(
-        message: 'Waktu koneksi habis. Silakan periksa koneksi internet.',
-      );
+      throw const ApiException(message: _pesanTimeout);
     } on http.ClientException {
       throw const ApiException(
         message: 'Unduhan terputus. Periksa koneksi internet.',
@@ -155,13 +175,9 @@ class ApiClient {
       }
       return data;
     } on TimeoutException {
-      gagalJaringan = const ApiException(
-        message: 'Waktu koneksi habis. Silakan periksa koneksi internet.',
-      );
+      gagalJaringan = const ApiException(message: _pesanTimeout);
     } on http.ClientException {
-      gagalJaringan = const ApiException(
-        message: 'Tidak dapat terhubung ke server. Periksa koneksi internet.',
-      );
+      gagalJaringan = const ApiException(message: _pesanTerputus);
     }
 
     // Sampai sini berarti gagal jaringan (tanpa status code). Error server
@@ -181,8 +197,8 @@ class ApiClient {
     String endpoint, {
     Map<String, dynamic>? body,
     bool useToken = true,
-  }) async {
-    try {
+  }) {
+    return _guard(() async {
       final http.Response response = await _client
           .post(
             _buildUri(endpoint),
@@ -191,24 +207,16 @@ class ApiClient {
           )
           .timeout(_timeout);
 
-      return await _processResponse(response, handleSessionExpired: useToken);
-    } on TimeoutException {
-      throw const ApiException(
-        message: 'Waktu koneksi habis. Silakan periksa koneksi internet.',
-      );
-    } on http.ClientException {
-      throw const ApiException(
-        message: 'Tidak dapat terhubung ke server. Periksa koneksi internet.',
-      );
-    }
+      return _processResponse(response, handleSessionExpired: useToken);
+    });
   }
 
   Future<dynamic> put(
     String endpoint, {
     Map<String, dynamic>? body,
     bool useToken = true,
-  }) async {
-    try {
+  }) {
+    return _guard(() async {
       final http.Response response = await _client
           .put(
             _buildUri(endpoint),
@@ -217,20 +225,12 @@ class ApiClient {
           )
           .timeout(_timeout);
 
-      return await _processResponse(response, handleSessionExpired: useToken);
-    } on TimeoutException {
-      throw const ApiException(
-        message: 'Waktu koneksi habis. Silakan periksa koneksi internet.',
-      );
-    } on http.ClientException {
-      throw const ApiException(
-        message: 'Tidak dapat terhubung ke server. Periksa koneksi internet.',
-      );
-    }
+      return _processResponse(response, handleSessionExpired: useToken);
+    });
   }
 
-  Future<dynamic> delete(String endpoint, {bool useToken = true}) async {
-    try {
+  Future<dynamic> delete(String endpoint, {bool useToken = true}) {
+    return _guard(() async {
       final http.Response response = await _client
           .delete(
             _buildUri(endpoint),
@@ -238,16 +238,8 @@ class ApiClient {
           )
           .timeout(_timeout);
 
-      return await _processResponse(response, handleSessionExpired: useToken);
-    } on TimeoutException {
-      throw const ApiException(
-        message: 'Waktu koneksi habis. Silakan periksa koneksi internet.',
-      );
-    } on http.ClientException {
-      throw const ApiException(
-        message: 'Tidak dapat terhubung ke server. Periksa koneksi internet.',
-      );
-    }
+      return _processResponse(response, handleSessionExpired: useToken);
+    });
   }
 
   Future<dynamic> multipartPost(
@@ -255,8 +247,8 @@ class ApiClient {
     required Map<String, String> fields,
     required List<http.MultipartFile> files,
     bool useToken = true,
-  }) async {
-    try {
+  }) {
+    return _guard(() async {
       final http.MultipartRequest request = http.MultipartRequest(
         'POST',
         _buildUri(endpoint),
@@ -279,16 +271,8 @@ class ApiClient {
         streamedResponse,
       );
 
-      return await _processResponse(response, handleSessionExpired: useToken);
-    } on TimeoutException {
-      throw const ApiException(
-        message: 'Waktu unggah habis. Silakan periksa koneksi internet.',
-      );
-    } on http.ClientException {
-      throw const ApiException(
-        message: 'Tidak dapat terhubung ke server. Periksa koneksi internet.',
-      );
-    }
+      return _processResponse(response, handleSessionExpired: useToken);
+    }, pesanTimeout: 'Waktu unggah habis. Silakan periksa koneksi internet.');
   }
 
   Future<dynamic> _processResponse(
