@@ -22,23 +22,41 @@ class ApiCache {
 
   static const String table = AppDatabase.apiCacheTable;
 
-  /// Hanya GET dashboard, riwayat, profil, daftar OTA, daftar OSS proyek, dan
-  /// Data Proyek (daftar + opsi filter). Data Proyek sengaja exact, bukan
-  /// prefix, supaya '/mobile/proyek-data/export' (CSV) tidak ikut ter-cache.
+  /// Hanya GET dashboard, peta, riwayat, profil, daftar OTA/OSS, Data Proyek,
+  /// Data Hotel, Okupansi Hotel, dan BPS. Semua exact (bukan prefix) supaya
+  /// endpoint unduhan seperti '/mobile/proyek-data/export' tidak ikut ter-cache.
   static const Set<String> _exact = <String>{
     '/mobile/me',
     '/mobile/dashboard',
+
+    // Dashboard pariwisata (GET)
+    '/mobile/dashboard-okupansi/filters',
+    '/mobile/dashboard-okupansi/data',
+    '/mobile/dashboard-wisman-rekap/filters',
+    '/mobile/dashboard-wisman-rekap/data',
+    '/mobile/dashboard-operasional/wisman/filters',
+    '/mobile/dashboard-operasional/wisman/data',
+    '/mobile/dashboard-pariwisata/summary',
+
     '/mobile/peta-industri',
     '/mobile/oss/riwayat',
     '/mobile/oss/proyek',
     '/mobile/oss/baseline-ota',
     '/mobile/proyek-data',
     '/mobile/proyek-data/filter-options',
+    '/mobile/data-hotel',
+    '/mobile/okupansi-hotel',
+    '/mobile/okupansi-hotel/filters',
+    '/mobile/bps/okupansi-bintang',
+    '/mobile/bps/okupansi-bintang/filters',
+    '/mobile/bps/okupansi-non-bintang',
+    '/mobile/bps/okupansi-non-bintang/filters',
   };
   static const List<String> _prefix = <String>[
     '/mobile/oss/riwayat/',
     '/mobile/oss/proyek/',
     '/mobile/peta-industri/',
+    '/mobile/data-hotel/', // detail per hotel
   ];
 
   static final AesGcm _aes = AesGcm.with256bits();
@@ -51,8 +69,10 @@ class ApiCache {
         _exact.contains(endpoint) || _prefix.any(endpoint.startsWith);
     if (!boleh) return null;
 
-    // Potongan data ekspor tidak di-cache: besar dan hanya dipakai sekali.
-    if (endpoint.endsWith('/perusahaan/ekspor')) return null;
+    // Data ekspor (perusahaan maupun rekap) tidak di-cache: besar dan sekali pakai.
+    if (endpoint.endsWith('/ekspor') || endpoint.endsWith('/export')) {
+      return null;
+    }
 
     // Mode "Dekat saya": koordinat berubah tiap saat, cache-nya tidak berguna.
     if (uri.queryParameters.containsKey('lat')) return null;

@@ -37,7 +37,7 @@ class _KelolaAkunPageState extends State<KelolaAkunPage> {
   String _filter = 'Semua';
   String _query = '';
 
-  // Paginasi lokal: 5 akun per halaman.
+  // Paginasi lokal: 25 akun per halaman
   static const int _perPage = 25;
   int _page = 1;
 
@@ -511,7 +511,7 @@ class _KelolaAkunPageState extends State<KelolaAkunPage> {
     final confirmFocus = FocusNode();
     bool obscurePass = true;
     bool obscureConfirm = true;
-    showModalBottomSheet(
+    showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
       backgroundColor: AppTheme.surface(context),
@@ -774,7 +774,21 @@ class _KelolaAkunPageState extends State<KelolaAkunPage> {
           },
         );
       },
-    );
+    ).whenComplete(() {
+      // Ditunda: animasi tutup sheet masih berjalan saat future selesai,
+      // dan field masih memakai controller sampai animasi itu usai.
+      Future<void>.delayed(const Duration(milliseconds: 400), () {
+        kodeCtrl.dispose();
+        namaCtrl.dispose();
+        emailCtrl.dispose();
+        passCtrl.dispose();
+        jabatanCtrl.dispose();
+        nohpCtrl.dispose();
+        confirmCtrl.dispose();
+        passFocus.dispose();
+        confirmFocus.dispose();
+      });
+    });
   }
 
   @override

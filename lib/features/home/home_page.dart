@@ -13,17 +13,11 @@ import 'package:ipardasbor/features/hotel/okupansi_hotel/okupansi_hotel_page.dar
     show OkupansiHotelPage;
 import 'package:ipardasbor/shared/bidang_usaha/pilih_bidang_page.dart';
 import 'package:ipardasbor/shared/region/services/wilayah_akses_service.dart';
-// import 'package:ipardasbor/features/oss/pages/oss_pilih_bidang_page.dart';
 import 'package:ipardasbor/features/pengawasan/ota/baseline_ota_page.dart';
 import 'package:ipardasbor/features/notifications/notification_page.dart';
 import 'package:ipardasbor/features/notifications/services/notification_service.dart';
-// import '../industri_pariwisata/industri_pariwisata_page.dart';
-// import '../wisatawan_mancanegara/wisatawan_mancanegara_page.dart';
-// import '../profil_pasar_wisman/profil_pasar_wisman_page.dart';
-// import '../okupansi_akomodasi/okupansi_akomodasi_page.dart';
 import '../dashboard/dashboard_hub_page.dart';
 import '../../app/app_theme.dart';
-import '../dashboard/dashboard_page.dart';
 import '../peta_industri/peta_industri_page.dart';
 
 import '../sinkronisasi/sync_page.dart';
@@ -103,11 +97,9 @@ class _HomePageState extends State<HomePage>
     }
   }
 
-  /// Mengecek status koneksi ke SERVER (ping asli, bukan cuma jaringan
-  /// device) dan menghitung seluruh data tersimpan lokal yang belum synced
-  /// (draft + pending + failed). Dipanggil saat halaman dibuka, tiap 60
-  /// detik, saat pull-to-refresh, dan setelah kembali dari halaman lain
-  /// yang mungkin mengubah antrean (mis. Sinkronisasi, form Non-OSS).
+  /// ... Dipanggil saat halaman dibuka, saat pull-to-refresh, dan setelah
+  /// kembali dari halaman lain yang mungkin mengubah antrean (mis.
+  /// Sinkronisasi, form Non-OSS).
   Future<void> _refreshSyncStatus() async {
     final bool online = await _nonOssService.isServerAvailable();
     if (online) unawaited(_segarkanJenisProduk());
@@ -349,40 +341,6 @@ class _HomePageState extends State<HomePage>
           context,
         ).push(MaterialPageRoute<void>(builder: (_) => const SyncPage()));
         break;
-
-      // case 'Industri Pariwisata':
-      //   await Navigator.of(context).push(
-      //     MaterialPageRoute<void>(
-      //       builder: (_) => const IndustriPariwisataPage(),
-      //     ),
-      //   );
-      //   break;
-
-      // case 'Wisatawan Mancanegara':
-      //   await Navigator.of(context).push(
-      //     MaterialPageRoute<void>(
-      //       builder: (_) => const WisatawanMancanegaraPage(),
-      //     ),
-      //   );
-      //   break;
-
-      // case 'Profil Pasar Wisatwawan Mancanegara':
-      //   await Navigator.of(context).push(
-      //     MaterialPageRoute<void>(
-      //       builder: (_) => const ProfilPasarWismanPage(),
-      //     ),
-      //   );
-      //   break;
-
-      // // Judul harus SAMA PERSIS dengan `title` di MenuData.
-      // case 'Okupansi Akomodasi':
-      //   await Navigator.of(context).push(
-      //     MaterialPageRoute<void>(
-      //       builder: (_) => const OkupansiAkomodasiPage(),
-      //     ),
-      //   );
-      //   break;
-
       default:
         await Navigator.of(context).push(
           MaterialPageRoute<void>(

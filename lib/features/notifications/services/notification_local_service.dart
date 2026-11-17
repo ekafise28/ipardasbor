@@ -28,10 +28,25 @@ class NotificationLocalService {
       FlutterLocalNotificationsPlugin();
   bool _initialized = false;
 
+  /// Zona Indonesia dipilih dari offset perangkat (WIB/WITA/WIT), tanpa
+  /// paket tambahan. Tanpa ini tz.local = UTC dan pengingat "jam 9"
+  /// berbunyi sekitar 16.00 WIB.
+  static String _zonaIndonesia() {
+    switch (DateTime.now().timeZoneOffset.inHours) {
+      case 8:
+        return 'Asia/Makassar';
+      case 9:
+        return 'Asia/Jayapura';
+      default:
+        return 'Asia/Jakarta';
+    }
+  }
+
   Future<void> init() async {
     if (_initialized) return;
 
     tz_data.initializeTimeZones();
+    tz.setLocalLocation(tz.getLocation(_zonaIndonesia()));
 
     const AndroidInitializationSettings androidInit =
         AndroidInitializationSettings('@mipmap/ic_launcher');

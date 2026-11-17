@@ -109,7 +109,7 @@ class RiwayatFilter {
 
   /// Mengubah filter menjadi query parameter untuk [ApiClient.get].
   ///
-  /// Nilai null akan otomatis dibuang oleh ApiClient/ApiEndpoints.uri(),
+  /// Nilai null akan otomatis dibuang oleh ApiClient
   /// jadi tidak perlu difilter manual di sini.
   Map<String, dynamic> toQueryParameters(int page) {
     return <String, dynamic>{

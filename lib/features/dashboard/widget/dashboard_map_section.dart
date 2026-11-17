@@ -194,15 +194,15 @@ class _DashboardMapSectionState extends State<DashboardMapSection> {
           runSpacing: 6,
           children: [
             _CountChip(
-              color: AppTheme.primaryColor,
+              color: MapPointType.oss.color,
               label: 'OSS: ${widget.config.totalOss}',
             ),
             _CountChip(
-              color: const Color(0xFFE53935),
+              color: MapPointType.nonOss.color,
               label: 'Non OSS: ${widget.config.totalNonOss}',
             ),
             _CountChip(
-              color: const Color(0xFFFF9500),
+              color: MapPointType.ota.color,
               label: 'OTA: ${widget.config.totalOta}',
             ),
           ],
@@ -362,7 +362,7 @@ class _MapLegend extends StatelessWidget {
                     materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
                   ),
                   Text(
-                    '${type.label} - ${_dotLabel(type)}',
+                    type.label,
                     style: TextStyle(
                       fontSize: 12,
                       color: AppTheme.textColor(context),
@@ -375,17 +375,6 @@ class _MapLegend extends StatelessWidget {
         }).toList(),
       ),
     );
-  }
-
-  String _dotLabel(MapPointType type) {
-    switch (type) {
-      case MapPointType.oss:
-        return 'Biru';
-      case MapPointType.nonOss:
-        return 'Merah';
-      case MapPointType.ota:
-        return 'Oranye';
-    }
   }
 }
 

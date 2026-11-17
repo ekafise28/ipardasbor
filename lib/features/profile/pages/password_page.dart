@@ -522,7 +522,9 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
                           obscureText: _obscurePassword,
                           inputFormatters: [
                             FilteringTextInputFormatter.deny(RegExp(r'\s')),
-                            LengthLimitingTextInputFormatter(_maxPasswordLength),
+                            LengthLimitingTextInputFormatter(
+                              _maxPasswordLength,
+                            ),
                           ],
                           decoration: InputDecoration(
                             hintText: 'Masukkan password baru',
@@ -572,7 +574,10 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
                           controller: _confirmController,
                           obscureText: _obscureConfirm,
                           inputFormatters: [
-                            FilteringTextInputFormatter.deny(RegExp(r'\s')),LengthLimitingTextInputFormatter(_maxPasswordLength),
+                            FilteringTextInputFormatter.deny(RegExp(r'\s')),
+                            LengthLimitingTextInputFormatter(
+                              _maxPasswordLength,
+                            ),
                           ],
                           decoration: InputDecoration(
                             hintText: 'Masukkan kembali password baru',
@@ -694,13 +699,15 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
                     fontWeight: FontWeight.w800,
                   ),
                 ),
-                Text(
-                  'Kode: ${widget.user.kodeUser}',
-                  style: TextStyle(
-                    color: AppTheme.textSecondary(context),
-                    fontSize: 11.5,
+                if (widget.user.kodeUser != null &&
+                    widget.user.kodeUser!.isNotEmpty)
+                  Text(
+                    'Kode: ${widget.user.kodeUser}',
+                    style: TextStyle(
+                      color: AppTheme.textSecondary(context),
+                      fontSize: 11.5,
+                    ),
                   ),
-                ),
               ],
             ),
           ),

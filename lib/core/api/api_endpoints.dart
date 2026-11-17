@@ -25,10 +25,7 @@ class ApiEndpoints {
   static const String pengawasanNonOss = '/mobile/non-oss';
 
   // Wilayah
-  static const String provinsi = '/mobile/wilayah/provinsi';
   static const String kabupaten = '/mobile/wilayah/kabupaten';
-  static const String kecamatan = '/mobile/wilayah/kecamatan';
-  static const String kelurahan = '/mobile/wilayah/kelurahan';
   static const String wilayahAkses = '/mobile/wilayah/akses';
 
   // Pengawasan OSS
@@ -36,17 +33,6 @@ class ApiEndpoints {
   static const String proyekOss = '/mobile/oss/proyek';
   static const String pengawasanOss = '/mobile/oss/pengawasan';
   static const String riwayatOss = '/mobile/oss/riwayat';
-  static String detailProyekOss(String idProyek) {
-    final encodedId = Uri.encodeComponent(idProyek);
-
-    return '/mobile/oss/proyek/$encodedId';
-  }
-
-  static String fotoPengawasanOss(dynamic idPengawasan) {
-    final encodedId = Uri.encodeComponent(idPengawasan.toString());
-
-    return '/mobile/oss/pengawasan/$encodedId/foto';
-  }
 
   // Jenis Produk
   static const String jenisProdukSemua = '/mobile/referensi/jenis-produk';
@@ -107,19 +93,5 @@ class ApiEndpoints {
   static String userDetail(String kodeUser) {
     final encodedKode = Uri.encodeComponent(kodeUser);
     return '/mobile/users/$encodedKode';
-  }
-
-  static Uri uri(String endpoint, {Map<String, dynamic>? queryParameters}) {
-    final parameters = <String, String>{};
-
-    queryParameters?.forEach((key, value) {
-      if (value != null && value.toString().trim().isNotEmpty) {
-        parameters[key] = value.toString();
-      }
-    });
-
-    return Uri.parse(
-      '$baseUrl$endpoint',
-    ).replace(queryParameters: parameters.isEmpty ? null : parameters);
   }
 }
