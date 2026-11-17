@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:ipardasbor/app/app_theme.dart';
 import 'package:ipardasbor/features/hotel/okupansi_hotel/okupansi_hotel_style.dart';
+import 'package:ipardasbor/shared/utils/formatters.dart';
 import 'package:ipardasbor/shared/widgets/list_parts.dart';
 
 import '../models/okupansi_non_bintang_data.dart';
@@ -36,7 +37,7 @@ class OkupansiNonBintangCard extends StatelessWidget {
                 ),
               ),
               Text(
-                fmtPersen(item.persentase, desimal: 2),
+                formatPersen(item.persentase, desimal: 2),
                 style: TextStyle(
                   fontSize: 15,
                   fontWeight: FontWeight.w800,

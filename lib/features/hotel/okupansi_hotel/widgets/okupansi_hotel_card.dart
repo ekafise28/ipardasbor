@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:ipardasbor/app/app_theme.dart';
 import 'package:ipardasbor/features/hotel/okupansi_hotel/widgets/okupansi_bulan_grid.dart'
     show OkupansiBulanGrid;
+import 'package:ipardasbor/shared/utils/formatters.dart';
 import 'package:ipardasbor/shared/widgets/list_parts.dart';
 
 import '../models/okupansi_hotel_data.dart';
@@ -43,7 +44,7 @@ class OkupansiHotelCard extends StatelessWidget {
               ),
               const SizedBox(width: 8),
               Text(
-                fmtPersen(item.rataRata, desimal: 2),
+                formatPersen(item.rataRata, desimal: 2),
                 style: TextStyle(
                   fontSize: 15,
                   fontWeight: FontWeight.w800,

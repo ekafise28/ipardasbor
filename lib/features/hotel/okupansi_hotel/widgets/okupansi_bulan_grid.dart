@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:ipardasbor/app/app_theme.dart';
-
-import '../models/okupansi_hotel_data.dart';
+import 'package:ipardasbor/shared/utils/formatters.dart';
 import '../okupansi_hotel_style.dart';
 
 /// Grid 12 bulan (4 kolom x 3 baris). [bulan] harus 12 elemen,
@@ -23,7 +22,7 @@ class OkupansiBulanGrid extends StatelessWidget {
                 if (k > 0) const SizedBox(width: 6),
                 Expanded(
                   child: _SelBulan(
-                    nama: kNamaBulanSingkat[baris * 4 + k],
+                    nama: bulanSingkat[baris * 4 + k],
                     nilai: bulan[baris * 4 + k],
                   ),
                 ),
@@ -48,7 +47,8 @@ class _SelBulan extends StatelessWidget {
     final bool kosong = nilai == null;
 
     return Semantics(
-      label: '$nama: ${kosong ? 'belum ada data' : fmtPersen(nilai)}',
+      label:
+          '$nama: ${kosong ? 'belum ada data' : formatPersen(nilai, desimal: 1)}',
       excludeSemantics: true,
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 6),
@@ -73,7 +73,7 @@ class _SelBulan extends StatelessWidget {
             ),
             const SizedBox(height: 2),
             Text(
-              fmtPersen(nilai),
+              formatPersen(nilai, desimal: 1, kosong: '-'),
               style: TextStyle(
                 fontSize: 12.5,
                 fontWeight: FontWeight.w800,

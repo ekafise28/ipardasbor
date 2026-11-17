@@ -31,7 +31,7 @@ class OkupansiSummaryCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
                 _Kpi(
-                  nilai: fmtPersen(hasil.rataRata, desimal: 2),
+                  nilai: formatPersen(hasil.rataRata, desimal: 2),
                   label: 'Rata-rata okupansi',
                 ),
                 _Kpi(

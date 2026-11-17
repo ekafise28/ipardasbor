@@ -134,7 +134,7 @@ class _BarisPeringkat extends StatelessWidget {
               ),
               const SizedBox(width: 8),
               Text(
-                fmtPersen(nilai, desimal: 2),
+                formatPersen(nilai, desimal: 2),
                 style: TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.w800,

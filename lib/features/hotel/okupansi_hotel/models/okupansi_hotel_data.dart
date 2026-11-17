@@ -1,22 +1,6 @@
+import 'package:ipardasbor/shared/utils/formatters.dart';
+
 import '../../data_hotel/models/hotel_page_result.dart' show HotelPagination;
-
-const List<String> kNamaBulanSingkat = <String>[
-  'Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun',
-  'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des',
-];
-
-const List<String> kNamaBulanPanjang = <String>[
-  'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
-  'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember',
-];
-
-List<double?> _duaBelas(dynamic v) {
-  final List<dynamic> src = v as List<dynamic>? ?? const <dynamic>[];
-  return List<double?>.generate(
-    12,
-    (int i) => i < src.length && src[i] != null ? (src[i] as num).toDouble() : null,
-  );
-}
 
 /// Satu deret grafik: satu provinsi (atau INDONESIA) pada satu tahun.
 /// [values] selalu 12 elemen, null = belum ada data bulan itu.
@@ -41,7 +25,7 @@ class OkupansiSeries {
     label: '${j['label'] ?? ''}',
     provinsi: '${j['provinsi'] ?? ''}',
     tahun: (j['tahun'] as num?)?.toInt() ?? 0,
-    values: _duaBelas(j['values']),
+    values: duaBelasDouble(j['values']),
     rataRata: (j['rata_rata'] as num?)?.toDouble() ?? 0,
     nasional: j['nasional'] == true,
   );
@@ -73,7 +57,7 @@ class OkupansiHotelRow {
     provinsi: '${j['provinsi'] ?? '-'}',
     kabKota: '${j['kab_kota'] ?? '-'}',
     tahun: (j['tahun'] as num?)?.toInt() ?? 0,
-    bulan: _duaBelas(j['bulan']),
+    bulan: duaBelasDouble(j['bulan']),
     rataRata: (j['rata_rata'] as num?)?.toDouble(),
   );
 }

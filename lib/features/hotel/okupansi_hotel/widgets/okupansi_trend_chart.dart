@@ -3,7 +3,9 @@ import 'dart:math' as math;
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:ipardasbor/app/app_theme.dart';
+import 'package:ipardasbor/shared/utils/formatters.dart';
 import 'package:ipardasbor/shared/widgets/detail_cards.dart' show DetailCard;
+import 'package:ipardasbor/shared/widgets/legend_chip.dart';
 
 import '../models/okupansi_hotel_data.dart';
 import '../okupansi_hotel_style.dart';
@@ -98,7 +100,7 @@ class _OkupansiTrendChartState extends State<OkupansiTrendChart> {
               runSpacing: 6,
               children: <Widget>[
                 for (int i = 0; i < semua.length; i++)
-                  _LegendChip(
+                  LegendChip(
                     label: semua[i].label,
                     warna: warnaSeries(i, semua[i]),
                     aktif: !_sembunyi.contains(kunciSeries(semua[i])),
@@ -199,7 +201,7 @@ class _OkupansiTrendChartState extends State<OkupansiTrendChart> {
               }
               return SideTitleWidget(
                 meta: meta,
-                child: Text(kNamaBulanSingkat[i], style: sumbu),
+                child: Text(bulanSingkat[i], style: sumbu),
               );
             },
           ),
@@ -220,14 +222,14 @@ class _OkupansiTrendChartState extends State<OkupansiTrendChart> {
               for (int n = 0; n < spots.length; n++)
                 () {
                   final (OkupansiSeries s, Color w) = tampil[spots[n].barIndex];
-                  final String bulan = kNamaBulanPanjang[spots[n].x.toInt()];
+                  final String bulan = namaBulan[spots[n].x.toInt()];
                   return LineTooltipItem(
                     n == 0 ? '$bulan\n' : '',
                     putih,
                     children: <TextSpan>[
                       TextSpan(text: '● ', style: TextStyle(color: w)),
                       TextSpan(
-                        text: '${s.label}: ${fmtPersen(spots[n].y, desimal: 2)}',
+                        text: '${s.label}: ${formatPersen(spots[n].y, desimal: 2)}',
                         style: putih.copyWith(fontWeight: FontWeight.w500),
                       ),
                     ],
@@ -235,75 +237,6 @@ class _OkupansiTrendChartState extends State<OkupansiTrendChart> {
                 }(),
             ];
           },
-        ),
-      ),
-    );
-  }
-}
-
-class _LegendChip extends StatelessWidget {
-  const _LegendChip({
-    required this.label,
-    required this.warna,
-    required this.aktif,
-    required this.putus,
-    required this.onTap,
-  });
-
-  final String label;
-  final Color warna;
-  final bool aktif;
-  final bool putus;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return Semantics(
-      button: true,
-      toggled: aktif,
-      label: label,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(20),
-        child: Container(
-          constraints: const BoxConstraints(maxWidth: 230),
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-          decoration: BoxDecoration(
-            color: aktif ? warna.withValues(alpha: 0.12) : Colors.transparent,
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(
-              color: aktif ? warna : AppTheme.border(context),
-            ),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: <Widget>[
-              Container(
-                width: putus ? 12 : 9,
-                height: putus ? 3 : 9,
-                decoration: BoxDecoration(
-                  color: aktif ? warna : AppTheme.textMuted,
-                  shape: putus ? BoxShape.rectangle : BoxShape.circle,
-                ),
-              ),
-              const SizedBox(width: 6),
-              Flexible(
-                child: Text(
-                  label,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    fontSize: 11.5,
-                    fontWeight: FontWeight.w700,
-                    decoration: aktif ? null : TextDecoration.lineThrough,
-                    color: aktif
-                        ? AppTheme.textColor(context)
-                        : AppTheme.textSecondary(context),
-                  ),
-                ),
-              ),
-            ],
-          ),
         ),
       ),
     );

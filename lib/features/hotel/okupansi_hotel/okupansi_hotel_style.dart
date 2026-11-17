@@ -18,14 +18,13 @@ const List<Color> _palet = <Color>[
   Color(0xFF00897B),
 ];
 
-/// Warna satu deret. [index] = posisi deret di daftar lengkap, supaya grafik
-/// dan peringkat memakai warna yang sama. Deret INDONESIA selalu abu-biru.
-Color warnaSeries(int index, OkupansiSeries s) =>
-    s.nasional ? AppTheme.menuProfil : _palet[index % _palet.length];
+/// Warna deret ke-[index] dari palet bersama. Deret nasional (INDONESIA)
+/// selalu abu-biru. Dipakai grafik Okupansi dan grafik Wisatawan.
+Color warnaDeret(int index, {bool nasional = false}) =>
+    nasional ? AppTheme.menuProfil : _palet[index % _palet.length];
 
-/// "63,4%". Null menjadi "-".
-String fmtPersen(double? v, {int desimal = 1}) =>
-    v == null ? '-' : '${v.toStringAsFixed(desimal).replaceAll('.', ',')}%';
+Color warnaSeries(int index, OkupansiSeries s) =>
+    warnaDeret(index, nasional: s.nasional);
 
 /// Warna tingkat okupansi: merah di bawah 40, kuning 40-59, hijau 60 ke atas.
 Color warnaOkupansi(double? v) {

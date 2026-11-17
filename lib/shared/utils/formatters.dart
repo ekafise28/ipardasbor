@@ -1,5 +1,7 @@
 import 'dart:math' as math;
 
+import 'package:ipardasbor/shared/utils/json_parse.dart';
+
 // ======================================================================
 // Angka
 // ======================================================================
@@ -56,10 +58,29 @@ double niceInterval(double max) {
   return nice * magnitude;
 }
 
-/// Persentase 2 desimal: 55.2 -> "55,20%"; null -> "—".
-String formatPersen(double? v) {
-  if (v == null) return '—';
-  return '${v.toStringAsFixed(2).replaceFirst('.', ',')}%';
+/// Daftar tepat 12 elemen (Jan-Des) dari JSON. Elemen yang kosong, tidak
+/// valid, atau tidak ada menjadi null.
+List<double?> duaBelasDouble(dynamic v) {
+  final List<dynamic> src = v is List ? v : const <dynamic>[];
+  return List<double?>.generate(
+    12,
+    (int i) => i < src.length ? asDoubleOrNull(src[i]) : null,
+  );
+}
+
+/// Sama seperti [duaBelasDouble], untuk bilangan bulat (mis. jumlah wisatawan).
+List<int?> duaBelasInt(dynamic v) {
+  final List<dynamic> src = v is List ? v : const <dynamic>[];
+  return List<int?>.generate(
+    12,
+    (int i) => i < src.length ? asIntOrNull(src[i]) : null,
+  );
+}
+
+/// Persentase: 55.2 -> "55,20%" (default 2 desimal); null -> [kosong] ("—").
+String formatPersen(double? v, {int desimal = 2, String kosong = '—'}) {
+  if (v == null) return kosong;
+  return '${v.toStringAsFixed(desimal).replaceFirst('.', ',')}%';
 }
 
 /// Pertumbuhan dengan tanda: 2.5 -> "+2,5%", -1.25 -> "-1,25%", null -> "N/A".

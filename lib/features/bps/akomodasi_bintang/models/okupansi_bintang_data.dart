@@ -2,15 +2,7 @@ import 'package:ipardasbor/features/hotel/data_hotel/models/hotel_page_result.da
     show HotelPagination;
 import 'package:ipardasbor/features/hotel/okupansi_hotel/models/okupansi_hotel_data.dart'
     show OkupansiSeries;
-
-List<double?> _duaBelas(dynamic v) {
-  final List<dynamic> src = v as List<dynamic>? ?? const <dynamic>[];
-  return List<double?>.generate(
-    12,
-    (int i) =>
-        i < src.length && src[i] != null ? (src[i] as num).toDouble() : null,
-  );
-}
+import 'package:ipardasbor/shared/utils/formatters.dart';
 
 /// Satu kartu rincian: satu provinsi pada satu tahun, 12 bulan.
 /// [bulan] selalu 12 elemen, null = belum ada data bulan itu.
@@ -37,7 +29,7 @@ class OkupansiBintangRow {
         provinsi: '${j['provinsi'] ?? '-'}',
         tahun: (j['tahun'] as num?)?.toInt() ?? 0,
         nasional: j['nasional'] == true,
-        bulan: _duaBelas(j['bulan']),
+        bulan: duaBelasDouble(j['bulan']),
         rataRata: (j['rata_rata'] as num?)?.toDouble(),
       );
 }

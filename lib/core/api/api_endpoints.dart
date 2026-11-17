@@ -115,6 +115,14 @@ class ApiEndpoints {
   static const String okupansiNonBintangFilters =
       '/mobile/bps/okupansi-non-bintang/filters';
 
+  // BPS - Wisatawan Mancanegara
+  static const String wismanBps = '/mobile/bps/wisman';
+  static const String wismanBpsFilters = '/mobile/bps/wisman/filters';
+
+  // BPS - Wisatawan Nusantara
+  static const String wisnusBps = '/mobile/bps/wisnus';
+  static const String wisnusBpsFilters = '/mobile/bps/wisnus/filters';
+
   // //Mobile - CRUD Kelola Akun
   static const String users = '/mobile/users';
   static String userDetail(String kodeUser) {

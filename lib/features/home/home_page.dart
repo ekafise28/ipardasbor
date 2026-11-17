@@ -5,6 +5,7 @@ import 'package:ipardasbor/features/bps/akomodasi_bintang/okupansi_bintang_page.
     show OkupansiBintangPage;
 import 'package:ipardasbor/features/bps/akomodasi_non_bintang/okupansi_non_bintang_page.dart'
     show OkupansiNonBintangPage;
+import 'package:ipardasbor/features/bps/wisatawan_mancanegara/wisman_bps_page.dart';
 import 'package:ipardasbor/features/hotel/data_hotel/data_hotel_page.dart'
     show DataHotelPage;
 import 'package:ipardasbor/features/ipar_data/data_proyek_page.dart';
@@ -173,6 +174,14 @@ class _HomePageState extends State<HomePage>
     backgroundColor: AppTheme.menuOtaBg,
   );
 
+  static const MenuData _mWismanBps = MenuData(
+    title: 'Wisatawan Mancanegara',
+    description: 'Kunjungan wisman per pintu masuk (BPS)',
+    icon: Icons.flight_land_rounded,
+    color: AppTheme.menuOta,
+    backgroundColor: AppTheme.menuOtaBg,
+  );
+
   static const MenuData _mOss = MenuData(
     title: 'Validasi OSS',
     description: 'Verifikasi proyek dan usaha OSS',
@@ -242,7 +251,7 @@ class _HomePageState extends State<HomePage>
       _mProfil,
       _mKelolaAkun,
     ]),
-    _MenuGroup('BPS', [_mOkupansiBintang, _mOkupansiNonBintang]),
+    _MenuGroup('BPS', [_mOkupansiBintang, _mOkupansiNonBintang, _mWismanBps]),
   ];
 
   /// Angka badge per menu. Saat ini hanya Sinkronisasi (data belum terkirim).
@@ -296,6 +305,12 @@ class _HomePageState extends State<HomePage>
             builder: (_) => const OkupansiNonBintangPage(),
           ),
         );
+        break;
+
+      case 'Wisatawan Mancanegara':
+        await Navigator.of(
+          context,
+        ).push(MaterialPageRoute<void>(builder: (_) => const WismanBpsPage()));
         break;
 
       case 'Validasi OSS':
