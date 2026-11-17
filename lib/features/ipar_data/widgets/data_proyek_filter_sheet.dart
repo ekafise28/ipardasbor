@@ -3,7 +3,6 @@ import 'package:ipardasbor/app/app_theme.dart';
 import 'package:ipardasbor/shared/widgets/list_filters.dart'
     show
         FilterSheetFrame,
-        FilterLabel,
         FilterChoiceGroup,
         FilterChoice,
         FilterSection;

@@ -10,10 +10,10 @@ import 'dart:math' as math;
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:ipardasbor/shared/utils/formatters.dart';
 
 import '../../../app/app_theme.dart';
 import '../../../shared/widgets/skeleton.dart';
-import '../industri_format.dart';
 import '../models/industri_dashboard_data.dart';
 
 // Palet warna sama persis dengan versi web (variabel `palette`).
@@ -33,40 +33,8 @@ const List<Color> _palette = <Color>[
 // Warna batang grafik Perkembangan Total Usaha di web.
 const Color _warnaBatang = Color(0xFF0B6BB6);
 
-/// 1234567 -> "1,2 jt", 85000 -> "85 rb". Untuk label sumbu Y yang sempit.
-String _ringkas(double v) {
-  String rapikan(double x) {
-    final String s = x.toStringAsFixed(1);
-    return s.endsWith('.0')
-        ? s.substring(0, s.length - 2)
-        : s.replaceFirst('.', ',');
-  }
-
-  if (v >= 1000000) return '${rapikan(v / 1000000)} jt';
-  if (v >= 1000) return '${rapikan(v / 1000)} rb';
-  return v.round().toString();
-}
-
 /// 12.5 -> "12,5"
 String _persen(double v) => v.toStringAsFixed(1).replaceFirst('.', ',');
-
-/// Jarak antar garis sumbu Y yang "bulat" (1, 2, 5 x 10^n), sekitar 4 garis.
-double _niceInterval(double max) {
-  if (max <= 0) return 1;
-  final double raw = max / 4;
-  final double magnitude = math
-      .pow(10, (math.log(raw) / math.ln10).floor())
-      .toDouble();
-  final double normalized = raw / magnitude;
-  final double nice = normalized <= 1
-      ? 1
-      : normalized <= 2
-      ? 2
-      : normalized <= 5
-      ? 5
-      : 10;
-  return nice * magnitude;
-}
 
 // ======================================================================
 // Judul seksi (dipakai juga oleh tabel peringkat)
@@ -409,7 +377,7 @@ class _BarView extends StatelessWidget {
         .map((int v) => v.toDouble())
         .toList();
     final double maxValue = values.fold<double>(0, math.max);
-    final double interval = _niceInterval(maxValue);
+    final double interval = niceInterval(maxValue);
     final double maxY = maxValue <= 0
         ? interval * 4
         : ((maxValue * 1.1) / interval).ceil() * interval;
@@ -427,7 +395,7 @@ class _BarView extends StatelessWidget {
                   ? data.labels[groupIndex]
                   : '';
               return BarTooltipItem(
-                '$label: ${formatAngka(rod.toY.round())}',
+                '$label: ${formatNumber(rod.toY.round())}',
                 const TextStyle(
                   color: Colors.white,
                   fontSize: 11,
@@ -450,7 +418,7 @@ class _BarView extends StatelessWidget {
               reservedSize: 40,
               interval: interval,
               getTitlesWidget: (value, meta) => Text(
-                _ringkas(value),
+                formatRingkas(value),
                 style: TextStyle(color: muted, fontSize: 10),
               ),
             ),
@@ -589,7 +557,7 @@ class _DoughnutViewState extends State<_DoughnutView> {
                       FittedBox(
                         fit: BoxFit.scaleDown,
                         child: Text(
-                          formatAngka(nilai),
+                          formatNumber(nilai),
                           style: TextStyle(
                             color: AppTheme.textColor(context),
                             fontSize: 17,
@@ -888,7 +856,7 @@ class _DataTable extends StatelessWidget {
                                   ),
                                   const SizedBox(width: 8),
                                   Text(
-                                    formatAngka(
+                                    formatNumber(
                                       i < values.length ? values[i] : 0,
                                     ),
                                     style: const TextStyle(

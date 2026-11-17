@@ -15,14 +15,16 @@ import 'app/app_theme.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await ThemeController.instance.loadSavedTheme();
-  await AutoSyncController.instance.loadSavedPreference();
-  await NotificationRetentionController.instance.loadSavedPreference();
-  await NotificationCategoryPreferences.instance.loadSavedPreference();
-  await NotificationStatusBarController.instance.loadSavedPreference();
+  await Future.wait(<Future<void>>[
+    ThemeController.instance.loadSavedTheme(),
+    AutoSyncController.instance.loadSavedPreference(),
+    NotificationRetentionController.instance.loadSavedPreference(),
+    NotificationCategoryPreferences.instance.loadSavedPreference(),
+    NotificationStatusBarController.instance.loadSavedPreference(),
+    ScreenshotButtonController.instance.loadSavedPreference(),
+    CachePreferences.instance.loadSavedPreference(),
+  ]);
   await NotificationLocalService.instance.init();
-  await ScreenshotButtonController.instance.loadSavedPreference();
-  await CachePreferences.instance.loadSavedPreference();
   await NetworkStatus.instance.init();
   ApiCache.instance.pruneExpired(); // tanpa await, jalan di latar belakang
   // Saat app baru dibuka tidak ada proses kirim yang berjalan, jadi semua

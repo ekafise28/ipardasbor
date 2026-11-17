@@ -9,11 +9,11 @@ import 'dart:async';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:ipardasbor/shared/utils/formatters.dart';
 
 import '../../../app/app_theme.dart';
 import '../../../shared/widgets/skeleton.dart';
 import '../models/wisman_dashboard_data.dart';
-import '../wisman_format.dart';
 
 const List<Color> _warnaTahun = <Color>[
   Color(0xFF0B5ED7),
@@ -54,8 +54,6 @@ class WismanChartSection extends StatelessWidget {
   /// null = belum ada data. Saat [loading] true tampil kerangka loading.
   final WismanDashboardData? data;
   final bool loading;
-
-  static const String _kosong = 'Tidak ada data untuk filter ini.';
 
   @override
   Widget build(BuildContext context) {
@@ -129,8 +127,8 @@ class WismanChartSection extends StatelessWidget {
                 if (s.data[i] != null)
                   <String>[
                     '${s.tahun}',
-                    wismanBulan[i],
-                    wismanAngka(s.data[i]!),
+                    namaBulan[i],
+                    formatNumber(s.data[i]!),
                   ],
           ],
         ),
@@ -181,7 +179,7 @@ class WismanChartSection extends StatelessWidget {
         ],
         height: besar ? 340 : 260,
       ),
-      headers: <String>['Provinsi/Lokasi', 'Tahun', ...wismanBulanSingkat],
+      headers: <String>['Provinsi/Lokasi', 'Tahun', ...bulanSingkat],
       // Lebar tetap + gulir mendatar: tabelnya 14 kolom.
       minWidths: const <double>[
         52,
@@ -204,7 +202,7 @@ class WismanChartSection extends StatelessWidget {
           <String>[
             r.province,
             '${r.year}',
-            for (final int? v in r.months) v == null ? '—' : wismanAngka(v),
+            for (final int? v in r.months) v == null ? '—' : formatNumber(v),
           ],
       ],
     );
@@ -221,7 +219,7 @@ class WismanChartSection extends StatelessWidget {
       minWidths: const <double>[84],
       rows: <List<String>>[
         for (final WismanRank r in rows)
-          <String>[r.label, wismanAngka(r.total)],
+          <String>[r.label, formatNumber(r.total)],
       ],
     );
   }
@@ -476,7 +474,7 @@ class _LineView extends StatelessWidget {
         if (v != null && v > maxValue) maxValue = v.toDouble();
       }
     }
-    final double interval = wismanNiceInterval(maxValue);
+    final double interval = niceInterval(maxValue);
     final double maxY = maxValue <= 0
         ? interval * 4
         : ((maxValue * 1.1) / interval).ceil() * interval;
@@ -499,7 +497,7 @@ class _LineView extends StatelessWidget {
                       : '';
                   final int bulan = s.x.toInt().clamp(0, 11);
                   return LineTooltipItem(
-                    '$nama\n${wismanBulanSingkat[bulan]}: ${wismanAngka(s.y.round())}',
+                    '$nama\n${bulanSingkat[bulan]}: ${formatNumber(s.y.round())}',
                     const TextStyle(
                       color: Colors.white,
                       fontSize: 11,
@@ -523,7 +521,7 @@ class _LineView extends StatelessWidget {
                 reservedSize: 40,
                 interval: interval,
                 getTitlesWidget: (double value, TitleMeta meta) => Text(
-                  wismanRingkas(value),
+                  formatRingkas(value),
                   style: TextStyle(color: muted, fontSize: 10),
                 ),
               ),
@@ -541,7 +539,7 @@ class _LineView extends StatelessWidget {
                   return Padding(
                     padding: const EdgeInsets.only(top: 8),
                     child: Text(
-                      wismanBulanSingkat[i],
+                      bulanSingkat[i],
                       style: TextStyle(color: muted, fontSize: 9),
                     ),
                   );
@@ -680,7 +678,7 @@ class _RankView extends StatelessWidget {
                     ),
                     const SizedBox(width: 8),
                     Text(
-                      wismanAngka(rows[i].total),
+                      formatNumber(rows[i].total),
                       style: const TextStyle(
                         color: _warnaBatang,
                         fontSize: 11.5,

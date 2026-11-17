@@ -2,11 +2,10 @@
 // Tertinggi, Bulan Puncak.
 
 import 'package:flutter/material.dart';
+import 'package:ipardasbor/shared/utils/formatters.dart';
 
 import '../../../shared/widgets/skeleton.dart';
-import '../../wisatawan_mancanegara/wisman_format.dart' show wismanBulan;
 import '../models/okupansi_dashboard_data.dart';
-import '../okupansi_format.dart';
 
 class OkupansiKpiCards extends StatelessWidget {
   const OkupansiKpiCards({super.key, required this.summary});
@@ -21,8 +20,8 @@ class OkupansiKpiCards extends StatelessWidget {
     final bool turun = s?.growthYoy != null && s!.growthYoy! < 0;
     final String info = s == null
         ? 'Dibanding tahun sebelumnya'
-        : '${okPersen(s.latestAverage)} vs ${okPersen(s.previousAverage)} '
-              '(${(s.changePoint ?? 0) > 0 ? '+' : ''}${okPersen(s.changePoint)} poin)';
+        : '${formatPersen(s.latestAverage)} vs ${formatPersen(s.previousAverage)} '
+              '(${(s.changePoint ?? 0) > 0 ? '+' : ''}${formatPersen(s.changePoint)} poin)';
 
     final int? bulan = s?.peakMonth;
 
@@ -30,14 +29,14 @@ class OkupansiKpiCards extends StatelessWidget {
       _KpiCard(
         icon: Icons.percent_rounded,
         label: 'Rata-rata Okupansi',
-        value: s == null ? '—' : okPersen(s.average),
+        value: s == null ? '—' : formatPersen(s.average),
         detail: 'Sesuai filter aktif',
         colors: const <Color>[Color(0xFF064A91), Color(0xFF0874BD)],
       ),
       _KpiCard(
         icon: Icons.trending_up_rounded,
         label: 'Perubahan YoY',
-        value: s == null ? '—' : okPertumbuhan(s.growthYoy),
+        value: s == null ? '—' : formatPertumbuhan(s.growthYoy),
         detail: info,
         colors: const <Color>[Color(0xFF087A9E), Color(0xFF11A4BD)],
         negative: turun,
@@ -46,7 +45,7 @@ class OkupansiKpiCards extends StatelessWidget {
         icon: Icons.emoji_events_rounded,
         label: 'Provinsi Tertinggi',
         value: s == null ? '—' : (s.topProvince ?? '—'),
-        detail: s == null ? '—' : okPersen(s.topValue),
+        detail: s == null ? '—' : formatPersen(s.topValue),
         colors: const <Color>[Color(0xFF5450A3), Color(0xFF776CCC)],
         compactValue: true,
       ),
@@ -55,8 +54,8 @@ class OkupansiKpiCards extends StatelessWidget {
         label: 'Bulan Puncak',
         value: bulan == null || bulan < 1 || bulan > 12
             ? '—'
-            : wismanBulan[bulan - 1],
-        detail: s == null ? '—' : okPersen(s.peakValue),
+            : namaBulan[bulan - 1],
+        detail: s == null ? '—' : formatPersen(s.peakValue),
         colors: const <Color>[Color(0xFFB45309), Color(0xFFF59E0B)],
       ),
     ];

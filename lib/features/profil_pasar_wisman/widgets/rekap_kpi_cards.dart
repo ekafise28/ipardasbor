@@ -2,9 +2,9 @@
 // Pintu Masuk Utama. (Kartu YoY tidak ada: di web juga tidak ditampilkan.)
 
 import 'package:flutter/material.dart';
+import 'package:ipardasbor/shared/utils/formatters.dart';
 
 import '../../../shared/widgets/skeleton.dart';
-import '../../wisatawan_mancanegara/wisman_format.dart' show wismanAngka;
 import '../models/rekap_dashboard_data.dart';
 
 class RekapKpiCards extends StatelessWidget {
@@ -21,7 +21,7 @@ class RekapKpiCards extends StatelessWidget {
       _KpiCard(
         icon: Icons.groups_rounded,
         label: 'Total Kunjungan',
-        value: s == null ? '—' : wismanAngka(s.total),
+        value: s == null ? '—' : formatNumber(s.total),
         detail: 'Sesuai filter aktif',
         colors: const <Color>[Color(0xFF064A91), Color(0xFF0874BD)],
       ),
@@ -31,7 +31,7 @@ class RekapKpiCards extends StatelessWidget {
         value: s == null ? '—' : (s.topNationality ?? '—'),
         detail: s == null
             ? '—'
-            : '${wismanAngka(s.topNationalityTotal)} kunjungan',
+            : '${formatNumber(s.topNationalityTotal)} kunjungan',
         colors: const <Color>[Color(0xFF087A9E), Color(0xFF11A4BD)],
         compactValue: true,
       ),
@@ -39,7 +39,7 @@ class RekapKpiCards extends StatelessWidget {
         icon: Icons.signpost_rounded,
         label: 'Pintu Masuk Utama',
         value: s == null ? '—' : (s.topPort ?? 'Belum dipetakan'),
-        detail: s == null ? '—' : '${wismanAngka(s.topPortTotal)} kunjungan',
+        detail: s == null ? '—' : '${formatNumber(s.topPortTotal)} kunjungan',
         colors: const <Color>[Color(0xFF5450A3), Color(0xFF776CCC)],
         compactValue: true,
       ),

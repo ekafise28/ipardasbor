@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:image_picker/image_picker.dart';
+import 'package:ipardasbor/shared/utils/formatters.dart';
 
 /// Data form lanjutan validasi OSS.
 ///
@@ -91,7 +92,7 @@ class OssFormData {
       'no_hp': noHp.trim(),
       'terdaftar_ota': terdaftarOta.trim().toUpperCase(),
       'status_pengawasan': '0',
-      'tanggal_pengawasan': _formatDate(tanggalPengawasan),
+      'tanggal_pengawasan': formatTanggalApi(tanggalPengawasan),
     };
 
     _addOptionalInt(fields, 'provinsi_id', provinsiId);
@@ -158,13 +159,6 @@ class OssFormData {
 
   void _addOptionalInt(Map<String, String> fields, String key, int? value) {
     if (value != null) fields[key] = value.toString();
-  }
-
-  String _formatDate(DateTime date) {
-    final String y = date.year.toString().padLeft(4, '0');
-    final String m = date.month.toString().padLeft(2, '0');
-    final String d = date.day.toString().padLeft(2, '0');
-    return '$y-$m-$d';
   }
 
   String debugJson() {

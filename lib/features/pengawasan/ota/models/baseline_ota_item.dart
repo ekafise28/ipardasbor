@@ -1,3 +1,5 @@
+import 'package:ipardasbor/shared/utils/json_parse.dart' show asDoubleOrNull;
+
 /// Ringkasan hasil verifikasi terakhir suatu listing baseline OTA
 /// (tbl_oss_baseline_ota_verifikasi, lewat relasi verifikasiAktif).
 /// null kalau listing ini belum pernah diverifikasi sama sekali.
@@ -78,7 +80,6 @@ class BaselineOtaItem {
   }
 
   factory BaselineOtaItem.fromJson(Map<String, dynamic> json) {
-    double? toDouble(dynamic v) => v == null ? null : double.tryParse(v.toString());
 
     return BaselineOtaItem(
       id: int.parse(json['id'].toString()),
@@ -90,8 +91,8 @@ class BaselineOtaItem {
       kabupaten: json['kabupaten']?.toString(),
       kecamatan: json['kecamatan']?.toString(),
       kelurahan: json['kelurahan']?.toString(),
-      latitude: toDouble(json['latitude']),
-      longitude: toDouble(json['longitude']),
+      latitude: asDoubleOrNull(json['latitude']),
+      longitude: asDoubleOrNull(json['longitude']),
       sourceUrl: json['source_url']?.toString(),
       urlMaps: json['url_maps']?.toString(),
       scrapedAt: json['scraped_at'] != null
@@ -103,7 +104,7 @@ class BaselineOtaItem {
               Map<String, dynamic>.from(json['verifikasi_aktif'] as Map),
             )
           : null,
-      jarakKm: toDouble(json['jarak_km']),
+      jarakKm: asDoubleOrNull(json['jarak_km']),
     );
   }
 }

@@ -10,12 +10,11 @@ import 'dart:async';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:ipardasbor/shared/utils/formatters.dart';
 
 import '../../../app/app_theme.dart';
 import '../../../shared/widgets/skeleton.dart';
-import '../../wisatawan_mancanegara/wisman_format.dart';
 import '../models/okupansi_dashboard_data.dart';
-import '../okupansi_format.dart';
 
 const Color _biru = Color(0xFF0756B4);
 const Color _kuning = Color(0xFFF59E0B);
@@ -102,7 +101,7 @@ class OkupansiChartSection extends StatelessWidget {
           title: 'Okupansi Bulanan',
           kosong: comparison.isEmpty,
           chart: _LineView(
-            labels: wismanBulanSingkat,
+            labels: bulanSingkat,
             fixed100: true,
             height: 300,
             series: <_Seri>[
@@ -114,7 +113,7 @@ class OkupansiChartSection extends StatelessWidget {
                 ),
             ],
           ),
-          headers: <String>['Provinsi', 'Tahun', ...wismanBulanSingkat],
+          headers: <String>['Provinsi', 'Tahun', ...bulanSingkat],
           // Lebar tetap + gulir mendatar: tabelnya 14 kolom.
           minWidths: const <double>[
             52,
@@ -137,7 +136,7 @@ class OkupansiChartSection extends StatelessWidget {
               <String>[
                 r.province,
                 r.year,
-                for (final double? v in r.months) okPersen(v),
+                for (final double? v in r.months) formatPersen(v),
               ],
           ],
         ),
@@ -162,7 +161,7 @@ class OkupansiChartSection extends StatelessWidget {
           minWidths: const <double>[84],
           rows: <List<String>>[
             for (final OkupansiPoint p in annual)
-              <String>[p.label, okPersen(p.value)],
+              <String>[p.label, formatPersen(p.value)],
           ],
         ),
 
@@ -176,7 +175,7 @@ class OkupansiChartSection extends StatelessWidget {
           minWidths: const <double>[84],
           rows: <List<String>>[
             for (final OkupansiPoint p in ranking)
-              <String>[p.label, okPersen(p.value)],
+              <String>[p.label, formatPersen(p.value)],
           ],
         ),
 
@@ -190,7 +189,7 @@ class OkupansiChartSection extends StatelessWidget {
           minWidths: const <double>[84],
           rows: <List<String>>[
             for (final OkupansiPoint p in bottom)
-              <String>[p.label, okPersen(p.value)],
+              <String>[p.label, formatPersen(p.value)],
           ],
         ),
       ],
@@ -331,7 +330,7 @@ class _LineView extends StatelessWidget {
         if (v != null && v > maxValue) maxValue = v;
       }
     }
-    final double interval = fixed100 ? 20 : wismanNiceInterval(maxValue);
+    final double interval = fixed100 ? 20 : niceInterval(maxValue);
     final double maxY = fixed100
         ? (maxValue > 100 ? (maxValue / 20).ceil() * 20.0 : 100)
         : (maxValue <= 0
@@ -360,7 +359,7 @@ class _LineView extends StatelessWidget {
                       ? labels[i]
                       : '';
                   return LineTooltipItem(
-                    '$nama\n$waktu: ${okPersen(s.y)}',
+                    '$nama\n$waktu: ${formatPersen(s.y)}',
                     const TextStyle(
                       color: Colors.white,
                       fontSize: 11,
@@ -548,7 +547,7 @@ class _RankView extends StatelessWidget {
                     ),
                     const SizedBox(width: 8),
                     Text(
-                      okPersen(rows[i].value),
+                      formatPersen(rows[i].value),
                       style: TextStyle(
                         color: color,
                         fontSize: 11.5,

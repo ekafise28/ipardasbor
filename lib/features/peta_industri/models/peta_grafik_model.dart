@@ -1,4 +1,5 @@
-// lib/features/peta_industri/models/peta_grafik_model.dart
+
+import 'package:ipardasbor/shared/utils/json_parse.dart' show asInt;
 
 class RisikoJumlah {
   const RisikoJumlah({required this.label, required this.jumlah});
@@ -9,7 +10,7 @@ class RisikoJumlah {
   factory RisikoJumlah.fromJson(Map<String, dynamic> json) {
     return RisikoJumlah(
       label: (json['label'] ?? '').toString().trim(),
-      jumlah: _asInt(json['jumlah']),
+      jumlah: asInt(json['jumlah']),
     );
   }
 }
@@ -32,7 +33,7 @@ class KbliGrafik {
     return KbliGrafik(
       kbli: (json['kbli'] ?? '').toString().trim(),
       nama: (json['nama'] ?? '').toString().trim(),
-      total: _asInt(json['total']),
+      total: asInt(json['total']),
       risiko: _asList(json['risiko'], RisikoJumlah.fromJson),
     );
   }
@@ -52,7 +53,7 @@ class KategoriGrafik {
   factory KategoriGrafik.fromJson(Map<String, dynamic> json) {
     return KategoriGrafik(
       nama: (json['nama'] ?? '').toString().trim(),
-      total: _asInt(json['total']),
+      total: asInt(json['total']),
       kbli: _asList(json['kbli'], KbliGrafik.fromJson),
     );
   }
@@ -73,7 +74,7 @@ class PetaGrafikData {
   factory PetaGrafikData.fromJson(Map<String, dynamic> json) {
     return PetaGrafikData(
       provinsi: (json['provinsi'] ?? '').toString().trim(),
-      total: _asInt(json['total']),
+      total: asInt(json['total']),
       kategori: _asList(json['kategori'], KategoriGrafik.fromJson),
     );
   }
@@ -88,10 +89,4 @@ List<T> _asList<T>(
       .whereType<Map>()
       .map((e) => parser(Map<String, dynamic>.from(e)))
       .toList();
-}
-
-int _asInt(dynamic value) {
-  if (value is int) return value;
-  if (value is num) return value.toInt();
-  return int.tryParse(value?.toString() ?? '') ?? 0;
 }

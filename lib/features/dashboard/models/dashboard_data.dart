@@ -1,3 +1,5 @@
+import 'package:ipardasbor/shared/utils/json_parse.dart' show asInt;
+
 class DashboardData {
   final DashboardProvince province;
   final DashboardPeriod period;
@@ -49,9 +51,9 @@ class DashboardData {
       platformRecap: _asMapList(json['rekap_platform']),
       productTypeRecap: _asMapList(json['rekap_jenis_produk']),
       legalitasNibRecap: _asMapList(json['rekap_legalitas_nib']),
-      totalDistrict: _asInt(json['total_kabupaten']),
-      totalPlatform: _asInt(json['total_platform']),
-      totalProductType: _asInt(json['total_jenis_produk']),
+      totalDistrict: asInt(json['total_kabupaten']),
+      totalPlatform: asInt(json['total_platform']),
+      totalProductType: asInt(json['total_jenis_produk']),
       charts: DashboardCharts.fromJson(_asMap(json['chart'])),
       map: DashboardMapData.fromJson(_asMap(json['peta'])),
     );
@@ -71,7 +73,7 @@ class DashboardProvince {
 
   factory DashboardProvince.fromJson(Map<String, dynamic> json) {
     return DashboardProvince(
-      id: _asInt(json['id']),
+      id: asInt(json['id']),
       slug: _asString(json['slug']),
       name: _asString(json['nama']),
     );
@@ -167,7 +169,7 @@ class DistrictOption {
 
   factory DistrictOption.fromJson(Map<String, dynamic> json) {
     return DistrictOption(
-      id: _asInt(json['id']),
+      id: asInt(json['id']),
       name: _asString(json['nama']),
     );
   }
@@ -311,18 +313,6 @@ String? _asNullableString(dynamic value) {
   return result.isEmpty ? null : result;
 }
 
-int _asInt(dynamic value) {
-  if (value is int) {
-    return value;
-  }
-
-  if (value is num) {
-    return value.toInt();
-  }
-
-  return int.tryParse(value?.toString() ?? '') ?? 0;
-}
-
 int? _asNullableInt(dynamic value) {
   if (value == null || value.toString().trim().isEmpty) {
     return null;
@@ -359,7 +349,7 @@ bool _asBool(dynamic value) {
 int _readInt(Map<String, dynamic> json, List<String> possibleKeys) {
   for (final String key in possibleKeys) {
     if (json.containsKey(key) && json[key] != null) {
-      return _asInt(json[key]);
+      return asInt(json[key]);
     }
   }
 

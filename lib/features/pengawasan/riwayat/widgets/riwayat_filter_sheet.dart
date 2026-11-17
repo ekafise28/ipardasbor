@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:ipardasbor/app/app_theme.dart' show AppTheme;
 import 'package:ipardasbor/shared/widgets/list_filters.dart'
     show
-        FilterLabel,
         FilterSheetFrame,
         FilterDropdown,
         FilterDateField,

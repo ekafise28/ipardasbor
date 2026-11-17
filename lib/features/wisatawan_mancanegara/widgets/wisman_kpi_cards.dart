@@ -2,10 +2,10 @@
 // (Kartu Pertumbuhan YoY sengaja tidak ada: di web juga dinonaktifkan.)
 
 import 'package:flutter/material.dart';
+import 'package:ipardasbor/shared/utils/formatters.dart';
 
 import '../../../shared/widgets/skeleton.dart';
 import '../models/wisman_dashboard_data.dart';
-import '../wisman_format.dart';
 
 class WismanKpiCards extends StatelessWidget {
   const WismanKpiCards({super.key, required this.summary});
@@ -22,20 +22,20 @@ class WismanKpiCards extends StatelessWidget {
         : 'Wisman YTD ${s.ytdYear}';
     final String ytdDetail = s == null || s.ytdMonth < 1 || s.ytdMonth > 12
         ? 'Periode tahun berjalan'
-        : 'Januari–${wismanBulan[s.ytdMonth - 1]}';
+        : 'Januari–${namaBulan[s.ytdMonth - 1]}';
 
     final List<Widget> cards = <Widget>[
       _KpiCard(
         icon: Icons.groups_rounded,
         label: 'Total Wisman',
-        value: s == null ? '—' : wismanAngka(s.total),
+        value: s == null ? '—' : formatNumber(s.total),
         detail: 'Sesuai seluruh filter aktif',
         colors: const <Color>[Color(0xFF064A91), Color(0xFF0874BD)],
       ),
       _KpiCard(
         icon: Icons.event_available_rounded,
         label: ytdLabel,
-        value: s == null ? '—' : wismanAngka(s.ytd),
+        value: s == null ? '—' : formatNumber(s.ytd),
         detail: ytdDetail,
         colors: const <Color>[Color(0xFF087A9E), Color(0xFF11A4BD)],
       ),
@@ -45,7 +45,7 @@ class WismanKpiCards extends StatelessWidget {
         value: s == null ? '—' : (s.topGate ?? 'Tidak ada data'),
         detail: s == null
             ? '— kunjungan'
-            : '${wismanAngka(s.topGateTotal)} kunjungan',
+            : '${formatNumber(s.topGateTotal)} kunjungan',
         colors: const <Color>[Color(0xFF5450A3), Color(0xFF776CCC)],
         compactValue: true,
       ),

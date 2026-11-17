@@ -2,10 +2,10 @@
 // Nama Pintu. Tiap kolom membuka lembar pilihan ganda (bisa dicari).
 
 import 'package:flutter/material.dart';
+import 'package:ipardasbor/shared/utils/formatters.dart';
 
 import '../../../app/app_theme.dart';
 import '../models/wisman_filter.dart';
-import '../wisman_format.dart';
 
 class WismanFilterPanel extends StatelessWidget {
   const WismanFilterPanel({
@@ -31,8 +31,8 @@ class WismanFilterPanel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final List<WismanOption> opsiBulan = <WismanOption>[
-      for (int i = 0; i < wismanBulan.length; i++)
-        WismanOption('${i + 1}', wismanBulan[i]),
+      for (int i = 0; i < namaBulan.length; i++)
+        WismanOption('${i + 1}', namaBulan[i]),
     ];
 
     return Container(

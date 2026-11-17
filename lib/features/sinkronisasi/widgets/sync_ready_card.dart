@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:ipardasbor/app/app_theme.dart';
 import 'package:ipardasbor/features/pengawasan/non_oss/offline/non_oss_local_data.dart';
+import 'package:ipardasbor/shared/utils/formatters.dart';
 
 import 'sync_formatters.dart';
 
@@ -95,7 +96,7 @@ class SyncReadyCard extends StatelessWidget {
                 if (produk != null) _InfoRow(label: 'Produk', value: produk),
                 _InfoRow(
                   label: 'Tanggal Pengawasan',
-                  value: formatTanggal(tanggalPengawasanOf(data)),
+                  value: formatTanggalAngka(tanggalPengawasanOf(data)),
                 ),
                 _InfoRow(label: 'Alamat', value: alamatOf(data), maxLines: 3),
               ],

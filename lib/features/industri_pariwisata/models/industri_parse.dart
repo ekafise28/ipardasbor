@@ -4,7 +4,7 @@
 // Fungsi di sini selalu mengembalikan nilai yang aman.
 
 /// Mengubah nilai dinamis menjadi int. Gagal/null -> 0.
-int parseInt(dynamic value) {
+int parseInt(dynamic value) { // TODO: hapus di Fase 2
   if (value is int) return value;
   if (value is num) return value.toInt();
   return int.tryParse('${value ?? ''}') ?? 0;

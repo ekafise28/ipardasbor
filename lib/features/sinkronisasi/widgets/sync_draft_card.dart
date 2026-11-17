@@ -2,8 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:ipardasbor/app/app_theme.dart';
 import 'package:ipardasbor/features/pengawasan/non_oss/offline/draft_completeness.dart';
 import 'package:ipardasbor/features/pengawasan/non_oss/offline/non_oss_local_data.dart';
-
-import 'sync_formatters.dart';
+import 'package:ipardasbor/shared/utils/formatters.dart';
 
 /// Ikon tiap bagian form, urutannya sama dengan
 /// [DraftCompletenessChecker.checkModules].

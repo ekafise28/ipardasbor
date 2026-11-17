@@ -1,5 +1,6 @@
+import 'package:ipardasbor/core/api/api_endpoints.dart';
+
 import '../../../core/api/api_client.dart';
-import '../industri_endpoints.dart';
 import '../models/industri_dashboard_data.dart';
 import '../models/industri_filter.dart';
 import '../models/industri_option.dart';
@@ -15,7 +16,7 @@ class IndustriPariwisataService {
   /// GET /summary?section=filters
   Future<IndustriFilterOptions> fetchFilterOptions() async {
     final dynamic json = await _api.get(
-      IndustriEndpoints.summary,
+      ApiEndpoints.dashboardPariwisataSummary,
       queryParameters: {'section': 'filters'},
     );
     return IndustriFilterOptions.fromJson(parseMap(parseMap(json)['filters']));
@@ -25,7 +26,7 @@ class IndustriPariwisataService {
   /// POST /filter (filter dikirim sebagai JSON body).
   Future<IndustriDashboardData> fetchDashboard(IndustriFilter filter) async {
     final dynamic json = await _api.post(
-      IndustriEndpoints.filter,
+      ApiEndpoints.dashboardPariwisataFilter,
       body: filter.toJson(),
     );
     return IndustriDashboardData.fromJson(parseMap(json));
@@ -38,7 +39,7 @@ class IndustriPariwisataService {
     IndustriFilter filter,
   ) async {
     final dynamic json = await _api.get(
-      IndustriEndpoints.summary,
+      ApiEndpoints.dashboardPariwisataSummary,
       queryParameters: {...filter.toQueryParams(), 'section': section.key},
     );
 
@@ -55,7 +56,7 @@ class IndustriPariwisataService {
 
   /// Daftar kabupaten/kota milik satu provinsi.
   Future<List<IndustriOption>> fetchKota(String provinsiId) async {
-    final dynamic json = await _api.get(IndustriEndpoints.kota(provinsiId));
+    final dynamic json = await _api.get(ApiEndpoints.dashboardPariwisataKota(provinsiId));
 
     // Server bisa membalas langsung berupa list, atau dibungkus {"data": [...]}.
     final List<dynamic> rows = json is List

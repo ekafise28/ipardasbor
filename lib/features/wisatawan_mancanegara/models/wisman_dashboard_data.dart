@@ -1,16 +1,7 @@
 // Model data dashboard Wisman. Bentuknya mengikuti JSON dari
 // DashboardOperasionalWismanController@data (isi kunci "data").
 
-int _int(dynamic v) {
-  if (v is num) return v.toInt();
-  return int.tryParse('$v') ?? 0;
-}
-
-int? _intN(dynamic v) {
-  if (v == null) return null;
-  if (v is num) return v.toInt();
-  return int.tryParse('$v');
-}
+import 'package:ipardasbor/shared/utils/json_parse.dart';
 
 String _str(dynamic v, [String fallback = '']) =>
     v == null ? fallback : v.toString();
@@ -21,7 +12,7 @@ Map<String, dynamic> _map(dynamic v) =>
     v is Map ? Map<String, dynamic>.from(v) : <String, dynamic>{};
 
 List<int?> _bulan12(dynamic v) {
-  final List<int?> out = _list(v).map(_intN).toList();
+  final List<int?> out = _list(v).map(asIntOrNull).toList();
   while (out.length < 12) {
     out.add(null);
   }
@@ -48,14 +39,14 @@ class WismanSummary {
   factory WismanSummary.fromJson(Map<String, dynamic> json) {
     final dynamic gate = json['top_gate'];
     return WismanSummary(
-      total: _int(json['total']),
-      ytd: _int(json['ytd']),
-      ytdYear: _int(json['ytd_year']),
-      ytdMonth: _int(json['ytd_month']),
+      total: asInt(json['total']),
+      ytd: asInt(json['ytd']),
+      ytdYear: asInt(json['ytd_year']),
+      ytdMonth: asInt(json['ytd_month']),
       topGate: gate == null || gate.toString().trim().isEmpty
           ? null
           : gate.toString(),
-      topGateTotal: _int(json['top_gate_total']),
+      topGateTotal: asInt(json['top_gate_total']),
     );
   }
 }
@@ -71,7 +62,7 @@ class WismanMonthlySeries {
 
   factory WismanMonthlySeries.fromJson(Map<String, dynamic> json) {
     return WismanMonthlySeries(
-      tahun: _int(json['tahun']),
+      tahun: asInt(json['tahun']),
       data: _bulan12(json['data']),
     );
   }
@@ -94,7 +85,7 @@ class WismanGateSeries {
   factory WismanGateSeries.fromJson(Map<String, dynamic> json) {
     return WismanGateSeries(
       province: _str(json['province'], '-'),
-      year: _int(json['year']),
+      year: asInt(json['year']),
       label: _str(json['label'], '-'),
       months: _bulan12(json['months']),
     );
@@ -110,7 +101,7 @@ class WismanRank {
   factory WismanRank.fromJson(Map<String, dynamic> json) {
     return WismanRank(
       label: _str(json['label'], '-'),
-      total: _int(json['total']),
+      total: asInt(json['total']),
     );
   }
 }

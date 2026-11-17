@@ -5,10 +5,10 @@
 // lambat atau gagal tidak menahan tabel lain dan bisa dicoba lagi sendiri.
 
 import 'package:flutter/material.dart';
+import 'package:ipardasbor/shared/utils/formatters.dart';
 
 import '../../../app/app_theme.dart';
 import '../../../shared/widgets/skeleton.dart';
-import '../industri_format.dart';
 import '../models/industri_ranking.dart';
 import 'industri_charts.dart' show IndustriSectionTitle;
 
@@ -373,7 +373,7 @@ class _RankingCard extends StatelessWidget {
           ),
           const SizedBox(width: 10),
           Text(
-            formatAngka(row.total),
+            formatNumber(row.total),
             style: const TextStyle(
               color: AppTheme.primaryColor,
               fontSize: 12.5,

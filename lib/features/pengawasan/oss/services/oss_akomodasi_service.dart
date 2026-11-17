@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:http/http.dart' as http;
+import 'package:ipardasbor/shared/utils/formatters.dart';
 
 import '../../../../core/api/api_client.dart';
 import '../../../../core/api/api_endpoints.dart';
@@ -103,7 +104,7 @@ class AkomodasiService {
       'latitude': tahap1.latitude.trim(),
       'longitude': tahap1.longitude.trim(),
       'no_hp': tahap1.noHp.trim(),
-      'tanggal_pengawasan': _formatDate(tahap1.tanggalPengawasan),
+      'tanggal_pengawasan': formatTanggalApi(tahap1.tanggalPengawasan),
       'sumber_data': tahap1.dariDaftar ? 'OSS' : 'NON OSS',
     };
 
@@ -140,12 +141,5 @@ class AkomodasiService {
     }
 
     return fields;
-  }
-
-  String _formatDate(DateTime date) {
-    final String y = date.year.toString().padLeft(4, '0');
-    final String m = date.month.toString().padLeft(2, '0');
-    final String d = date.day.toString().padLeft(2, '0');
-    return '$y-$m-$d';
   }
 }

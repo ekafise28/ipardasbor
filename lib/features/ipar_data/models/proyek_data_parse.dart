@@ -5,7 +5,7 @@ String? teksAtauNull(dynamic v) {
   return s.isEmpty ? null : s;
 }
 
-int? angkaAtauNull(dynamic v) {
+int? angkaAtauNull(dynamic v) { // TODO: hapus di Fase 2
   if (v == null) return null;
   if (v is int) return v;
   if (v is num) return v.toInt();

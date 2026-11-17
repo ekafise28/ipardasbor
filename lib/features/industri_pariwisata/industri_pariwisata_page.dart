@@ -3,12 +3,12 @@
 // Tahap berikutnya: 4 grafik + tabel data + 4 tabel peringkat.
 
 import 'package:flutter/material.dart';
+import 'package:ipardasbor/shared/utils/formatters.dart';
 
 import '../../app/app_theme.dart';
 import '../../shared/widgets/skeleton.dart';
 import '../../core/api/api_client.dart';
 import '../../core/api/api_exception.dart'; // untuk pesanErrorRamah()
-import 'industri_format.dart';
 import 'models/industri_dashboard_data.dart';
 import 'models/industri_filter.dart';
 import 'models/industri_option.dart';

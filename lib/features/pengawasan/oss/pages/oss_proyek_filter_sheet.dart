@@ -7,7 +7,6 @@ import 'package:ipardasbor/shared/region/services/region_service.dart';
 import 'package:ipardasbor/features/pengawasan/oss/models/oss_proyek_filter.dart';
 import 'package:ipardasbor/shared/widgets/list_filters.dart'
     show
-        FilterLabel,
         FilterSheetFrame,
         FilterDropdown,
         FilterChoice,

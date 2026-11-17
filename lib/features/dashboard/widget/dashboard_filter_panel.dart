@@ -1,6 +1,7 @@
 // dashboard_filter_panel.dart
 import 'package:flutter/material.dart';
 import 'package:ipardasbor/app/app_theme.dart';
+import 'package:ipardasbor/shared/utils/formatters.dart';
 
 import '../../../core/constants/bidang_usaha_constants.dart';
 import '../models/dashboard_data.dart';
@@ -58,16 +59,8 @@ class DashboardFilterValues {
 
   /// Format tanggal siap dikirim ke DashboardService (YYYY-MM-DD),
   /// null kalau belum dipilih.
-  String? get startDateApiFormat => _formatDate(startDate);
-  String? get endDateApiFormat => _formatDate(endDate);
-
-  static String? _formatDate(DateTime? date) {
-    if (date == null) return null;
-    final String y = date.year.toString().padLeft(4, '0');
-    final String m = date.month.toString().padLeft(2, '0');
-    final String d = date.day.toString().padLeft(2, '0');
-    return '$y-$m-$d';
-  }
+  String? get startDateApiFormat => formatTanggalApiOrNull(startDate);
+  String? get endDateApiFormat => formatTanggalApiOrNull(endDate);
 }
 
 /// Tampilan tanggal untuk pengguna: dd/mm/yyyy.

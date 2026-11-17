@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:ipardasbor/shared/utils/pref_notifier.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class AppTheme {
@@ -300,26 +301,27 @@ class AppTheme {
 
 /// Mengelola status mode gelap aplikasi dan menyimpannya secara lokal
 /// agar pilihan pengguna tetap tersimpan setelah aplikasi ditutup.
-class ThemeController extends ValueNotifier<ThemeMode> {
+class ThemeController extends PrefNotifier<ThemeMode> {
   ThemeController._() : super(ThemeMode.light);
-
   static final ThemeController instance = ThemeController._();
 
-  static const String _prefsKey = 'is_dark_mode';
+  // Kunci lama dipertahankan (tersimpan sebagai bool) supaya pilihan tema
+  // pengguna yang sudah ada tetap terbaca.
+  @override
+  String get prefsKey => 'is_dark_mode';
 
   bool get isDarkMode => value == ThemeMode.dark;
 
-  /// Dipanggil sekali saat aplikasi pertama kali dijalankan untuk memuat
-  /// preferensi tema yang tersimpan.
-  Future<void> loadSavedTheme() async {
-    final prefs = await SharedPreferences.getInstance();
-    final bool isDark = prefs.getBool(_prefsKey) ?? false;
-    value = isDark ? ThemeMode.dark : ThemeMode.light;
-  }
+  @override
+  ThemeMode readFrom(SharedPreferences prefs) =>
+      (prefs.getBool(prefsKey) ?? false) ? ThemeMode.dark : ThemeMode.light;
 
-  Future<void> setDarkMode(bool isDark) async {
-    value = isDark ? ThemeMode.dark : ThemeMode.light;
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool(_prefsKey, isDark);
-  }
+  @override
+  Future<void> writeTo(SharedPreferences prefs, ThemeMode v) =>
+      prefs.setBool(prefsKey, v == ThemeMode.dark);
+
+  Future<void> loadSavedTheme() => loadSavedPreference();
+
+  Future<void> setDarkMode(bool isDark) =>
+      save(isDark ? ThemeMode.dark : ThemeMode.light);
 }

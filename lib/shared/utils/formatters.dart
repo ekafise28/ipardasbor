@@ -1,3 +1,9 @@
+import 'dart:math' as math;
+
+// ======================================================================
+// Angka
+// ======================================================================
+
 /// Memformat bilangan bulat dengan pemisah ribuan titik.
 /// Contoh: 1234567 -> "1.234.567".
 String formatNumber(int value) {
@@ -18,6 +24,54 @@ String formatNumber(int value) {
   return result.toString();
 }
 
+/// 1234567 -> "1,2 jt", 85000 -> "85 rb". Untuk label sumbu yang sempit.
+String formatRingkas(double v) {
+  String rapikan(double x) {
+    final String s = x.toStringAsFixed(1);
+    return s.endsWith('.0')
+        ? s.substring(0, s.length - 2)
+        : s.replaceFirst('.', ',');
+  }
+
+  if (v >= 1000000) return '${rapikan(v / 1000000)} jt';
+  if (v >= 1000) return '${rapikan(v / 1000)} rb';
+  return v.round().toString();
+}
+
+/// Jarak garis sumbu Y yang "bulat" (1, 2, 5 x 10^n), sekitar 4 garis.
+double niceInterval(double max) {
+  if (max <= 0) return 1;
+  final double raw = max / 4;
+  final double magnitude = math
+      .pow(10, (math.log(raw) / math.ln10).floor())
+      .toDouble();
+  final double normalized = raw / magnitude;
+  final double nice = normalized <= 1
+      ? 1
+      : normalized <= 2
+      ? 2
+      : normalized <= 5
+      ? 5
+      : 10;
+  return nice * magnitude;
+}
+
+/// Persentase 2 desimal: 55.2 -> "55,20%"; null -> "—".
+String formatPersen(double? v) {
+  if (v == null) return '—';
+  return '${v.toStringAsFixed(2).replaceFirst('.', ',')}%';
+}
+
+/// Pertumbuhan dengan tanda: 2.5 -> "+2,5%", -1.25 -> "-1,25%", null -> "N/A".
+String formatPertumbuhan(double? v) {
+  if (v == null) return 'N/A';
+  String s = v.toStringAsFixed(2);
+  if (s.contains('.')) {
+    s = s.replaceFirst(RegExp(r'0+$'), '').replaceFirst(RegExp(r'\.$'), '');
+  }
+  return '${v > 0 ? '+' : ''}${s.replaceFirst('.', ',')}%';
+}
+
 /// Ukuran berkas: "512 B", "48 KB", "1,5 MB".
 String formatUkuranBytes(int bytes) {
   if (bytes < 1024) return '$bytes B';
@@ -31,6 +85,10 @@ String formatJarak(double km) {
   if (km < 10) return '${km.toStringAsFixed(1).replaceAll('.', ',')} km';
   return '${km.round()} km';
 }
+
+// ======================================================================
+// Tautan
+// ======================================================================
 
 /// Menambah https:// bila belum ada skema. Null/kosong menghasilkan null.
 String? normalisasiUrl(String? url) {
@@ -112,7 +170,10 @@ NomorTelepon klasifikasiNomor(String? raw) {
   final String n;
   if (d.startsWith('62')) {
     n = '0${d.substring(2)}';
-  } else if (!pakaiPlus && d.startsWith('8') && d.length >= 9 && d.length <= 12) {
+  } else if (!pakaiPlus &&
+      d.startsWith('8') &&
+      d.length >= 9 &&
+      d.length <= 12) {
     n = '0$d'; // nol di depan hilang (mis. karena Excel).
   } else {
     n = d;
@@ -144,23 +205,58 @@ NomorTelepon klasifikasiNomor(String? raw) {
 }
 
 // ======================================================================
-// Tanggal
+// Tanggal dan waktu
 // ======================================================================
 
-const List<String> _bulan = <String>[
-  'Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun',
-  'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des',
+/// Satu-satunya daftar nama bulan di aplikasi.
+const List<String> namaBulan = <String>[
+  'Januari',
+  'Februari',
+  'Maret',
+  'April',
+  'Mei',
+  'Juni',
+  'Juli',
+  'Agustus',
+  'September',
+  'Oktober',
+  'November',
+  'Desember',
 ];
+
+/// "Jan", "Feb", ... "Des": tiga huruf pertama [namaBulan], jadi tidak
+/// perlu daftar kedua. Dipakai dengan indeks (bulan - 1), sama seperti
+/// [namaBulan].
+final List<String> bulanSingkat = <String>[
+  for (final String b in namaBulan) b.substring(0, 3),
+];
+
+String _dua(int n) => n.toString().padLeft(2, '0');
 
 /// "5 Mar 2026". Null bila [d] null.
 String? formatTanggal(DateTime? d) {
   if (d == null) return null;
-  return '${d.day} ${_bulan[d.month - 1]} ${d.year}';
+  return '${d.day} ${bulanSingkat[d.month - 1]} ${d.year}';
 }
 
 /// "5 Mar 2026, 09:05". Null bila [d] null.
 String? formatTanggalJam(DateTime? d) {
   if (d == null) return null;
-  String dua(int n) => n.toString().padLeft(2, '0');
-  return '${formatTanggal(d)}, ${dua(d.hour)}:${dua(d.minute)}';
+  return '${formatTanggal(d)}, ${_dua(d.hour)}:${_dua(d.minute)}';
 }
+
+/// "20 Okt 2026 08.00" (hari 2 digit, titik pemisah jam).
+String formatWaktu(DateTime t) =>
+    '${_dua(t.day)} ${bulanSingkat[t.month - 1]} ${t.year} '
+    '${_dua(t.hour)}.${_dua(t.minute)}';
+
+/// "05/03/2026".
+String formatTanggalAngka(DateTime d) =>
+    '${_dua(d.day)}/${_dua(d.month)}/${d.year}';
+
+/// "2026-03-05": format yang diterima API Laravel.
+String formatTanggalApi(DateTime d) =>
+    '${d.year.toString().padLeft(4, '0')}-${_dua(d.month)}-${_dua(d.day)}';
+
+String? formatTanggalApiOrNull(DateTime? d) =>
+    d == null ? null : formatTanggalApi(d);

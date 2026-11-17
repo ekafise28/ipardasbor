@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'package:ipardasbor/app/app_theme.dart';
+import 'package:ipardasbor/shared/utils/json_parse.dart';
 
 /// Kategori titik pada peta sebaran pengawasan.
 enum MapPointType { oss, nonOss, ota }
@@ -72,14 +73,14 @@ class MapPoint {
 
   factory MapPoint.fromJson(Map<String, dynamic> json) {
     return MapPoint(
-      id: _asInt(json['id']),
+      id: asInt(json['id']),
       type: MapPointTypeX.fromRaw(json['tipe']?.toString()),
       title: (json['judul'] ?? '').toString().trim(),
       platform: _asNullableString(json['platform']),
       address: (json['alamat'] ?? '').toString().trim(),
       district: (json['kabupaten'] ?? '').toString().trim(),
-      latitude: _asDouble(json['latitude']),
-      longitude: _asDouble(json['longitude']),
+      latitude: asDouble(json['latitude']),
+      longitude: asDouble(json['longitude']),
       status: (json['status'] ?? '').toString().trim(),
       nib: (json['nib'] ?? '').toString().trim(),
       sourceUrl: _asNullableString(json['source_url']),
@@ -117,13 +118,13 @@ class MapConfigData {
 
   factory MapConfigData.fromJson(Map<String, dynamic> json) {
     return MapConfigData(
-      latitude: _asDouble(json['latitude']),
-      longitude: _asDouble(json['longitude']),
-      zoom: _asInt(json['zoom']) == 0 ? 8 : _asInt(json['zoom']),
+      latitude: asDouble(json['latitude']),
+      longitude: asDouble(json['longitude']),
+      zoom: asInt(json['zoom']) == 0 ? 8 : asInt(json['zoom']),
       provinceName: (json['nama_provinsi'] ?? '').toString().trim(),
-      totalOss: _asInt(json['total_oss']),
-      totalNonOss: _asInt(json['total_non_oss']),
-      totalOta: _asInt(json['total_ota']),
+      totalOss: asInt(json['total_oss']),
+      totalNonOss: asInt(json['total_non_oss']),
+      totalOta: asInt(json['total_ota']),
     );
   }
 }
@@ -133,18 +134,6 @@ List<MapPoint> parseMapPoints(List<Map<String, dynamic>> raw) {
       .map(MapPoint.fromJson)
       .where((point) => point.hasPlausibleIndonesianCoordinate)
       .toList();
-}
-
-int _asInt(dynamic value) {
-  if (value is int) return value;
-  if (value is num) return value.toInt();
-  return int.tryParse(value?.toString() ?? '') ?? 0;
-}
-
-double _asDouble(dynamic value) {
-  if (value is double) return value;
-  if (value is num) return value.toDouble();
-  return double.tryParse(value?.toString() ?? '') ?? 0;
 }
 
 String? _asNullableString(dynamic value) {

@@ -1,4 +1,5 @@
-int _int(dynamic v) => v is int ? v : int.tryParse('${v ?? ''}') ?? 0;
+import 'package:ipardasbor/shared/utils/json_parse.dart' show asInt;
+
 String? _str(dynamic v) {
   final String s = '${v ?? ''}'.trim();
   return s.isEmpty ? null : s;
@@ -60,7 +61,7 @@ class HotelItem {
 
   factory HotelItem.fromJson(Map<String, dynamic> j) {
     return HotelItem(
-      id: _int(j['id']),
+      id: asInt(j['id']),
       namaHotel: _str(j['nama_hotel']) ?? '-',
       provinsi: _str(j['provinsi']) ?? '-',
       kabKota: _str(j['kab_kota']) ?? '-',
@@ -69,13 +70,13 @@ class HotelItem {
         for (final MapEntry<String, String> e in _jenis.entries)
           HotelKaryawan(
             e.value,
-            _int(j['total_karyawan_${e.key}_sebelumnya']),
-            _int(j['total_karyawan_${e.key}_terdampak']),
+            asInt(j['total_karyawan_${e.key}_sebelumnya']),
+            asInt(j['total_karyawan_${e.key}_terdampak']),
           ),
       ],
-      kamar: _int(j['kapasitas_total_kamar']),
-      meetingMice: _int(j['kapasitas_meeting_mice']),
-      pelayananDapur: _int(j['kapasitas_pelayanan_dapur']),
+      kamar: asInt(j['kapasitas_total_kamar']),
+      meetingMice: asInt(j['kapasitas_meeting_mice']),
+      pelayananDapur: asInt(j['kapasitas_pelayanan_dapur']),
       alamat: _str(j['alamat']),
       kondisiDanDampak: _str(j['kondisi_dan_dampak']),
       picEmail: _str(j['pic_email']),

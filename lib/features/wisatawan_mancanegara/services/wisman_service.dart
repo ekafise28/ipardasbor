@@ -1,9 +1,10 @@
 // Pemanggil API dashboard Wisman.
 
+import 'package:ipardasbor/core/api/api_endpoints.dart';
+
 import '../../../core/api/api_client.dart';
 import '../models/wisman_dashboard_data.dart';
 import '../models/wisman_filter.dart';
-import '../wisman_endpoints.dart';
 
 class WismanService {
   WismanService(this._api);
@@ -15,14 +16,14 @@ class WismanService {
 
   /// GET /filters -> opsi filter.
   Future<WismanFilterOptions> fetchFilters() async {
-    final dynamic json = await _api.get(WismanEndpoints.filters);
+    final dynamic json = await _api.get(ApiEndpoints.dashboardWismanFilters);
     return WismanFilterOptions.fromJson(_map(_map(json)['data']));
   }
 
   /// GET /data?tahun[0]=...&bulan[0]=... -> seluruh data dashboard.
   Future<WismanDashboardData> fetchDashboard(WismanFilter filter) async {
     final dynamic json = await _api.get(
-      WismanEndpoints.data,
+      ApiEndpoints.dashboardWismanData,
       queryParameters: filter.toQueryParams(),
     );
     return WismanDashboardData.fromJson(_map(_map(json)['data']));

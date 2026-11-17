@@ -1,16 +1,7 @@
 // Model data dashboard Okupansi. Bentuknya mengikuti JSON dari
 // DashboardOkupansiController@data (isi kunci "data").
 
-double _dbl(dynamic v) {
-  if (v is num) return v.toDouble();
-  return double.tryParse('$v') ?? 0;
-}
-
-double? _dblN(dynamic v) {
-  if (v == null || v == '') return null;
-  if (v is num) return v.toDouble();
-  return double.tryParse('$v');
-}
+import 'package:ipardasbor/shared/utils/json_parse.dart';
 
 int? _intN(dynamic v) {
   if (v == null) return null;
@@ -54,17 +45,17 @@ class OkupansiSummary {
   factory OkupansiSummary.fromJson(Map<String, dynamic> json) {
     final dynamic top = json['top_province'];
     return OkupansiSummary(
-      average: _dbl(json['average']),
-      latestAverage: _dbl(json['latest_average']),
-      previousAverage: _dbl(json['previous_average']),
-      changePoint: _dblN(json['change_point']),
-      growthYoy: _dblN(json['growth_yoy']),
+      average: asDouble(json['average']),
+      latestAverage: asDouble(json['latest_average']),
+      previousAverage: asDouble(json['previous_average']),
+      changePoint: asDoubleOrNull(json['change_point']),
+      growthYoy: asDoubleOrNull(json['growth_yoy']),
       topProvince: top == null || top.toString().trim().isEmpty
           ? null
           : top.toString(),
-      topValue: _dbl(json['top_value']),
+      topValue: asDouble(json['top_value']),
       peakMonth: _intN(json['peak_month']),
-      peakValue: _dbl(json['peak_value']),
+      peakValue: asDouble(json['peak_value']),
     );
   }
 }
@@ -79,7 +70,7 @@ class OkupansiPoint {
   factory OkupansiPoint.fromJson(Map<String, dynamic> json) {
     return OkupansiPoint(
       label: _str(json['label'], '-'),
-      value: _dbl(json['value']),
+      value: asDouble(json['value']),
     );
   }
 }
@@ -103,7 +94,7 @@ class OkupansiSeries {
   factory OkupansiSeries.fromJson(Map<String, dynamic> json) {
     final List<double?> out = _list(
       json['months'] ?? json['values'],
-    ).map(_dblN).toList();
+    ).map(asDoubleOrNull).toList();
     while (out.length < 12) {
       out.add(null);
     }

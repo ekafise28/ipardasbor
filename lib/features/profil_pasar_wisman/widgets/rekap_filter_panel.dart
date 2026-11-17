@@ -2,11 +2,11 @@
 // Nama Pintu (Kanonik). Tiap kolom membuka lembar pilihan ganda (bisa dicari).
 
 import 'package:flutter/material.dart';
+import 'package:ipardasbor/shared/utils/formatters.dart';
 
 import '../../../app/app_theme.dart';
 import '../../wisatawan_mancanegara/models/wisman_filter.dart'
     show WismanOption;
-import '../../wisatawan_mancanegara/wisman_format.dart' show wismanBulan;
 import '../models/rekap_filter.dart';
 
 class RekapFilterPanel extends StatelessWidget {
@@ -33,8 +33,8 @@ class RekapFilterPanel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final List<WismanOption> opsiBulan = <WismanOption>[
-      for (int i = 0; i < wismanBulan.length; i++)
-        WismanOption('${i + 1}', wismanBulan[i]),
+      for (int i = 0; i < namaBulan.length; i++)
+        WismanOption('${i + 1}', namaBulan[i]),
     ];
 
     return Container(

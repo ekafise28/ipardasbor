@@ -1,3 +1,6 @@
+import 'package:flutter/foundation.dart';
+import 'package:ipardasbor/shared/utils/json_parse.dart';
+
 /// Info wilayah lengkap (nama, bukan cuma ID) untuk satu item riwayat.
 class RiwayatDetailWilayah {
   const RiwayatDetailWilayah({
@@ -177,8 +180,8 @@ class RiwayatDetail {
         (json['wilayah'] as Map<String, dynamic>?) ?? const <String, dynamic>{},
       ),
       alamat: json['alamat'] as String?,
-      latitude: _toDouble(json['latitude']),
-      longitude: _toDouble(json['longitude']),
+      latitude: asDoubleOrNull(json['latitude']),
+      longitude: asDoubleOrNull(json['longitude']),
       hasilValidasi: json['hasil_validasi'] as String?,
       pesanValidasi: json['pesan_validasi'] as String?,
       statusPengawasan: _toStringSafe(json['status_pengawasan']),
@@ -209,22 +212,6 @@ class RiwayatDetail {
           .toList(),
     );
   }
-}
-
-double? _toDouble(dynamic value) {
-  if (value == null) {
-    return null;
-  }
-
-  if (value is num) {
-    return value.toDouble();
-  }
-
-  if (value is String) {
-    return double.tryParse(value);
-  }
-
-  return null;
 }
 
 String? _toStringSafe(dynamic value) {
@@ -275,6 +262,8 @@ class RiwayatDetailFoto {
   final String? keterangan;
 
   factory RiwayatDetailFoto.fromJson(Map<String, dynamic> json) {
+    debugPrint('FOTO URL: ${json['url']}');
+
     return RiwayatDetailFoto(
       id: (json['id'] as num).toInt(),
       namaFile: (json['nama_file'] as String?) ?? '-',
@@ -332,27 +321,13 @@ class RiwayatDetailOta {
       tanggalDiperiksa: json['tanggal_diperiksa'] != null
           ? DateTime.tryParse(json['tanggal_diperiksa'] as String)
           : null,
-      hargaTerendah: _toDouble(json['harga_terendah']),
-      rating: _toDouble(json['rating']),
-      jumlahUlasan: _toIntOta(json['jumlah_ulasan']),
-      latitude: _toDouble(json['latitude']),
-      longitude: _toDouble(json['longitude']),
+      hargaTerendah: asDoubleOrNull(json['harga_terendah']),
+      rating: asDoubleOrNull(json['rating']),
+      jumlahUlasan: asIntOrNull(json['jumlah_ulasan']),
+      latitude: asDoubleOrNull(json['latitude']),
+      longitude: asDoubleOrNull(json['longitude']),
       catatan: json['catatan'] as String?,
       mapsUrl: json['maps_url'] as String?,
     );
-  }
-
-  static double? _toDouble(dynamic value) {
-    if (value == null) return null;
-    if (value is num) return value.toDouble();
-    if (value is String) return double.tryParse(value);
-    return null;
-  }
-
-  static int? _toIntOta(dynamic value) {
-    if (value == null) return null;
-    if (value is num) return value.toInt();
-    if (value is String) return int.tryParse(value);
-    return null;
   }
 }

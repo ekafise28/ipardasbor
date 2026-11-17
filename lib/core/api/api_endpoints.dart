@@ -47,6 +47,36 @@ class ApiEndpoints {
   // Dashboard
   static const String dashboard = '/mobile/dashboard';
 
+  // ---- Dashboard Industri Pariwisata ----
+  static const String _dashPariwisata = '/mobile/dashboard-pariwisata';
+  static const String dashboardPariwisataFilter =
+      '$_dashPariwisata/filter'; // POST: KPI + 4 grafik
+  static const String dashboardPariwisataSummary =
+      '$_dashPariwisata/summary'; // GET: opsi filter & peringkat
+
+  /// Kab/Kota milik satu provinsi.
+  static String dashboardPariwisataKota(String provinsiId) =>
+      '$kabupaten/${Uri.encodeComponent(provinsiId)}';
+
+  // ---- Dashboard Okupansi Akomodasi ----
+  static const String _dashOkupansi = '/mobile/dashboard-okupansi';
+  static const String dashboardOkupansiFilters =
+      '$_dashOkupansi/filters'; // GET: tahun, provinsi
+  static const String dashboardOkupansiData =
+      '$_dashOkupansi/data'; // GET: summary, meta, charts
+
+  // ---- Dashboard Profil Pasar Wisman (Rekap) ----
+  static const String _dashRekap = '/mobile/dashboard-wisman-rekap';
+  static const String dashboardRekapFilters =
+      '$_dashRekap/filters'; // GET: tahun, kewarganegaraan, pintu
+  static const String dashboardRekapData = '$_dashRekap/data'; // GET
+
+  // ---- Dashboard Wisman (operasional) ----
+  static const String _dashWisman = '/mobile/dashboard-operasional/wisman';
+  static const String dashboardWismanFilters =
+      '$_dashWisman/filters'; // GET: tahun, provinsi, pintu, nama pintu
+  static const String dashboardWismanData = '$_dashWisman/data'; // GET
+
   // Peta Industri
   static const String petaIndustri = '/mobile/peta-industri';
   static String petaIndustriGrafik(String provinsi) =>

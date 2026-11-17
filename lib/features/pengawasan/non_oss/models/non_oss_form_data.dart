@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:ipardasbor/shared/utils/formatters.dart';
 import 'package:ipardasbor/shared/utils/ota_utils.dart';
 import 'package:uuid/uuid.dart';
 import 'package:image_picker/image_picker.dart';
@@ -147,7 +148,7 @@ class NonOssFormData {
       'longitude': longitude.trim(),
       'no_hp': noHp.trim(),
       'terdaftar_ota': terdaftarOta.trim().toUpperCase(),
-      'tanggal_pengawasan': _formatDate(tanggalPengawasan),
+      'tanggal_pengawasan': formatTanggalApi(tanggalPengawasan),
     };
 
     _addStatusKetidaksesuaianFields(fields);
@@ -205,14 +206,6 @@ class NonOssFormData {
     if (value != null) {
       fields[key] = value.toString();
     }
-  }
-
-  String _formatDate(DateTime date) {
-    final String year = date.year.toString().padLeft(4, '0');
-    final String month = date.month.toString().padLeft(2, '0');
-    final String day = date.day.toString().padLeft(2, '0');
-
-    return '$year-$month-$day';
   }
 
   String debugJson() {

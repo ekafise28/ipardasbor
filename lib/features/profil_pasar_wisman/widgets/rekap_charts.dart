@@ -11,10 +11,10 @@ import 'dart:async';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:ipardasbor/shared/utils/formatters.dart';
 
 import '../../../app/app_theme.dart';
 import '../../../shared/widgets/skeleton.dart';
-import '../../wisatawan_mancanegara/wisman_format.dart';
 import '../models/rekap_dashboard_data.dart';
 
 // Palet sama dengan web (variabel `palette`).
@@ -127,7 +127,7 @@ class RekapChartSection extends StatelessWidget {
           minWidths: const <double>[84],
           rows: <List<String>>[
             for (final RekapPoint p in annual)
-              <String>[p.label, wismanAngka(p.total)],
+              <String>[p.label, formatNumber(p.total)],
           ],
         ),
 
@@ -140,7 +140,7 @@ class RekapChartSection extends StatelessWidget {
             (RekapMonthlySeries s) => s.data.every((int? v) => v == null),
           ),
           chart: _LineView(
-            labels: wismanBulanSingkat,
+            labels: bulanSingkat,
             series: <_Seri>[
               for (int i = 0; i < monthly.length; i++)
                 _Seri(
@@ -158,8 +158,8 @@ class RekapChartSection extends StatelessWidget {
                 if (s.data[i] != null)
                   <String>[
                     '${s.tahun}',
-                    wismanBulan[i],
-                    wismanAngka(s.data[i]!),
+                    namaBulan[i],
+                    formatNumber(s.data[i]!),
                   ],
           ],
         ),
@@ -175,7 +175,7 @@ class RekapChartSection extends StatelessWidget {
           minWidths: const <double>[84],
           rows: <List<String>>[
             for (final RekapPoint p in countries)
-              <String>[p.label, wismanAngka(p.total)],
+              <String>[p.label, formatNumber(p.total)],
           ],
         ),
 
@@ -190,7 +190,7 @@ class RekapChartSection extends StatelessWidget {
           minWidths: const <double>[84],
           rows: <List<String>>[
             for (final RekapPoint p in share)
-              <String>[p.label, wismanAngka(p.total)],
+              <String>[p.label, formatNumber(p.total)],
           ],
         ),
 
@@ -205,7 +205,7 @@ class RekapChartSection extends StatelessWidget {
           minWidths: const <double>[84],
           rows: <List<String>>[
             for (final RekapPoint p in ports)
-              <String>[p.label, wismanAngka(p.total)],
+              <String>[p.label, formatNumber(p.total)],
           ],
         ),
       ],
@@ -350,7 +350,7 @@ class _LineView extends StatelessWidget {
         if (v != null && v > maxValue) maxValue = v.toDouble();
       }
     }
-    final double interval = wismanNiceInterval(maxValue);
+    final double interval = niceInterval(maxValue);
     final double maxY = maxValue <= 0
         ? interval * 4
         : ((maxValue * 1.1) / interval).ceil() * interval;
@@ -377,7 +377,7 @@ class _LineView extends StatelessWidget {
                       ? labels[i]
                       : '';
                   return LineTooltipItem(
-                    '$nama\n$waktu: ${wismanAngka(s.y.round())}',
+                    '$nama\n$waktu: ${formatNumber(s.y.round())}',
                     const TextStyle(
                       color: Colors.white,
                       fontSize: 11,
@@ -401,7 +401,7 @@ class _LineView extends StatelessWidget {
                 reservedSize: 40,
                 interval: interval,
                 getTitlesWidget: (double value, TitleMeta meta) => Text(
-                  wismanRingkas(value),
+                  formatRingkas(value),
                   style: TextStyle(color: muted, fontSize: 10),
                 ),
               ),
@@ -553,7 +553,7 @@ class _RankView extends StatelessWidget {
                     ),
                     const SizedBox(width: 8),
                     Text(
-                      wismanAngka(rows[i].total),
+                      formatNumber(rows[i].total),
                       style: const TextStyle(
                         color: _biru,
                         fontSize: 11.5,
@@ -676,7 +676,7 @@ class _DoughnutViewState extends State<_DoughnutView> {
                       FittedBox(
                         fit: BoxFit.scaleDown,
                         child: Text(
-                          wismanAngka(nilai),
+                          formatNumber(nilai),
                           style: TextStyle(
                             color: AppTheme.textColor(context),
                             fontSize: 17,

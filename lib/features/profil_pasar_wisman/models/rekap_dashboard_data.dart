@@ -1,16 +1,7 @@
 // Model data dashboard Profil Pasar Wisman. Bentuknya mengikuti JSON dari
 // DashboardWismanRekapController@data (isi kunci "data").
 
-int _int(dynamic v) {
-  if (v is num) return v.toInt();
-  return int.tryParse('$v') ?? 0;
-}
-
-int? _intN(dynamic v) {
-  if (v == null) return null;
-  if (v is num) return v.toInt();
-  return int.tryParse('$v');
-}
+import 'package:ipardasbor/shared/utils/json_parse.dart';
 
 String _str(dynamic v, [String fallback = '']) =>
     v == null ? fallback : v.toString();
@@ -40,11 +31,11 @@ class RekapSummary {
 
   factory RekapSummary.fromJson(Map<String, dynamic> json) {
     return RekapSummary(
-      total: _int(json['total']),
+      total: asInt(json['total']),
       topNationality: _strN(json['top_nationality']),
-      topNationalityTotal: _int(json['top_nationality_total']),
+      topNationalityTotal: asInt(json['top_nationality_total']),
       topPort: _strN(json['top_port']),
-      topPortTotal: _int(json['top_port_total']),
+      topPortTotal: asInt(json['top_port_total']),
     );
   }
 }
@@ -59,7 +50,7 @@ class RekapPoint {
   factory RekapPoint.fromJson(Map<String, dynamic> json) {
     return RekapPoint(
       label: _str(json['label'], '-'),
-      total: _int(json['total']),
+      total: asInt(json['total']),
     );
   }
 }
@@ -74,11 +65,11 @@ class RekapMonthlySeries {
   final List<int?> data;
 
   factory RekapMonthlySeries.fromJson(Map<String, dynamic> json) {
-    final List<int?> out = _list(json['data']).map(_intN).toList();
+    final List<int?> out = _list(json['data']).map(asIntOrNull).toList();
     while (out.length < 12) {
       out.add(null);
     }
-    return RekapMonthlySeries(tahun: _int(json['tahun']), data: out);
+    return RekapMonthlySeries(tahun: asInt(json['tahun']), data: out);
   }
 }
 

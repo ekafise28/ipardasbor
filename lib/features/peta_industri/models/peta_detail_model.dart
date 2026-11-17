@@ -1,4 +1,4 @@
-// lib/features/peta_industri/models/peta_detail_model.dart
+import 'package:ipardasbor/shared/utils/json_parse.dart' show asInt;
 
 /// Satu baris rekap (jenis usaha + KBLI + risiko + jumlah proyek).
 class PetaRekapItem {
@@ -20,12 +20,12 @@ class PetaRekapItem {
 
   factory PetaRekapItem.fromJson(Map<String, dynamic> json) {
     return PetaRekapItem(
-      id: _asInt(json['id']),
+      id: asInt(json['id']),
       jenisUsaha: _asText(json['jenis_usaha']),
       namaKbli: _asText(json['nama_kbli']),
       kbli: _asText(json['kbli']),
       risiko: _asText(json['risiko']),
-      jumlah: _asInt(json['jumlah']),
+      jumlah: asInt(json['jumlah']),
     );
   }
 }
@@ -64,10 +64,10 @@ class PetaRekapHalaman {
                 )
                 .toList()
           : const <PetaRekapItem>[],
-      page: _asInt(meta['page']),
-      perPage: _asInt(meta['per_page']),
-      total: _asInt(meta['total']),
-      lastPage: _asInt(meta['last_page']),
+      page: asInt(meta['page']),
+      perPage: asInt(meta['per_page']),
+      total: asInt(meta['total']),
+      lastPage: asInt(meta['last_page']),
     );
   }
 }
@@ -113,12 +113,12 @@ class PetaPerusahaanItem {
         lng <= 141.5;
 
     return PetaPerusahaanItem(
-      id: _asInt(json['id']),
+      id: asInt(json['id']),
       nama: _asText(json['nama']),
       alamat: _asText(json['alamat']),
       nib: _asText(json['nib']),
-      investasi: _asInt(json['investasi']),
-      tenagaKerja: _asInt(json['tenaga_kerja']),
+      investasi: asInt(json['investasi']),
+      tenagaKerja: asInt(json['tenaga_kerja']),
       telepon: _asTelepon(json['telepon']),
       latitude: lokasiValid ? lat : null,
       longitude: lokasiValid ? lng : null,
@@ -171,9 +171,9 @@ class PetaPerusahaanHalaman {
                 )
                 .toList()
           : const <PetaPerusahaanItem>[],
-      page: _asInt(meta['page']),
-      total: _asInt(meta['total']),
-      lastPage: _asInt(meta['last_page']),
+      page: asInt(meta['page']),
+      total: asInt(meta['total']),
+      lastPage: asInt(meta['last_page']),
     );
   }
 }
@@ -181,10 +181,4 @@ class PetaPerusahaanHalaman {
 String _asText(dynamic value) {
   final String text = (value ?? '').toString().trim();
   return text.isEmpty ? '-' : text;
-}
-
-int _asInt(dynamic value) {
-  if (value is int) return value;
-  if (value is num) return value.toInt();
-  return int.tryParse(value?.toString() ?? '') ?? 0;
 }

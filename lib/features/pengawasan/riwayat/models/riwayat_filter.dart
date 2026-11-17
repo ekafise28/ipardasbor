@@ -1,3 +1,5 @@
+import 'package:ipardasbor/shared/utils/formatters.dart';
+
 /// State filter untuk halaman Riwayat.
 ///
 /// Immutable - gunakan [copyWith] untuk membuat versi baru saat salah satu
@@ -120,23 +122,11 @@ class RiwayatFilter {
       'memiliki_nib': memilikiNib.join('|'),
       'terdaftar_ota': terdaftarOta,
       'kabupaten_id': kabupatenId,
-      'tanggal_mulai': _formatTanggal(tanggalMulai),
-      'tanggal_selesai': _formatTanggal(tanggalSelesai),
+      'tanggal_mulai': formatTanggalApiOrNull(tanggalMulai),
+      'tanggal_selesai': formatTanggalApiOrNull(tanggalSelesai),
       'search': search.trim().isEmpty ? null : search.trim(),
       'per_page': perPage,
       'page': page,
     };
-  }
-
-  static String? _formatTanggal(DateTime? tanggal) {
-    if (tanggal == null) {
-      return null;
-    }
-
-    final String tahun = tanggal.year.toString().padLeft(4, '0');
-    final String bulan = tanggal.month.toString().padLeft(2, '0');
-    final String hari = tanggal.day.toString().padLeft(2, '0');
-
-    return '$tahun-$bulan-$hari';
   }
 }

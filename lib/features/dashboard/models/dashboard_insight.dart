@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:ipardasbor/app/app_theme.dart';
 import 'package:ipardasbor/shared/utils/formatters.dart';
+import 'package:ipardasbor/shared/utils/json_parse.dart' show asInt;
 
 import 'dashboard_data.dart';
 
@@ -29,7 +30,7 @@ List<DashboardInsight> buildDashboardInsights(DashboardData data) {
   Map<String, dynamic>? topRow;
   int topTotal = 0;
   for (final Map<String, dynamic> row in data.districtRecap) {
-    final int value = _toInt(row['total']);
+    final int value = asInt(row['total']);
     if (value > topTotal) {
       topTotal = value;
       topRow = row;
@@ -62,11 +63,11 @@ List<DashboardInsight> buildDashboardInsights(DashboardData data) {
   int otaTidak = 0;
 
   for (final Map<String, dynamic> row in data.districtRecap) {
-    nibYa += _toInt(row['nib_ya']);
-    nibTidak += _toInt(row['nib_tidak']);
-    nibTidakTahu += _toInt(row['nib_tidak_tahu']);
-    otaYa += _toInt(row['ota_ya']);
-    otaTidak += _toInt(row['ota_tidak']);
+    nibYa += asInt(row['nib_ya']);
+    nibTidak += asInt(row['nib_tidak']);
+    nibTidakTahu += asInt(row['nib_tidak_tahu']);
+    otaYa += asInt(row['ota_ya']);
+    otaTidak += asInt(row['ota_tidak']);
   }
 
   final int nibTotal = nibYa + nibTidak + nibTidakTahu;
@@ -119,10 +120,4 @@ List<DashboardInsight> buildDashboardInsights(DashboardData data) {
 String _percent(int part, int whole) {
   if (whole <= 0) return '0.0';
   return (part / whole * 100).toStringAsFixed(1);
-}
-
-int _toInt(dynamic value) {
-  if (value is int) return value;
-  if (value is num) return value.toInt();
-  return int.tryParse(value?.toString() ?? '') ?? 0;
 }

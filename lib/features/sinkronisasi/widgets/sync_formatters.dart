@@ -1,24 +1,10 @@
 import 'package:intl/intl.dart';
 import 'package:ipardasbor/core/constants/bidang_usaha_constants.dart';
 import 'package:ipardasbor/features/pengawasan/non_oss/offline/non_oss_local_data.dart';
+import 'package:ipardasbor/shared/utils/formatters.dart';
 
 /// Pembantu tampilan untuk halaman Sinkronisasi: mengubah isi payload
 /// mentah menjadi teks yang mudah dibaca petugas.
-
-const List<String> _bulan = <String>[
-  'Jan',
-  'Feb',
-  'Mar',
-  'Apr',
-  'Mei',
-  'Jun',
-  'Jul',
-  'Agu',
-  'Sep',
-  'Okt',
-  'Nov',
-  'Des',
-];
 
 /// Slug bidang usaha; data lama tanpa nilai dianggap akomodasi (sama
 /// dengan aturan di `NonOssFormData`).
@@ -51,9 +37,6 @@ DateTime tanggalPengawasanOf(NonOssLocalData d) {
   return DateTime.tryParse(raw) ?? d.createdAt.toLocal();
 }
 
-String formatTanggal(DateTime tanggal) =>
-    DateFormat('dd/MM/yyyy').format(tanggal);
-
 String alamatOf(NonOssLocalData d) {
   final String alamat = (d.payload['alamat'] ?? '').trim();
   return alamat.isEmpty ? '-' : alamat;
@@ -76,5 +59,5 @@ String lastSyncLabel(DateTime? waktu) {
       lokal.month == sekarang.month &&
       lokal.day == sekarang.day;
 
-  return hariIni ? 'Hari ini, $jam' : '${lokal.day} ${_bulan[lokal.month - 1]}, $jam';
+  return hariIni ? 'Hari ini, $jam' : '${lokal.day} ${bulanSingkat[lokal.month - 1]}, $jam';
 }

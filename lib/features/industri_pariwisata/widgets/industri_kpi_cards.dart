@@ -2,8 +2,7 @@
 // Warna gradien disamakan dengan versi web.
 
 import 'package:flutter/material.dart';
-
-import '../industri_format.dart';
+import 'package:ipardasbor/shared/utils/formatters.dart';
 import '../models/industri_dashboard_data.dart';
 
 class IndustriKpiCards extends StatelessWidget {
@@ -16,7 +15,7 @@ class IndustriKpiCards extends StatelessWidget {
   Widget build(BuildContext context) {
     // Jika belum ada data, pakai nilai bawaan untuk judul & keterangan.
     final IndustriKpi data = kpi ?? const IndustriKpi();
-    String angka(int value) => kpi == null ? '—' : formatAngka(value);
+    String angka(int value) => kpi == null ? '—' : formatNumber(value);
 
     final List<Widget> cards = [
       _KpiCard(
