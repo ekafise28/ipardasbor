@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:ipardasbor/app/app_theme.dart';
-import 'package:ipardasbor/features/bps/shared/wisatawan_bulanan.dart';
 import 'package:ipardasbor/shared/widgets/list_filters.dart'
-    show FilterSheetFrame, FilterSection, FilterChoiceGroup, FilterChoice;
+    show FilterSheetFrame, FilterSection, FilterChoiceGroup, FilterChoice, FilterOptions;
 
-typedef WisatawanPilihan = ({
+typedef FilterPilihan = ({
   List<int> tahun,
   List<String> pintuMasuk,
   List<String> provinsi,
@@ -13,17 +12,17 @@ typedef WisatawanPilihan = ({
 /// Sheet filter Wisatawan: tahun, provinsi, dan (bila [tampilPintu]) pintu
 /// masuk; semuanya multi-pilih. Mengembalikan pilihan baru saat "Terapkan",
 /// atau null kalau ditutup.
-Future<WisatawanPilihan?> showWisatawanFilterSheet(
+Future<FilterPilihan?> showTahunProvinsiFilterSheet(
   BuildContext context, {
-  required Future<WisatawanOptions> Function() loadOptions,
+  required Future<FilterOptions> Function() loadOptions,
   required List<int> tahun,
   required List<String> provinsi,
   List<String> pintuMasuk = const <String>[],
   bool tampilPintu = false,
-  String title = 'Filter Wisatawan',
+  String title = 'Filter',
   String? subtitle,
 }) {
-  return showModalBottomSheet<WisatawanPilihan>(
+  return showModalBottomSheet<FilterPilihan>(
     context: context,
     isScrollControlled: true,
     backgroundColor: Colors.transparent,
@@ -50,7 +49,7 @@ class _FilterSheet extends StatefulWidget {
     required this.subtitle,
   });
 
-  final Future<WisatawanOptions> Function() loadOptions;
+  final Future<FilterOptions> Function() loadOptions;
   final List<int> tahun;
   final List<String> provinsi;
   final List<String> pintuMasuk;
@@ -67,7 +66,7 @@ class _FilterSheetState extends State<_FilterSheet> {
   late List<String> _provinsi = <String>[...widget.provinsi];
   late List<String> _pintu = <String>[...widget.pintuMasuk];
 
-  WisatawanOptions? _opsi;
+  FilterOptions? _opsi;
   bool _gagal = false;
 
   @override
@@ -79,7 +78,7 @@ class _FilterSheetState extends State<_FilterSheet> {
   Future<void> _muat() async {
     setState(() => _gagal = false);
     try {
-      final WisatawanOptions o = await widget.loadOptions();
+      final FilterOptions o = await widget.loadOptions();
       if (!mounted) return;
       setState(() => _opsi = o);
     } catch (_) {
@@ -87,7 +86,7 @@ class _FilterSheetState extends State<_FilterSheet> {
     }
   }
 
-  Widget _isiPilihan(Widget Function(WisatawanOptions o) bangun) {
+  Widget _isiPilihan(Widget Function(FilterOptions o) bangun) {
     if (_gagal) {
       return Row(
         children: <Widget>[
@@ -104,7 +103,7 @@ class _FilterSheetState extends State<_FilterSheet> {
         ],
       );
     }
-    final WisatawanOptions? o = _opsi;
+    final FilterOptions? o = _opsi;
     if (o == null) {
       return const SizedBox(
         height: 40,
@@ -144,7 +143,7 @@ class _FilterSheetState extends State<_FilterSheet> {
           label: 'Tahun',
           hint: _tahun.isEmpty ? 'Terbaru' : '${_tahun.length} dipilih',
           child: _isiPilihan(
-            (WisatawanOptions o) => FilterChoiceGroup(
+            (FilterOptions o) => FilterChoiceGroup(
               multi: true,
               semuaLabel: 'Terbaru',
               columns: 3,
@@ -165,7 +164,7 @@ class _FilterSheetState extends State<_FilterSheet> {
             label: 'Pintu Masuk',
             hint: _pintu.isEmpty ? null : '${_pintu.length} dipilih',
             child: _isiPilihan(
-              (WisatawanOptions o) => FilterChoiceGroup(
+              (FilterOptions o) => FilterChoiceGroup(
                 multi: true,
                 semuaLabel: 'Semua',
                 options: <FilterChoice>[
@@ -181,7 +180,7 @@ class _FilterSheetState extends State<_FilterSheet> {
           label: 'Provinsi',
           hint: _provinsi.isEmpty ? null : '${_provinsi.length} dipilih',
           child: _isiPilihan(
-            (WisatawanOptions o) => FilterChoiceGroup(
+            (FilterOptions o) => FilterChoiceGroup(
               multi: true,
               semuaLabel: 'Semua',
               options: <FilterChoice>[

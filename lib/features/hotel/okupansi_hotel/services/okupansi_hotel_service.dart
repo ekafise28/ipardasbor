@@ -1,3 +1,5 @@
+import 'package:ipardasbor/shared/widgets/list_filters.dart';
+
 import '../../../../core/api/api_client.dart';
 import '../../../../core/api/api_endpoints.dart';
 import '../models/okupansi_hotel_data.dart';
@@ -11,7 +13,9 @@ class OkupansiHotelService {
   final ApiClient _api;
 
   Map<String, dynamic> _data(dynamic r) {
-    final Map<String, dynamic> body = r is Map<String, dynamic> ? r : <String, dynamic>{};
+    final Map<String, dynamic> body = r is Map<String, dynamic>
+        ? r
+        : <String, dynamic>{};
     return (body['data'] as Map<String, dynamic>?) ?? <String, dynamic>{};
   }
 
@@ -26,8 +30,8 @@ class OkupansiHotelService {
     return OkupansiHotelResult.fromJson(_data(r));
   }
 
-  Future<OkupansiHotelOptions> fetchOptions() async {
+  Future<FilterOptions> fetchOptions() async {
     final dynamic r = await _api.get(ApiEndpoints.okupansiHotelFilters);
-    return OkupansiHotelOptions.fromJson(_data(r));
+    return FilterOptions.fromJson(_data(r));
   }
 }

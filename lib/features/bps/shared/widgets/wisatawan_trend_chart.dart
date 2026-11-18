@@ -2,10 +2,9 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:ipardasbor/app/app_theme.dart';
 import 'package:ipardasbor/features/bps/shared/wisatawan_bulanan.dart';
-import 'package:ipardasbor/features/hotel/okupansi_hotel/okupansi_hotel_style.dart'
-    show warnaDeret;
 import 'package:ipardasbor/shared/utils/formatters.dart'
     show bulanSingkat, formatNumber, formatRingkas, namaBulan, niceInterval;
+import 'package:ipardasbor/shared/widgets/chart_colors.dart';
 import 'package:ipardasbor/shared/widgets/detail_cards.dart' show DetailCard;
 import 'package:ipardasbor/shared/widgets/legend_chip.dart';
 

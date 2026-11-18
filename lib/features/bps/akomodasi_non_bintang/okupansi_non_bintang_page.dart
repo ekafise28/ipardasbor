@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:ipardasbor/app/app_theme.dart';
 import 'package:ipardasbor/core/network/network_status.dart';
-import 'package:ipardasbor/features/hotel/okupansi_hotel/widgets/okupansi_filter_sheet.dart';
 import 'package:ipardasbor/shared/pagination/paginated_list_controller.dart';
 import 'package:ipardasbor/shared/pagination/pagination_bar.dart';
 import 'package:ipardasbor/shared/widgets/app_banner.dart';
@@ -10,6 +9,7 @@ import 'package:ipardasbor/shared/widgets/list_parts.dart';
 import 'package:ipardasbor/shared/widgets/page_states.dart';
 import 'package:ipardasbor/shared/widgets/skeleton.dart'
     show DataProyekSkeleton;
+import 'package:ipardasbor/shared/widgets/tahun_provinsi_filter_sheet.dart';
 
 import 'models/okupansi_non_bintang_data.dart';
 import 'models/okupansi_non_bintang_filter.dart';
@@ -101,11 +101,13 @@ class _OkupansiNonBintangPageState extends State<OkupansiNonBintangPage> {
   }
 
   Future<void> _bukaFilter() async {
-    final OkupansiPilihan? p = await showOkupansiFilterSheet(
+    final FilterPilihan? p = await showTahunProvinsiFilterSheet(
       context,
       loadOptions: _service.fetchOptions,
       tahun: _filter.tahun,
       provinsi: _filter.provinsi,
+      title: 'Filter Okupansi',
+      subtitle: 'Tahun dan provinsi',
     );
     if (p == null) return;
     _ubahFilter(_filter.copyWith(tahun: p.tahun, provinsi: p.provinsi));

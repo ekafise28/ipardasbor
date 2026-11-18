@@ -17,7 +17,7 @@ import '../../../app/app_theme.dart';
 import 'models/okupansi_hotel_data.dart';
 import 'models/okupansi_hotel_filter.dart';
 import 'services/okupansi_hotel_service.dart';
-import 'widgets/okupansi_filter_sheet.dart';
+import 'package:ipardasbor/shared/widgets/tahun_provinsi_filter_sheet.dart';
 import 'widgets/okupansi_hotel_card.dart';
 import 'widgets/okupansi_ranking_card.dart';
 import 'widgets/okupansi_summary_card.dart';
@@ -154,11 +154,13 @@ class _OkupansiHotelPageState extends State<OkupansiHotelPage>
   );
 
   Future<void> _bukaFilter() async {
-    final OkupansiPilihan? p = await showOkupansiFilterSheet(
+    final FilterPilihan? p = await showTahunProvinsiFilterSheet(
       context,
       loadOptions: _service.fetchOptions,
       tahun: _filter.tahun,
       provinsi: _filter.provinsi,
+      title: 'Filter Okupansi',
+      subtitle: 'Tahun dan provinsi',
     );
     if (p == null) return;
     _ubahFilter(_filter.copyWith(tahun: p.tahun, provinsi: p.provinsi));

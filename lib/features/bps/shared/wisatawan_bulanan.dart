@@ -57,23 +57,3 @@ String? catatanBulanTerakhir(List<WisatawanBulanTerakhir> daftar) {
   ];
   return bagian.isEmpty ? null : bagian.join(' · ');
 }
-
-/// Pilihan untuk sheet filter. [pintuMasuk] hanya terisi untuk Wisman.
-class WisatawanOptions {
-  const WisatawanOptions({
-    required this.tahun,
-    required this.provinsi,
-    this.pintuMasuk = const <String>[],
-  });
-
-  final List<int> tahun;
-  final List<String> provinsi;
-  final List<String> pintuMasuk;
-
-  factory WisatawanOptions.fromJson(Map<String, dynamic> j) =>
-      WisatawanOptions(
-        tahun: asIntList(j['tahun']),
-        provinsi: asStringList(j['provinsi']),
-        pintuMasuk: asStringList(j['pintu_masuk']),
-      );
-}

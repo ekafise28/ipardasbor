@@ -115,21 +115,3 @@ class OkupansiHotelResult {
     );
   }
 }
-
-/// Pilihan untuk sheet filter.
-class OkupansiHotelOptions {
-  const OkupansiHotelOptions({required this.tahun, required this.provinsi});
-
-  final List<int> tahun;
-  final List<String> provinsi;
-
-  factory OkupansiHotelOptions.fromJson(Map<String, dynamic> j) =>
-      OkupansiHotelOptions(
-        tahun: (j['tahun'] as List<dynamic>? ?? const <dynamic>[])
-            .map((dynamic e) => (e as num).toInt())
-            .toList(),
-        provinsi: (j['provinsi'] as List<dynamic>? ?? const <dynamic>[])
-            .map((dynamic e) => '$e')
-            .toList(),
-      );
-}

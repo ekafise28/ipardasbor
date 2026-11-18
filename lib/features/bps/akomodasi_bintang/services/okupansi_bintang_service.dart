@@ -1,7 +1,6 @@
 import 'package:ipardasbor/core/api/api_client.dart';
 import 'package:ipardasbor/core/api/api_endpoints.dart';
-import 'package:ipardasbor/features/hotel/okupansi_hotel/models/okupansi_hotel_data.dart'
-    show OkupansiHotelOptions;
+import 'package:ipardasbor/shared/widgets/list_filters.dart';
 
 import '../models/okupansi_bintang_data.dart';
 import '../models/okupansi_bintang_filter.dart';
@@ -30,10 +29,9 @@ class OkupansiBintangService {
     return OkupansiBintangResult.fromJson(_data(r));
   }
 
-  /// Bentuk JSON-nya sama dengan opsi filter Okupansi Hotel, jadi
-  /// kelasnya dipakai ulang.
-  Future<OkupansiHotelOptions> fetchOptions() async {
+  /// Bentuk JSON-nya sama dengan opsi filter Okupansi Hotel
+    Future<FilterOptions> fetchOptions() async {
     final dynamic r = await _api.get(ApiEndpoints.okupansiBintangFilters);
-    return OkupansiHotelOptions.fromJson(_data(r));
+    return FilterOptions.fromJson(_data(r));
   }
 }

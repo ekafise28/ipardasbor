@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:ipardasbor/app/app_theme.dart';
 import 'package:ipardasbor/core/network/network_status.dart';
-import 'package:ipardasbor/features/bps/shared/widgets/wisatawan_filter_sheet.dart';
 import 'package:ipardasbor/features/bps/shared/widgets/wisatawan_trend_chart.dart';
 import 'package:ipardasbor/shared/pagination/paginated_list_controller.dart';
 import 'package:ipardasbor/shared/pagination/pagination_bar.dart'
@@ -12,6 +11,7 @@ import 'package:ipardasbor/shared/widgets/list_parts.dart';
 import 'package:ipardasbor/shared/widgets/page_states.dart';
 import 'package:ipardasbor/shared/widgets/skeleton.dart'
     show DataProyekSkeleton;
+import 'package:ipardasbor/shared/widgets/tahun_provinsi_filter_sheet.dart';
 
 import 'models/wisman_bps_data.dart';
 import 'models/wisman_bps_filter.dart';
@@ -105,7 +105,7 @@ class _WismanBpsPageState extends State<WismanBpsPage> {
   }
 
   Future<void> _bukaFilter() async {
-    final WisatawanPilihan? p = await showWisatawanFilterSheet(
+    final FilterPilihan? p = await showTahunProvinsiFilterSheet(
       context,
       loadOptions: _service.fetchOptions,
       tahun: _filter.tahun,

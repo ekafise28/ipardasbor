@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:ipardasbor/app/app_theme.dart';
 import 'package:ipardasbor/shared/utils/formatters.dart';
+import 'package:ipardasbor/shared/utils/json_parse.dart';
 
 /// Kolom pencarian halaman daftar: ikon cari, tombol hapus saat ada teks,
 /// dan (opsional) contoh isian saat kolom difokuskan dan masih kosong.
@@ -867,4 +868,24 @@ class FilterDateField extends StatelessWidget {
       ],
     );
   }
+}
+
+/// Pilihan filter dari server: tahun, provinsi, dan (khusus Wisman) pintu
+/// masuk. Dipakai [showTahunProvinsiFilterSheet].
+class FilterOptions {
+  const FilterOptions({
+    required this.tahun,
+    required this.provinsi,
+    this.pintuMasuk = const <String>[],
+  });
+
+  final List<int> tahun;
+  final List<String> provinsi;
+  final List<String> pintuMasuk;
+
+  factory FilterOptions.fromJson(Map<String, dynamic> j) => FilterOptions(
+    tahun: asIntList(j['tahun']),
+    provinsi: asStringList(j['provinsi']),
+    pintuMasuk: asStringList(j['pintu_masuk']),
+  );
 }
