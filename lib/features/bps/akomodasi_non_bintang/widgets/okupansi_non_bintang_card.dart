@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:ipardasbor/app/app_theme.dart';
-import 'package:ipardasbor/features/hotel/okupansi_hotel/okupansi_hotel_style.dart';
 import 'package:ipardasbor/shared/utils/formatters.dart';
 import 'package:ipardasbor/shared/widgets/list_parts.dart';
 
@@ -13,7 +12,7 @@ class OkupansiNonBintangCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final Color warna = warnaOkupansi(item.persentase);
+    final Color warna = AppTheme.warnaOkupansi(item.persentase);
 
     return StripCard(
       stripColor: warna,

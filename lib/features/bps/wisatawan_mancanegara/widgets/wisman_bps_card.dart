@@ -5,7 +5,6 @@ import 'package:ipardasbor/shared/utils/formatters.dart' show formatNumber;
 import 'package:ipardasbor/shared/widgets/list_parts.dart';
 
 import '../models/wisman_bps_data.dart';
-import '../wisman_bps_style.dart';
 
 class WismanBpsCard extends StatelessWidget {
   const WismanBpsCard({super.key, required this.item});
@@ -14,7 +13,7 @@ class WismanBpsCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final Color warna = warnaPintu(item.pintuMasuk);
+    final Color warna = AppTheme.warnaPintu(item.pintuMasuk);
 
     return StripCard(
       stripColor: warna,
@@ -41,7 +40,7 @@ class WismanBpsCard extends StatelessWidget {
                   child: TintChip(
                     label: item.pintuMasuk,
                     color: warna,
-                    icon: ikonPintu(item.pintuMasuk),
+                    icon: AppTheme.ikonPintu(item.pintuMasuk),
                   ),
                 ),
               ),

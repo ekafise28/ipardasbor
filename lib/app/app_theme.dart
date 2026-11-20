@@ -185,6 +185,112 @@ class AppTheme {
   static const Color answerUnknown = Color(0xFFF2A93B);
   static const Color answerNone = Color(0xFFB6BEC9);
 
+  // ---- Palet grafik multi-deret ----
+  /// Warna deret grafik. Indeks berputar bila deret lebih dari 12. Nilainya
+  /// sengaja literal (bukan alias warna merek) supaya palet grafik tidak
+  /// ikut berubah saat warna merek diganti.
+  static const List<Color> chartPalette = <Color>[
+    Color(0xFF1565C0),
+    Color(0xFFEF6C00),
+    Color(0xFF2E7D32),
+    Color(0xFF8E24AA),
+    Color(0xFFD32F2F),
+    Color(0xFF00ACC1),
+    Color(0xFFF9A825),
+    Color(0xFF6D4C41),
+    Color(0xFFE91E63),
+    Color(0xFF5C6BC0),
+    Color(0xFF7CB342),
+    Color(0xFF00897B),
+  ];
+
+  /// Warna deret ke-[index]. Deret nasional (INDONESIA) selalu abu-biru.
+  static Color warnaDeret(int index, {bool nasional = false}) =>
+      nasional ? menuProfil : chartPalette[index % chartPalette.length];
+
+  /// Warna tingkat okupansi: merah di bawah 40, kuning 40-59, hijau 60 ke
+  /// atas. Null = abu-abu (belum ada data).
+  static Color warnaOkupansi(double? v) {
+    if (v == null) return answerNone;
+    if (v < 40) return answerNo;
+    if (v < 60) return answerUnknown;
+    return answerYes;
+  }
+
+  // ---- Jenis pintu masuk wisatawan mancanegara ----
+  static const Color pintuUdara = primaryColor;
+  static const Color pintuLaut = categoryNonOss;
+  static const Color pintuDarat = warning;
+
+  /// Warna jenis pintu masuk. Nama tak dikenal memakai warna netral.
+  static Color warnaPintu(String pintu) {
+    switch (pintu) {
+      case 'Pintu Udara':
+        return pintuUdara;
+      case 'Pintu Laut':
+        return pintuLaut;
+      case 'Pintu Darat':
+        return pintuDarat;
+      default:
+        return menuProfil;
+    }
+  }
+
+  static IconData ikonPintu(String pintu) {
+    switch (pintu) {
+      case 'Pintu Udara':
+        return Icons.flight_rounded;
+      case 'Pintu Laut':
+        return Icons.directions_boat_rounded;
+      case 'Pintu Darat':
+        return Icons.directions_bus_rounded;
+      default:
+        return Icons.login_rounded;
+    }
+  }
+
+  // ---- Bayangan ----
+  static const Color shadowCard = Color(
+    0x0D17243A,
+  ); // kartu tipis: dashboard, filter, grafik
+  static const Color shadowForm = Color(0x0A152238); // kartu form
+  static const Color shadowMap = Color(0x33000000); // kontrol di atas peta
+
+  // ---- Gradien kartu KPI ----
+  static const List<Color> kpiBiru = <Color>[
+    Color(0xFF064A91),
+    Color(0xFF0874BD),
+  ];
+  static const List<Color> kpiTeal = <Color>[
+    Color(0xFF087A9E),
+    Color(0xFF11A4BD),
+  ];
+  static const List<Color> kpiUngu = <Color>[
+    Color(0xFF5450A3),
+    Color(0xFF776CCC),
+  ];
+  static const List<Color> kpiAmber = <Color>[
+    Color(0xFFB45309),
+    Color(0xFFF59E0B),
+  ];
+
+  // ---- Hijau terang di atas latar gelap ----
+  static const Color hijauMint = Color(0xFF68E7A7);
+  static const Color hijauNeon = Color(0xFF7CFFB2);
+
+  // ---- Keluarga amber / peringatan ----
+  static const Color amber = Color(0xFFF59E0B);
+  static const Color amberDark = Color(0xFFB45309);
+  static const Color orangeDark = Color(0xFFD97706);
+  static const Color goldDark = Color(0xFFD08A00);
+
+  // ---- Status tegas (snackbar, sinkronisasi) ----
+  static const Color successStrong = Color(0xFF238636);
+  static const Color successDeep = Color(0xFF15803D);
+  static const Color errorStrong = Color(0xFFC62828);
+  static const Color warningStrong = Color(0xFFC2410C);
+  static const Color neutralGrey = Color(0xFF6B7280);
+
   static ThemeData get lightTheme {
     return ThemeData(
       useMaterial3: true,

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:ipardasbor/app/app_theme.dart';
 import 'package:ipardasbor/shared/utils/formatters.dart';
-import '../okupansi_hotel_style.dart';
+
 
 /// Grid 12 bulan (4 kolom x 3 baris). [bulan] harus 12 elemen,
 /// null = belum ada data.
@@ -43,7 +43,7 @@ class _SelBulan extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final Color w = warnaOkupansi(nilai);
+    final Color w = AppTheme.warnaOkupansi(nilai);
     final bool kosong = nilai == null;
 
     return Semantics(

@@ -8,7 +8,6 @@ import 'package:ipardasbor/shared/widgets/detail_cards.dart' show DetailCard;
 import 'package:ipardasbor/shared/widgets/legend_chip.dart';
 
 import '../models/okupansi_hotel_data.dart';
-import '../okupansi_hotel_style.dart';
 
 /// Grafik garis okupansi per bulan (Jan-Des). Satu garis = satu provinsi
 /// pada satu tahun. Ketuk legenda untuk menyembunyikan/menampilkan garis.
@@ -33,8 +32,10 @@ class _OkupansiTrendChartState extends State<OkupansiTrendChart> {
   final Set<String> _sembunyi = <String>{};
 
   void _toggle(OkupansiSeries s) {
-    final String k = kunciSeries(s);
-    setState(() => _sembunyi.contains(k) ? _sembunyi.remove(k) : _sembunyi.add(k));
+    final String k = s.kunci;
+    setState(
+      () => _sembunyi.contains(k) ? _sembunyi.remove(k) : _sembunyi.add(k),
+    );
   }
 
   LineChartBarData _garis(OkupansiSeries s, Color warna) {
@@ -62,8 +63,8 @@ class _OkupansiTrendChartState extends State<OkupansiTrendChart> {
     // posisi di daftar lengkap, jadi tidak berubah saat ada yang disembunyikan.
     final List<(OkupansiSeries, Color)> tampil = <(OkupansiSeries, Color)>[
       for (int i = 0; i < semua.length; i++)
-        if (!_sembunyi.contains(kunciSeries(semua[i])))
-          (semua[i], warnaSeries(i, semua[i])),
+        if (!_sembunyi.contains(semua[i].kunci))
+          (semua[i], AppTheme.warnaDeret(i, nasional: semua[i].nasional)),
     ];
 
     double? tertinggi;
@@ -102,8 +103,8 @@ class _OkupansiTrendChartState extends State<OkupansiTrendChart> {
                 for (int i = 0; i < semua.length; i++)
                   LegendChip(
                     label: semua[i].label,
-                    warna: warnaSeries(i, semua[i]),
-                    aktif: !_sembunyi.contains(kunciSeries(semua[i])),
+                    warna: AppTheme.warnaDeret(i, nasional: semua[i].nasional),
+                    aktif: !_sembunyi.contains(semua[i].kunci),
                     putus: semua[i].nasional,
                     onTap: () => _toggle(semua[i]),
                   ),
@@ -174,7 +175,9 @@ class _OkupansiTrendChartState extends State<OkupansiTrendChart> {
       ),
       titlesData: FlTitlesData(
         topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-        rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+        rightTitles: const AxisTitles(
+          sideTitles: SideTitles(showTitles: false),
+        ),
         leftTitles: AxisTitles(
           sideTitles: SideTitles(
             showTitles: true,
@@ -227,9 +230,13 @@ class _OkupansiTrendChartState extends State<OkupansiTrendChart> {
                     n == 0 ? '$bulan\n' : '',
                     putih,
                     children: <TextSpan>[
-                      TextSpan(text: '● ', style: TextStyle(color: w)),
                       TextSpan(
-                        text: '${s.label}: ${formatPersen(spots[n].y, desimal: 2)}',
+                        text: '● ',
+                        style: TextStyle(color: w),
+                      ),
+                      TextSpan(
+                        text:
+                            '${s.label}: ${formatPersen(spots[n].y, desimal: 2)}',
                         style: putih.copyWith(fontWeight: FontWeight.w500),
                       ),
                     ],

@@ -6,7 +6,6 @@ import 'package:ipardasbor/shared/utils/formatters.dart';
 import 'package:ipardasbor/shared/widgets/list_parts.dart';
 
 import '../models/okupansi_hotel_data.dart';
-import '../okupansi_hotel_style.dart';
 
 class OkupansiHotelCard extends StatelessWidget {
   const OkupansiHotelCard({super.key, required this.item});
@@ -15,7 +14,7 @@ class OkupansiHotelCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final Color warna = warnaOkupansi(item.rataRata);
+    final Color warna = AppTheme.warnaOkupansi(item.rataRata);
 
     return StripCard(
       stripColor: warna,

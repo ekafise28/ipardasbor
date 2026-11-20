@@ -18,7 +18,6 @@ import 'models/wisman_bps_filter.dart';
 import 'services/wisman_bps_service.dart';
 import 'widgets/wisman_bps_card.dart';
 import 'widgets/wisman_bps_summary_card.dart';
-import 'wisman_bps_style.dart';
 
 /// Wisatawan Mancanegara (padanan web /wisman, menu BPS). Satu halaman:
 /// ringkasan, grafik garis per bulan untuk tiap jenis pintu, lalu rincian
@@ -274,7 +273,7 @@ class _WismanBpsPageState extends State<WismanBpsPage> {
               child: WisatawanTrendChart(
                 key: ValueKey<String>('grafik-${g.pintuMasuk}'),
                 title: '${g.pintuMasuk} per Bulan',
-                icon: ikonPintu(g.pintuMasuk),
+                icon: AppTheme.ikonPintu(g.pintuMasuk),
                 series: g.series,
                 seriesDipotong: g.seriesDipotong,
                 totalSeries: g.totalSeries,

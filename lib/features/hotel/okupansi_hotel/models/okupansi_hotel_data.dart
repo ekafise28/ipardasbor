@@ -21,6 +21,9 @@ class OkupansiSeries {
   final double rataRata;
   final bool nasional;
 
+  /// Kunci unik deret (provinsi + tahun), untuk menyembunyikan garis lewat legenda.
+  String get kunci => '$provinsi|$tahun';
+
   factory OkupansiSeries.fromJson(Map<String, dynamic> j) => OkupansiSeries(
     label: '${j['label'] ?? ''}',
     provinsi: '${j['provinsi'] ?? ''}',
@@ -92,9 +95,12 @@ class OkupansiHotelResult {
             .whereType<Map<String, dynamic>>()
             .toList();
 
-    final Map<String, dynamic> meta = (j['meta'] as Map<String, dynamic>?) ?? <String, dynamic>{};
-    final Map<String, dynamic> sum = (j['summary'] as Map<String, dynamic>?) ?? <String, dynamic>{};
-    final Map<String, dynamic> chart = (j['chart'] as Map<String, dynamic>?) ?? <String, dynamic>{};
+    final Map<String, dynamic> meta =
+        (j['meta'] as Map<String, dynamic>?) ?? <String, dynamic>{};
+    final Map<String, dynamic> sum =
+        (j['summary'] as Map<String, dynamic>?) ?? <String, dynamic>{};
+    final Map<String, dynamic> chart =
+        (j['chart'] as Map<String, dynamic>?) ?? <String, dynamic>{};
 
     return OkupansiHotelResult(
       tahun: (meta['tahun'] as List<dynamic>? ?? const <dynamic>[])

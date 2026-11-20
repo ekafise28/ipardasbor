@@ -4,7 +4,6 @@ import 'package:ipardasbor/shared/utils/formatters.dart';
 import 'package:ipardasbor/shared/widgets/detail_cards.dart' show DetailCard;
 
 import '../models/okupansi_hotel_data.dart';
-import '../okupansi_hotel_style.dart';
 
 /// Peringkat rata-rata okupansi (tertinggi ke terendah) dari deret yang
 /// tampil di grafik. Skala batang 0-100%.
@@ -61,7 +60,7 @@ class _OkupansiRankingCardState extends State<OkupansiRankingCard> {
                     urutan: urut.indexOf(tampil[n]) + 1,
                     label: tampil[n].$2.label,
                     nilai: tampil[n].$2.rataRata,
-                    warna: warnaSeries(tampil[n].$1, tampil[n].$2),
+                    warna: AppTheme.warnaDeret(tampil[n].$1, nasional: tampil[n].$2.nasional),
                   ),
                 if (bisaLipat)
                   Align(

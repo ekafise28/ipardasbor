@@ -4,7 +4,6 @@ import 'package:ipardasbor/app/app_theme.dart';
 import 'package:ipardasbor/features/bps/shared/wisatawan_bulanan.dart';
 import 'package:ipardasbor/shared/utils/formatters.dart'
     show bulanSingkat, formatNumber, formatRingkas, namaBulan, niceInterval;
-import 'package:ipardasbor/shared/widgets/chart_colors.dart';
 import 'package:ipardasbor/shared/widgets/detail_cards.dart' show DetailCard;
 import 'package:ipardasbor/shared/widgets/legend_chip.dart';
 
@@ -74,7 +73,7 @@ class _WisatawanTrendChartState extends State<WisatawanTrendChart> {
     final List<(WisatawanSeries, Color)> tampil = <(WisatawanSeries, Color)>[
       for (int i = 0; i < semua.length; i++)
         if (!_sembunyi.contains(semua[i].kunci))
-          (semua[i], warnaDeret(i, nasional: semua[i].nasional)),
+          (semua[i], AppTheme.warnaDeret(i, nasional: semua[i].nasional)),
     ];
 
     int tertinggi = 0;
@@ -117,7 +116,7 @@ class _WisatawanTrendChartState extends State<WisatawanTrendChart> {
                 for (int i = 0; i < semua.length; i++)
                   LegendChip(
                     label: semua[i].label,
-                    warna: warnaDeret(i, nasional: semua[i].nasional),
+                    warna: AppTheme.warnaDeret(i, nasional: semua[i].nasional),
                     aktif: !_sembunyi.contains(semua[i].kunci),
                     putus: semua[i].nasional,
                     onTap: () => _toggle(semua[i]),
@@ -237,9 +236,13 @@ class _WisatawanTrendChartState extends State<WisatawanTrendChart> {
                     n == 0 ? '$bulan\n' : '',
                     putih,
                     children: <TextSpan>[
-                      TextSpan(text: '● ', style: TextStyle(color: w)),
                       TextSpan(
-                        text: '${s.label}: '
+                        text: '● ',
+                        style: TextStyle(color: w),
+                      ),
+                      TextSpan(
+                        text:
+                            '${s.label}: '
                             '${formatNumber(spots[n].y.round())}',
                         style: putih.copyWith(fontWeight: FontWeight.w500),
                       ),

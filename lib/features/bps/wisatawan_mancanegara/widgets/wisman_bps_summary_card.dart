@@ -7,7 +7,6 @@ import 'package:ipardasbor/shared/utils/formatters.dart'
 import 'package:ipardasbor/shared/widgets/detail_cards.dart' show DetailCard;
 
 import '../models/wisman_bps_data.dart';
-import '../wisman_bps_style.dart';
 
 /// Total kunjungan wisman sesuai filter (seluruh data, bukan satu halaman)
 /// dan porsi tiap jenis pintu.
@@ -76,7 +75,7 @@ class _BarisPintu extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final Color warna = warnaPintu(item.pintuMasuk);
+    final Color warna = AppTheme.warnaPintu(item.pintuMasuk);
     final double porsi = total > 0 ? (item.total / total).clamp(0.0, 1.0) : 0;
 
     return Padding(
@@ -90,7 +89,11 @@ class _BarisPintu extends StatelessWidget {
               color: warna.withValues(alpha: 0.12),
               borderRadius: BorderRadius.circular(10),
             ),
-            child: Icon(ikonPintu(item.pintuMasuk), size: 18, color: warna),
+            child: Icon(
+              AppTheme.ikonPintu(item.pintuMasuk),
+              size: 18,
+              color: warna,
+            ),
           ),
           const SizedBox(width: 10),
           Expanded(
