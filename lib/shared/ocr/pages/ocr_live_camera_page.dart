@@ -4,6 +4,7 @@ import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart';
+import 'package:ipardasbor/app/app_theme.dart';
 import 'package:ipardasbor/shared/ocr/models/ocr_field_type.dart';
 import 'package:ipardasbor/shared/ocr/models/ocr_result.dart';
 import 'package:ipardasbor/shared/ocr/parsing/ocr_parser.dart';
@@ -75,8 +76,8 @@ class _OcrLiveCameraPageState extends State<OcrLiveCameraPage>
   /// Jeda dari nilai stabil sampai foto otomatis diambil.
   static const Duration _autoDelay = Duration(milliseconds: 700);
 
-  static const Color _green = Color(0xFF22C55E);
-  static const Color _amber = Color(0xFFF59E0B);
+  static const Color _green = AppTheme.successBright;
+  static const Color _amber = AppTheme.amber;
 
   final TextRecognizer _recognizer = TextRecognizer(
     script: TextRecognitionScript.latin,

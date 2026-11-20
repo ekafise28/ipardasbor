@@ -2,6 +2,7 @@
 // (Kartu Pertumbuhan YoY sengaja tidak ada: di web juga dinonaktifkan.)
 
 import 'package:flutter/material.dart';
+import 'package:ipardasbor/app/app_theme.dart';
 import 'package:ipardasbor/shared/utils/formatters.dart';
 
 import '../../../shared/widgets/skeleton.dart';
@@ -30,14 +31,14 @@ class WismanKpiCards extends StatelessWidget {
         label: 'Total Wisman',
         value: s == null ? '—' : formatNumber(s.total),
         detail: 'Sesuai seluruh filter aktif',
-        colors: const <Color>[Color(0xFF064A91), Color(0xFF0874BD)],
+        colors: AppTheme.kpiBiru,
       ),
       _KpiCard(
         icon: Icons.event_available_rounded,
         label: ytdLabel,
         value: s == null ? '—' : formatNumber(s.ytd),
         detail: ytdDetail,
-        colors: const <Color>[Color(0xFF087A9E), Color(0xFF11A4BD)],
+        colors: AppTheme.kpiTeal,
       ),
       _KpiCard(
         icon: Icons.signpost_rounded,
@@ -46,7 +47,7 @@ class WismanKpiCards extends StatelessWidget {
         detail: s == null
             ? '— kunjungan'
             : '${formatNumber(s.topGateTotal)} kunjungan',
-        colors: const <Color>[Color(0xFF5450A3), Color(0xFF776CCC)],
+        colors: AppTheme.kpiUngu,
         compactValue: true,
       ),
     ];

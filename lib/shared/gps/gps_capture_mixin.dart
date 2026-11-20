@@ -234,7 +234,7 @@ mixin GpsCaptureMixin<T extends StatefulWidget> on State<T>, WidgetsBindingObser
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
         icon: const Icon(
           Icons.location_off_rounded,
-          color: Color(0xFFD97706),
+          color: AppTheme.amber,
           size: 48,
         ),
         title: const Text(
@@ -292,7 +292,7 @@ mixin GpsCaptureMixin<T extends StatefulWidget> on State<T>, WidgetsBindingObser
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
         icon: const Icon(
           Icons.history_rounded,
-          color: Color(0xFFD97706),
+          color: AppTheme.amber,
           size: 48,
         ),
         title: const Text(

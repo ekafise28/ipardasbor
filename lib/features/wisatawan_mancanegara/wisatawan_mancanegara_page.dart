@@ -235,7 +235,7 @@ class _HeroCard extends StatelessWidget {
                 width: 8,
                 height: 8,
                 decoration: const BoxDecoration(
-                  color: Color(0xFF68E7A7),
+                  color: AppTheme.hijauMint,
                   shape: BoxShape.circle,
                 ),
               ),

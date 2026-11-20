@@ -575,7 +575,7 @@ class _NonOssFormPageState extends State<NonOssFormPage>
               'Tidak ada koneksi ke server. Data disimpan sementara '
               'di perangkat. Lihat status di halaman Sinkronisasi.';
           ikonSukses = Icons.cloud_off_rounded;
-          warnaIkonSukses = const Color(0xFFD97706);
+          warnaIkonSukses = AppTheme.amber;
         }
       }
 

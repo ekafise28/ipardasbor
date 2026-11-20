@@ -127,7 +127,7 @@ class _RankingCard extends StatelessWidget {
         border: Border.all(color: AppTheme.border(context)),
         boxShadow: const <BoxShadow>[
           BoxShadow(
-            color: Color(0x0D17243A),
+            color: AppTheme.shadowCard,
             blurRadius: 18,
             offset: Offset(0, 6),
           ),

@@ -2,6 +2,7 @@
 // Warna gradien disamakan dengan versi web.
 
 import 'package:flutter/material.dart';
+import 'package:ipardasbor/app/app_theme.dart';
 import 'package:ipardasbor/shared/utils/formatters.dart';
 import '../models/industri_dashboard_data.dart';
 
@@ -23,21 +24,21 @@ class IndustriKpiCards extends StatelessWidget {
         title: 'Total Usaha',
         value: angka(data.totalUsaha),
         caption: 'Jumlah seluruh baris usaha sesuai filter',
-        colors: const [Color(0xFF064A91), Color(0xFF0874BD)],
+        colors: AppTheme.kpiBiru,
       ),
       _KpiCard(
         icon: Icons.trending_up_rounded,
         title: data.usahaBaruLabel, // berubah mengikuti filter tahun
         value: angka(data.usahaBaru),
         caption: data.usahaBaruDetail,
-        colors: const [Color(0xFF087A9E), Color(0xFF11A4BD)],
+        colors: AppTheme.kpiTeal,
       ),
       _KpiCard(
         icon: Icons.fingerprint_rounded,
         title: 'Total NIB',
         value: angka(data.totalNib),
         caption: 'Jumlah NIB unik, tanpa data ganda',
-        colors: const [Color(0xFF5450A3), Color(0xFF776CCC)],
+        colors: AppTheme.kpiUngu,
       ),
     ];
 

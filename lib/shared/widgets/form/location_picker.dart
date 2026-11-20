@@ -299,7 +299,7 @@ class _SumberBadge extends StatelessWidget {
 
     switch (source) {
       case LocationSource.tersimpanTanpaInternet:
-        warna = const Color(0xFFD97706);
+        warna = AppTheme.amber;
         pesan =
             'Perangkat sedang offline - koordinat ini dari lokasi tersimpan terakhir, bukan posisi saat ini.';
         break;
@@ -309,7 +309,7 @@ class _SumberBadge extends StatelessWidget {
             'Sinyal GPS lemah - koordinat ini dari lokasi tersimpan terakhir, bukan posisi saat ini.';
         break;
       case LocationSource.cacheManual:
-        warna = const Color(0xFFD97706);
+        warna = AppTheme.amber;
         final waktu = savedAt != null
             ? DateFormat('dd MMM yyyy, HH:mm').format(savedAt!)
             : 'waktu tidak diketahui';
@@ -321,7 +321,7 @@ class _SumberBadge extends StatelessWidget {
         pesan = '';
         break;
       case LocationSource.tersimpanLayananNonaktif:
-        warna = const Color(0xFFD97706);
+        warna = AppTheme.amber;
         pesan =
             'Layanan lokasi nonaktif - koordinat ini dari lokasi tersimpan '
             'sistem, bukan posisi saat ini.';

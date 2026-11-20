@@ -5,21 +5,8 @@ import 'package:ipardasbor/shared/widgets/detail_cards.dart' show DetailCard;
 
 import '../models/okupansi_non_bintang_data.dart';
 
-/// Warna per tahun (urutan naik). Palet di okupansi_hotel_style.dart
-/// bersifat private, jadi enam warna pertamanya disalin di sini.
-const List<Color> _warnaTahun = <Color>[
-  Color(0xFF1565C0),
-  Color(0xFFEF6C00),
-  Color(0xFF2E7D32),
-  Color(0xFF8E24AA),
-  Color(0xFFD32F2F),
-  Color(0xFF00ACC1),
-];
-
 /// Jumlah provinsi yang tampil sebelum "Tampilkan semua".
 const int _batasAwal = 10;
-
-Color _warna(int i) => _warnaTahun[i % _warnaTahun.length];
 
 class OkupansiNonBintangChartCard extends StatefulWidget {
   const OkupansiNonBintangChartCard({super.key, required this.chart});
@@ -74,7 +61,7 @@ class _OkupansiNonBintangChartCardState
                           width: 10,
                           height: 10,
                           decoration: BoxDecoration(
-                            color: _warna(i),
+                            color: AppTheme.warnaDeret(i),
                             borderRadius: BorderRadius.circular(3),
                           ),
                         ),
@@ -165,7 +152,7 @@ class _BarisProvinsi extends StatelessWidget {
                   Expanded(
                     child: _Batang(
                       nilai: i < baris.values.length ? baris.values[i] : null,
-                      warna: _warna(i),
+                      warna: AppTheme.warnaDeret(i),
                     ),
                   ),
                   const SizedBox(width: 8),

@@ -38,7 +38,7 @@ class SyncDraftCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const Color draftColor = Color(0xFF6B7280);
+    const Color draftColor = AppTheme.neutralGrey;
 
     return Container(
       width: double.infinity,

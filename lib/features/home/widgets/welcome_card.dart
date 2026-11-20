@@ -218,7 +218,7 @@ class _WelcomeCardState extends State<WelcomeCard>
                           Text(
                             '$_greeting,',
                             style: const TextStyle(
-                              color: Color(0xFFDCEBFF),
+                              color: AppTheme.textOnBrandMuted,
                               fontSize: 12,
                               fontWeight: FontWeight.w500,
                             ),

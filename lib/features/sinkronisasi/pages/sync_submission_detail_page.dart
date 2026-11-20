@@ -576,7 +576,7 @@ class _DraftChecklistCard extends StatelessWidget {
                 const Icon(
                   Icons.check_circle_rounded,
                   size: 16,
-                  color: Color(0xFF238636),
+                  color: AppTheme.success,
                 ),
                 const SizedBox(width: 8),
                 Expanded(

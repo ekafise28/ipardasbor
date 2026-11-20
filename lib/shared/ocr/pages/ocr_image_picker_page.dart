@@ -62,8 +62,8 @@ class OcrImagePickerPage extends StatefulWidget {
 }
 
 class _OcrImagePickerPageState extends State<OcrImagePickerPage> {
-  static const Color _green = Color(0xFF16A34A);
-  static const Color _amber = Color(0xFFB45309);
+  static const Color _green = AppTheme.successBright;
+  static const Color _amber = AppTheme.amberDark;
 
   late final List<OcrFieldType> _types;
   late OcrFieldType _type;

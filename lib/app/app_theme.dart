@@ -208,6 +208,16 @@ class AppTheme {
   static Color warnaDeret(int index, {bool nasional = false}) =>
       nasional ? menuProfil : chartPalette[index % chartPalette.length];
 
+  /// Warna batang tunggal grafik (satu deret, tanpa palet).
+  static const Color chartBar = primaryColor;
+
+  /// Warna garis bila deret banyak (provinsi/pintu): hue dibagi rata,
+  /// seperti di web. Dipakai di mana jumlah deret bisa melebihi 12.
+  static Color warnaGarisBagiRata(int index, int total) {
+    final double hue = (index * 360 / (total < 1 ? 1 : total)).roundToDouble();
+    return HSLColor.fromAHSL(1, hue % 360, 0.78, 0.48).toColor();
+  }
+
   /// Warna tingkat okupansi: merah di bawah 40, kuning 40-59, hijau 60 ke
   /// atas. Null = abu-abu (belum ada data).
   static Color warnaOkupansi(double? v) {
@@ -278,15 +288,16 @@ class AppTheme {
   static const Color hijauMint = Color(0xFF68E7A7);
   static const Color hijauNeon = Color(0xFF7CFFB2);
 
-  // ---- Keluarga amber / peringatan ----
-  static const Color amber = Color(0xFFF59E0B);
-  static const Color amberDark = Color(0xFFB45309);
-  static const Color orangeDark = Color(0xFFD97706);
-  static const Color goldDark = Color(0xFFD08A00);
+  // ---- Amber / peringatan (dua saja) ----
+  static const Color amber = Color(
+    0xFFF59E0B,
+  ); // isian, ikon, di atas latar gelap
+  static const Color amberDark = Color(0xFFB45309); // teks/ikon di latar terang
 
   // ---- Status tegas (snackbar, sinkronisasi) ----
-  static const Color successStrong = Color(0xFF238636);
-  static const Color successDeep = Color(0xFF15803D);
+  static const Color successBright = Color(
+    0xFF22C55E,
+  ); // hijau terang (OCR, kategori)
   static const Color errorStrong = Color(0xFFC62828);
   static const Color warningStrong = Color(0xFFC2410C);
   static const Color neutralGrey = Color(0xFF6B7280);

@@ -41,7 +41,7 @@ class _KelolaAkunPageState extends State<KelolaAkunPage> {
   static const int _perPage = 25;
   int _page = 1;
 
-  static const Color _merah = Color(0xFFC62828);
+  static const Color _merah = AppTheme.errorStrong;
   static const Color _merahBg = Color(0x1FC62828);
 
   @override
@@ -115,7 +115,7 @@ class _KelolaAkunPageState extends State<KelolaAkunPage> {
         return (AppTheme.primaryColor, Colors.white);
       case 'operator':
       case 'editor':
-        return (const Color(0x33F59E0B), const Color(0xFFB45309));
+        return (const Color(0x33F59E0B), AppTheme.amberDark);
       default:
         return (
           AppTheme.surfaceMuted(context),
@@ -130,7 +130,7 @@ class _KelolaAkunPageState extends State<KelolaAkunPage> {
       ..showSnackBar(
         SnackBar(
           content: Text(message, style: const TextStyle(color: Colors.white)),
-          backgroundColor: isError ? _merah : const Color(0xFF238636),
+          backgroundColor: isError ? _merah : AppTheme.success,
           behavior: SnackBarBehavior.floating,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(14),

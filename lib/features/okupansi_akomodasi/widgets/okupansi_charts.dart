@@ -16,15 +16,6 @@ import '../../../app/app_theme.dart';
 import '../../../shared/widgets/skeleton.dart';
 import '../models/okupansi_dashboard_data.dart';
 
-const Color _biru = Color(0xFF0756B4);
-const Color _kuning = Color(0xFFF59E0B);
-
-/// Warna garis per provinsi: hue dibagi rata seperti di web.
-Color _warnaGaris(int index, int total) {
-  final double hue = (index * 360 / (total < 1 ? 1 : total)).roundToDouble();
-  return HSLColor.fromAHSL(1, hue % 360, 0.78, 0.48).toColor();
-}
-
 class _Seri {
   const _Seri(this.label, this.color, this.values);
 
@@ -108,7 +99,7 @@ class OkupansiChartSection extends StatelessWidget {
               for (int i = 0; i < comparison.length; i++)
                 _Seri(
                   comparison[i].label,
-                  _warnaGaris(i, comparison.length),
+                  AppTheme.warnaGarisBagiRata(i, comparison.length),
                   comparison[i].months,
                 ),
             ],
@@ -152,7 +143,7 @@ class OkupansiChartSection extends StatelessWidget {
             showLegend: false,
             height: 260,
             series: <_Seri>[
-              _Seri('Okupansi', _biru, <double?>[
+              _Seri('Okupansi', AppTheme.chartBar, <double?>[
                 for (final OkupansiPoint p in annual) p.value,
               ]),
             ],
@@ -170,7 +161,7 @@ class OkupansiChartSection extends StatelessWidget {
         _ChartCard(
           title: '10 Provinsi Okupansi Tertinggi',
           kosong: ranking.isEmpty,
-          chart: _RankView(rows: ranking, color: _biru),
+          chart: _RankView(rows: ranking, color: AppTheme.chartBar),
           headers: const <String>['Provinsi', 'Okupansi'],
           minWidths: const <double>[84],
           rows: <List<String>>[
@@ -184,7 +175,7 @@ class OkupansiChartSection extends StatelessWidget {
         _ChartCard(
           title: '10 Provinsi Okupansi Terendah',
           kosong: bottom.isEmpty,
-          chart: _RankView(rows: bottom, color: _kuning),
+          chart: _RankView(rows: bottom, color: AppTheme.amber),
           headers: const <String>['Provinsi', 'Okupansi'],
           minWidths: const <double>[84],
           rows: <List<String>>[
@@ -243,7 +234,7 @@ class _ChartCard extends StatelessWidget {
         border: Border.all(color: AppTheme.border(context)),
         boxShadow: const <BoxShadow>[
           BoxShadow(
-            color: Color(0x0D17243A),
+            color: AppTheme.shadowCard,
             blurRadius: 18,
             offset: Offset(0, 6),
           ),

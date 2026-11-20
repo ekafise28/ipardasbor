@@ -30,7 +30,7 @@ class BaselineOtaCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final Color strip = item.sudahDiverifikasi
-        ? const Color(0xFF15803D)
+        ? AppTheme.success
         : const Color(0xFFE0A100);
     final bool adaAlamat = (item.alamat ?? '').trim().isNotEmpty;
 
@@ -97,7 +97,7 @@ class BaselineOtaCard extends StatelessWidget {
                             'Tanpa koordinat',
                             style: TextStyle(
                               fontSize: 12,
-                              color: Color(0xFFD08A00),
+                              color: AppTheme.amber,
                             ),
                           ),
                         if (item.scrapedAt != null)
@@ -345,8 +345,8 @@ class OtaStatusBadge extends StatelessWidget {
     return TintChip(
       label: sudahDiverifikasi ? 'Terverifikasi' : 'Belum',
       color: sudahDiverifikasi
-          ? const Color(0xFF15803D)
-          : const Color(0xFFA96700),
+          ? AppTheme.success
+          : Color(0xFFA96700),
       icon: sudahDiverifikasi ? Icons.check_circle : Icons.access_time,
     );
   }
@@ -370,9 +370,9 @@ class OtaSudahDiverifikasiBox extends StatelessWidget {
       return ('Tidak Ada NIB', Colors.red.shade700, Icons.cancel_rounded);
     }
     if (punyaNib || s.contains('NIB') || s.contains('ADA')) {
-      return ('Ada NIB', const Color(0xFF15803D), Icons.check_circle);
+      return ('Ada NIB', AppTheme.success, Icons.check_circle);
     }
-    return ('Sudah diverifikasi', const Color(0xFF15803D), Icons.check_circle);
+    return ('Sudah diverifikasi', AppTheme.success, Icons.check_circle);
   }
 
   @override

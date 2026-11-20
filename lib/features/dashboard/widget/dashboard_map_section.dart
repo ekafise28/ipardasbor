@@ -50,7 +50,7 @@ class _DashboardMapSectionState extends State<DashboardMapSection> {
         border: Border.all(color: AppTheme.border(context)),
         boxShadow: const [
           BoxShadow(
-            color: Color(0x0D17243A),
+            color: AppTheme.shadowCard,
             blurRadius: 18,
             offset: Offset(0, 6),
           ),
@@ -225,7 +225,7 @@ class _DashboardMapSectionState extends State<DashboardMapSection> {
             border: Border.all(color: Colors.white, width: 2),
             boxShadow: const [
               BoxShadow(
-                color: Color(0x33000000),
+                color: AppTheme.shadowMap,
                 blurRadius: 4,
                 offset: Offset(0, 2),
               ),
@@ -265,7 +265,7 @@ class _ClusterBubble extends StatelessWidget {
         border: Border.all(color: Colors.white, width: 2),
         boxShadow: const [
           BoxShadow(
-            color: Color(0x33000000),
+            color: AppTheme.shadowMap,
             blurRadius: 6,
             offset: Offset(0, 2),
           ),

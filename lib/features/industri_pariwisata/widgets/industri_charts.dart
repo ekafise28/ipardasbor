@@ -16,23 +16,6 @@ import '../../../app/app_theme.dart';
 import '../../../shared/widgets/skeleton.dart';
 import '../models/industri_dashboard_data.dart';
 
-// Palet warna sama persis dengan versi web (variabel `palette`).
-const List<Color> _palette = <Color>[
-  Color(0xFF0756A4),
-  Color(0xFF0F91B9),
-  Color(0xFF18A27C),
-  Color(0xFF675FC1),
-  Color(0xFFF0A43A),
-  Color(0xFFE26565),
-  Color(0xFF5F84A8),
-  Color(0xFF45B7AA),
-  Color(0xFF9B72CF),
-  Color(0xFFD77F44),
-];
-
-// Warna batang grafik Perkembangan Total Usaha di web.
-const Color _warnaBatang = Color(0xFF0B6BB6);
-
 /// 12.5 -> "12,5"
 String _persen(double v) => v.toStringAsFixed(1).replaceFirst('.', ',');
 
@@ -252,7 +235,7 @@ class IndustriChartCard extends StatelessWidget {
         border: Border.all(color: AppTheme.border(context)),
         boxShadow: const <BoxShadow>[
           BoxShadow(
-            color: Color(0x0D17243A),
+            color: AppTheme.shadowCard,
             blurRadius: 18,
             offset: Offset(0, 6),
           ),
@@ -457,7 +440,7 @@ class _BarView extends StatelessWidget {
             barRods: <BarChartRodData>[
               BarChartRodData(
                 toY: values[i],
-                color: _warnaBatang,
+                color: AppTheme.chartBar,
                 width: lebarBatang,
                 borderRadius: const BorderRadius.vertical(
                   top: Radius.circular(7),
@@ -530,7 +513,7 @@ class _DoughnutViewState extends State<_DoughnutView> {
                     for (int i = 0; i < data.values.length; i++)
                       PieChartSectionData(
                         value: data.values[i].toDouble(),
-                        color: _palette[i % _palette.length],
+                        color: AppTheme.warnaDeret(i),
                         radius: h * (i == _touched ? 0.17 : 0.15),
                         showTitle: false,
                       ),
@@ -596,7 +579,7 @@ class _DoughnutViewState extends State<_DoughnutView> {
                     width: 8,
                     height: 8,
                     decoration: BoxDecoration(
-                      color: _palette[i % _palette.length],
+                      color: AppTheme.warnaDeret(i),
                       shape: BoxShape.circle,
                     ),
                   ),

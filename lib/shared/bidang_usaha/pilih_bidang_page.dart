@@ -37,7 +37,7 @@ class PilihBidangPage extends StatelessWidget {
       icon: Icons.restaurant_rounded,
       warna: Color(0xFFF97316),
     ),
-    'kawasan-pariwisata': (icon: Icons.map_outlined, warna: Color(0xFF16A34A)),
+    'kawasan-pariwisata': (icon: Icons.map_outlined, warna: AppTheme.successBright),
     'konsultan-pariwisata': (
       icon: Icons.work_outline_rounded,
       warna: Color(0xFF8B3CF0),
@@ -51,7 +51,7 @@ class PilihBidangPage extends StatelessWidget {
       icon: Icons.person_outline_rounded,
       warna: Color(0xFF4F46E5),
     ),
-    'mice-event': (icon: Icons.event_rounded, warna: Color(0xFFD08A00)),
+    'mice-event': (icon: Icons.event_rounded, warna: AppTheme.amber),
     'hiburan-rekreasi': (
       icon: Icons.sports_esports_rounded,
       warna: Color(0xFFDB2777),

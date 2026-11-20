@@ -2,6 +2,7 @@
 // Tertinggi, Bulan Puncak.
 
 import 'package:flutter/material.dart';
+import 'package:ipardasbor/app/app_theme.dart';
 import 'package:ipardasbor/shared/utils/formatters.dart';
 
 import '../../../shared/widgets/skeleton.dart';
@@ -31,14 +32,14 @@ class OkupansiKpiCards extends StatelessWidget {
         label: 'Rata-rata Okupansi',
         value: s == null ? '—' : formatPersen(s.average),
         detail: 'Sesuai filter aktif',
-        colors: const <Color>[Color(0xFF064A91), Color(0xFF0874BD)],
+        colors: AppTheme.kpiBiru,
       ),
       _KpiCard(
         icon: Icons.trending_up_rounded,
         label: 'Perubahan YoY',
         value: s == null ? '—' : formatPertumbuhan(s.growthYoy),
         detail: info,
-        colors: const <Color>[Color(0xFF087A9E), Color(0xFF11A4BD)],
+        colors: AppTheme.kpiTeal,
         negative: turun,
       ),
       _KpiCard(
@@ -46,7 +47,7 @@ class OkupansiKpiCards extends StatelessWidget {
         label: 'Provinsi Tertinggi',
         value: s == null ? '—' : (s.topProvince ?? '—'),
         detail: s == null ? '—' : formatPersen(s.topValue),
-        colors: const <Color>[Color(0xFF5450A3), Color(0xFF776CCC)],
+        colors: AppTheme.kpiUngu,
         compactValue: true,
       ),
       _KpiCard(
@@ -56,7 +57,7 @@ class OkupansiKpiCards extends StatelessWidget {
             ? '—'
             : namaBulan[bulan - 1],
         detail: s == null ? '—' : formatPersen(s.peakValue),
-        colors: const <Color>[Color(0xFFB45309), Color(0xFFF59E0B)],
+        colors: AppTheme.kpiAmber,
       ),
     ];
 

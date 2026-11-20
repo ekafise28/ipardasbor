@@ -15,23 +15,6 @@ import '../../../app/app_theme.dart';
 import '../../../shared/widgets/skeleton.dart';
 import '../models/wisman_dashboard_data.dart';
 
-const List<Color> _warnaTahun = <Color>[
-  Color(0xFF0B5ED7),
-  Color(0xFF14B8A6),
-  Color(0xFFF59E0B),
-  Color(0xFF8B5CF6),
-  Color(0xFFEF4444),
-  Color(0xFF06B6D4),
-];
-
-const Color _warnaBatang = Color(0xFF0B5ED7);
-
-/// Warna garis perbandingan pintu: hue dibagi rata seperti di web.
-Color _warnaGaris(int index, int total) {
-  final double hue = (index * 360 / (total < 1 ? 1 : total)).roundToDouble();
-  return HSLColor.fromAHSL(1, hue % 360, 0.78, 0.48).toColor();
-}
-
 class _Seri {
   const _Seri(this.label, this.color, this.values);
 
@@ -113,7 +96,7 @@ class WismanChartSection extends StatelessWidget {
               for (int i = 0; i < monthly.length; i++)
                 _Seri(
                   '${monthly[i].tahun}',
-                  _warnaTahun[i % _warnaTahun.length],
+                  AppTheme.warnaDeret(i),
                   monthly[i].data,
                 ),
             ],
@@ -175,7 +158,7 @@ class WismanChartSection extends StatelessWidget {
       chart: (bool besar) => _LineView(
         series: <_Seri>[
           for (int i = 0; i < rows.length; i++)
-            _Seri(rows[i].label, _warnaGaris(i, rows.length), rows[i].months),
+            _Seri(rows[i].label, AppTheme.warnaGarisBagiRata(i, rows.length), rows[i].months),
         ],
         height: besar ? 340 : 260,
       ),
@@ -353,7 +336,7 @@ class _ChartCard extends StatelessWidget {
         border: Border.all(color: AppTheme.border(context)),
         boxShadow: const <BoxShadow>[
           BoxShadow(
-            color: Color(0x0D17243A),
+            color: AppTheme.shadowCard,
             blurRadius: 18,
             offset: Offset(0, 6),
           ),
@@ -680,7 +663,7 @@ class _RankView extends StatelessWidget {
                     Text(
                       formatNumber(rows[i].total),
                       style: const TextStyle(
-                        color: _warnaBatang,
+                        color: AppTheme.chartBar,
                         fontSize: 11.5,
                         fontWeight: FontWeight.w800,
                       ),
@@ -700,7 +683,7 @@ class _RankView extends StatelessWidget {
                         widthFactor: maxValue <= 0
                             ? 0
                             : (rows[i].total / maxValue).clamp(0.0, 1.0),
-                        child: Container(height: 10, color: _warnaBatang),
+                        child: Container(height: 10, color: AppTheme.chartBar),
                       ),
                     ],
                   ),

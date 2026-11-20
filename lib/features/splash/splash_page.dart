@@ -342,7 +342,7 @@ class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
                     child: Icon(
                       Icons.verified_rounded,
                       size: 17,
-                      color: Color(0xFF7CFFB2),
+                      color: AppTheme.hijauNeon,
                     ),
                   ),
                 Text(
@@ -367,7 +367,7 @@ class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
               value: t,
               backgroundColor: Colors.white.withValues(alpha: 0.2),
               valueColor: AlwaysStoppedAnimation<Color>(
-                Color.lerp(Colors.white, const Color(0xFF7CFFB2), glow)!,
+                Color.lerp(Colors.white, AppTheme.hijauNeon, glow)!,
               ),
             ),
           ),
@@ -535,7 +535,7 @@ class _SparklePainter extends CustomPainter {
       final alpha = (1 - p).clamp(0.0, 1.0);
       final color = i % 3 == 0
           ? const Color(0xFFFFE08A)
-          : (i % 3 == 1 ? Colors.white : const Color(0xFF7CFFB2));
+          : (i % 3 == 1 ? Colors.white : AppTheme.hijauNeon);
       paint.color = color.withValues(alpha: alpha);
 
       if (i.isEven) {

@@ -73,7 +73,7 @@ class ListSummaryLine extends StatelessWidget {
                   catatan!,
                   style: const TextStyle(
                     fontSize: 12,
-                    color: Color(0xFFD08A00),
+                    color: AppTheme.amber,
                   ),
                 ),
               ),

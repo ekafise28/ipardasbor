@@ -279,7 +279,7 @@ class _UnduhSheetState extends State<_UnduhSheet> {
     return <Widget>[
       Row(
         children: <Widget>[
-          const Icon(Icons.check_circle_rounded, color: Color(0xFF2E7D32)),
+          const Icon(Icons.check_circle_rounded, color: AppTheme.success),
           const SizedBox(width: 8),
           Expanded(
             child: Text(

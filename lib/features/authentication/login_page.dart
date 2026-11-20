@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:ipardasbor/app/app_theme.dart';
 
 import '../../core/api/api_exception.dart';
 // import '../keamanan/services/biometric_service.dart';
@@ -175,7 +176,7 @@ class _LoginPageState extends State<LoginPage> {
               ),
             ],
           ),
-          backgroundColor: const Color(0xFFC62828),
+          backgroundColor: AppTheme.errorStrong,
           behavior: SnackBarBehavior.floating,
           margin: const EdgeInsets.all(18),
           elevation: 8,

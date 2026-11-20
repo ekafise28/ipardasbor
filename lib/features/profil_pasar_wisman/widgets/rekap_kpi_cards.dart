@@ -2,6 +2,7 @@
 // Pintu Masuk Utama. (Kartu YoY tidak ada: di web juga tidak ditampilkan.)
 
 import 'package:flutter/material.dart';
+import 'package:ipardasbor/app/app_theme.dart';
 import 'package:ipardasbor/shared/utils/formatters.dart';
 
 import '../../../shared/widgets/skeleton.dart';
@@ -23,7 +24,7 @@ class RekapKpiCards extends StatelessWidget {
         label: 'Total Kunjungan',
         value: s == null ? '—' : formatNumber(s.total),
         detail: 'Sesuai filter aktif',
-        colors: const <Color>[Color(0xFF064A91), Color(0xFF0874BD)],
+        colors: AppTheme.kpiBiru,
       ),
       _KpiCard(
         icon: Icons.public_rounded,
@@ -32,7 +33,7 @@ class RekapKpiCards extends StatelessWidget {
         detail: s == null
             ? '—'
             : '${formatNumber(s.topNationalityTotal)} kunjungan',
-        colors: const <Color>[Color(0xFF087A9E), Color(0xFF11A4BD)],
+        colors: AppTheme.kpiTeal,
         compactValue: true,
       ),
       _KpiCard(
@@ -40,7 +41,7 @@ class RekapKpiCards extends StatelessWidget {
         label: 'Pintu Masuk Utama',
         value: s == null ? '—' : (s.topPort ?? 'Belum dipetakan'),
         detail: s == null ? '—' : '${formatNumber(s.topPortTotal)} kunjungan',
-        colors: const <Color>[Color(0xFF5450A3), Color(0xFF776CCC)],
+        colors: AppTheme.kpiUngu,
         compactValue: true,
       ),
     ];

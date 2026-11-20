@@ -1254,7 +1254,7 @@ class FormSectionOss extends StatelessWidget {
         ),
         boxShadow: const [
           BoxShadow(
-            color: Color(0x0A152238),
+            color: AppTheme.shadowForm,
             blurRadius: 14,
             offset: Offset(0, 5),
           ),

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:ipardasbor/app/app_theme.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 /// Menampilkan satu snackbar (yang lama otomatis diganti).
@@ -27,7 +28,7 @@ void tampilkanPesan(
         duration: durasi ?? const Duration(seconds: 4),
         backgroundColor: !gaya
             ? null
-            : (sukses ? const Color(0xFF238636) : const Color(0xFFC2410C)),
+            : (sukses ? AppTheme.success : AppTheme.warningStrong),
         behavior: gaya ? SnackBarBehavior.floating : null,
         shape: gaya
             ? RoundedRectangleBorder(borderRadius: BorderRadius.circular(14))

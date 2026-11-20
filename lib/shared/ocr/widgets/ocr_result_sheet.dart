@@ -414,7 +414,7 @@ class _OcrResultSheetState extends State<_OcrResultSheet> {
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
           color: live.hasWarning
-              ? const Color(0xFFF59E0B)
+              ? AppTheme.amber
               : AppTheme.border(context),
         ),
       ),
@@ -441,7 +441,7 @@ class _OcrResultSheetState extends State<_OcrResultSheet> {
                   fontSize: 12,
                   fontWeight: FontWeight.w700,
                   color: lengthOff
-                      ? const Color(0xFFB45309)
+                      ?AppTheme.amberDark
                       : AppTheme.textSecondary(context),
                 ),
               ),
@@ -486,7 +486,7 @@ class _OcrResultSheetState extends State<_OcrResultSheet> {
                               ? const Icon(
                                   Icons.warning_amber_rounded,
                                   size: 16,
-                                  color: Color(0xFFB45309),
+                                  color: AppTheme.amberDark,
                                 )
                               : null,
                           selected: _picked[t] == i,
@@ -530,7 +530,7 @@ class _OcrResultSheetState extends State<_OcrResultSheet> {
                         const Icon(
                           Icons.warning_amber_rounded,
                           size: 16,
-                          color: Color(0xFFB45309),
+                          color: AppTheme.amberDark,
                         ),
                         const SizedBox(width: 6),
                         Expanded(
@@ -538,7 +538,7 @@ class _OcrResultSheetState extends State<_OcrResultSheet> {
                             msg,
                             style: const TextStyle(
                               fontSize: 12,
-                              color: Color(0xFFB45309),
+                              color: AppTheme.amberDark,
                             ),
                           ),
                         ),

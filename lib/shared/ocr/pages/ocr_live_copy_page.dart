@@ -4,6 +4,7 @@ import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart';
+import 'package:ipardasbor/app/app_theme.dart';
 import 'package:ipardasbor/shared/ocr/services/ocr_frame_converter.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:share_plus/share_plus.dart';
@@ -69,8 +70,8 @@ class _OcrLiveCopyPageState extends State<OcrLiveCopyPage>
   /// OCR justru memburuk.
   static const double _zoomCap = 5;
 
-  static const Color _accent = Color(0xFF22C55E);
-  static const Color _amber = Color(0xFFF59E0B);
+  static const Color _accent = AppTheme.successBright;
+  static const Color _amber = AppTheme.amber;
 
   final TextRecognizer _recognizer = TextRecognizer(
     script: TextRecognitionScript.latin,

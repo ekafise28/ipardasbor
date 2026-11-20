@@ -72,7 +72,7 @@ class BaselineOtaDetailPage extends StatelessWidget {
                         'Koordinat tidak tersedia',
                         style: TextStyle(
                           fontSize: 12,
-                          color: Color(0xFFD08A00),
+                          color: AppTheme.amber,
                         ),
                       ),
                   ],

@@ -1054,7 +1054,7 @@ class _RingGaugePainter extends CustomPainter {
         ..style = PaintingStyle.stroke
         ..strokeWidth = stroke
         ..strokeCap = StrokeCap.round
-        ..color = const Color(0xFF7CFFB2),
+        ..color = AppTheme.hijauNeon,
     );
   }
 
@@ -1199,7 +1199,7 @@ class _StatisticCard extends StatelessWidget {
         border: Border.all(color: AppTheme.border(context)),
         boxShadow: const [
           BoxShadow(
-            color: Color(0x0D17243A),
+            color: AppTheme.shadowCard,
             blurRadius: 14,
             offset: Offset(0, 5),
           ),
@@ -1279,7 +1279,7 @@ class _DashboardPanel extends StatelessWidget {
         border: Border.all(color: AppTheme.border(context)),
         boxShadow: const [
           BoxShadow(
-            color: Color(0x0D17243A),
+            color: AppTheme.shadowCard,
             blurRadius: 18,
             offset: Offset(0, 6),
           ),

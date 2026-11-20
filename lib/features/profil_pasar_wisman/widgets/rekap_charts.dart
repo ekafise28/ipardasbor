@@ -17,23 +17,6 @@ import '../../../app/app_theme.dart';
 import '../../../shared/widgets/skeleton.dart';
 import '../models/rekap_dashboard_data.dart';
 
-// Palet sama dengan web (variabel `palette`).
-const List<Color> _palette = <Color>[
-  Color(0xFF0756B4),
-  Color(0xFF08A8C7),
-  Color(0xFF16A34A),
-  Color(0xFFF59E0B),
-  Color(0xFF8B5CF6),
-  Color(0xFFEF4444),
-  Color(0xFFEC4899),
-  Color(0xFF14B8A6),
-  Color(0xFF64748B),
-  Color(0xFF84CC16),
-  Color(0xFFF97316),
-];
-
-const Color _biru = Color(0xFF0756B4);
-
 String _persen(double v) => v.toStringAsFixed(1).replaceFirst('.', ',');
 
 class _Seri {
@@ -116,7 +99,7 @@ class RekapChartSection extends StatelessWidget {
           chart: _LineView(
             labels: <String>[for (final RekapPoint p in annual) p.label],
             series: <_Seri>[
-              _Seri('Kunjungan', _biru, <int?>[
+              _Seri('Kunjungan', AppTheme.chartBar, <int?>[
                 for (final RekapPoint p in annual) p.total,
               ]),
             ],
@@ -145,7 +128,7 @@ class RekapChartSection extends StatelessWidget {
               for (int i = 0; i < monthly.length; i++)
                 _Seri(
                   '${monthly[i].tahun}',
-                  _palette[i % _palette.length],
+                  AppTheme.warnaDeret(i),
                   monthly[i].data,
                 ),
             ],
@@ -257,7 +240,7 @@ class _ChartCard extends StatelessWidget {
         border: Border.all(color: AppTheme.border(context)),
         boxShadow: const <BoxShadow>[
           BoxShadow(
-            color: Color(0x0D17243A),
+            color: AppTheme.shadowCard,
             blurRadius: 18,
             offset: Offset(0, 6),
           ),
@@ -555,7 +538,7 @@ class _RankView extends StatelessWidget {
                     Text(
                       formatNumber(rows[i].total),
                       style: const TextStyle(
-                        color: _biru,
+                        color: AppTheme.chartBar,
                         fontSize: 11.5,
                         fontWeight: FontWeight.w800,
                       ),
@@ -575,7 +558,7 @@ class _RankView extends StatelessWidget {
                         widthFactor: maxValue <= 0
                             ? 0
                             : (rows[i].total / maxValue).clamp(0.0, 1.0),
-                        child: Container(height: 10, color: _biru),
+                        child: Container(height: 10, color: AppTheme.chartBar),
                       ),
                     ],
                   ),
@@ -650,7 +633,7 @@ class _DoughnutViewState extends State<_DoughnutView> {
                     for (int i = 0; i < rows.length; i++)
                       PieChartSectionData(
                         value: rows[i].total.toDouble(),
-                        color: _palette[i % _palette.length],
+                        color: AppTheme.warnaDeret(i),
                         radius: _tinggi * (i == _touched ? 0.17 : 0.15),
                         showTitle: false,
                       ),
@@ -714,7 +697,7 @@ class _DoughnutViewState extends State<_DoughnutView> {
                     width: 8,
                     height: 8,
                     decoration: BoxDecoration(
-                      color: _palette[i % _palette.length],
+                      color: AppTheme.warnaDeret(i),
                       shape: BoxShape.circle,
                     ),
                   ),

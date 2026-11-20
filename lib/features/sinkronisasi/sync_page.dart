@@ -246,8 +246,8 @@ class _SyncPageState extends State<SyncPage> {
         SnackBar(
           content: Text(message, style: TextStyle(color: textColor)),
           backgroundColor: success
-              ? const Color(0xFF238636)
-              : const Color(0xFFC2410C),
+              ? AppTheme.success
+              : AppTheme.warningStrong,
           behavior: SnackBarBehavior.floating,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(14),
