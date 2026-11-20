@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:ipardasbor/app/app_theme.dart';
-import 'package:ipardasbor/features/hotel/okupansi_hotel/okupansi_hotel_style.dart';
 import 'package:ipardasbor/shared/utils/formatters.dart';
 import 'package:ipardasbor/shared/widgets/detail_cards.dart' show DetailCard;
 

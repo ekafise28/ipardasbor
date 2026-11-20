@@ -4,7 +4,6 @@ import 'package:ipardasbor/shared/utils/formatters.dart';
 import 'package:ipardasbor/shared/widgets/detail_cards.dart' show DetailCard;
 
 import '../models/okupansi_hotel_data.dart';
-import '../okupansi_hotel_style.dart';
 
 /// Tiga angka ringkas di atas grafik: rata-rata, jumlah hotel, tahun.
 class OkupansiSummaryCard extends StatelessWidget {
