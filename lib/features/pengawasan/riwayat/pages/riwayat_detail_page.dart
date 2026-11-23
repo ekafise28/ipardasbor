@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:ipardasbor/shared/screenshot/screenshot_service.dart';
 import 'package:ipardasbor/shared/utils/formatters.dart';
+import 'package:ipardasbor/shared/widgets/app_sheet.dart';
 import 'package:ipardasbor/shared/widgets/form/status_ketidaksesuaian_selector.dart';
 import 'package:ipardasbor/shared/widgets/page_states.dart';
 import 'package:ipardasbor/shared/widgets/skeleton.dart';
@@ -560,97 +561,77 @@ class _RiwayatDetailPageState extends State<RiwayatDetailPage> {
   Future<void> _tampilkanBagikan(RiwayatDetail d) async {
     final String teks = _ringkasan(d);
 
-    await showModalBottomSheet<void>(
-      context: context,
-      isScrollControlled: true,
-      showDragHandle: true,
-      backgroundColor: AppTheme.surface(context),
-      builder: (BuildContext sheetContext) {
-        return SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: <Widget>[
-                Text(
-                  'Bagikan ringkasan',
-                  style: TextStyle(
-                    fontSize: 17,
-                    fontWeight: FontWeight.w800,
-                    color: AppTheme.textColor(sheetContext),
-                  ),
+    await showInfoSheet<void>(
+      context,
+      builder: (BuildContext sheet) => <Widget>[
+        Text(
+          'Bagikan ringkasan',
+          style: TextStyle(
+            fontSize: 17,
+            fontWeight: FontWeight.w800,
+            color: AppTheme.textColor(sheet),
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          'No. HP, email, dan foto tidak ikut dibagikan.',
+          style: TextStyle(
+            fontSize: 12.5,
+            color: AppTheme.textSecondary(sheet),
+          ),
+        ),
+        const SizedBox(height: 12),
+        Flexible(
+          child: Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: AppTheme.surfaceMuted(sheet),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: AppTheme.border(sheet)),
+            ),
+            child: SingleChildScrollView(
+              child: SelectableText(
+                teks,
+                style: TextStyle(
+                  fontSize: 13,
+                  height: 1.45,
+                  color: AppTheme.textColor(sheet),
                 ),
-                const SizedBox(height: 4),
-                Text(
-                  'No. HP, email, dan foto tidak ikut dibagikan.',
-                  style: TextStyle(
-                    fontSize: 12.5,
-                    color: AppTheme.textSecondary(sheetContext),
-                  ),
-                ),
-                const SizedBox(height: 12),
-                Flexible(
-                  child: Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: AppTheme.surfaceMuted(sheetContext),
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: AppTheme.border(sheetContext)),
-                    ),
-                    child: SingleChildScrollView(
-                      child: SelectableText(
-                        teks,
-                        style: TextStyle(
-                          fontSize: 13,
-                          height: 1.45,
-                          color: AppTheme.textColor(sheetContext),
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 16),
-                Row(
-                  children: <Widget>[
-                    Expanded(
-                      child: OutlinedButton.icon(
-                        onPressed: () async {
-                          await Clipboard.setData(ClipboardData(text: teks));
-                          HapticFeedback.lightImpact();
-                          if (sheetContext.mounted) {
-                            Navigator.of(sheetContext).pop();
-                          }
-                          if (!mounted) return;
-                          tampilkanPesan(
-                            context,
-                            'Ringkasan disalin.',
-                            sukses: true,
-                          );
-                        },
-                        icon: const Icon(Icons.copy_rounded, size: 18),
-                        label: const Text('Salin'),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: FilledButton.icon(
-                        onPressed: () {
-                          Navigator.of(sheetContext).pop();
-                          _bagikan(d);
-                        },
-                        icon: const Icon(Icons.share_outlined, size: 18),
-                        label: const Text('Bagikan'),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
+              ),
             ),
           ),
-        );
-      },
+        ),
+        const SizedBox(height: 16),
+        Row(
+          children: <Widget>[
+            Expanded(
+              child: OutlinedButton.icon(
+                onPressed: () async {
+                  await Clipboard.setData(ClipboardData(text: teks));
+                  HapticFeedback.lightImpact();
+                  if (sheet.mounted) Navigator.of(sheet).pop();
+                  if (!mounted) return;
+                  tampilkanPesan(context, 'Ringkasan disalin.', sukses: true);
+                },
+                icon: const Icon(Icons.copy_rounded, size: 18),
+                label: const Text('Salin'),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: FilledButton.icon(
+                onPressed: () {
+                  Navigator.of(sheet).pop();
+                  _bagikan(d);
+                },
+                icon: const Icon(Icons.share_outlined, size: 18),
+                label: const Text('Bagikan'),
+              ),
+            ),
+          ],
+        ),
+      ],
     );
   }
 

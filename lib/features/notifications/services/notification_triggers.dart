@@ -1,6 +1,7 @@
 import 'package:ipardasbor/features/pengawasan/non_oss/offline/non_oss_queue_store.dart';
 import 'package:ipardasbor/features/notifications/services/notification_local_service.dart';
 import 'package:ipardasbor/features/notifications/services/notification_statusbar_controller.dart';
+import 'package:ipardasbor/shared/utils/formatters.dart';
 
 import '../models/notification_item.dart';
 import 'notification_service.dart';
@@ -23,16 +24,14 @@ class NotificationTriggers {
   /// cukup menghasilkan SATU notifikasi per hari (upsert menimpa yang lama),
   /// dan otomatis hilang dari inbox kalau sudah tidak ada lagi yang lama
   /// (lihat pemanggilan resolve() di bawah).
-  static String _todayKey() {
-    final DateTime now = DateTime.now();
-    return '${now.year}-${now.month.toString().padLeft(2, '0')}-'
-        '${now.day.toString().padLeft(2, '0')}';
-  }
+  static String _todayKey() => formatTanggalApi(DateTime.now());
 
   static Future<void> _checkWaitingTooLong() async {
     final List waiting = await NonOssQueueStore.instance.getWaiting(limit: 500);
     final int lama = waiting
-        .where((d) => DateTime.now().difference(d.createdAt) > _waitingThreshold)
+        .where(
+          (d) => DateTime.now().difference(d.createdAt) > _waitingThreshold,
+        )
         .length;
 
     final String key = 'waiting_too_long:${_todayKey()}';
@@ -46,15 +45,18 @@ class NotificationTriggers {
     await NotificationService.instance.upsert(
       type: NotificationType.waitingTooLong,
       title: 'Data menunggu terkirim',
-      body: '$lama data tersimpan di perangkat lebih dari 24 jam dan belum '
+      body:
+          '$lama data tersimpan di perangkat lebih dari 24 jam dan belum '
           'terkirim ke server. Buka halaman Sinkronisasi untuk memeriksa.',
       dedupeKey: key,
       targetType: 'sync_page',
     );
 
     if (NotificationStatusBarController.instance.value) {
-      await NotificationLocalService.instance
-          .scheduleWaitingTooLongReminder(count: lama, hour: 9);
+      await NotificationLocalService.instance.scheduleWaitingTooLongReminder(
+        count: lama,
+        hour: 9,
+      );
     }
   }
 
@@ -75,15 +77,18 @@ class NotificationTriggers {
     await NotificationService.instance.upsert(
       type: NotificationType.draftLingering,
       title: 'Draft belum diselesaikan',
-      body: '$lama draft pengawasan sudah lebih dari 3 hari belum '
+      body:
+          '$lama draft pengawasan sudah lebih dari 3 hari belum '
           'dilanjutkan. Buka halaman Sinkronisasi untuk melanjutkan.',
       dedupeKey: key,
       targetType: 'sync_page',
     );
 
     if (NotificationStatusBarController.instance.value) {
-      await NotificationLocalService.instance
-          .scheduleDraftLingeringReminder(count: lama, hour: 9);
+      await NotificationLocalService.instance.scheduleDraftLingeringReminder(
+        count: lama,
+        hour: 9,
+      );
     }
   }
 }

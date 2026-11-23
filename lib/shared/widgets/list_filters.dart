@@ -170,61 +170,84 @@ class StatusFilterBar extends StatelessWidget {
 
 /// Data satu chip filter aktif.
 class FilterChipData {
-  const FilterChipData({required this.label, required this.onRemove});
+  const FilterChipData({
+    required this.label,
+    required this.onRemove,
+    this.icon,
+  });
 
   final String label;
   final VoidCallback onRemove;
+
+  /// Ikon kecil di kiri label; null = tanpa ikon.
+  final IconData? icon;
 }
 
 /// Chip filter aktif; tiap chip bisa dihapus dengan satu ketukan.
+/// [enabled] false = semua ketukan diabaikan (mis. saat data dimuat).
+/// [padding] mengatur jarak tepi daftar (nol bila sudah di dalam kartu).
 class ActiveFilterChips extends StatelessWidget {
   const ActiveFilterChips({
     super.key,
     required this.chips,
     required this.onResetAll,
+    this.enabled = true,
+    this.padding = const EdgeInsets.symmetric(horizontal: 16),
   });
 
   final List<FilterChipData> chips;
   final VoidCallback onResetAll;
+  final bool enabled;
+  final EdgeInsetsGeometry padding;
 
   @override
   Widget build(BuildContext context) {
     if (chips.isEmpty) return const SizedBox.shrink();
 
-    return SizedBox(
-      height: 38,
-      child: ListView(
-        scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: 16),
-        children: <Widget>[
-          for (final FilterChipData c in chips)
-            Padding(
-              padding: const EdgeInsets.only(right: 8),
-              child: InputChip(
-                label: Text(c.label),
-                onDeleted: c.onRemove,
-                deleteIcon: const Icon(Icons.close_rounded, size: 16),
-                deleteButtonTooltipMessage: 'Hapus filter ${c.label}',
-                labelStyle: const TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
-                  color: AppTheme.primaryColor,
+    final bool gelap = Theme.of(context).brightness == Brightness.dark;
+    final Color aksen = gelap ? AppTheme.primaryLight : AppTheme.primaryColor;
+
+    return IgnorePointer(
+      ignoring: !enabled,
+      child: SizedBox(
+        height: 38,
+        child: ListView(
+          scrollDirection: Axis.horizontal,
+          padding: padding,
+          children: <Widget>[
+            for (final FilterChipData c in chips)
+              Padding(
+                padding: const EdgeInsets.only(right: 8),
+                child: InputChip(
+                  avatar: c.icon == null
+                      ? null
+                      : Icon(c.icon, size: 14, color: aksen),
+                  label: Text(c.label),
+                  onDeleted: c.onRemove,
+                  deleteIcon: const Icon(Icons.close_rounded, size: 16),
+                  deleteIconColor: aksen,
+                  deleteButtonTooltipMessage: 'Hapus filter ${c.label}',
+                  labelStyle: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: aksen,
+                  ),
+                  backgroundColor: aksen.withValues(alpha: 0.10),
+                  side: BorderSide.none,
+                  visualDensity: VisualDensity.compact,
                 ),
-                backgroundColor: AppTheme.primaryColor.withValues(alpha: 0.10),
-                side: BorderSide.none,
-                visualDensity: VisualDensity.compact,
               ),
-            ),
-          if (chips.length > 1)
-            TextButton(
-              onPressed: onResetAll,
-              style: TextButton.styleFrom(
-                visualDensity: VisualDensity.compact,
-                padding: const EdgeInsets.symmetric(horizontal: 8),
+            if (chips.length > 1)
+              TextButton(
+                onPressed: onResetAll,
+                style: TextButton.styleFrom(
+                  visualDensity: VisualDensity.compact,
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                ),
+                child: const Text('Reset'),
               ),
-              child: const Text('Reset'),
-            ),
-        ],
+          ],
+        ),
       ),
     );
   }

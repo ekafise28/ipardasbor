@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_map_marker_cluster/flutter_map_marker_cluster.dart';
 import 'package:ipardasbor/app/app_theme.dart';
+import 'package:ipardasbor/shared/widgets/app_sheet.dart';
 import 'package:latlong2/latlong.dart';
 
 import '../../dashboard/models/dashboard_map_model.dart';
@@ -242,12 +243,9 @@ class _DashboardMapSectionState extends State<DashboardMapSection> {
   }
 
   void _showPointDetail(MapPoint point) {
-    showModalBottomSheet<void>(
-      context: context,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (context) => _PointDetailSheet(point: point),
+    showInfoSheet<void>(
+      context,
+      builder: (BuildContext sheet) => _isiDetailTitik(sheet, point),
     );
   }
 }
@@ -378,87 +376,55 @@ class _MapLegend extends StatelessWidget {
   }
 }
 
-class _PointDetailSheet extends StatelessWidget {
-  final MapPoint point;
-  const _PointDetailSheet({required this.point});
-
-  @override
-  Widget build(BuildContext context) {
-    return SafeArea(
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(20, 14, 20, 24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Center(
-              child: Container(
-                width: 40,
-                height: 4,
-                margin: const EdgeInsets.only(bottom: 16),
-                decoration: BoxDecoration(
-                  color: AppTheme.border(context),
-                  borderRadius: BorderRadius.circular(4),
-                ),
-              ),
+List<Widget> _isiDetailTitik(BuildContext context, MapPoint point) {
+  return <Widget>[
+    Row(
+      children: <Widget>[
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
+          decoration: BoxDecoration(
+            color: point.type.color.withValues(alpha: 0.10),
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: Text(
+            point.type.label,
+            style: TextStyle(
+              color: point.type.color,
+              fontSize: 11,
+              fontWeight: FontWeight.w800,
             ),
-            Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 9,
-                    vertical: 4,
-                  ),
-                  decoration: BoxDecoration(
-                    color: point.type.color.withValues(alpha: 0.10),
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: Text(
-                    point.type.label,
-                    style: TextStyle(
-                      color: point.type.color,
-                      fontSize: 11,
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 10),
-            Text(
-              point.title.isEmpty ? '(Tanpa nama)' : point.title,
-              style: TextStyle(
-                fontSize: 17,
-                fontWeight: FontWeight.w800,
-                color: AppTheme.textColor(context),
-              ),
-            ),
-            const SizedBox(height: 12),
-            _DetailRow(
-              icon: Icons.place_outlined,
-              label: point.address.isEmpty ? '-' : point.address,
-            ),
-            _DetailRow(
-              icon: Icons.location_city_outlined,
-              label: point.district,
-            ),
-            _DetailRow(
-              icon: Icons.fact_check_outlined,
-              label: 'Status: ${point.status}',
-            ),
-            _DetailRow(icon: Icons.badge_outlined, label: 'NIB: ${point.nib}'),
-            if (point.platform != null)
-              _DetailRow(
-                icon: Icons.travel_explore_rounded,
-                label: 'Platform: ${point.platform}',
-              ),
-            if (point.sourceUrl != null)
-              _DetailRow(icon: Icons.link_rounded, label: point.sourceUrl!),
-          ],
+          ),
         ),
+      ],
+    ),
+    const SizedBox(height: 10),
+    Text(
+      point.title.isEmpty ? '(Tanpa nama)' : point.title,
+      style: TextStyle(
+        fontSize: 17,
+        fontWeight: FontWeight.w800,
+        color: AppTheme.textColor(context),
       ),
-    );
-  }
+    ),
+    const SizedBox(height: 12),
+    _DetailRow(
+      icon: Icons.place_outlined,
+      label: point.address.isEmpty ? '-' : point.address,
+    ),
+    _DetailRow(icon: Icons.location_city_outlined, label: point.district),
+    _DetailRow(
+      icon: Icons.fact_check_outlined,
+      label: 'Status: ${point.status}',
+    ),
+    _DetailRow(icon: Icons.badge_outlined, label: 'NIB: ${point.nib}'),
+    if (point.platform != null)
+      _DetailRow(
+        icon: Icons.travel_explore_rounded,
+        label: 'Platform: ${point.platform}',
+      ),
+    if (point.sourceUrl != null)
+      _DetailRow(icon: Icons.link_rounded, label: point.sourceUrl!),
+  ];
 }
 
 class _DetailRow extends StatelessWidget {

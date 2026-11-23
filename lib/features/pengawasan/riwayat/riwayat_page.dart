@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:ipardasbor/shared/pagination/pagination_bar.dart';
+import 'package:ipardasbor/shared/utils/formatters.dart';
 import 'package:ipardasbor/shared/widgets/app_banner.dart';
 import 'package:ipardasbor/core/constants/bidang_usaha_constants.dart';
 import 'package:ipardasbor/shared/widgets/list_filters.dart';
@@ -200,18 +201,6 @@ class _RiwayatPageState extends State<RiwayatPage>
     return 'Kabupaten/Kota';
   }
 
-  static String _tgl(DateTime d) =>
-      '${d.day.toString().padLeft(2, '0')}/'
-      '${d.month.toString().padLeft(2, '0')}/${d.year}';
-
-  static String _labelTanggal(DateTime? mulai, DateTime? selesai) {
-    if (mulai != null && selesai != null) {
-      return '${_tgl(mulai)} - ${_tgl(selesai)}';
-    }
-    if (mulai != null) return 'Mulai ${_tgl(mulai)}';
-    return 'Sampai ${_tgl(selesai!)}';
-  }
-
   /// Chip filter aktif dari sheet (tanpa pencarian dan status, yang punya
   /// kontrol sendiri). Rentang tanggal digabung jadi satu chip.
   List<FilterChipData> _chipFilterAktif() {
@@ -262,7 +251,7 @@ class _RiwayatPageState extends State<RiwayatPage>
         ),
       if (f.tanggalMulai != null || f.tanggalSelesai != null)
         FilterChipData(
-          label: _labelTanggal(f.tanggalMulai, f.tanggalSelesai),
+          label: formatRentangTanggal(f.tanggalMulai, f.tanggalSelesai),
           onRemove: () => _ubahFilter(
             f.copyWith(clearTanggalMulai: true, clearTanggalSelesai: true),
           ),

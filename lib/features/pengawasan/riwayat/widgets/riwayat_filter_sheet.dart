@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:ipardasbor/app/app_theme.dart' show AppTheme;
+import 'package:ipardasbor/shared/utils/formatters.dart';
 import 'package:ipardasbor/shared/widgets/app_sheet.dart';
 
 import '../../../../core/constants/bidang_usaha_constants.dart';
@@ -211,7 +212,7 @@ class _RiwayatFilterSheetState extends State<_RiwayatFilterSheet> {
                   placeholder: 'Pilih tanggal',
                   text: _tanggalMulai == null
                       ? null
-                      : _formatTanggalSingkat(_tanggalMulai!),
+                      : formatTanggalAngka(_tanggalMulai!),
                   onTap: () => _pilihTanggal(mulai: true),
                 ),
               ),
@@ -222,7 +223,7 @@ class _RiwayatFilterSheetState extends State<_RiwayatFilterSheet> {
                   placeholder: 'Pilih tanggal',
                   text: _tanggalSelesai == null
                       ? null
-                      : _formatTanggalSingkat(_tanggalSelesai!),
+                      : formatTanggalAngka(_tanggalSelesai!),
                   onTap: () => _pilihTanggal(mulai: false),
                 ),
               ),
@@ -231,12 +232,5 @@ class _RiwayatFilterSheetState extends State<_RiwayatFilterSheet> {
         ),
       ],
     );
-  }
-
-  static String _formatTanggalSingkat(DateTime tanggal) {
-    final String hari = tanggal.day.toString().padLeft(2, '0');
-    final String bulan = tanggal.month.toString().padLeft(2, '0');
-
-    return '$hari/$bulan/${tanggal.year}';
   }
 }

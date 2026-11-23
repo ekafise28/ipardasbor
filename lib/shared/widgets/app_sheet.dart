@@ -71,6 +71,28 @@ Future<T?> showDraggableSheet<T>(
   );
 }
 
+/// Sheet info/aksi singkat: pegangan bawaan, lalu [builder] mengembalikan
+/// isi yang disusun dalam kolom (mis. detail titik peta, pratinjau bagikan).
+Future<T?> showInfoSheet<T>(
+  BuildContext context, {
+  required List<Widget> Function(BuildContext context) builder,
+}) {
+  return showAppSheet<T>(
+    context,
+    showDragHandle: true,
+    builder: (BuildContext sheet) => SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: builder(sheet),
+        ),
+      ),
+    ),
+  );
+}
+
 /// Sheet berjudul: pegangan, judul, tombol X, lalu isi yang bisa digulir.
 /// Dipakai untuk tampilan "perbesar grafik" dan sejenisnya.
 Future<T?> showTitledSheet<T>(

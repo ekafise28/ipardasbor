@@ -9,6 +9,7 @@ import 'package:ipardasbor/features/peta_industri/pages/peta_industri_detail_pag
 import 'package:ipardasbor/features/peta_industri/pages/peta_industri_grafik_page.dart';
 import 'package:ipardasbor/shared/region/data/wilayah_local_database.dart';
 import 'package:ipardasbor/shared/region/services/wilayah_akses_service.dart';
+import 'package:ipardasbor/shared/widgets/app_sheet.dart';
 import 'package:latlong2/latlong.dart';
 
 import '../../core/api/api_exception.dart';
@@ -307,13 +308,9 @@ class _PetaIndustriPageState extends State<PetaIndustriPage>
     final PetaIndustriData? data = _data;
     if (data == null || data.provinsi.isEmpty) return;
 
-    final PetaProvinsi? dipilih = await showModalBottomSheet<PetaProvinsi>(
-      context: context,
-      isScrollControlled: true,
+    final PetaProvinsi? dipilih = await showAppSheet<PetaProvinsi>(
+      context,
       useSafeArea: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
       builder: (_) =>
           _DaftarProvinsiSheet(daftar: data.provinsi, angka: _angka),
     );
@@ -346,132 +343,106 @@ class _PetaIndustriPageState extends State<PetaIndustriPage>
   }
 
   void _tampilkanInfo(PetaProvinsi p) {
-    showModalBottomSheet<void>(
-      context: context,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (context) => SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(20, 14, 20, 24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Center(
-                child: Container(
-                  width: 40,
-                  height: 4,
-                  margin: const EdgeInsets.only(bottom: 16),
-                  decoration: BoxDecoration(
-                    color: AppTheme.border(context),
-                    borderRadius: BorderRadius.circular(4),
-                  ),
+    showInfoSheet<void>(
+      context,
+      builder: (BuildContext sheet) => <Widget>[
+        Row(
+          children: <Widget>[
+            Container(
+              width: 36,
+              height: 36,
+              decoration: BoxDecoration(
+                color: AppTheme.primaryColor,
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: const Icon(
+                Icons.location_on_rounded,
+                color: Colors.white,
+                size: 20,
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                p.nama,
+                style: TextStyle(
+                  fontSize: 17,
+                  fontWeight: FontWeight.w800,
+                  color: AppTheme.textColor(sheet),
                 ),
               ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 14),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+          decoration: BoxDecoration(
+            color: AppTheme.tintBackground(
+              sheet,
+              AppTheme.primaryColor,
+              AppTheme.menuDashboardBg,
+            ),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: <Widget>[
               Row(
-                children: [
-                  Container(
-                    width: 36,
-                    height: 36,
-                    decoration: BoxDecoration(
-                      color: AppTheme.primaryColor,
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: const Icon(
-                      Icons.location_on_rounded,
-                      color: Colors.white,
-                      size: 20,
-                    ),
+                children: <Widget>[
+                  const Icon(
+                    Icons.business_rounded,
+                    size: 18,
+                    color: AppTheme.primaryColor,
                   ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: Text(
-                      p.nama,
-                      style: TextStyle(
-                        fontSize: 17,
-                        fontWeight: FontWeight.w800,
-                        color: AppTheme.textColor(context),
-                      ),
+                  const SizedBox(width: 8),
+                  Text(
+                    'Jumlah usaha',
+                    style: TextStyle(
+                      color: AppTheme.textColor(sheet),
+                      fontSize: 13,
                     ),
                   ),
                 ],
               ),
-              const SizedBox(height: 14),
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 14,
-                  vertical: 12,
+              Text(
+                _angka.format(p.total),
+                style: const TextStyle(
+                  color: AppTheme.primaryColor,
+                  fontSize: 18,
+                  fontWeight: FontWeight.w800,
                 ),
-                decoration: BoxDecoration(
-                  color: AppTheme.tintBackground(
-                    context,
-                    AppTheme.primaryColor,
-                    AppTheme.menuDashboardBg,
-                  ),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Row(
-                      children: [
-                        const Icon(
-                          Icons.business_rounded,
-                          size: 18,
-                          color: AppTheme.primaryColor,
-                        ),
-                        const SizedBox(width: 8),
-                        Text(
-                          'Jumlah usaha',
-                          style: TextStyle(
-                            color: AppTheme.textColor(context),
-                            fontSize: 13,
-                          ),
-                        ),
-                      ],
-                    ),
-                    Text(
-                      _angka.format(p.total),
-                      style: const TextStyle(
-                        color: AppTheme.primaryColor,
-                        fontSize: 18,
-                        fontWeight: FontWeight.w800,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 14),
-              Row(
-                children: [
-                  Expanded(
-                    child: OutlinedButton.icon(
-                      onPressed: () {
-                        Navigator.of(context).pop();
-                        _bukaGrafik(p);
-                      },
-                      icon: const Icon(Icons.pie_chart_rounded),
-                      label: const Text('Grafik'),
-                    ),
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: FilledButton.icon(
-                      onPressed: () {
-                        Navigator.of(context).pop();
-                        _bukaDetail(p);
-                      },
-                      icon: const Icon(Icons.table_rows_rounded),
-                      label: const Text('Detail'),
-                    ),
-                  ),
-                ],
               ),
             ],
           ),
         ),
-      ),
+        const SizedBox(height: 14),
+        Row(
+          children: <Widget>[
+            Expanded(
+              child: OutlinedButton.icon(
+                onPressed: () {
+                  Navigator.of(sheet).pop();
+                  _bukaGrafik(p);
+                },
+                icon: const Icon(Icons.pie_chart_rounded),
+                label: const Text('Grafik'),
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: FilledButton.icon(
+                onPressed: () {
+                  Navigator.of(sheet).pop();
+                  _bukaDetail(p);
+                },
+                icon: const Icon(Icons.table_rows_rounded),
+                label: const Text('Detail'),
+              ),
+            ),
+          ],
+        ),
+      ],
     );
   }
 }
@@ -511,10 +482,7 @@ class _DenyutSorot extends StatelessWidget {
       decoration: BoxDecoration(
         shape: BoxShape.circle,
         color: AppTheme.primaryColor.withValues(alpha: 0.18 * alpha),
-        border: Border.all(
-          color: _biruMuda.withValues(alpha: alpha),
-          width: 3,
-        ),
+        border: Border.all(color: _biruMuda.withValues(alpha: alpha), width: 3),
       ),
     );
   }
@@ -552,11 +520,8 @@ class _IndustriPin extends StatelessWidget {
           ),
           boxShadow: [
             BoxShadow(
-              color:
-                  (milikSaya
-                          ? _oranyeTua
-                          : const Color(0xFF054582))
-                      .withValues(alpha: 0.35),
+              color: (milikSaya ? _oranyeTua : const Color(0xFF054582))
+                  .withValues(alpha: 0.35),
               blurRadius: 10,
               offset: const Offset(0, 4),
             ),

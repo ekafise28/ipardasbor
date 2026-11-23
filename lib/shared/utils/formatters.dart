@@ -275,6 +275,17 @@ String formatWaktu(DateTime t) =>
 String formatTanggalAngka(DateTime d) =>
     '${_dua(d.day)}/${_dua(d.month)}/${d.year}';
 
+/// Rentang tanggal untuk chip/label filter: "05/03/2026 – 20/03/2026",
+/// "Mulai 05/03/2026", atau "Sampai 20/03/2026". Kosong bila keduanya null.
+String formatRentangTanggal(DateTime? mulai, DateTime? selesai) {
+  if (mulai != null && selesai != null) {
+    return '${formatTanggalAngka(mulai)} – ${formatTanggalAngka(selesai)}';
+  }
+  if (mulai != null) return 'Mulai ${formatTanggalAngka(mulai)}';
+  if (selesai != null) return 'Sampai ${formatTanggalAngka(selesai)}';
+  return '';
+}
+
 /// "2026-03-05": format yang diterima API Laravel.
 String formatTanggalApi(DateTime d) =>
     '${d.year.toString().padLeft(4, '0')}-${_dua(d.month)}-${_dua(d.day)}';
