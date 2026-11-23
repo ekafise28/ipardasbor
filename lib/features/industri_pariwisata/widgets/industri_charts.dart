@@ -43,7 +43,7 @@ class IndustriSectionTitle extends StatelessWidget {
           title,
           style: TextStyle(
             color: AppTheme.textColor(context),
-            fontSize: 18,
+            fontSize: AppTheme.fontJudulHalaman,
             fontWeight: FontWeight.w800,
           ),
         ),
@@ -52,7 +52,7 @@ class IndustriSectionTitle extends StatelessWidget {
           subtitle,
           style: TextStyle(
             color: AppTheme.textSecondary(context),
-            fontSize: 12,
+            fontSize: AppTheme.fontIsiKecil,
           ),
         ),
       ],
@@ -202,7 +202,7 @@ class IndustriChartCard extends StatelessWidget {
                       kicker.toUpperCase(),
                       style: const TextStyle(
                         color: AppTheme.primaryColor,
-                        fontSize: 10,
+                        fontSize: AppTheme.fontSumbu,
                         fontWeight: FontWeight.w800,
                         letterSpacing: 0.8,
                       ),
@@ -212,7 +212,7 @@ class IndustriChartCard extends StatelessWidget {
                       title,
                       style: TextStyle(
                         color: AppTheme.textColor(context),
-                        fontSize: 15,
+                        fontSize: AppTheme.fontJudulKartu,
                         fontWeight: FontWeight.w800,
                       ),
                     ),
@@ -279,7 +279,7 @@ class _ChartView extends StatelessWidget {
             'Tidak ada data untuk filter ini.',
             style: TextStyle(
               color: AppTheme.textSecondary(context),
-              fontSize: 12,
+              fontSize: AppTheme.fontIsiKecil,
             ),
           ),
         ),
@@ -328,7 +328,7 @@ class _BarView extends StatelessWidget {
                 '$label: ${formatNumber(rod.toY.round())}',
                 const TextStyle(
                   color: Colors.white,
-                  fontSize: 11,
+                  fontSize: AppTheme.fontKeterangan,
                   fontWeight: FontWeight.w600,
                 ),
               );
@@ -349,7 +349,7 @@ class _BarView extends StatelessWidget {
               interval: interval,
               getTitlesWidget: (value, meta) => Text(
                 formatRingkas(value),
-                style: TextStyle(color: muted, fontSize: 10),
+                style: TextStyle(color: muted, fontSize: AppTheme.fontSumbu),
               ),
             ),
           ),
@@ -366,7 +366,7 @@ class _BarView extends StatelessWidget {
                   padding: const EdgeInsets.only(top: 6),
                   child: Text(
                     data.labels[index],
-                    style: TextStyle(color: muted, fontSize: 10),
+                    style: TextStyle(color: muted, fontSize: AppTheme.fontSumbu),
                   ),
                 );
               },
@@ -481,7 +481,7 @@ class _DoughnutViewState extends State<_DoughnutView> {
                         textAlign: TextAlign.center,
                         style: TextStyle(
                           color: AppTheme.textSecondary(context),
-                          fontSize: 10.5,
+                          fontSize: AppTheme.fontSumbu,
                         ),
                       ),
                       FittedBox(
@@ -490,7 +490,7 @@ class _DoughnutViewState extends State<_DoughnutView> {
                           formatNumber(nilai),
                           style: TextStyle(
                             color: AppTheme.textColor(context),
-                            fontSize: 17,
+                            fontSize: AppTheme.fontJudulHalaman,
                             fontWeight: FontWeight.w800,
                           ),
                         ),
@@ -500,7 +500,7 @@ class _DoughnutViewState extends State<_DoughnutView> {
                           persen,
                           style: const TextStyle(
                             color: AppTheme.primaryColor,
-                            fontSize: 10.5,
+                            fontSize: AppTheme.fontSumbu,
                             fontWeight: FontWeight.w700,
                           ),
                         ),
@@ -539,7 +539,7 @@ class _DoughnutViewState extends State<_DoughnutView> {
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
                         color: AppTheme.textSecondary(context),
-                        fontSize: 10.5,
+                        fontSize: AppTheme.fontSumbu,
                       ),
                     ),
                   ),
@@ -602,7 +602,7 @@ class _DataPanel extends StatelessWidget {
                       title,
                       style: TextStyle(
                         color: AppTheme.textColor(context),
-                        fontSize: 12,
+                        fontSize: AppTheme.fontIsiKecil,
                         fontWeight: FontWeight.w800,
                       ),
                     ),
@@ -611,7 +611,7 @@ class _DataPanel extends StatelessWidget {
                       'Sesuai grafik dan filter aktif',
                       style: TextStyle(
                         color: AppTheme.textSecondary(context),
-                        fontSize: 10,
+                        fontSize: AppTheme.fontSumbu,
                       ),
                     ),
                   ],
@@ -692,7 +692,7 @@ class _CopyButtonState extends State<_CopyButton> {
               _copied ? 'Berhasil Disalin' : 'Salin ke Excel',
               style: TextStyle(
                 color: warnaTeks,
-                fontSize: 10.5,
+                fontSize: AppTheme.fontSumbu,
                 fontWeight: FontWeight.w800,
               ),
             ),
@@ -717,7 +717,7 @@ class _DataTable extends StatelessWidget {
     final Color border = AppTheme.border(context);
     final TextStyle styleHeader = TextStyle(
       color: AppTheme.textSecondary(context),
-      fontSize: 9,
+      fontSize: AppTheme.fontMikro,
       fontWeight: FontWeight.w800,
       letterSpacing: 0.4,
     );
@@ -754,7 +754,7 @@ class _DataTable extends StatelessWidget {
                           'Tidak ada data untuk filter ini.',
                           style: TextStyle(
                             color: AppTheme.textSecondary(context),
-                            fontSize: 11.5,
+                            fontSize: AppTheme.fontKeterangan,
                           ),
                         ),
                       ),
@@ -780,7 +780,7 @@ class _DataTable extends StatelessWidget {
                                       labels[i],
                                       style: TextStyle(
                                         color: AppTheme.textColor(context),
-                                        fontSize: 11.5,
+                                        fontSize: AppTheme.fontKeterangan,
                                       ),
                                     ),
                                   ),
@@ -791,7 +791,7 @@ class _DataTable extends StatelessWidget {
                                     ),
                                     style: const TextStyle(
                                       color: AppTheme.primaryColor,
-                                      fontSize: 11.5,
+                                      fontSize: AppTheme.fontKeterangan,
                                       fontWeight: FontWeight.w800,
                                     ),
                                   ),

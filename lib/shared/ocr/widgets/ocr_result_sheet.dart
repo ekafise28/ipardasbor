@@ -188,7 +188,7 @@ class _OcrResultSheetState extends State<_OcrResultSheet> {
                 Text(
                   'Hasil scan',
                   style: TextStyle(
-                    fontSize: 18,
+                    fontSize: AppTheme.fontJudulHalaman,
                     fontWeight: FontWeight.w800,
                     color: AppTheme.textColor(context),
                   ),
@@ -197,7 +197,7 @@ class _OcrResultSheetState extends State<_OcrResultSheet> {
                 Text(
                   'Cocokkan angka dengan sumbernya sebelum dipakai.',
                   style: TextStyle(
-                    fontSize: 12.5,
+                    fontSize: AppTheme.fontIsiKecil,
                     color: AppTheme.textSecondary(context),
                   ),
                 ),
@@ -328,7 +328,7 @@ class _OcrResultSheetState extends State<_OcrResultSheet> {
                 : 'Coba gambar yang lebih jelas, atau potong ke area angka saja.',
             textAlign: TextAlign.center,
             style: TextStyle(
-              fontSize: 12.5,
+              fontSize: AppTheme.fontIsiKecil,
               color: AppTheme.textSecondary(context),
             ),
           ),
@@ -362,7 +362,7 @@ class _OcrResultSheetState extends State<_OcrResultSheet> {
                   '${t.displayName}: tidak ditemukan di gambar',
                   style: TextStyle(
                     fontWeight: FontWeight.w700,
-                    fontSize: 13,
+                    fontSize: AppTheme.fontIsi,
                     color: AppTheme.textColor(context),
                   ),
                 ),
@@ -370,7 +370,7 @@ class _OcrResultSheetState extends State<_OcrResultSheet> {
                 Text(
                   'Isi form tidak diubah, isi manual kalau perlu.',
                   style: TextStyle(
-                    fontSize: 11.5,
+                    fontSize: AppTheme.fontKeterangan,
                     color: AppTheme.textSecondary(context),
                   ),
                 ),
@@ -434,7 +434,7 @@ class _OcrResultSheetState extends State<_OcrResultSheet> {
               Text(
                 '${text.length} digit',
                 style: TextStyle(
-                  fontSize: 12,
+                  fontSize: AppTheme.fontIsiKecil,
                   fontWeight: FontWeight.w700,
                   color: lengthOff
                       ? AppTheme.amberDark
@@ -457,7 +457,7 @@ class _OcrResultSheetState extends State<_OcrResultSheet> {
                           : 'Isi form saat ini: ${_group(current, t)}. '
                                 'Centang untuk menimpa.',
                       style: TextStyle(
-                        fontSize: 11.5,
+                        fontSize: AppTheme.fontKeterangan,
                         color: AppTheme.textSecondary(context),
                       ),
                     ),
@@ -466,7 +466,7 @@ class _OcrResultSheetState extends State<_OcrResultSheet> {
                   Text(
                     'Ditemukan ${cands.length} kandidat, pilih satu:',
                     style: TextStyle(
-                      fontSize: 11.5,
+                      fontSize: AppTheme.fontKeterangan,
                       color: AppTheme.textSecondary(context),
                     ),
                   ),
@@ -533,7 +533,7 @@ class _OcrResultSheetState extends State<_OcrResultSheet> {
                           child: Text(
                             msg,
                             style: const TextStyle(
-                              fontSize: 12,
+                              fontSize: AppTheme.fontIsiKecil,
                               color: AppTheme.amberDark,
                             ),
                           ),

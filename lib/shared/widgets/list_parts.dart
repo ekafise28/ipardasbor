@@ -62,7 +62,7 @@ class ListSummaryLine extends StatelessWidget {
                 ],
               ),
               style: TextStyle(
-                fontSize: 12.5,
+                fontSize: AppTheme.fontIsiKecil,
                 color: AppTheme.textSecondary(context),
               ),
             ),
@@ -72,7 +72,7 @@ class ListSummaryLine extends StatelessWidget {
                 child: Text(
                   catatan!,
                   style: const TextStyle(
-                    fontSize: 12,
+                    fontSize: AppTheme.fontIsiKecil,
                     color: AppTheme.amber,
                   ),
                 ),
@@ -105,7 +105,7 @@ class DistanceBadge extends StatelessWidget {
           Text(
             formatJarak(km),
             style: TextStyle(
-              fontSize: 12,
+              fontSize: AppTheme.fontIsiKecil,
               fontWeight: FontWeight.w700,
               color: warna,
             ),
@@ -130,11 +130,11 @@ class TwoLineTitle extends StatelessWidget {
       children: <Widget>[
         Text(
           title,
-          style: const TextStyle(fontSize: 19, fontWeight: FontWeight.w800),
+          style: const TextStyle(fontSize: AppTheme.fontJudulHalaman, fontWeight: FontWeight.w800),
         ),
         Text(
           subtitle,
-          style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.w400),
+          style: const TextStyle(fontSize: AppTheme.fontKeterangan, fontWeight: FontWeight.w400),
         ),
       ],
     );
@@ -178,7 +178,7 @@ class ListInfoRow extends StatelessWidget {
               text,
               maxLines: maxLines,
               overflow: TextOverflow.ellipsis,
-              style: TextStyle(fontSize: 13, height: 1.3, color: warna),
+              style: TextStyle(fontSize: AppTheme.fontIsi, height: 1.3, color: warna),
             ),
           ),
         ],
@@ -221,7 +221,7 @@ class TintChip extends StatelessWidget {
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: TextStyle(
-                fontSize: 11.5,
+                fontSize: AppTheme.fontKeterangan,
                 fontWeight: FontWeight.w800,
                 color: color,
               ),
@@ -311,7 +311,7 @@ class CardTitleRow extends StatelessWidget {
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
             style: TextStyle(
-              fontSize: 15,
+              fontSize: AppTheme.fontJudulKartu,
               fontWeight: FontWeight.w800,
               height: 1.25,
               color: AppTheme.textColor(context),
@@ -397,7 +397,7 @@ class KodeRow extends StatelessWidget {
           child: Text(
             label,
             style: TextStyle(
-              fontSize: 11.5,
+              fontSize: AppTheme.fontKeterangan,
               fontWeight: FontWeight.w700,
               color: AppTheme.textSecondary(context),
             ),
@@ -407,7 +407,7 @@ class KodeRow extends StatelessWidget {
           child: Text(
             kosong ? '-' : value,
             style: TextStyle(
-              fontSize: 13,
+              fontSize: AppTheme.fontIsi,
               fontWeight: FontWeight.w600,
               color: AppTheme.textColor(context),
               fontFeatures: const <FontFeature>[FontFeature.tabularFigures()],

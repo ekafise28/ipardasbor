@@ -133,7 +133,7 @@ Future<T?> showOptionSheet<T>(
                 title,
                 style: TextStyle(
                   color: AppTheme.textColor(sheet),
-                  fontSize: 16,
+                  fontSize: AppTheme.fontJudulHalaman,
                   fontWeight: FontWeight.w800,
                 ),
               ),
@@ -199,7 +199,7 @@ Future<bool> showConfirmSheet(
                       Text(
                         title,
                         style: TextStyle(
-                          fontSize: 18,
+                          fontSize: AppTheme.fontJudulHalaman,
                           fontWeight: FontWeight.w800,
                           color: AppTheme.textColor(sheet),
                         ),
@@ -207,7 +207,7 @@ Future<bool> showConfirmSheet(
                       const SizedBox(height: 4),
                       DefaultTextStyle(
                         style: TextStyle(
-                          fontSize: 13,
+                          fontSize: AppTheme.fontIsi,
                           height: 1.4,
                           color: AppTheme.textSecondary(sheet),
                         ),
@@ -294,7 +294,7 @@ Future<T?> showTitledSheet<T>(
                     title,
                     style: TextStyle(
                       color: AppTheme.textColor(sheet),
-                      fontSize: 17,
+                      fontSize: AppTheme.fontJudulHalaman,
                       fontWeight: FontWeight.w800,
                     ),
                   ),
@@ -577,7 +577,7 @@ class _MultiSelectSheetState extends State<_MultiSelectSheet> {
           return ListTile(
             key: kunci,
             dense: true,
-            title: Text(o.label, style: const TextStyle(fontSize: 13)),
+            title: Text(o.label, style: const TextStyle(fontSize: AppTheme.fontIsi)),
             trailing: aktif
                 ? const Icon(Icons.check_rounded, color: AppTheme.primaryColor)
                 : null,
@@ -591,7 +591,7 @@ class _MultiSelectSheetState extends State<_MultiSelectSheet> {
           controlAffinity: ListTileControlAffinity.leading,
           activeColor: AppTheme.primaryColor,
           value: aktif,
-          title: Text(o.label, style: const TextStyle(fontSize: 13)),
+          title: Text(o.label, style: const TextStyle(fontSize: AppTheme.fontIsi)),
           onChanged: (bool? c) => _toggle(o, c),
         );
       },
@@ -618,7 +618,7 @@ class _MultiSelectSheetState extends State<_MultiSelectSheet> {
                       widget.title,
                       style: TextStyle(
                         color: AppTheme.textColor(context),
-                        fontSize: 16,
+                        fontSize: AppTheme.fontJudulHalaman,
                         fontWeight: FontWeight.w800,
                       ),
                     ),
@@ -722,7 +722,7 @@ class MultiSelectField extends StatelessWidget {
           label,
           style: TextStyle(
             color: AppTheme.textSecondary(context),
-            fontSize: 11,
+            fontSize: AppTheme.fontKeterangan,
             fontWeight: FontWeight.w700,
           ),
         ),
@@ -753,7 +753,7 @@ class MultiSelectField extends StatelessWidget {
                       color: aktif
                           ? AppTheme.primaryColor
                           : AppTheme.textSecondary(context),
-                      fontSize: 12,
+                      fontSize: AppTheme.fontIsiKecil,
                       fontWeight: aktif ? FontWeight.w700 : FontWeight.w500,
                     ),
                   ),
@@ -791,7 +791,7 @@ class FilterLabel extends StatelessWidget {
             child: Text(
               text.toUpperCase(),
               style: TextStyle(
-                fontSize: 11.5,
+                fontSize: AppTheme.fontKeterangan,
                 fontWeight: FontWeight.w800,
                 letterSpacing: 0.6,
                 color: AppTheme.textSecondary(context),
@@ -802,7 +802,7 @@ class FilterLabel extends StatelessWidget {
             Text(
               hint!,
               style: TextStyle(
-                fontSize: 11.5,
+                fontSize: AppTheme.fontKeterangan,
                 fontWeight: FontWeight.w600,
                 color: hintColor ?? AppTheme.primaryColor,
               ),
@@ -961,7 +961,7 @@ class FilterSheetFrame extends StatelessWidget {
                     Text(
                       title,
                       style: TextStyle(
-                        fontSize: 17,
+                        fontSize: AppTheme.fontJudulHalaman,
                         fontWeight: FontWeight.w800,
                         color: AppTheme.textColor(context),
                       ),
@@ -979,7 +979,7 @@ class FilterSheetFrame extends StatelessWidget {
                         child: Text(
                           '$activeCount Aktif',
                           style: const TextStyle(
-                            fontSize: 11,
+                            fontSize: AppTheme.fontKeterangan,
                             fontWeight: FontWeight.w700,
                             color: AppTheme.primaryColor,
                           ),
@@ -993,7 +993,7 @@ class FilterSheetFrame extends StatelessWidget {
                   Text(
                     subtitle!,
                     style: TextStyle(
-                      fontSize: 12,
+                      fontSize: AppTheme.fontIsiKecil,
                       color: AppTheme.textSecondary(context),
                     ),
                   ),
@@ -1296,7 +1296,7 @@ class _ChoiceChip extends StatelessWidget {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
-                    fontSize: 12.5,
+                    fontSize: AppTheme.fontIsiKecil,
                     fontWeight: FontWeight.w700,
                     color: teks,
                   ),
@@ -1337,7 +1337,7 @@ class FilterDateField extends StatelessWidget {
         Text(
           label,
           style: TextStyle(
-            fontSize: 11.5,
+            fontSize: AppTheme.fontKeterangan,
             color: AppTheme.textSecondary(context),
           ),
         ),
@@ -1366,7 +1366,7 @@ class FilterDateField extends StatelessWidget {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
-                      fontSize: 13,
+                      fontSize: AppTheme.fontIsi,
                       fontWeight: kosong ? FontWeight.w400 : FontWeight.w600,
                       color: kosong
                           ? AppTheme.textSecondary(context)
@@ -1441,7 +1441,7 @@ class IsiPilihan<T> extends StatelessWidget {
                 child: Text(
                   'Pilihan gagal dimuat.',
                   style: TextStyle(
-                    fontSize: 12.5,
+                    fontSize: AppTheme.fontIsiKecil,
                     color: AppTheme.textSecondary(context),
                   ),
                 ),

@@ -88,7 +88,7 @@ class SyncDraftCard extends StatelessWidget {
                             overflow: TextOverflow.ellipsis,
                             style: TextStyle(
                               color: AppTheme.textColor(context),
-                              fontSize: 15,
+                              fontSize: AppTheme.fontJudulKartu,
                               fontWeight: FontWeight.w800,
                             ),
                           ),
@@ -98,7 +98,7 @@ class SyncDraftCard extends StatelessWidget {
                             ' · Draft Offline',
                             style: TextStyle(
                               color: AppTheme.textSecondary(context),
-                              fontSize: 11.5,
+                              fontSize: AppTheme.fontKeterangan,
                             ),
                           ),
                         ],
@@ -118,7 +118,7 @@ class SyncDraftCard extends StatelessWidget {
                         'DRAFT',
                         style: TextStyle(
                           color: draftColor,
-                          fontSize: 10,
+                          fontSize: AppTheme.fontKeterangan,
                           fontWeight: FontWeight.w900,
                         ),
                       ),
@@ -196,7 +196,7 @@ class _DraftBody extends StatelessWidget {
                   'Progres Kelengkapan Formulir',
                   style: TextStyle(
                     color: AppTheme.textColor(context),
-                    fontSize: 12,
+                    fontSize: AppTheme.fontIsiKecil,
                     fontWeight: FontWeight.w800,
                   ),
                 ),
@@ -205,7 +205,7 @@ class _DraftBody extends StatelessWidget {
                 '$persen%',
                 style: TextStyle(
                   color: progressColor,
-                  fontSize: 13,
+                  fontSize: AppTheme.fontIsi,
                   fontWeight: FontWeight.w900,
                 ),
               ),
@@ -229,7 +229,7 @@ class _DraftBody extends StatelessWidget {
                   '$lengkap dari $total bagian lengkap',
                   style: TextStyle(
                     color: AppTheme.textSecondary(context),
-                    fontSize: 11,
+                    fontSize: AppTheme.fontKeterangan,
                   ),
                 ),
               ),
@@ -237,7 +237,7 @@ class _DraftBody extends StatelessWidget {
                 '${total - lengkap} bagian tertunda',
                 style: TextStyle(
                   color: AppTheme.textSecondary(context),
-                  fontSize: 11,
+                  fontSize: AppTheme.fontKeterangan,
                 ),
               ),
             ],
@@ -247,7 +247,7 @@ class _DraftBody extends StatelessWidget {
             'RINCIAN BAGIAN FORMULIR',
             style: TextStyle(
               color: AppTheme.textSecondary(context),
-              fontSize: 10.5,
+              fontSize: AppTheme.fontKeterangan,
               fontWeight: FontWeight.w800,
               letterSpacing: 0.3,
             ),
@@ -268,7 +268,7 @@ class _DraftBody extends StatelessWidget {
               'kembali, lalu simpan agar data ikut dikirim.',
               style: TextStyle(
                 color: AppTheme.textSecondary(context),
-                fontSize: 11.5,
+                fontSize: AppTheme.fontKeterangan,
                 height: 1.35,
               ),
             ),
@@ -301,7 +301,7 @@ class _DraftBody extends StatelessWidget {
                 foregroundColor: AppTheme.textSecondary(context),
               ),
               icon: const Icon(Icons.info_outline_rounded, size: 16),
-              label: const Text('Lihat Detail', style: TextStyle(fontSize: 12)),
+              label: const Text('Lihat Detail', style: TextStyle(fontSize: AppTheme.fontIsiKecil)),
             ),
           ),
         ],
@@ -369,7 +369,7 @@ class _ModuleRow extends StatelessWidget {
                   '$nomor. ${module.title}',
                   style: TextStyle(
                     color: AppTheme.textColor(context),
-                    fontSize: 12.5,
+                    fontSize: AppTheme.fontIsiKecil,
                     fontWeight: FontWeight.w800,
                   ),
                 ),
@@ -380,7 +380,7 @@ class _ModuleRow extends StatelessWidget {
                     color: lengkap
                         ? AppTheme.textSecondary(context)
                         : AppTheme.warning,
-                    fontSize: 11.5,
+                    fontSize: AppTheme.fontKeterangan,
                     height: 1.3,
                   ),
                 ),

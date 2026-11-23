@@ -69,7 +69,7 @@ class DetailCard extends StatelessWidget {
                     child: Text(
                       title!.toUpperCase(),
                       style: TextStyle(
-                        fontSize: 13,
+                        fontSize: AppTheme.fontIsi,
                         letterSpacing: 0.4,
                         fontWeight: FontWeight.w800,
                         color: AppTheme.textColor(context),
@@ -81,7 +81,7 @@ class DetailCard extends StatelessWidget {
                     Text(
                       '($count$countSuffix)',
                       style: TextStyle(
-                        fontSize: 12.5,
+                        fontSize: AppTheme.fontIsiKecil,
                         color: AppTheme.textSecondary(context),
                       ),
                     ),
@@ -372,7 +372,7 @@ class BarisTile extends StatelessWidget {
                 child: Text(
                   baris.label,
                   style: TextStyle(
-                    fontSize: 13.5,
+                    fontSize: AppTheme.fontIsi,
                     fontWeight: FontWeight.w500,
                     color: AppTheme.textSecondary(context),
                   ),
@@ -423,7 +423,7 @@ class BarisTile extends StatelessWidget {
         '-',
         textAlign: TextAlign.right,
         style: TextStyle(
-          fontSize: 13.5,
+          fontSize: AppTheme.fontIsi,
           fontStyle: FontStyle.italic,
           color: AppTheme.textMuted,
         ),
@@ -449,7 +449,7 @@ class BarisTile extends StatelessWidget {
       baris.value!,
       textAlign: TextAlign.right,
       style: TextStyle(
-        fontSize: 13.5,
+        fontSize: AppTheme.fontIsi,
         fontWeight: baris.sorot ? FontWeight.w800 : FontWeight.w600,
         color: baris.sorot ? AppTheme.danger : AppTheme.textColor(context),
       ),
@@ -468,7 +468,7 @@ class BarisTile extends StatelessWidget {
           Text(
             baris.label.toUpperCase(),
             style: TextStyle(
-              fontSize: 11.5,
+              fontSize: AppTheme.fontKeterangan,
               fontWeight: FontWeight.w700,
               letterSpacing: 0.5,
               color: AppTheme.textSecondary(context),
@@ -492,7 +492,7 @@ class BarisTile extends StatelessWidget {
             child: Text(
               baris.value!,
               style: TextStyle(
-                fontSize: 13.5,
+                fontSize: AppTheme.fontIsi,
                 height: 1.4,
                 fontWeight: FontWeight.w500,
                 color: AppTheme.textColor(context),
@@ -528,7 +528,7 @@ class BarisTile extends StatelessWidget {
                   child: Text(
                     baris.label,
                     style: TextStyle(
-                      fontSize: 12,
+                      fontSize: AppTheme.fontIsiKecil,
                       fontWeight: FontWeight.w500,
                       color: AppTheme.textSecondary(context),
                     ),
@@ -547,7 +547,7 @@ class BarisTile extends StatelessWidget {
               baris.value!,
               style: TextStyle(
                 fontFamily: 'monospace',
-                fontSize: 12.5,
+                fontSize: AppTheme.fontIsiKecil,
                 fontWeight: FontWeight.w700,
                 color: AppTheme.textColor(context),
               ),
@@ -560,7 +560,7 @@ class BarisTile extends StatelessWidget {
                 label: Text(
                   a.label!,
                   style: const TextStyle(
-                    fontSize: 12.5,
+                    fontSize: AppTheme.fontIsiKecil,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
@@ -614,7 +614,7 @@ class _KodeNilai extends StatelessWidget {
               text,
               style: TextStyle(
                 fontFamily: 'monospace',
-                fontSize: 12.5,
+                fontSize: AppTheme.fontIsiKecil,
                 fontWeight: FontWeight.w700,
                 color: AppTheme.textColor(context),
               ),
@@ -657,7 +657,7 @@ class _LencanaNilai extends StatelessWidget {
       child: Text(
         text,
         style: TextStyle(
-          fontSize: 12,
+          fontSize: AppTheme.fontIsiKecil,
           fontWeight: FontWeight.w700,
           color: _teksDariWarna(context, warna),
         ),
@@ -701,7 +701,7 @@ class _PilAksi extends StatelessWidget {
               Text(
                 aksi.label!,
                 style: TextStyle(
-                  fontSize: 12,
+                  fontSize: AppTheme.fontIsiKecil,
                   fontWeight: FontWeight.w600,
                   color: fg,
                 ),
@@ -735,7 +735,7 @@ class _LinkValue extends StatelessWidget {
               text,
               textAlign: TextAlign.right,
               style: TextStyle(
-                fontSize: 13.5,
+                fontSize: AppTheme.fontIsi,
                 fontWeight: FontWeight.w600,
                 color: warna,
                 decoration: TextDecoration.underline,
@@ -791,7 +791,7 @@ class _DaftarNilai extends StatelessWidget {
                     child: Text(
                       items[i],
                       style: TextStyle(
-                        fontSize: 12.5,
+                        fontSize: AppTheme.fontIsiKecil,
                         fontWeight: FontWeight.w600,
                         color: _teksDariWarna(context, warna),
                       ),
@@ -915,7 +915,7 @@ class StatusHeaderCard extends StatelessWidget {
         Text(
           title,
           style: TextStyle(
-            fontSize: 18,
+            fontSize: AppTheme.fontJudulHalaman,
             fontWeight: FontWeight.w800,
             color: AppTheme.textColor(context),
           ),
@@ -925,7 +925,7 @@ class StatusHeaderCard extends StatelessWidget {
           Text(
             subtitle!,
             style: TextStyle(
-              fontSize: 12,
+              fontSize: AppTheme.fontIsiKecil,
               color: AppTheme.textSecondary(context),
             ),
           ),
@@ -956,7 +956,7 @@ class StatusHeaderCard extends StatelessWidget {
                   Text(
                     title,
                     style: TextStyle(
-                      fontSize: 20,
+                      fontSize: AppTheme.fontJudulHalaman,
                       height: 1.25,
                       fontWeight: FontWeight.w800,
                       letterSpacing: -0.3,
@@ -968,7 +968,7 @@ class StatusHeaderCard extends StatelessWidget {
                     Text(
                       subtitle!,
                       style: TextStyle(
-                        fontSize: 12,
+                        fontSize: AppTheme.fontIsiKecil,
                         color: AppTheme.textSecondary(context),
                       ),
                     ),
@@ -1013,7 +1013,7 @@ class StatusHeaderCard extends StatelessWidget {
                       Text(
                         meta[i].label,
                         style: TextStyle(
-                          fontSize: 11.5,
+                          fontSize: AppTheme.fontKeterangan,
                           fontWeight: FontWeight.w500,
                           color: AppTheme.textSecondary(context),
                         ),
@@ -1024,7 +1024,7 @@ class StatusHeaderCard extends StatelessWidget {
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
-                          fontSize: 13,
+                          fontSize: AppTheme.fontIsi,
                           fontWeight: FontWeight.w700,
                           color: AppTheme.textColor(context),
                         ),
@@ -1067,7 +1067,7 @@ class _ErrorNote extends StatelessWidget {
             child: Text(
               message,
               style: const TextStyle(
-                fontSize: 11.5,
+                fontSize: AppTheme.fontKeterangan,
                 fontWeight: FontWeight.w600,
                 color: warna,
                 height: 1.3,
@@ -1115,7 +1115,7 @@ class _BadgeChip extends StatelessWidget {
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: TextStyle(
-                fontSize: 11.5,
+                fontSize: AppTheme.fontKeterangan,
                 fontWeight: FontWeight.w700,
                 color: _teksDariWarna(context, badge.color),
               ),
@@ -1144,7 +1144,7 @@ class _JenisChip extends StatelessWidget {
       child: Text(
         badge.text.toUpperCase(),
         style: TextStyle(
-          fontSize: 11,
+          fontSize: AppTheme.fontKeterangan,
           fontWeight: FontWeight.w800,
           letterSpacing: 0.6,
           color: _teksDariWarna(context, badge.color),
@@ -1172,7 +1172,7 @@ class LinkButton extends StatelessWidget {
     return OutlinedButton.icon(
       onPressed: onTap,
       icon: Icon(icon, size: 15),
-      label: Text(label, style: const TextStyle(fontSize: 12)),
+      label: Text(label, style: const TextStyle(fontSize: AppTheme.fontIsiKecil)),
       style: OutlinedButton.styleFrom(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
         minimumSize: Size.zero,
@@ -1197,7 +1197,7 @@ class MetaFooter extends StatelessWidget {
       child: Text(
         teks,
         textAlign: TextAlign.center,
-        style: TextStyle(fontSize: 11.5, color: AppTheme.textMuted),
+        style: TextStyle(fontSize: AppTheme.fontKeterangan, color: AppTheme.textMuted),
       ),
     );
   }
@@ -1376,7 +1376,7 @@ class _FotoViewerPageState extends State<_FotoViewerPage> {
               child: Text(
                 item.keterangan!,
                 textAlign: TextAlign.center,
-                style: const TextStyle(color: Colors.white70, fontSize: 13),
+                style: const TextStyle(color: Colors.white70, fontSize: AppTheme.fontIsi),
               ),
             ),
         ],
@@ -1509,7 +1509,7 @@ class _OtaTile extends StatelessWidget {
               child: Text(
                 item.judul,
                 style: TextStyle(
-                  fontSize: 13.5,
+                  fontSize: AppTheme.fontIsi,
                   fontWeight: FontWeight.w700,
                   color: AppTheme.textColor(context),
                 ),
@@ -1525,7 +1525,7 @@ class _OtaTile extends StatelessWidget {
                 child: Text(
                   item.status!,
                   style: TextStyle(
-                    fontSize: 10.5,
+                    fontSize: AppTheme.fontKeterangan,
                     fontWeight: FontWeight.w700,
                     color: _warnaStatus(),
                   ),
@@ -1538,7 +1538,7 @@ class _OtaTile extends StatelessWidget {
           Text(
             item.platform!,
             style: TextStyle(
-              fontSize: 12,
+              fontSize: AppTheme.fontIsiKecil,
               color: AppTheme.textSecondary(context),
             ),
           ),
@@ -1552,7 +1552,7 @@ class _OtaTile extends StatelessWidget {
           Text(
             item.catatan!,
             style: TextStyle(
-              fontSize: 12,
+              fontSize: AppTheme.fontIsiKecil,
               fontStyle: FontStyle.italic,
               color: AppTheme.textSecondary(context),
             ),
@@ -1602,7 +1602,7 @@ class _InfoKecil extends StatelessWidget {
         Text(
           text,
           style: TextStyle(
-            fontSize: 11.5,
+            fontSize: AppTheme.fontKeterangan,
             color: AppTheme.textSecondary(context),
           ),
         ),

@@ -136,7 +136,7 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
             'Batalkan perubahan?',
             textAlign: TextAlign.center,
             style: TextStyle(
-              fontSize: 17,
+              fontSize: AppTheme.fontJudulHalaman,
               fontWeight: FontWeight.w800,
               color: AppTheme.textColor(context),
             ),
@@ -145,7 +145,7 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
             'Password yang sudah Anda isi tidak akan disimpan.',
             textAlign: TextAlign.center,
             style: TextStyle(
-              fontSize: 13.5,
+              fontSize: AppTheme.fontIsi,
               height: 1.4,
               color: AppTheme.textSecondary(context),
             ),
@@ -262,7 +262,7 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
                 'Kekuatan password',
                 style: TextStyle(
                   color: AppTheme.textColor(context),
-                  fontSize: 12.5,
+                  fontSize: AppTheme.fontIsiKecil,
                   fontWeight: FontWeight.w700,
                 ),
               ),
@@ -270,7 +270,7 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
                 _strengthLabel,
                 style: TextStyle(
                   color: _strengthColor,
-                  fontSize: 12,
+                  fontSize: AppTheme.fontIsiKecil,
                   fontWeight: FontWeight.w700,
                 ),
               ),
@@ -309,7 +309,7 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
                   'Semua persyaratan terpenuhi',
                   style: TextStyle(
                     color: AppTheme.success,
-                    fontSize: 12,
+                    fontSize: AppTheme.fontIsiKecil,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
@@ -342,7 +342,7 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
           Text(
             item.label,
             style: TextStyle(
-              fontSize: 11.5,
+              fontSize: AppTheme.fontKeterangan,
               color: AppTheme.textSecondary(context),
             ),
           ),
@@ -359,7 +359,7 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
           const SizedBox(width: 6),
           Text(
             'Masukkan kembali password yang sama.',
-            style: TextStyle(color: AppTheme.textMuted, fontSize: 11.5),
+            style: TextStyle(color: AppTheme.textMuted, fontSize: AppTheme.fontKeterangan),
           ),
         ],
       );
@@ -380,7 +380,7 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
           match ? 'Password cocok' : 'Password belum sama',
           style: TextStyle(
             color: color,
-            fontSize: 11.5,
+            fontSize: AppTheme.fontKeterangan,
             fontWeight: FontWeight.w600,
           ),
         ),
@@ -409,7 +409,7 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
           ),
           title: const Text(
             'Ubah Password',
-            style: TextStyle(fontSize: 17, fontWeight: FontWeight.w800),
+            style: TextStyle(fontSize: AppTheme.fontJudulHalaman, fontWeight: FontWeight.w800),
           ),
         ),
         bottomNavigationBar: Container(
@@ -428,7 +428,7 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
                     _submitHint!,
                     style: TextStyle(
                       color: AppTheme.textSecondary(context),
-                      fontSize: 12,
+                      fontSize: AppTheme.fontIsiKecil,
                     ),
                   ),
                   const SizedBox(height: 8),
@@ -461,7 +461,7 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
                         borderRadius: BorderRadius.circular(12),
                       ),
                       textStyle: const TextStyle(
-                        fontSize: 14.5,
+                        fontSize: AppTheme.fontJudulKartu,
                         fontWeight: FontWeight.w700,
                       ),
                     ),
@@ -488,7 +488,7 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
                       'Gunakan kombinasi password yang kuat untuk menjaga keamanan akun.',
                       style: TextStyle(
                         color: AppTheme.textSecondary(context),
-                        fontSize: 12.5,
+                        fontSize: AppTheme.fontIsiKecil,
                         height: 1.4,
                       ),
                     ),
@@ -634,7 +634,7 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
                             'atau administrator aplikasi.',
                             style: TextStyle(
                               color: AppTheme.textSecondary(context),
-                              fontSize: 11.5,
+                              fontSize: AppTheme.fontKeterangan,
                               height: 1.4,
                             ),
                           ),
@@ -679,7 +679,7 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
               _initials,
               style: const TextStyle(
                 color: Colors.white,
-                fontSize: 13,
+                fontSize: AppTheme.fontIsi,
                 fontWeight: FontWeight.w800,
               ),
             ),
@@ -695,7 +695,7 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
                     color: AppTheme.textColor(context),
-                    fontSize: 13.5,
+                    fontSize: AppTheme.fontIsi,
                     fontWeight: FontWeight.w800,
                   ),
                 ),
@@ -705,7 +705,7 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
                     'Kode: ${widget.user.kodeUser}',
                     style: TextStyle(
                       color: AppTheme.textSecondary(context),
-                      fontSize: 11.5,
+                      fontSize: AppTheme.fontKeterangan,
                     ),
                   ),
               ],
@@ -722,7 +722,7 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
         text: label,
         style: TextStyle(
           color: AppTheme.textColor(context),
-          fontSize: 13,
+          fontSize: AppTheme.fontIsi,
           fontWeight: FontWeight.w700,
         ),
         children: [

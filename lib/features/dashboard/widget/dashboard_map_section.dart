@@ -133,7 +133,7 @@ class _DashboardMapSectionState extends State<DashboardMapSection> {
               Expanded(
                 child: Text(
                   'Klik titik untuk melihat informasi usaha. Gunakan checklist di kanan atas untuk menampilkan atau menyembunyikan kategori.',
-                  style: TextStyle(color: AppTheme.textMuted, fontSize: 11.5),
+                  style: TextStyle(color: AppTheme.textMuted, fontSize: AppTheme.fontKeterangan),
                 ),
               ),
             ],
@@ -172,7 +172,7 @@ class _DashboardMapSectionState extends State<DashboardMapSection> {
                     'Peta Sebaran Pengawasan',
                     style: TextStyle(
                       color: AppTheme.textColor(context),
-                      fontSize: 16,
+                      fontSize: AppTheme.fontJudulKartu,
                       fontWeight: FontWeight.w800,
                     ),
                   ),
@@ -181,7 +181,7 @@ class _DashboardMapSectionState extends State<DashboardMapSection> {
                     'Lokasi OSS, Non-OSS, dan Baseline OTA Provinsi ${widget.config.provinceName}.',
                     style: TextStyle(
                       color: AppTheme.textSecondary(context),
-                      fontSize: 12,
+                      fontSize: AppTheme.fontIsiKecil,
                     ),
                   ),
                 ],
@@ -275,7 +275,7 @@ class _ClusterBubble extends StatelessWidget {
         style: TextStyle(
           color: AppTheme.textColor(context),
           fontWeight: FontWeight.w800,
-          fontSize: 13,
+          fontSize: AppTheme.fontIsi,
         ),
       ),
     );
@@ -308,7 +308,7 @@ class _CountChip extends StatelessWidget {
             label,
             style: TextStyle(
               color: color,
-              fontSize: 11,
+              fontSize: AppTheme.fontKeterangan,
               fontWeight: FontWeight.w700,
             ),
           ),
@@ -362,7 +362,7 @@ class _MapLegend extends StatelessWidget {
                   Text(
                     type.label,
                     style: TextStyle(
-                      fontSize: 12,
+                      fontSize: AppTheme.fontIsiKecil,
                       color: AppTheme.textColor(context),
                     ),
                   ),
@@ -390,7 +390,7 @@ List<Widget> _isiDetailTitik(BuildContext context, MapPoint point) {
             point.type.label,
             style: TextStyle(
               color: point.type.color,
-              fontSize: 11,
+              fontSize: AppTheme.fontKeterangan,
               fontWeight: FontWeight.w800,
             ),
           ),
@@ -401,7 +401,7 @@ List<Widget> _isiDetailTitik(BuildContext context, MapPoint point) {
     Text(
       point.title.isEmpty ? '(Tanpa nama)' : point.title,
       style: TextStyle(
-        fontSize: 17,
+        fontSize: AppTheme.fontJudulHalaman,
         fontWeight: FontWeight.w800,
         color: AppTheme.textColor(context),
       ),
@@ -445,7 +445,7 @@ class _DetailRow extends StatelessWidget {
             child: Text(
               label,
               style: TextStyle(
-                fontSize: 13,
+                fontSize: AppTheme.fontIsi,
                 color: AppTheme.textColor(context),
                 height: 1.4,
               ),

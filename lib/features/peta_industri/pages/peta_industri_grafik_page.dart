@@ -88,12 +88,12 @@ class _PetaIndustriGrafikPageState extends State<PetaIndustriGrafikPage> {
           children: [
             const Text(
               'Grafik Risiko Proyek',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
+              style: TextStyle(fontSize: AppTheme.fontJudulKartu, fontWeight: FontWeight.w800),
             ),
             Text(
               widget.provinsi,
               style: TextStyle(
-                fontSize: 12,
+                fontSize: AppTheme.fontIsiKecil,
                 fontWeight: FontWeight.w500,
                 color: AppTheme.textSecondary(context),
               ),
@@ -181,7 +181,7 @@ class _PetaIndustriGrafikPageState extends State<PetaIndustriGrafikPage> {
                 'Proyek pada kategori pariwisata',
                 style: TextStyle(
                   color: AppTheme.textColor(context),
-                  fontSize: 13,
+                  fontSize: AppTheme.fontIsi,
                 ),
               ),
             ),
@@ -189,7 +189,7 @@ class _PetaIndustriGrafikPageState extends State<PetaIndustriGrafikPage> {
               _angka.format(data.total),
               style: const TextStyle(
                 color: AppTheme.primaryColor,
-                fontSize: 17,
+                fontSize: AppTheme.fontJudulHalaman,
                 fontWeight: FontWeight.w800,
               ),
             ),
@@ -253,7 +253,7 @@ class _KategoriHeader extends StatelessWidget {
                 kategori.nama,
                 style: TextStyle(
                   color: AppTheme.textColor(context),
-                  fontSize: 13,
+                  fontSize: AppTheme.fontIsi,
                   fontWeight: FontWeight.w800,
                 ),
               ),
@@ -262,7 +262,7 @@ class _KategoriHeader extends StatelessWidget {
               angka.format(kategori.total),
               style: TextStyle(
                 color: AppTheme.textSecondary(context),
-                fontSize: 12,
+                fontSize: AppTheme.fontIsiKecil,
                 fontWeight: FontWeight.w700,
               ),
             ),
@@ -340,7 +340,7 @@ class _KbliCardState extends State<_KbliCard> {
                               widget.provinsi.toUpperCase(),
                               style: const TextStyle(
                                 color: AppTheme.primaryColor,
-                                fontSize: 10.5,
+                                fontSize: AppTheme.fontSumbu,
                                 fontWeight: FontWeight.w800,
                                 letterSpacing: 0.5,
                               ),
@@ -350,7 +350,7 @@ class _KbliCardState extends State<_KbliCard> {
                               '${kbli.kbli} - ${kbli.nama}',
                               style: TextStyle(
                                 color: AppTheme.textColor(context),
-                                fontSize: 13.5,
+                                fontSize: AppTheme.fontIsi,
                                 fontWeight: FontWeight.w800,
                               ),
                             ),
@@ -378,7 +378,7 @@ class _KbliCardState extends State<_KbliCard> {
                                   angka.format(kbli.total),
                                   style: TextStyle(
                                     color: AppTheme.textColor(context),
-                                    fontSize: 13,
+                                    fontSize: AppTheme.fontIsi,
                                     fontWeight: FontWeight.w800,
                                   ),
                                 ),
@@ -458,7 +458,7 @@ class _LegendaRow extends StatelessWidget {
               risiko.label,
               style: TextStyle(
                 color: AppTheme.textColor(context),
-                fontSize: 12,
+                fontSize: AppTheme.fontIsiKecil,
               ),
             ),
           ),
@@ -466,7 +466,7 @@ class _LegendaRow extends StatelessWidget {
             angka.format(risiko.jumlah),
             style: TextStyle(
               color: AppTheme.textColor(context),
-              fontSize: 12,
+              fontSize: AppTheme.fontIsiKecil,
               fontWeight: FontWeight.w700,
             ),
           ),
@@ -477,7 +477,7 @@ class _LegendaRow extends StatelessWidget {
               textAlign: TextAlign.right,
               style: TextStyle(
                 color: AppTheme.textSecondary(context),
-                fontSize: 11,
+                fontSize: AppTheme.fontKeterangan,
               ),
             ),
           ),

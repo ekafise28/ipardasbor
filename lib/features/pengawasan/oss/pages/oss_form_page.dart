@@ -602,7 +602,7 @@ class _OssFormPageState extends State<OssFormPage>
           label,
           style: TextStyle(
             color: AppTheme.textColor(context),
-            fontSize: 12.5,
+            fontSize: AppTheme.fontIsiKecil,
             fontWeight: FontWeight.w700,
           ),
         ),
@@ -657,7 +657,7 @@ class _OssFormPageState extends State<OssFormPage>
                               color: selected
                                   ? AppTheme.primaryColor
                                   : AppTheme.textSecondary(context),
-                              fontSize: 12,
+                              fontSize: AppTheme.fontIsiKecil,
                               fontWeight: FontWeight.w700,
                             ),
                           ),
@@ -726,7 +726,7 @@ class _OssFormPageState extends State<OssFormPage>
                     valid ? 'TERVALIDASI' : 'BELUM TERVALIDASI',
                     style: TextStyle(
                       color: warnaAkhir,
-                      fontSize: 11,
+                      fontSize: AppTheme.fontKeterangan,
                       fontWeight: FontWeight.w800,
                       letterSpacing: 0.6,
                     ),
@@ -737,7 +737,7 @@ class _OssFormPageState extends State<OssFormPage>
                   'Formulir Pendataan Lapangan',
                   style: TextStyle(
                     color: Colors.white,
-                    fontSize: 16,
+                    fontSize: AppTheme.fontJudulKartu,
                     fontWeight: FontWeight.w800,
                   ),
                 ),
@@ -816,7 +816,7 @@ class _OssFormPageState extends State<OssFormPage>
         Text(
           label,
           style: TextStyle(
-            fontSize: 10,
+            fontSize: AppTheme.fontKeterangan,
             fontWeight: FontWeight.w700,
             color: AppTheme.textSecondary(context),
           ),
@@ -835,7 +835,7 @@ class _OssFormPageState extends State<OssFormPage>
                 value.isEmpty ? '-' : value,
                 overflow: TextOverflow.ellipsis,
                 style: TextStyle(
-                  fontSize: 12,
+                  fontSize: AppTheme.fontIsiKecil,
                   fontWeight: FontWeight.w700,
                   color: AppTheme.textColor(context),
                 ),
@@ -863,7 +863,7 @@ class _OssFormPageState extends State<OssFormPage>
             const Text(
               'Validasi OSS',
               style: TextStyle(
-                fontSize: 19,
+                fontSize: AppTheme.fontJudulHalaman,
                 color: Colors.white,
                 fontWeight: FontWeight.w800,
               ),
@@ -873,7 +873,7 @@ class _OssFormPageState extends State<OssFormPage>
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: const TextStyle(
-                fontSize: 11.5,
+                fontSize: AppTheme.fontKeterangan,
                 color: Colors.white,
                 fontWeight: FontWeight.w400,
               ),
@@ -1198,7 +1198,7 @@ class _OssFormPageState extends State<OssFormPage>
                                         : 'Simpan Pengawasan'),
                               style: const TextStyle(
                                 fontWeight: FontWeight.w800,
-                                fontSize: 15,
+                                fontSize: AppTheme.fontJudulKartu,
                                 color: Colors.white,
                               ),
                             ),
@@ -1316,7 +1316,7 @@ class FormSectionOss extends StatelessWidget {
                               title,
                               style: TextStyle(
                                 color: AppTheme.textColor(context),
-                                fontSize: 14.5,
+                                fontSize: AppTheme.fontJudulKartu,
                                 fontWeight: FontWeight.w800,
                               ),
                             ),
@@ -1335,7 +1335,7 @@ class FormSectionOss extends StatelessWidget {
                           subtitle!,
                           style: TextStyle(
                             color: AppTheme.textSecondary(context),
-                            fontSize: 11.5,
+                            fontSize: AppTheme.fontKeterangan,
                             height: 1.3,
                           ),
                         ),

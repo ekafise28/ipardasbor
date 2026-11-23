@@ -49,6 +49,15 @@ class AppTheme {
     0xFFEAF4FF,
   ); // badge text/icon on gradient
 
+  // ---- Skala teks ----
+  static const double fontKeterangan = 11.5; // keterangan, label kecil
+  static const double fontIsiKecil = 12.5; // isi kecil, subjudul
+  static const double fontIsi = 13.5; // isi, nilai baris
+  static const double fontJudulKartu = 15; // judul kartu/daftar
+  static const double fontJudulHalaman = 18; // judul halaman/sheet
+  static const double fontSumbu = 10; // label sumbu/legenda grafik saja
+  static const double fontMikro = 9; // header tabel/label rapat di grafik
+
   // ---- Surfaces ----
   static Color surface(BuildContext context) {
     final bool isDark = Theme.of(context).brightness == Brightness.dark;

@@ -71,7 +71,7 @@ class BaselineOtaCard extends StatelessWidget {
                             style: TextStyle(
                               color: AppTheme.textColor(context),
                               fontWeight: FontWeight.w800,
-                              fontSize: 15.5,
+                              fontSize: AppTheme.fontJudulKartu,
                               height: 1.25,
                             ),
                           ),
@@ -97,7 +97,7 @@ class BaselineOtaCard extends StatelessWidget {
                           const Text(
                             'Tanpa koordinat',
                             style: TextStyle(
-                              fontSize: 12,
+                              fontSize: AppTheme.fontIsiKecil,
                               color: AppTheme.amberDark,
                             ),
                           ),
@@ -105,14 +105,14 @@ class BaselineOtaCard extends StatelessWidget {
                           Text(
                             'Scraping ${formatTanggal(item.scrapedAt)}',
                             style: TextStyle(
-                              fontSize: 12,
+                              fontSize: AppTheme.fontIsiKecil,
                               color: AppTheme.textSecondary(context),
                             ),
                           ),
                         Text(
                           '#${item.id}',
                           style: TextStyle(
-                            fontSize: 12,
+                            fontSize: AppTheme.fontIsiKecil,
                             color: AppTheme.textMuted,
                           ),
                         ),
@@ -197,7 +197,7 @@ class BaselineOtaCard extends StatelessWidget {
                                 child: Text(
                                   'Perlu koneksi untuk verifikasi',
                                   style: TextStyle(
-                                    fontSize: 11.5,
+                                    fontSize: AppTheme.fontKeterangan,
                                     color: AppTheme.textSecondary(context),
                                   ),
                                 ),
@@ -295,7 +295,7 @@ class OtaVerifButton extends StatelessWidget {
       borderRadius: BorderRadius.circular(11),
     );
     final textStyle = const TextStyle(
-      fontSize: 12.5,
+      fontSize: AppTheme.fontIsiKecil,
       fontWeight: FontWeight.w800,
     );
 
@@ -393,7 +393,7 @@ class OtaSudahDiverifikasiBox extends StatelessWidget {
                 Text(
                   label,
                   style: TextStyle(
-                    fontSize: 13,
+                    fontSize: AppTheme.fontIsi,
                     fontWeight: FontWeight.w800,
                     color: warna,
                   ),
@@ -404,7 +404,7 @@ class OtaSudahDiverifikasiBox extends StatelessWidget {
                     child: Text(
                       'NIB: $nib',
                       style: TextStyle(
-                        fontSize: 12,
+                        fontSize: AppTheme.fontIsiKecil,
                         color: AppTheme.textSecondary(context),
                       ),
                     ),
@@ -415,7 +415,7 @@ class OtaSudahDiverifikasiBox extends StatelessWidget {
                     child: Text(
                       'Diverifikasi $tanggal',
                       style: TextStyle(
-                        fontSize: 11.5,
+                        fontSize: AppTheme.fontKeterangan,
                         color: AppTheme.textSecondary(context),
                       ),
                     ),

@@ -121,7 +121,7 @@ class _NonOssFormPageState extends State<NonOssFormPage>
         title: const Text(
           'Simpan sebagai draft?',
           textAlign: TextAlign.center,
-          style: TextStyle(fontSize: 17, fontWeight: FontWeight.w800),
+          style: TextStyle(fontSize: AppTheme.fontJudulHalaman, fontWeight: FontWeight.w800),
         ),
         content: const Text(
           'Data yang sudah diisi belum tersimpan. Simpan sebagai draft '
@@ -764,7 +764,7 @@ class _NonOssFormPageState extends State<NonOssFormPage>
             child: Text(
               'Kepemilikan NIB: $label (terkunci dari alur Baseline OTA)',
               style: TextStyle(
-                fontSize: 12.5,
+                fontSize: AppTheme.fontIsiKecil,
                 fontWeight: FontWeight.w700,
                 color: AppTheme.textColor(context),
               ),
@@ -788,7 +788,7 @@ class _NonOssFormPageState extends State<NonOssFormPage>
           label,
           style: TextStyle(
             color: AppTheme.textColor(context),
-            fontSize: 12.5,
+            fontSize: AppTheme.fontIsiKecil,
             fontWeight: FontWeight.w700,
           ),
         ),
@@ -843,7 +843,7 @@ class _NonOssFormPageState extends State<NonOssFormPage>
                               color: selected
                                   ? AppTheme.primaryColor
                                   : AppTheme.textSecondary(context),
-                              fontSize: 12,
+                              fontSize: AppTheme.fontIsiKecil,
                               fontWeight: FontWeight.w700,
                             ),
                           ),
@@ -882,7 +882,7 @@ class _NonOssFormPageState extends State<NonOssFormPage>
               Text(
                 _isEditing ? 'Edit Pengawasan Non-OSS' : 'Pengawasan Non-OSS',
                 style: const TextStyle(
-                  fontSize: 18,
+                  fontSize: AppTheme.fontJudulHalaman,
                   fontWeight: FontWeight.w800,
                 ),
               ),
@@ -892,7 +892,7 @@ class _NonOssFormPageState extends State<NonOssFormPage>
                     : (BidangUsahaOpsi.namaDari(_data.bidang) ??
                           'Pendataan usaha pariwisata'),
                 style: const TextStyle(
-                  fontSize: 11.5,
+                  fontSize: AppTheme.fontKeterangan,
                   fontWeight: FontWeight.w400,
                 ),
               ),
@@ -936,7 +936,7 @@ class _NonOssFormPageState extends State<NonOssFormPage>
                                   'Formulir Pendataan Lapangan',
                                   style: TextStyle(
                                     color: Colors.white,
-                                    fontSize: 16,
+                                    fontSize: AppTheme.fontJudulKartu,
                                     fontWeight: FontWeight.w800,
                                   ),
                                 ),
@@ -1167,7 +1167,7 @@ class _NonOssFormPageState extends State<NonOssFormPage>
                             'Status Hasil Pengawasan *',
                             style: TextStyle(
                               color: AppTheme.textColor(context),
-                              fontSize: 12.5,
+                              fontSize: AppTheme.fontIsiKecil,
                               fontWeight: FontWeight.w700,
                             ),
                           ),
@@ -1197,7 +1197,7 @@ class _NonOssFormPageState extends State<NonOssFormPage>
                                   Text(
                                     'Tidak Punya NIB',
                                     style: TextStyle(
-                                      fontSize: 12.5,
+                                      fontSize: AppTheme.fontIsiKecil,
                                       fontWeight: FontWeight.w700,
                                       color: AppTheme.textColor(context),
                                     ),
@@ -1287,7 +1287,7 @@ class _NonOssFormPageState extends State<NonOssFormPage>
                                     : 'Simpan Pengawasan'),
                           style: TextStyle(
                             fontWeight: FontWeight.w800,
-                            fontSize: 15,
+                            fontSize: AppTheme.fontJudulKartu,
                             color: Colors.white,
                           ),
                         ),

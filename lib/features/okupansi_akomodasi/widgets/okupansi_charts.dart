@@ -48,7 +48,7 @@ class OkupansiChartSection extends StatelessWidget {
           'Ikhtisar Okupansi Hotel Bintang',
           style: TextStyle(
             color: AppTheme.textColor(context),
-            fontSize: 18,
+            fontSize: AppTheme.fontJudulHalaman,
             fontWeight: FontWeight.w800,
           ),
         ),
@@ -57,7 +57,7 @@ class OkupansiChartSection extends StatelessWidget {
           'Nilai merupakan persentase tingkat penghunian kamar.',
           style: TextStyle(
             color: AppTheme.textSecondary(context),
-            fontSize: 12,
+            fontSize: AppTheme.fontIsiKecil,
           ),
         ),
       ],
@@ -250,7 +250,7 @@ class _ChartCard extends StatelessWidget {
                   title,
                   style: TextStyle(
                     color: AppTheme.textColor(context),
-                    fontSize: 15,
+                    fontSize: AppTheme.fontJudulKartu,
                     fontWeight: FontWeight.w800,
                   ),
                 ),
@@ -268,7 +268,7 @@ class _ChartCard extends StatelessWidget {
                   'Tidak ada data untuk filter ini.',
                   style: TextStyle(
                     color: AppTheme.textSecondary(context),
-                    fontSize: 12,
+                    fontSize: AppTheme.fontIsiKecil,
                   ),
                 ),
               ),
@@ -353,7 +353,7 @@ class _LineView extends StatelessWidget {
                     '$nama\n$waktu: ${formatPersen(s.y)}',
                     const TextStyle(
                       color: Colors.white,
-                      fontSize: 11,
+                      fontSize: AppTheme.fontKeterangan,
                       fontWeight: FontWeight.w600,
                     ),
                   );
@@ -375,7 +375,7 @@ class _LineView extends StatelessWidget {
                 interval: interval,
                 getTitlesWidget: (double value, TitleMeta meta) => Text(
                   '${value.round()}%',
-                  style: TextStyle(color: muted, fontSize: 10),
+                  style: TextStyle(color: muted, fontSize: AppTheme.fontSumbu),
                 ),
               ),
             ),
@@ -393,7 +393,7 @@ class _LineView extends StatelessWidget {
                     padding: const EdgeInsets.only(top: 8),
                     child: Text(
                       labels[i],
-                      style: TextStyle(color: muted, fontSize: 9),
+                      style: TextStyle(color: muted, fontSize: AppTheme.fontMikro),
                     ),
                   );
                 },
@@ -483,7 +483,7 @@ class _LineView extends StatelessWidget {
                           overflow: TextOverflow.ellipsis,
                           style: TextStyle(
                             color: AppTheme.textSecondary(context),
-                            fontSize: 10.5,
+                            fontSize: AppTheme.fontSumbu,
                           ),
                         ),
                       ),
@@ -532,7 +532,7 @@ class _RankView extends StatelessWidget {
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
                           color: AppTheme.textColor(context),
-                          fontSize: 11.5,
+                          fontSize: AppTheme.fontKeterangan,
                         ),
                       ),
                     ),
@@ -541,7 +541,7 @@ class _RankView extends StatelessWidget {
                       formatPersen(rows[i].value),
                       style: TextStyle(
                         color: color,
-                        fontSize: 11.5,
+                        fontSize: AppTheme.fontKeterangan,
                         fontWeight: FontWeight.w800,
                       ),
                     ),
@@ -622,12 +622,12 @@ class _GridTable extends StatelessWidget {
 
     final TextStyle styleHeader = TextStyle(
       color: AppTheme.textSecondary(context),
-      fontSize: 9,
+      fontSize: AppTheme.fontMikro,
       fontWeight: FontWeight.w800,
     );
     final TextStyle styleIsi = TextStyle(
       color: AppTheme.textColor(context),
-      fontSize: 11,
+      fontSize: AppTheme.fontKeterangan,
     );
 
     double lebarTetap = 0;
@@ -657,7 +657,7 @@ class _GridTable extends StatelessWidget {
                         'Tidak ada data untuk filter ini.',
                         style: TextStyle(
                           color: AppTheme.textSecondary(context),
-                          fontSize: 11.5,
+                          fontSize: AppTheme.fontKeterangan,
                         ),
                       ),
                     ),
@@ -765,7 +765,7 @@ class _CopyButtonState extends State<_CopyButton> {
               _copied ? 'Tersalin' : 'Salin',
               style: TextStyle(
                 color: warnaTeks,
-                fontSize: 10.5,
+                fontSize: AppTheme.fontSumbu,
                 fontWeight: FontWeight.w800,
               ),
             ),

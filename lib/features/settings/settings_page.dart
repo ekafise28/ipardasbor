@@ -96,7 +96,7 @@ class _SettingsPageState extends State<SettingsPage> {
                       'Tombol Screenshot (Alpha)',
                       style: TextStyle(
                         color: AppTheme.textColor(context),
-                        fontSize: 14.5,
+                        fontSize: AppTheme.fontJudulKartu,
                         fontWeight: FontWeight.w700,
                       ),
                     ),
@@ -107,7 +107,7 @@ class _SettingsPageState extends State<SettingsPage> {
                           : 'Tombol screenshot disembunyikan',
                       style: TextStyle(
                         color: AppTheme.textSecondary(context),
-                        fontSize: 12,
+                        fontSize: AppTheme.fontIsiKecil,
                       ),
                     ),
                   ],
@@ -162,7 +162,7 @@ class _SettingsPageState extends State<SettingsPage> {
                       'Mode Tampilan (Alpha)',
                       style: TextStyle(
                         color: AppTheme.textColor(context),
-                        fontSize: 14.5,
+                        fontSize: AppTheme.fontJudulKartu,
                         fontWeight: FontWeight.w700,
                       ),
                     ),
@@ -171,7 +171,7 @@ class _SettingsPageState extends State<SettingsPage> {
                       isDark ? 'Mode gelap aktif' : 'Mode terang aktif',
                       style: TextStyle(
                         color: AppTheme.textSecondary(context),
-                        fontSize: 12,
+                        fontSize: AppTheme.fontIsiKecil,
                       ),
                     ),
                   ],
@@ -270,7 +270,7 @@ class _SettingsPageState extends State<SettingsPage> {
             'Keluar dari akun?',
             textAlign: TextAlign.center,
             style: TextStyle(
-              fontSize: 17,
+              fontSize: AppTheme.fontJudulHalaman,
               fontWeight: FontWeight.w800,
               color: AppTheme.textColor(context),
             ),
@@ -284,7 +284,7 @@ class _SettingsPageState extends State<SettingsPage> {
                       'tetap tersimpan terenkripsi di perangkat ini.',
             textAlign: TextAlign.center,
             style: TextStyle(
-              fontSize: 13.5,
+              fontSize: AppTheme.fontIsi,
               color: AppTheme.textSecondary(context),
             ),
           ),
@@ -379,7 +379,7 @@ class _SettingsPageState extends State<SettingsPage> {
                       'Sinkronisasi Otomatis (Alpha)',
                       style: TextStyle(
                         color: AppTheme.textColor(context),
-                        fontSize: 14.5,
+                        fontSize: AppTheme.fontJudulKartu,
                         fontWeight: FontWeight.w700,
                       ),
                     ),
@@ -390,7 +390,7 @@ class _SettingsPageState extends State<SettingsPage> {
                           : 'Data hanya terkirim saat Anda menekan Sync',
                       style: TextStyle(
                         color: AppTheme.textSecondary(context),
-                        fontSize: 12,
+                        fontSize: AppTheme.fontIsiKecil,
                       ),
                     ),
                   ],
@@ -428,7 +428,7 @@ class _SettingsPageState extends State<SettingsPage> {
           'Pengaturan',
           style: TextStyle(
             color: AppTheme.textColor(context),
-            fontSize: 17,
+            fontSize: AppTheme.fontJudulHalaman,
             fontWeight: FontWeight.w800,
           ),
         ),
@@ -514,7 +514,7 @@ class _SectionLabel extends StatelessWidget {
       label,
       style: TextStyle(
         color: AppTheme.textSecondary(context),
-        fontSize: 12,
+        fontSize: AppTheme.fontIsiKecil,
         fontWeight: FontWeight.w700,
         letterSpacing: 0.2,
       ),

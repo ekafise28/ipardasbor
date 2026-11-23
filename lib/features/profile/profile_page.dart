@@ -107,7 +107,7 @@ class _ProfilePageState extends State<ProfilePage> {
             'Keluar dari akun?',
             textAlign: TextAlign.center,
             style: TextStyle(
-              fontSize: 17,
+              fontSize: AppTheme.fontJudulHalaman,
               fontWeight: FontWeight.w800,
               color: AppTheme.textColor(context),
             ),
@@ -116,7 +116,7 @@ class _ProfilePageState extends State<ProfilePage> {
             'Anda perlu masuk kembali untuk mengakses aplikasi.',
             textAlign: TextAlign.center,
             style: TextStyle(
-              fontSize: 13.5,
+              fontSize: AppTheme.fontIsi,
               height: 1.4,
               color: AppTheme.textSecondary(context),
             ),
@@ -184,7 +184,7 @@ class _ProfilePageState extends State<ProfilePage> {
         scrolledUnderElevation: 0,
         title: const Text(
           'Profil Petugas',
-          style: TextStyle(fontSize: 17, fontWeight: FontWeight.w800),
+          style: TextStyle(fontSize: AppTheme.fontJudulHalaman, fontWeight: FontWeight.w800),
         ),
       ),
       body: Column(
@@ -417,7 +417,7 @@ class _ProfileHeader extends StatelessWidget {
             overflow: TextOverflow.ellipsis,
             style: const TextStyle(
               color: Colors.white,
-              fontSize: 19,
+              fontSize: AppTheme.fontJudulHalaman,
               fontWeight: FontWeight.w800,
             ),
           ),
@@ -430,7 +430,7 @@ class _ProfileHeader extends StatelessWidget {
               overflow: TextOverflow.ellipsis,
               style: TextStyle(
                 color: Colors.white.withValues(alpha: 0.9),
-                fontSize: 13,
+                fontSize: AppTheme.fontIsi,
               ),
             ),
           ],
@@ -480,7 +480,7 @@ class _HeaderChip extends StatelessWidget {
             text,
             style: const TextStyle(
               color: Colors.white,
-              fontSize: 11,
+              fontSize: AppTheme.fontKeterangan,
               fontWeight: FontWeight.w700,
               letterSpacing: 0.3,
             ),
@@ -529,7 +529,7 @@ class _InfoSection extends StatelessWidget {
             title,
             style: TextStyle(
               color: AppTheme.textColor(context),
-              fontSize: 14,
+              fontSize: AppTheme.fontIsi,
               fontWeight: FontWeight.w800,
             ),
           ),
@@ -634,7 +634,7 @@ class _InfoItemState extends State<_InfoItem> {
                     widget.label,
                     style: TextStyle(
                       color: AppTheme.textSecondary(context),
-                      fontSize: 12,
+                      fontSize: AppTheme.fontIsiKecil,
                     ),
                   ),
                   const SizedBox(height: 2),
@@ -642,7 +642,7 @@ class _InfoItemState extends State<_InfoItem> {
                     _displayValue,
                     style: TextStyle(
                       color: AppTheme.textColor(context),
-                      fontSize: 14,
+                      fontSize: AppTheme.fontIsi,
                       fontWeight: FontWeight.w600,
                       letterSpacing: widget.masked && !_revealed ? 0.6 : 0,
                     ),
@@ -736,7 +736,7 @@ class _ActionTile extends StatelessWidget {
                       title,
                       style: TextStyle(
                         color: AppTheme.textColor(context),
-                        fontSize: 14,
+                        fontSize: AppTheme.fontIsi,
                         fontWeight: FontWeight.w700,
                       ),
                     ),
@@ -745,7 +745,7 @@ class _ActionTile extends StatelessWidget {
                       subtitle,
                       style: TextStyle(
                         color: AppTheme.textSecondary(context),
-                        fontSize: 12,
+                        fontSize: AppTheme.fontIsiKecil,
                       ),
                     ),
                   ],
@@ -838,7 +838,7 @@ class _VersionFooterState extends State<_VersionFooter> {
           child: Text(
             'Versi ${info.version} (${info.buildNumber})',
             textAlign: TextAlign.center,
-            style: TextStyle(color: AppTheme.textMuted, fontSize: 11.5),
+            style: TextStyle(color: AppTheme.textMuted, fontSize: AppTheme.fontKeterangan),
           ),
         );
       },

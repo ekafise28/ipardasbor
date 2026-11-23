@@ -98,7 +98,7 @@ class _DataOfflinePageState extends State<DataOfflinePage> {
     child: Text(
       teks.toUpperCase(),
       style: TextStyle(
-        fontSize: 11.5,
+        fontSize: AppTheme.fontKeterangan,
         fontWeight: FontWeight.w800,
         letterSpacing: 0.6,
         color: AppTheme.textSecondary(context),
@@ -148,7 +148,7 @@ class _DataOfflinePageState extends State<DataOfflinePage> {
             child: Text(
               'dari ${_pref.maxMb} MB',
               style: TextStyle(
-                fontSize: 13,
+                fontSize: AppTheme.fontIsi,
                 color: AppTheme.textSecondary(context),
               ),
             ),
@@ -172,7 +172,7 @@ class _DataOfflinePageState extends State<DataOfflinePage> {
                   'dihapus otomatis.'
             : 'Dipakai oleh data yang tersimpan untuk mode offline.',
         style: TextStyle(
-          fontSize: 12,
+          fontSize: AppTheme.fontIsiKecil,
           color: AppTheme.textSecondary(context),
         ),
       ),
@@ -193,7 +193,7 @@ class _DataOfflinePageState extends State<DataOfflinePage> {
                   'Simpan data otomatis',
                   style: TextStyle(
                     color: AppTheme.textColor(context),
-                    fontSize: 14.5,
+                    fontSize: AppTheme.fontJudulKartu,
                     fontWeight: FontWeight.w700,
                   ),
                 ),
@@ -204,7 +204,7 @@ class _DataOfflinePageState extends State<DataOfflinePage> {
                   'internet (hanya baca). Disimpan terenkripsi per akun.',
                   style: TextStyle(
                     color: AppTheme.textSecondary(context),
-                    fontSize: 12,
+                    fontSize: AppTheme.fontIsiKecil,
                   ),
                 ),
               ],
@@ -276,7 +276,7 @@ class _DataOfflinePageState extends State<DataOfflinePage> {
       appBar: AppBar(
         title: const Text(
           'Data Offline',
-          style: TextStyle(fontSize: 17, fontWeight: FontWeight.w800),
+          style: TextStyle(fontSize: AppTheme.fontJudulHalaman, fontWeight: FontWeight.w800),
         ),
         centerTitle: false,
       ),
@@ -296,7 +296,7 @@ class _DataOfflinePageState extends State<DataOfflinePage> {
               'terkirim tidak ikut terhapus.',
               style: TextStyle(
                 color: AppTheme.textSecondary(context),
-                fontSize: 12,
+                fontSize: AppTheme.fontIsiKecil,
               ),
             ),
           ],

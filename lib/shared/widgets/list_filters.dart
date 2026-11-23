@@ -66,7 +66,7 @@ class ListSearchField extends StatelessWidget {
             helperText: tampilContoh ? contohSaatFokus : null,
             helperMaxLines: 2,
             helperStyle: TextStyle(
-              fontSize: 11.5,
+              fontSize: AppTheme.fontKeterangan,
               color: AppTheme.textSecondary(context),
             ),
             prefixIcon: const Icon(Icons.search_rounded),
@@ -153,7 +153,7 @@ class StatusFilterBar extends StatelessWidget {
             showCheckmark: false,
             onSelected: (_) => onChanged(o.value),
             labelStyle: TextStyle(
-              fontSize: 12.5,
+              fontSize: AppTheme.fontIsiKecil,
               fontWeight: FontWeight.w700,
               color: aktif ? o.color : AppTheme.textSecondary(context),
             ),
@@ -228,7 +228,7 @@ class ActiveFilterChips extends StatelessWidget {
                   deleteIconColor: aksen,
                   deleteButtonTooltipMessage: 'Hapus filter ${c.label}',
                   labelStyle: TextStyle(
-                    fontSize: 12,
+                    fontSize: AppTheme.fontIsiKecil,
                     fontWeight: FontWeight.w600,
                     color: aksen,
                   ),

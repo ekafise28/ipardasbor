@@ -266,7 +266,7 @@ class _KelolaAkunPageState extends State<KelolaAkunPage> {
                 'Kekuatan password',
                 style: TextStyle(
                   color: AppTheme.textColor(context),
-                  fontSize: 12.5,
+                  fontSize: AppTheme.fontIsiKecil,
                   fontWeight: FontWeight.w700,
                 ),
               ),
@@ -274,7 +274,7 @@ class _KelolaAkunPageState extends State<KelolaAkunPage> {
                 label,
                 style: TextStyle(
                   color: warna,
-                  fontSize: 12,
+                  fontSize: AppTheme.fontIsiKecil,
                   fontWeight: FontWeight.w700,
                 ),
               ),
@@ -313,7 +313,7 @@ class _KelolaAkunPageState extends State<KelolaAkunPage> {
                   'Semua persyaratan terpenuhi',
                   style: TextStyle(
                     color: AppTheme.success,
-                    fontSize: 12,
+                    fontSize: AppTheme.fontIsiKecil,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
@@ -346,7 +346,7 @@ class _KelolaAkunPageState extends State<KelolaAkunPage> {
           Text(
             item.label,
             style: TextStyle(
-              fontSize: 11.5,
+              fontSize: AppTheme.fontKeterangan,
               color: AppTheme.textSecondary(context),
             ),
           ),
@@ -363,7 +363,7 @@ class _KelolaAkunPageState extends State<KelolaAkunPage> {
           const SizedBox(width: 6),
           Text(
             'Masukkan kembali password yang sama.',
-            style: TextStyle(color: AppTheme.textMuted, fontSize: 11.5),
+            style: TextStyle(color: AppTheme.textMuted, fontSize: AppTheme.fontKeterangan),
           ),
         ],
       );
@@ -384,7 +384,7 @@ class _KelolaAkunPageState extends State<KelolaAkunPage> {
           cocok ? 'Password cocok' : 'Password belum sama',
           style: TextStyle(
             color: warna,
-            fontSize: 11.5,
+            fontSize: AppTheme.fontKeterangan,
             fontWeight: FontWeight.w600,
           ),
         ),
@@ -433,7 +433,7 @@ class _KelolaAkunPageState extends State<KelolaAkunPage> {
                       Text(
                         isEdit ? 'Edit Akun Pengguna' : 'Tambah Akun Baru',
                         style: TextStyle(
-                          fontSize: 18,
+                          fontSize: AppTheme.fontJudulHalaman,
                           fontWeight: FontWeight.w800,
                           color: AppTheme.textColor(modalCtx),
                         ),
@@ -784,7 +784,7 @@ class _KelolaAkunPageState extends State<KelolaAkunPage> {
               _query = v;
               _page = 1;
             }),
-            style: TextStyle(fontSize: 13, color: AppTheme.textColor(context)),
+            style: TextStyle(fontSize: AppTheme.fontIsi, color: AppTheme.textColor(context)),
             decoration: InputDecoration(
               hintText: 'Cari nama, kode user, atau role...',
               hintStyle: TextStyle(color: AppTheme.textSecondary(context)),
@@ -857,7 +857,7 @@ class _KelolaAkunPageState extends State<KelolaAkunPage> {
             Text(
               label,
               style: TextStyle(
-                fontSize: 11.5,
+                fontSize: AppTheme.fontKeterangan,
                 fontWeight: FontWeight.w600,
                 color: aktif ? Colors.white : AppTheme.textSecondary(context),
               ),
@@ -866,7 +866,7 @@ class _KelolaAkunPageState extends State<KelolaAkunPage> {
             Text(
               '${_countFor(label)}',
               style: TextStyle(
-                fontSize: 10.5,
+                fontSize: AppTheme.fontKeterangan,
                 fontWeight: FontWeight.w800,
                 color: aktif ? Colors.white : AppTheme.textSecondary(context),
               ),
@@ -906,7 +906,7 @@ class _KelolaAkunPageState extends State<KelolaAkunPage> {
             Text(
               '${list.length}',
               style: TextStyle(
-                fontSize: 16,
+                fontSize: AppTheme.fontJudulKartu,
                 fontWeight: FontWeight.w800,
                 color: AppTheme.textColor(context),
               ),
@@ -915,7 +915,7 @@ class _KelolaAkunPageState extends State<KelolaAkunPage> {
             Text(
               'Akun',
               style: TextStyle(
-                fontSize: 11.5,
+                fontSize: AppTheme.fontKeterangan,
                 color: AppTheme.textSecondary(context),
               ),
             ),
@@ -930,7 +930,7 @@ class _KelolaAkunPageState extends State<KelolaAkunPage> {
                 child: Text(
                   '$dipilih Dipilih',
                   style: const TextStyle(
-                    fontSize: 10.5,
+                    fontSize: AppTheme.fontKeterangan,
                     fontWeight: FontWeight.w700,
                     color: AppTheme.primaryColor,
                   ),
@@ -986,7 +986,7 @@ class _KelolaAkunPageState extends State<KelolaAkunPage> {
                   Text(
                     '#$nomor',
                     style: TextStyle(
-                      fontSize: 10,
+                      fontSize: AppTheme.fontKeterangan,
                       fontWeight: FontWeight.w700,
                       color: AppTheme.textSecondary(context),
                     ),
@@ -1002,7 +1002,7 @@ class _KelolaAkunPageState extends State<KelolaAkunPage> {
                   style: const TextStyle(
                     color: AppTheme.primaryColor,
                     fontWeight: FontWeight.w800,
-                    fontSize: 15,
+                    fontSize: AppTheme.fontJudulKartu,
                   ),
                 ),
               ),
@@ -1019,7 +1019,7 @@ class _KelolaAkunPageState extends State<KelolaAkunPage> {
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                             style: TextStyle(
-                              fontSize: 15,
+                              fontSize: AppTheme.fontJudulKartu,
                               fontWeight: FontWeight.w800,
                               color: AppTheme.textColor(context),
                             ),
@@ -1038,7 +1038,7 @@ class _KelolaAkunPageState extends State<KelolaAkunPage> {
                           child: Text(
                             p.role.toUpperCase(),
                             style: TextStyle(
-                              fontSize: 10,
+                              fontSize: AppTheme.fontKeterangan,
                               fontWeight: FontWeight.w800,
                               color: roleFg,
                             ),
@@ -1052,7 +1052,7 @@ class _KelolaAkunPageState extends State<KelolaAkunPage> {
                         Text(
                           '@${p.kodeUser}',
                           style: const TextStyle(
-                            fontSize: 11.5,
+                            fontSize: AppTheme.fontKeterangan,
                             fontWeight: FontWeight.w600,
                             color: AppTheme.primaryColor,
                           ),
@@ -1072,7 +1072,7 @@ class _KelolaAkunPageState extends State<KelolaAkunPage> {
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                             style: TextStyle(
-                              fontSize: 11.5,
+                              fontSize: AppTheme.fontKeterangan,
                               color: AppTheme.textSecondary(context),
                             ),
                           ),
@@ -1095,7 +1095,7 @@ class _KelolaAkunPageState extends State<KelolaAkunPage> {
                 ),
                 onPressed: () => _showFormModal(user: p),
                 icon: const Icon(Icons.edit_outlined, size: 18),
-                label: const Text('Edit', style: TextStyle(fontSize: 11.5)),
+                label: const Text('Edit', style: TextStyle(fontSize: AppTheme.fontKeterangan)),
               ),
               const SizedBox(width: 4),
               IconButton(

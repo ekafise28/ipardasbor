@@ -51,7 +51,7 @@ class RekapChartSection extends StatelessWidget {
           'Ikhtisar Wisman Rekap',
           style: TextStyle(
             color: AppTheme.textColor(context),
-            fontSize: 18,
+            fontSize: AppTheme.fontJudulHalaman,
             fontWeight: FontWeight.w800,
           ),
         ),
@@ -60,7 +60,7 @@ class RekapChartSection extends StatelessWidget {
           'Data Rekap Wisatawan Mancanegara',
           style: TextStyle(
             color: AppTheme.textSecondary(context),
-            fontSize: 12,
+            fontSize: AppTheme.fontIsiKecil,
           ),
         ),
       ],
@@ -260,7 +260,7 @@ class _ChartCard extends StatelessWidget {
                       kicker.toUpperCase(),
                       style: const TextStyle(
                         color: AppTheme.primaryColor,
-                        fontSize: 10,
+                        fontSize: AppTheme.fontSumbu,
                         fontWeight: FontWeight.w800,
                         letterSpacing: 0.8,
                       ),
@@ -270,7 +270,7 @@ class _ChartCard extends StatelessWidget {
                       title,
                       style: TextStyle(
                         color: AppTheme.textColor(context),
-                        fontSize: 15,
+                        fontSize: AppTheme.fontJudulKartu,
                         fontWeight: FontWeight.w800,
                       ),
                     ),
@@ -290,7 +290,7 @@ class _ChartCard extends StatelessWidget {
                   'Tidak ada data untuk filter ini.',
                   style: TextStyle(
                     color: AppTheme.textSecondary(context),
-                    fontSize: 12,
+                    fontSize: AppTheme.fontIsiKecil,
                   ),
                 ),
               ),
@@ -363,7 +363,7 @@ class _LineView extends StatelessWidget {
                     '$nama\n$waktu: ${formatNumber(s.y.round())}',
                     const TextStyle(
                       color: Colors.white,
-                      fontSize: 11,
+                      fontSize: AppTheme.fontKeterangan,
                       fontWeight: FontWeight.w600,
                     ),
                   );
@@ -385,7 +385,7 @@ class _LineView extends StatelessWidget {
                 interval: interval,
                 getTitlesWidget: (double value, TitleMeta meta) => Text(
                   formatRingkas(value),
-                  style: TextStyle(color: muted, fontSize: 10),
+                  style: TextStyle(color: muted, fontSize: AppTheme.fontSumbu),
                 ),
               ),
             ),
@@ -403,7 +403,7 @@ class _LineView extends StatelessWidget {
                     padding: const EdgeInsets.only(top: 8),
                     child: Text(
                       labels[i],
-                      style: TextStyle(color: muted, fontSize: 9),
+                      style: TextStyle(color: muted, fontSize: AppTheme.fontMikro),
                     ),
                   );
                 },
@@ -485,7 +485,7 @@ class _LineView extends StatelessWidget {
                     s.label,
                     style: TextStyle(
                       color: AppTheme.textSecondary(context),
-                      fontSize: 10.5,
+                      fontSize: AppTheme.fontSumbu,
                     ),
                   ),
                 ],
@@ -530,7 +530,7 @@ class _RankView extends StatelessWidget {
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
                           color: AppTheme.textColor(context),
-                          fontSize: 11.5,
+                          fontSize: AppTheme.fontKeterangan,
                         ),
                       ),
                     ),
@@ -539,7 +539,7 @@ class _RankView extends StatelessWidget {
                       formatNumber(rows[i].total),
                       style: const TextStyle(
                         color: AppTheme.chartBar,
-                        fontSize: 11.5,
+                        fontSize: AppTheme.fontKeterangan,
                         fontWeight: FontWeight.w800,
                       ),
                     ),
@@ -653,7 +653,7 @@ class _DoughnutViewState extends State<_DoughnutView> {
                         textAlign: TextAlign.center,
                         style: TextStyle(
                           color: AppTheme.textSecondary(context),
-                          fontSize: 10.5,
+                          fontSize: AppTheme.fontSumbu,
                         ),
                       ),
                       FittedBox(
@@ -662,7 +662,7 @@ class _DoughnutViewState extends State<_DoughnutView> {
                           formatNumber(nilai),
                           style: TextStyle(
                             color: AppTheme.textColor(context),
-                            fontSize: 17,
+                            fontSize: AppTheme.fontJudulHalaman,
                             fontWeight: FontWeight.w800,
                           ),
                         ),
@@ -672,7 +672,7 @@ class _DoughnutViewState extends State<_DoughnutView> {
                           persen,
                           style: const TextStyle(
                             color: AppTheme.primaryColor,
-                            fontSize: 10.5,
+                            fontSize: AppTheme.fontSumbu,
                             fontWeight: FontWeight.w700,
                           ),
                         ),
@@ -710,7 +710,7 @@ class _DoughnutViewState extends State<_DoughnutView> {
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
                         color: AppTheme.textSecondary(context),
-                        fontSize: 10.5,
+                        fontSize: AppTheme.fontSumbu,
                       ),
                     ),
                   ),
@@ -764,12 +764,12 @@ class _GridTable extends StatelessWidget {
 
     final TextStyle styleHeader = TextStyle(
       color: AppTheme.textSecondary(context),
-      fontSize: 9,
+      fontSize: AppTheme.fontMikro,
       fontWeight: FontWeight.w800,
     );
     final TextStyle styleIsi = TextStyle(
       color: AppTheme.textColor(context),
-      fontSize: 11,
+      fontSize: AppTheme.fontKeterangan,
     );
 
     return Container(
@@ -800,7 +800,7 @@ class _GridTable extends StatelessWidget {
                           'Tidak ada data untuk filter ini.',
                           style: TextStyle(
                             color: AppTheme.textSecondary(context),
-                            fontSize: 11.5,
+                            fontSize: AppTheme.fontKeterangan,
                           ),
                         ),
                       ),
@@ -895,7 +895,7 @@ class _CopyButtonState extends State<_CopyButton> {
               _copied ? 'Tersalin' : 'Salin',
               style: TextStyle(
                 color: warnaTeks,
-                fontSize: 10.5,
+                fontSize: AppTheme.fontSumbu,
                 fontWeight: FontWeight.w800,
               ),
             ),

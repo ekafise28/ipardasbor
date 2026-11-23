@@ -147,7 +147,7 @@ class _RankingCard extends StatelessWidget {
                       kicker.toUpperCase(),
                       style: const TextStyle(
                         color: AppTheme.primaryColor,
-                        fontSize: 10,
+                        fontSize: AppTheme.fontKeterangan,
                         fontWeight: FontWeight.w800,
                         letterSpacing: 0.8,
                       ),
@@ -157,7 +157,7 @@ class _RankingCard extends StatelessWidget {
                       title,
                       style: TextStyle(
                         color: AppTheme.textColor(context),
-                        fontSize: 15,
+                        fontSize: AppTheme.fontJudulKartu,
                         fontWeight: FontWeight.w800,
                       ),
                     ),
@@ -174,7 +174,7 @@ class _RankingCard extends StatelessWidget {
                   'Top 20',
                   style: TextStyle(
                     color: AppTheme.primaryColor,
-                    fontSize: 10,
+                    fontSize: AppTheme.fontKeterangan,
                     fontWeight: FontWeight.w800,
                   ),
                 ),
@@ -200,7 +200,7 @@ class _RankingCard extends StatelessWidget {
             children: <Widget>[
               const Text(
                 'Data gagal dimuat.',
-                style: TextStyle(color: AppTheme.danger, fontSize: 12),
+                style: TextStyle(color: AppTheme.danger, fontSize: AppTheme.fontIsiKecil),
               ),
               TextButton(onPressed: onRetry, child: const Text('Coba lagi')),
             ],
@@ -214,7 +214,7 @@ class _RankingCard extends StatelessWidget {
               'Tidak ada data untuk filter ini.',
               style: TextStyle(
                 color: AppTheme.textSecondary(context),
-                fontSize: 12,
+                fontSize: AppTheme.fontIsiKecil,
               ),
             ),
           );
@@ -255,7 +255,7 @@ class _RankingCard extends StatelessWidget {
     final Color border = AppTheme.border(context);
     final TextStyle styleHeader = TextStyle(
       color: AppTheme.textSecondary(context),
-      fontSize: 10,
+      fontSize: AppTheme.fontKeterangan,
       fontWeight: FontWeight.w800,
       letterSpacing: 0.4,
     );
@@ -330,7 +330,7 @@ class _RankingCard extends StatelessWidget {
               '${index + 1}',
               style: TextStyle(
                 color: AppTheme.textSecondary(context),
-                fontSize: 11,
+                fontSize: AppTheme.fontKeterangan,
                 fontWeight: FontWeight.w800,
               ),
             ),
@@ -345,7 +345,7 @@ class _RankingCard extends StatelessWidget {
                         row.code!,
                         style: const TextStyle(
                           color: AppTheme.primaryColor,
-                          fontSize: 10.5,
+                          fontSize: AppTheme.fontKeterangan,
                           fontWeight: FontWeight.w800,
                         ),
                       ),
@@ -356,7 +356,7 @@ class _RankingCard extends StatelessWidget {
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
                           color: AppTheme.textColor(context),
-                          fontSize: 12,
+                          fontSize: AppTheme.fontIsiKecil,
                         ),
                       ),
                     ],
@@ -367,7 +367,7 @@ class _RankingCard extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
                       color: AppTheme.textColor(context),
-                      fontSize: 12,
+                      fontSize: AppTheme.fontIsiKecil,
                     ),
                   ),
           ),
@@ -376,7 +376,7 @@ class _RankingCard extends StatelessWidget {
             formatNumber(row.total),
             style: const TextStyle(
               color: AppTheme.primaryColor,
-              fontSize: 12.5,
+              fontSize: AppTheme.fontIsiKecil,
               fontWeight: FontWeight.w800,
             ),
           ),

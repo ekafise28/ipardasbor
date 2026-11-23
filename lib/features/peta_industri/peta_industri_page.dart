@@ -281,7 +281,7 @@ class _PetaIndustriPageState extends State<PetaIndustriPage>
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
                     color: Colors.white,
-                    fontSize: 14.5,
+                    fontSize: AppTheme.fontJudulKartu,
                     fontWeight: FontWeight.w800,
                   ),
                 ),
@@ -293,7 +293,7 @@ class _PetaIndustriPageState extends State<PetaIndustriPage>
                             '${data.provinsi.length} provinsi',
                   style: const TextStyle(
                     color: AppTheme.textOnBrandMuted,
-                    fontSize: 11.5,
+                    fontSize: AppTheme.fontKeterangan,
                   ),
                 ),
               ],
@@ -366,7 +366,7 @@ class _PetaIndustriPageState extends State<PetaIndustriPage>
               child: Text(
                 p.nama,
                 style: TextStyle(
-                  fontSize: 17,
+                  fontSize: AppTheme.fontJudulHalaman,
                   fontWeight: FontWeight.w800,
                   color: AppTheme.textColor(sheet),
                 ),
@@ -400,7 +400,7 @@ class _PetaIndustriPageState extends State<PetaIndustriPage>
                     'Jumlah usaha',
                     style: TextStyle(
                       color: AppTheme.textColor(sheet),
-                      fontSize: 13,
+                      fontSize: AppTheme.fontIsi,
                     ),
                   ),
                 ],
@@ -409,7 +409,7 @@ class _PetaIndustriPageState extends State<PetaIndustriPage>
                 _angka.format(p.total),
                 style: const TextStyle(
                   color: AppTheme.primaryColor,
-                  fontSize: 18,
+                  fontSize: AppTheme.fontJudulHalaman,
                   fontWeight: FontWeight.w800,
                 ),
               ),
@@ -653,7 +653,7 @@ class _DaftarProvinsiSheetState extends State<_DaftarProvinsiSheet> {
                               '$peringkat',
                               style: const TextStyle(
                                 color: AppTheme.primaryColor,
-                                fontSize: 11.5,
+                                fontSize: AppTheme.fontKeterangan,
                                 fontWeight: FontWeight.w800,
                               ),
                             ),
@@ -662,7 +662,7 @@ class _DaftarProvinsiSheetState extends State<_DaftarProvinsiSheet> {
                             p.nama,
                             style: TextStyle(
                               color: AppTheme.textColor(context),
-                              fontSize: 14,
+                              fontSize: AppTheme.fontIsi,
                               fontWeight: FontWeight.w700,
                             ),
                           ),
@@ -681,7 +681,7 @@ class _DaftarProvinsiSheetState extends State<_DaftarProvinsiSheet> {
                             widget.angka.format(p.total),
                             style: const TextStyle(
                               color: AppTheme.primaryColor,
-                              fontSize: 14,
+                              fontSize: AppTheme.fontIsi,
                               fontWeight: FontWeight.w800,
                             ),
                           ),
@@ -730,7 +730,7 @@ class _LoadingOverlay extends StatelessWidget {
               'Memuat data...',
               style: TextStyle(
                 color: AppTheme.textColor(context),
-                fontSize: 13,
+                fontSize: AppTheme.fontIsi,
                 fontWeight: FontWeight.w700,
               ),
             ),
