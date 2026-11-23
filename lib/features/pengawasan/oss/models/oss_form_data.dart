@@ -1,6 +1,8 @@
 import 'dart:convert';
 
 import 'package:image_picker/image_picker.dart';
+import 'package:ipardasbor/core/constants/ota_platform_constants.dart';
+import 'package:ipardasbor/features/pengawasan/riwayat/models/riwayat_detail.dart';
 import 'package:ipardasbor/shared/utils/formatters.dart';
 
 /// Data form lanjutan validasi OSS.
@@ -72,6 +74,15 @@ class OssFormData {
 
   final List<XFile> photos = <XFile>[];
 
+  /// Mode edit data server (Riwayat). null = bukan mode ini.
+  int? riwayatId;
+
+  /// updated_at saat detail dibuka, dikirim balik untuk deteksi konflik (409).
+  String? versiServer;
+
+  final List<({int id, String url})> fotoLama = <({int id, String url})>[];
+  final List<int> fotoHapusIds = <int>[];
+
   Map<String, String> toFields() {
     final Map<String, String> fields = <String, String>{
       // --- WAJIB ditambahkan (belum ada di form Non-OSS) ---
@@ -122,6 +133,83 @@ class OssFormData {
       _addOtaFields(fields); // logic sama persis seperti NonOssFormData
     }
 
+    return fields;
+  }
+
+  /// Mengisi field yang boleh diubah dari detail Riwayat (mode edit).
+  /// nib/kbli/nku/isValid sudah diisi lewat konstruktor.
+  void isiDariRiwayat(RiwayatDetail d) {
+    riwayatId = d.id;
+    versiServer = d.updatedAt?.toUtc().toIso8601String();
+
+    namaPemilik = d.namaPemilik ?? '';
+    namaBrand = d.namaBrand ?? '';
+    jenisProduk = d.jenisProduk ?? '';
+
+    provinsiId = d.wilayah.provinsiId;
+    kabupatenId = d.wilayah.kabupatenId;
+    kecamatanId = d.wilayah.kecamatanId;
+    kelurahanId = d.wilayah.kelurahanId;
+
+    alamat = d.alamat ?? '';
+    latitude = d.latitude?.toStringAsFixed(8) ?? '';
+    longitude = d.longitude?.toStringAsFixed(8) ?? '';
+
+    npwpd = d.npwpd ?? '';
+    website = d.website ?? '';
+    noHp = d.noHp ?? '';
+    email = d.email ?? '';
+
+    terdaftarOta = (d.terdaftarOta ?? 'TIDAK').toUpperCase();
+    for (final RiwayatDetailOta o in d.ota) {
+      final String url = (o.urlListing ?? '').trim();
+      if (url.isEmpty) continue;
+
+      final String key = o.platformKey ?? OtaPlatform.lainnya;
+      otaUrls.putIfAbsent(key, () => <String>[]).add(url);
+
+      if (key == OtaPlatform.lainnya && otaLainnyaNama.isEmpty) {
+        otaLainnyaNama = o.namaPlatform ?? '';
+      }
+    }
+
+    statusKetidaksesuaian
+      ..clear()
+      ..addAll(d.statusKetidaksesuaian);
+    keteranganKetidaksesuaian = d.keteranganKetidaksesuaian ?? '';
+    catatanPetugas = d.catatanPetugas ?? '';
+    tanggalPengawasan = d.tanggalPengawasan ?? DateTime.now();
+
+    for (final RiwayatDetailFoto f in d.foto) {
+      if (f.url.isNotEmpty) fotoLama.add((id: f.id, url: f.url));
+    }
+  }
+
+  /// Field untuk POST edit. Field terkunci tidak dikirim (server juga
+  /// mengabaikannya). Field opsional yang dikosongkan memang tidak ada di
+  /// toFields(), dan server menyimpannya sebagai null.
+  Map<String, String> toUpdateFields() {
+    final Map<String, String> fields = toFields();
+
+    for (final String kunci in const <String>[
+      'nib',
+      'kbli',
+      'nku',
+      'kbli_desc',
+      'bidang_usaha',
+      'sumber_data',
+      'jenis_produk',
+      'status_pengawasan',
+      'tanggal_pengawasan',
+      'baseline_ota_id',
+    ]) {
+      fields.remove(kunci);
+    }
+
+    fields['updated_at'] = versiServer ?? '';
+    for (int i = 0; i < fotoHapusIds.length; i++) {
+      fields['hapus_foto_ids[$i]'] = fotoHapusIds[i].toString();
+    }
     return fields;
   }
 

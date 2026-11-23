@@ -5,7 +5,11 @@ import 'package:intl/intl.dart';
 import 'dart:async';
 
 import 'package:ipardasbor/app/app_theme.dart';
+import 'package:ipardasbor/core/api/api_exception.dart';
+import 'package:ipardasbor/core/network/network_status.dart';
 import 'package:ipardasbor/features/pengawasan/non_oss/offline/non_oss_local_data.dart';
+import 'package:ipardasbor/features/pengawasan/riwayat/models/riwayat_detail.dart';
+import 'package:ipardasbor/features/pengawasan/riwayat/services/riwayat_service.dart';
 import 'package:ipardasbor/shared/widgets/form/jenis_produk_dropdown.dart';
 import 'package:ipardasbor/shared/widgets/form/status_ketidaksesuaian_selector.dart';
 import 'package:ipardasbor/shared/gps/gps_capture_mixin.dart';
@@ -33,10 +37,15 @@ class NonOssFormPage extends StatefulWidget {
   const NonOssFormPage({
     super.key,
     this.editingData,
+    this.editRiwayat,
     this.memilikiNibTerkunci,
     this.baselineOtaId,
     this.bidang,
   });
+
+  /// Edit data yang sudah tersimpan di server (dari halaman detail Riwayat).
+  /// Online saja; tidak lewat antrean offline.
+  final RiwayatDetail? editRiwayat;
 
   /// Slug bidang usaha untuk data BARU. Diabaikan saat mode edit (bidang
   /// diambil dari data tersimpan). null = akomodasi.
@@ -78,8 +87,13 @@ class _NonOssFormPageState extends State<NonOssFormPage>
 
   Set<_Section> _sectionErrors = {};
   bool get _isEditing => widget.editingData != null;
+  bool get _isEditingRiwayat => widget.editRiwayat != null;
+  bool get _modeEdit => _isEditing || _isEditingRiwayat;
+
   bool get _nibTerkunci =>
-      widget.memilikiNibTerkunci != null || _data.baselineOtaId != null;
+      widget.memilikiNibTerkunci != null ||
+      _data.baselineOtaId != null ||
+      _isEditingRiwayat;
 
   bool get _isDirty {
     final Map<String, String> sekarang = _data.toFields();
@@ -92,7 +106,8 @@ class _NonOssFormPageState extends State<NonOssFormPage>
         return true;
       }
     }
-    return _data.photos.length != _jumlahFotoAwal;
+    return _data.photos.length != _jumlahFotoAwal ||
+        _data.fotoHapusIds.isNotEmpty;
   }
 
   List<MapEntry<String, String>> _jenisProdukOptions = const [];
@@ -113,6 +128,104 @@ class _NonOssFormPageState extends State<NonOssFormPage>
     }
   }
 
+  Future<bool> _konfirmasiBuangPerubahan() async {
+    final bool? buang = await showDialog<bool>(
+      context: context,
+      builder: (c) => AlertDialog(
+        title: const Text('Buang perubahan?'),
+        content: const Text('Perubahan yang belum disimpan akan hilang.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(c, false),
+            child: const Text('Lanjut Mengedit'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(c, true),
+            style: FilledButton.styleFrom(backgroundColor: Colors.red),
+            child: const Text('Buang'),
+          ),
+        ],
+      ),
+    );
+    return buang ?? false;
+  }
+
+  Future<void> _simpanEditRiwayat() async {
+    if (!await NetworkGuard.pastikanOnline(
+      context,
+      pesan: 'Perlu koneksi internet untuk menyimpan perubahan.',
+    )) {
+      return;
+    }
+    if (!mounted) return;
+
+    setState(() => _saving = true);
+
+    try {
+      await RiwayatService().update(
+        widget.editRiwayat!.id,
+        fields: _data.toUpdateFields(),
+        fotoBaruPaths: _data.photos
+            .map((photo) => photo.path)
+            .toList(growable: false),
+      );
+
+      if (!mounted) return;
+      setState(() => _saving = false);
+
+      await showDialog<void>(
+        context: context,
+        builder: (c) => AlertDialog(
+          icon: const Icon(Icons.check_circle, color: Colors.green, size: 52),
+          title: const Text('Berhasil'),
+          content: const Text('Perubahan data berhasil disimpan.'),
+          actions: [
+            FilledButton(
+              onPressed: () => Navigator.pop(c),
+              child: const Text('OK'),
+            ),
+          ],
+        ),
+      );
+      if (mounted) Navigator.pop(context, true);
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      setState(() => _saving = false);
+
+      if (e.statusCode == 409) {
+        await showDialog<void>(
+          context: context,
+          builder: (c) => AlertDialog(
+            icon: const Icon(
+              Icons.sync_problem_rounded,
+              color: AppTheme.amber,
+              size: 48,
+            ),
+            title: const Text('Data sudah berubah'),
+            content: const Text(
+              'Data ini sudah diubah oleh pengguna lain. Perubahan Anda '
+              'belum tersimpan. Detail akan dimuat ulang.',
+            ),
+            actions: [
+              FilledButton(
+                onPressed: () => Navigator.pop(c),
+                child: const Text('Muat Ulang'),
+              ),
+            ],
+          ),
+        );
+        // true = pemanggil memuat ulang detail dan melihat versi terbaru.
+        if (mounted) Navigator.pop(context, true);
+      } else {
+        _error(e);
+      }
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _saving = false);
+      _error(e);
+    }
+  }
+
   Future<_BackAction?> _tanyaSimpanDraft() {
     return showDialog<_BackAction>(
       context: context,
@@ -121,7 +234,10 @@ class _NonOssFormPageState extends State<NonOssFormPage>
         title: const Text(
           'Simpan sebagai draft?',
           textAlign: TextAlign.center,
-          style: TextStyle(fontSize: AppTheme.fontJudulHalaman, fontWeight: FontWeight.w800),
+          style: TextStyle(
+            fontSize: AppTheme.fontJudulHalaman,
+            fontWeight: FontWeight.w800,
+          ),
         ),
         content: const Text(
           'Data yang sudah diisi belum tersimpan. Simpan sebagai draft '
@@ -217,6 +333,12 @@ class _NonOssFormPageState extends State<NonOssFormPage>
       Navigator.of(context).pop();
       return;
     }
+    if (_isEditingRiwayat) {
+      if (await _konfirmasiBuangPerubahan() && mounted) {
+        Navigator.of(context).pop();
+      }
+      return;
+    }
 
     final _BackAction? aksi = await _tanyaSimpanDraft();
 
@@ -253,7 +375,9 @@ class _NonOssFormPageState extends State<NonOssFormPage>
     super.initState();
     initGpsCapture();
 
-    _data = widget.editingData != null
+    _data = widget.editRiwayat != null
+        ? NonOssFormData.fromRiwayat(widget.editRiwayat!)
+        : widget.editingData != null
         ? NonOssFormData.fromLocalData(widget.editingData!)
         : NonOssFormData();
 
@@ -316,7 +440,7 @@ class _NonOssFormPageState extends State<NonOssFormPage>
     try {
       _provinces = await _regions.provinces();
 
-      if (_isEditing) {
+      if (_modeEdit) {
         await _preloadRegionsForEditing();
       }
 
@@ -517,7 +641,10 @@ class _NonOssFormPageState extends State<NonOssFormPage>
           _data.otaUrls.containsKey('lainnya') &&
           _data.otaLainnyaNama.trim().isEmpty,
     ),
-    _RequiredCheck(_Section.foto, _data.photos.isEmpty),
+    _RequiredCheck(
+      _Section.foto,
+      _data.photos.isEmpty && _data.fotoLama.isEmpty,
+    ),
   ];
 
   // Guard sinkron. _saving baru menyala setelah `await endOfFrame` di
@@ -549,6 +676,10 @@ class _NonOssFormPageState extends State<NonOssFormPage>
 
     if (failedSections.isNotEmpty) {
       _error(Exception('Ada data yang belum diisi dengan benar.'));
+      return;
+    }
+    if (_isEditingRiwayat) {
+      await _simpanEditRiwayat();
       return;
     }
 
@@ -762,7 +893,9 @@ class _NonOssFormPageState extends State<NonOssFormPage>
           const SizedBox(width: 8),
           Expanded(
             child: Text(
-              'Kepemilikan NIB: $label (terkunci dari alur Baseline OTA)',
+              _isEditingRiwayat
+                  ? 'Kepemilikan NIB: $label (tidak dapat diubah)'
+                  : 'Kepemilikan NIB: $label (terkunci dari alur Baseline OTA)',
               style: TextStyle(
                 fontSize: AppTheme.fontIsiKecil,
                 fontWeight: FontWeight.w700,
@@ -880,14 +1013,14 @@ class _NonOssFormPageState extends State<NonOssFormPage>
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                _isEditing ? 'Edit Pengawasan Non-OSS' : 'Pengawasan Non-OSS',
+                _modeEdit ? 'Edit Pengawasan Non-OSS' : 'Pengawasan Non-OSS',
                 style: const TextStyle(
                   fontSize: AppTheme.fontJudulHalaman,
                   fontWeight: FontWeight.w800,
                 ),
               ),
               Text(
-                _isEditing
+                _modeEdit
                     ? 'Perbarui data yang tersimpan'
                     : (BidangUsahaOpsi.namaDari(_data.bidang) ??
                           'Pendataan usaha pariwisata'),
@@ -1233,8 +1366,12 @@ class _NonOssFormPageState extends State<NonOssFormPage>
                                 'dd-MM-yyyy',
                               ).format(_data.tanggalPengawasan),
                             ),
-                            trailing: const Icon(Icons.calendar_month),
-                            onTap: _date,
+                            trailing: Icon(
+                              _isEditingRiwayat
+                                  ? Icons.lock_outline_rounded
+                                  : Icons.calendar_month,
+                            ),
+                            onTap: _isEditingRiwayat ? null : _date,
                           ),
                         ],
                       ),
@@ -1247,6 +1384,13 @@ class _NonOssFormPageState extends State<NonOssFormPage>
                       hasError: _sectionErrors.contains(_Section.foto),
                       child: PhotoPicker(
                         photos: _data.photos,
+                        existingUrls: <String>[
+                          for (final f in _data.fotoLama) f.url,
+                        ],
+                        onRemoveExisting: (int i) => setState(() {
+                          final f = _data.fotoLama.removeAt(i);
+                          _data.fotoHapusIds.add(f.id);
+                        }),
                         onChanged: (v) => setState(() {
                           _data.photos
                             ..clear()

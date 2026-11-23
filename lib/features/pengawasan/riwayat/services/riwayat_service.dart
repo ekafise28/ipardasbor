@@ -1,3 +1,5 @@
+import 'dart:io';
+import 'package:http/http.dart' as http;
 import '../../../../core/api/api_client.dart';
 import '../../../../core/api/api_endpoints.dart';
 import '../models/riwayat_filter.dart';
@@ -57,5 +59,36 @@ class RiwayatService {
         (body['data'] as Map<String, dynamic>?) ?? <String, dynamic>{};
 
     return RiwayatDetail.fromJson(data);
+  }
+
+  /// Simpan hasil edit (POST multipart ke endpoint detail).
+  /// [fields] dari NonOssFormData.toUpdateFields(); [fotoBaruPaths] hanya
+  /// foto baru. Melempar ApiException (409 = data sudah diubah orang lain).
+  Future<void> update(
+    int id, {
+    required Map<String, String> fields,
+    required List<String> fotoBaruPaths,
+  }) async {
+    final List<http.MultipartFile> files = <http.MultipartFile>[];
+
+    for (final String path in fotoBaruPaths) {
+      final File file = File(path);
+      if (!await file.exists()) {
+        throw Exception('Foto lokal tidak ditemukan: $path');
+      }
+      files.add(
+        await http.MultipartFile.fromPath(
+          'foto_dokumentasi[]',
+          path,
+          filename: file.uri.pathSegments.last,
+        ),
+      );
+    }
+
+    await _apiClient.multipartPost(
+      ApiEndpoints.riwayatOssDetail(id),
+      fields: fields,
+      files: files,
+    );
   }
 }

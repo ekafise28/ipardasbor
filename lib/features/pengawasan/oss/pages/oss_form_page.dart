@@ -1,4 +1,6 @@
 import 'package:ipardasbor/core/network/network_status.dart';
+import 'package:ipardasbor/features/pengawasan/riwayat/models/riwayat_detail.dart';
+import 'package:ipardasbor/features/pengawasan/riwayat/services/riwayat_service.dart';
 import 'package:ipardasbor/shared/screenshot/screenshot_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -31,9 +33,24 @@ import '../../../../shared/widgets/form/status_ketidaksesuaian_selector.dart';
 /// Data dikirim ke backend lewat [OssService.submit], yang menyimpannya
 /// ke tbl_oss_pengawasan beserta OTA dan foto dokumentasi.
 class OssFormPage extends StatefulWidget {
-  const OssFormPage({super.key, required this.validasi});
+  const OssFormPage({super.key, required this.validasi}) : editRiwayat = null;
+
+  /// Edit data OSS yang sudah tersimpan di server (dari detail Riwayat).
+  /// Online saja. Identitas (NIB, KBLI, NKU) dan jenis produk terkunci.
+  OssFormPage.edit({super.key, required RiwayatDetail detail})
+    : editRiwayat = detail,
+      validasi = OssValidasiResult(
+        nib: detail.nib ?? '',
+        kbli: detail.kbli ?? '',
+        nku: (detail.idProyek ?? '').replaceFirst(RegExp(r'^R-'), ''),
+        kbliDesc: detail.kbliDesc ?? '',
+        isValid: detail.hasilValidasi != 'TIDAK_VALID',
+        bidang: detail.bidangUsaha ?? 'akomodasi',
+        dariDaftar: detail.sumberData.toUpperCase() == 'OSS',
+      );
 
   final OssValidasiResult validasi;
+  final RiwayatDetail? editRiwayat;
 
   @override
   State<OssFormPage> createState() => _OssFormPageState();
@@ -43,6 +60,16 @@ class _OssFormPageState extends State<OssFormPage>
     with WidgetsBindingObserver, GpsCaptureMixin<OssFormPage> {
   final _key = GlobalKey<FormState>();
   late final OssFormData _data;
+
+  bool get _isEditing => widget.editRiwayat != null;
+
+  /// Jenis produk data OSS tidak boleh diubah saat edit.
+  String get _labelJenisProdukEdit {
+    for (final MapEntry<String, String> o in _jenisProdukOptions) {
+      if (o.key == _data.jenisProduk) return labelJenisProduk(o.key, o.value);
+    }
+    return _data.jenisProduk.isEmpty ? '-' : _data.jenisProduk;
+  }
 
   /// Nama bidang usaha yang sedang divalidasi (mis. "Penyediaan Akomodasi"),
   /// atau null kalau slug kosong/tidak dikenal.
@@ -118,19 +145,22 @@ class _OssFormPageState extends State<OssFormPage>
     if (_data.isValid) {
       _data.jenisProduk = _data.kbli;
     }
+    if (_isEditing) {
+      _data.isiDariRiwayat(widget.editRiwayat!);
+    }
 
     _regions = RegionService();
     _api = ApiClient.shared;
     _ossService = OssService(_api);
 
-    _namaPemilikCtrl = TextEditingController();
-    _namaBrandCtrl = TextEditingController();
-    _npwpdCtrl = TextEditingController();
-    _alamatCtrl = TextEditingController();
-    _websiteCtrl = TextEditingController();
-    _noHpCtrl = TextEditingController();
-    _emailCtrl = TextEditingController();
-    _catatanPetugasCtrl = TextEditingController();
+    _namaPemilikCtrl = TextEditingController(text: _data.namaPemilik);
+    _namaBrandCtrl = TextEditingController(text: _data.namaBrand);
+    _npwpdCtrl = TextEditingController(text: _data.npwpd);
+    _alamatCtrl = TextEditingController(text: _data.alamat);
+    _websiteCtrl = TextEditingController(text: _data.website);
+    _noHpCtrl = TextEditingController(text: _data.noHp);
+    _emailCtrl = TextEditingController(text: _data.email);
+    _catatanPetugasCtrl = TextEditingController(text: _data.catatanPetugas);
 
     _muatAwal();
   }
@@ -184,10 +214,29 @@ class _OssFormPageState extends State<OssFormPage>
   Future<void> _loadProvinces() async {
     try {
       _provinces = await _regions.provinces();
+      if (_isEditing) await _preloadRegionsForEditing();
     } catch (e) {
       _error(e);
     } finally {
       if (mounted) setState(() => _loadingRegions = false);
+    }
+  }
+
+  Future<void> _preloadRegionsForEditing() async {
+    if (_data.provinsiId != null) {
+      try {
+        _regencies = await _regions.regencies(_data.provinsiId!);
+      } catch (_) {}
+    }
+    if (_data.kabupatenId != null) {
+      try {
+        _districts = await _regions.districts(_data.kabupatenId!);
+      } catch (_) {}
+    }
+    if (_data.kecamatanId != null) {
+      try {
+        _villages = await _regions.villages(_data.kecamatanId!);
+      } catch (_) {}
     }
   }
 
@@ -373,10 +422,16 @@ class _OssFormPageState extends State<OssFormPage>
   List<_RequiredCheck> _buildChecks() => [
     _RequiredCheck(
       _Section.identitas,
-      // Untuk Manajemen Akomodasi, jenis_produk selalu "Manajemen
-      // Akomodasi" (dipaksa di backend B2), bukan pilihan petugas.
-      !_isManajemenAkomodasi && !_data.isValid && _data.jenisProduk.isEmpty,
+      !_isEditing &&
+          !_isManajemenAkomodasi &&
+          !_data.isValid &&
+          _data.jenisProduk.isEmpty,
     ),
+    if (!_isManajemenAkomodasi)
+      _RequiredCheck(
+        _Section.foto,
+        _data.photos.isEmpty && _data.fotoLama.isEmpty,
+      ),
     _RequiredCheck(_Section.identitas, _data.namaPemilik.trim().isEmpty),
     _RequiredCheck(_Section.identitas, _data.namaBrand.trim().isEmpty),
     _RequiredCheck(_Section.wilayah, _data.provinsiId == null),
@@ -419,10 +474,82 @@ class _OssFormPageState extends State<OssFormPage>
           _data.statusKetidaksesuaian.contains('LAINNYA') &&
           _data.keteranganKetidaksesuaian.trim().isEmpty,
     ),
-    // Foto Tahap 1 juga tidak relevan - foto ada per item di Tahap 2.
-    if (!_isManajemenAkomodasi)
-      _RequiredCheck(_Section.foto, _data.photos.isEmpty),
   ];
+
+  Future<void> _simpanEdit() async {
+    if (!await NetworkGuard.pastikanOnline(
+      context,
+      pesan: 'Perlu koneksi internet untuk menyimpan perubahan.',
+    )) {
+      return;
+    }
+    if (!mounted) return;
+
+    setState(() => _saving = true);
+
+    try {
+      await RiwayatService().update(
+        widget.editRiwayat!.id,
+        fields: _data.toUpdateFields(),
+        fotoBaruPaths: _data.photos
+            .map((photo) => photo.path)
+            .toList(growable: false),
+      );
+
+      if (!mounted) return;
+      setState(() => _saving = false);
+
+      await showDialog<void>(
+        context: context,
+        builder: (c) => AlertDialog(
+          icon: const Icon(Icons.check_circle, color: Colors.green, size: 52),
+          title: const Text('Berhasil'),
+          content: const Text('Perubahan data berhasil disimpan.'),
+          actions: [
+            FilledButton(
+              onPressed: () => Navigator.pop(c),
+              child: const Text('OK'),
+            ),
+          ],
+        ),
+      );
+      if (mounted) Navigator.pop(context, true);
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      setState(() => _saving = false);
+
+      if (e.statusCode == 409) {
+        await showDialog<void>(
+          context: context,
+          builder: (c) => AlertDialog(
+            icon: const Icon(
+              Icons.sync_problem_rounded,
+              color: AppTheme.amber,
+              size: 48,
+            ),
+            title: const Text('Data sudah berubah'),
+            content: const Text(
+              'Data ini sudah diubah oleh pengguna lain. Perubahan Anda '
+              'belum tersimpan. Detail akan dimuat ulang.',
+            ),
+            actions: [
+              FilledButton(
+                onPressed: () => Navigator.pop(c),
+                child: const Text('Muat Ulang'),
+              ),
+            ],
+          ),
+        );
+        if (mounted) Navigator.pop(context, true);
+      } else {
+        _error(e);
+      }
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _saving = false);
+      _error(e);
+    }
+  }
 
   Future<void> _submit() async {
     _key.currentState!.validate();
@@ -438,6 +565,11 @@ class _OssFormPageState extends State<OssFormPage>
 
     if (failedSections.isNotEmpty) {
       _error(Exception('Ada data yang belum diisi dengan benar.'));
+      return;
+    }
+
+    if (_isEditing) {
+      await _simpanEdit();
       return;
     }
 
@@ -860,9 +992,9 @@ class _OssFormPageState extends State<OssFormPage>
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              'Validasi OSS',
-              style: TextStyle(
+            Text(
+              _isEditing ? 'Edit Pengawasan OSS' : 'Validasi OSS',
+              style: const TextStyle(
                 fontSize: AppTheme.fontJudulHalaman,
                 color: Colors.white,
                 fontWeight: FontWeight.w800,
@@ -920,10 +1052,14 @@ class _OssFormPageState extends State<OssFormPage>
                                 icon: Icons.storefront_outlined,
                               ),
                               if (!_isManajemenAkomodasi)
-                                _data.isValid
+                                (_data.isValid || _isEditing)
                                     ? _lockedField(
-                                        'Jenis Produk (dari KBLI)',
-                                        _labelJenisProdukTerkunci,
+                                        _isEditing
+                                            ? 'Jenis Produk'
+                                            : 'Jenis Produk (dari KBLI)',
+                                        _isEditing
+                                            ? _labelJenisProdukEdit
+                                            : _labelJenisProdukTerkunci,
                                       )
                                     : JenisProdukDropdown(
                                         options: _jenisProdukOptions,
@@ -1142,8 +1278,12 @@ class _OssFormPageState extends State<OssFormPage>
                                     'dd-MM-yyyy',
                                   ).format(_data.tanggalPengawasan),
                                 ),
-                                trailing: const Icon(Icons.calendar_month),
-                                onTap: _date,
+                                trailing: Icon(
+                                  _isEditing
+                                      ? Icons.lock_outline_rounded
+                                      : Icons.calendar_month,
+                                ),
+                                onTap: _isEditing ? null : _date,
                               ),
                             ],
                           ),
@@ -1158,6 +1298,13 @@ class _OssFormPageState extends State<OssFormPage>
                             hasError: _sectionErrors.contains(_Section.foto),
                             child: PhotoPicker(
                               photos: _data.photos,
+                              existingUrls: <String>[
+                                for (final f in _data.fotoLama) f.url,
+                              ],
+                              onRemoveExisting: (int i) => setState(() {
+                                final f = _data.fotoLama.removeAt(i);
+                                _data.fotoHapusIds.add(f.id);
+                              }),
                               onChanged: (v) => setState(() {
                                 _data.photos
                                   ..clear()
@@ -1192,10 +1339,14 @@ class _OssFormPageState extends State<OssFormPage>
                                   ),
                             label: Text(
                               _saving
-                                  ? 'Menyimpan data...'
-                                  : (_isManajemenAkomodasi
-                                        ? 'Lanjut ke Tahap 2'
-                                        : 'Simpan Pengawasan'),
+                                  ? (_isEditing
+                                        ? 'Menyimpan perubahan...'
+                                        : 'Menyimpan data...')
+                                  : (_isEditing
+                                        ? 'Simpan Perubahan'
+                                        : (_isManajemenAkomodasi
+                                              ? 'Lanjut ke Tahap 2'
+                                              : 'Simpan Pengawasan')),
                               style: const TextStyle(
                                 fontWeight: FontWeight.w800,
                                 fontSize: AppTheme.fontJudulKartu,

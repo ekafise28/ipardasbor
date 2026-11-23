@@ -7,10 +7,22 @@ import 'package:ipardasbor/app/app_theme.dart';
 const Color _tealAksi = Color(0xFF087F8C);
 
 class PhotoPicker extends StatefulWidget {
-  const PhotoPicker({super.key, required this.photos, required this.onChanged});
+  const PhotoPicker({
+    super.key,
+    required this.photos,
+    required this.onChanged,
+    this.existingUrls = const <String>[],
+    this.onRemoveExisting,
+  });
 
   final List<XFile> photos;
   final ValueChanged<List<XFile>> onChanged;
+
+  /// Foto yang sudah tersimpan di server (mode edit). Ditampilkan lebih dulu.
+  final List<String> existingUrls;
+
+  /// Dipanggil dengan indeks di [existingUrls] saat foto lama dihapus.
+  final ValueChanged<int>? onRemoveExisting;
 
   @override
   State<PhotoPicker> createState() => _PhotoPickerState();
@@ -18,9 +30,10 @@ class PhotoPicker extends StatefulWidget {
 
 class _PhotoPickerState extends State<PhotoPicker> {
   final ImagePicker _picker = ImagePicker();
+  int get _total => widget.existingUrls.length + widget.photos.length;
 
   Future<void> _pick(ImageSource source) async {
-    if (widget.photos.length >= 5) {
+    if (_total >= 5) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Maksimal 5 foto dokumentasi.')),
       );
@@ -74,7 +87,7 @@ class _PhotoPickerState extends State<PhotoPicker> {
             ),
             const SizedBox(width: 6),
             Text(
-              '${widget.photos.length}/5 foto dipilih · minimal 1 foto',
+              '$_total/5 foto dipilih · minimal 1 foto',
               style: TextStyle(
                 color: AppTheme.textSecondary(context),
                 fontSize: 12,
@@ -82,12 +95,12 @@ class _PhotoPickerState extends State<PhotoPicker> {
             ),
           ],
         ),
-        if (widget.photos.isNotEmpty) ...[
+        if (_total > 0) ...[
           const SizedBox(height: 14),
           GridView.builder(
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
-            itemCount: widget.photos.length,
+            itemCount: _total,
             gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
               crossAxisCount: 3,
               crossAxisSpacing: 9,
@@ -95,15 +108,30 @@ class _PhotoPickerState extends State<PhotoPicker> {
               childAspectRatio: 0.9,
             ),
             itemBuilder: (_, int index) {
+              final int jumlahLama = widget.existingUrls.length;
+              final bool lama = index < jumlahLama;
+
+              final Widget gambar = lama
+                  ? Image.network(
+                      widget.existingUrls[index],
+                      fit: BoxFit.cover,
+                      errorBuilder: (BuildContext c, Object e, StackTrace? s) =>
+                          const ColoredBox(
+                            color: Color(0x11000000),
+                            child: Icon(Icons.broken_image_outlined),
+                          ),
+                    )
+                  : Image.file(
+                      File(widget.photos[index - jumlahLama].path),
+                      fit: BoxFit.cover,
+                    );
+
               return Stack(
                 fit: StackFit.expand,
                 children: [
                   ClipRRect(
                     borderRadius: BorderRadius.circular(13),
-                    child: Image.file(
-                      File(widget.photos[index].path),
-                      fit: BoxFit.cover,
-                    ),
+                    child: gambar,
                   ),
                   Positioned(
                     right: 5,
@@ -114,8 +142,13 @@ class _PhotoPickerState extends State<PhotoPicker> {
                       child: InkWell(
                         customBorder: const CircleBorder(),
                         onTap: () {
-                          final next = [...widget.photos]..removeAt(index);
-                          widget.onChanged(next);
+                          if (lama) {
+                            widget.onRemoveExisting?.call(index);
+                          } else {
+                            final next = [...widget.photos]
+                              ..removeAt(index - jumlahLama);
+                            widget.onChanged(next);
+                          }
                         },
                         child: const Padding(
                           padding: EdgeInsets.all(6),
@@ -155,8 +188,7 @@ class _PhotoButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final Color warnaEfektif =
-        textColor ?? (filled ? Colors.white : _tealAksi);
+    final Color warnaEfektif = textColor ?? (filled ? Colors.white : _tealAksi);
 
     final child = Row(
       mainAxisAlignment: MainAxisAlignment.center,

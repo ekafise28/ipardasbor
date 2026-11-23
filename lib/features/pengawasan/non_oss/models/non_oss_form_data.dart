@@ -1,4 +1,6 @@
 import 'dart:convert';
+import 'package:ipardasbor/core/constants/ota_platform_constants.dart';
+import 'package:ipardasbor/features/pengawasan/riwayat/models/riwayat_detail.dart';
 import 'package:ipardasbor/shared/utils/formatters.dart';
 import 'package:ipardasbor/shared/utils/ota_utils.dart';
 import 'package:uuid/uuid.dart';
@@ -62,6 +64,18 @@ class NonOssFormData {
   DateTime tanggalPengawasan = DateTime.now();
 
   final List<XFile> photos = <XFile>[];
+
+  /// Mode edit data server (Riwayat). null = bukan mode ini.
+  int? riwayatId;
+
+  /// updated_at yang dibaca saat detail dibuka; dikirim balik untuk
+  /// deteksi konflik (server membalas 409 kalau sudah berbeda).
+  String? versiServer;
+
+  /// Foto yang sudah ada di server. Yang dihapus petugas dikeluarkan dari
+  /// daftar ini dan id-nya dicatat di [fotoHapusIds].
+  final List<({int id, String url})> fotoLama = <({int id, String url})>[];
+  final List<int> fotoHapusIds = <int>[];
 
   static List<String> _parseStatusKetidaksesuaian(Map<String, String> payload) {
     final RegExp pattern = RegExp(r'^status_ketidaksesuaian\[(\d+)\]$');
@@ -131,6 +145,81 @@ class NonOssFormData {
     form.photos.addAll(data.photoPaths.map((String path) => XFile(path)));
 
     return form;
+  }
+
+  /// Mengisi form dari detail Riwayat (mode edit data server).
+  factory NonOssFormData.fromRiwayat(RiwayatDetail d) {
+    final NonOssFormData form = NonOssFormData();
+
+    form.riwayatId = d.id;
+    form.versiServer = d.updatedAt?.toUtc().toIso8601String();
+    form.bidang = d.bidangUsaha ?? 'akomodasi';
+    form.memilikiNib = (d.memilikiNib ?? 'TIDAK').toUpperCase();
+
+    form.namaPemilik = d.namaPemilik ?? '';
+    form.namaBrand = d.namaBrand ?? '';
+    form.jenisProduk = d.jenisProduk ?? '';
+
+    form.provinsiId = d.wilayah.provinsiId;
+    form.kabupatenId = d.wilayah.kabupatenId;
+    form.kecamatanId = d.wilayah.kecamatanId;
+    form.kelurahanId = d.wilayah.kelurahanId;
+
+    form.alamat = d.alamat ?? '';
+    form.latitude = d.latitude?.toStringAsFixed(8) ?? '';
+    form.longitude = d.longitude?.toStringAsFixed(8) ?? '';
+
+    form.npwpd = d.npwpd ?? '';
+    form.website = d.website ?? '';
+    form.noHp = d.noHp ?? '';
+    form.email = d.email ?? '';
+
+    form.terdaftarOta = (d.terdaftarOta ?? 'TIDAK').toUpperCase();
+    for (final RiwayatDetailOta o in d.ota) {
+      final String url = (o.urlListing ?? '').trim();
+      if (url.isEmpty) continue;
+
+      final String key = o.platformKey ?? OtaPlatform.lainnya;
+      form.otaUrls.putIfAbsent(key, () => <String>[]).add(url);
+
+      if (key == OtaPlatform.lainnya && form.otaLainnyaNama.isEmpty) {
+        form.otaLainnyaNama = o.namaPlatform ?? '';
+      }
+    }
+
+    form.statusKetidaksesuaian = List<String>.of(d.statusKetidaksesuaian);
+    form.keterangan = d.keterangan ?? '';
+    form.catatanPetugas = d.catatanPetugas ?? '';
+    form.tanggalPengawasan = d.tanggalPengawasan ?? DateTime.now();
+
+    for (final RiwayatDetailFoto f in d.foto) {
+      if (f.url.isNotEmpty) form.fotoLama.add((id: f.id, url: f.url));
+    }
+
+    return form;
+  }
+
+  /// Field untuk POST edit. Field yang dikunci tidak dikirim; server tetap
+  /// mengabaikannya kalau terkirim. Field opsional yang dikosongkan memang
+  /// tidak ada di hasil toFields(), dan server menyimpannya sebagai null.
+  Map<String, String> toUpdateFields() {
+    final Map<String, String> fields = toFields();
+
+    for (final String kunci in const <String>[
+      'client_uuid',
+      'memiliki_nib',
+      'bidang_usaha',
+      'tanggal_pengawasan',
+      'baseline_ota_id',
+    ]) {
+      fields.remove(kunci);
+    }
+
+    fields['updated_at'] = versiServer ?? '';
+    for (int i = 0; i < fotoHapusIds.length; i++) {
+      fields['hapus_foto_ids[$i]'] = fotoHapusIds[i].toString();
+    }
+    return fields;
   }
 
   /// Menghasilkan field multipart yang dapat langsung dikirim ke Laravel

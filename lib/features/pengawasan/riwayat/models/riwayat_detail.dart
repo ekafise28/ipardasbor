@@ -88,6 +88,9 @@ class RiwayatDetail {
     required this.updatedAt,
     required this.foto,
     required this.ota,
+    this.bidangUsaha,
+    this.tipeForm = 'NON_OSS',
+    this.bolehEdit = false,
   });
 
   final int id;
@@ -119,6 +122,18 @@ class RiwayatDetail {
   final String? alamat;
   final double? latitude;
   final double? longitude;
+
+  final String? bidangUsaha;
+
+  /// 'OSS' | 'NON_OSS' (dari backend). Menentukan form mana yang dibuka.
+  final String tipeForm;
+
+  /// Dari backend; false untuk OTA dan Manajemen Akomodasi.
+  final bool bolehEdit;
+
+  /// Tombol Edit tampil hanya kalau ini true. Versi (updated_at) wajib ada
+  /// karena dipakai server untuk mendeteksi konflik.
+  bool get bisaDiedit => bolehEdit && updatedAt != null;
 
   /// 'VALID' / 'TIDAK_VALID' - hasil validasi otomatis NIB/KBLI/NKU ke API
   /// OSS saat data ini disimpan. Null untuk data Non-OSS/OTA.
@@ -210,6 +225,9 @@ class RiwayatDetail {
                 RiwayatDetailOta.fromJson(item as Map<String, dynamic>),
           )
           .toList(),
+      bidangUsaha: json['bidang_usaha'] as String?,
+      tipeForm: (json['tipe_form'] as String?) ?? 'NON_OSS',
+      bolehEdit: json['boleh_edit'] == true,
     );
   }
 }
@@ -291,6 +309,7 @@ class RiwayatDetailOta {
     required this.longitude,
     required this.catatan,
     required this.mapsUrl,
+    this.platformKey,
   });
 
   final int id;
@@ -307,6 +326,7 @@ class RiwayatDetailOta {
   final double? longitude;
   final String? catatan;
   final String? mapsUrl;
+  final String? platformKey;
 
   factory RiwayatDetailOta.fromJson(Map<String, dynamic> json) {
     return RiwayatDetailOta(
@@ -328,6 +348,7 @@ class RiwayatDetailOta {
       longitude: asDoubleOrNull(json['longitude']),
       catatan: json['catatan'] as String?,
       mapsUrl: json['maps_url'] as String?,
+      platformKey: json['platform_key'] as String?,
     );
   }
 }

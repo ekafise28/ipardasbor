@@ -188,10 +188,14 @@ class _RiwayatPageState extends State<RiwayatPage>
     );
   }
 
-  void _bukaDetail(RiwayatItem item) {
-    Navigator.of(
-      context,
-    ).push(MaterialPageRoute(builder: (_) => RiwayatDetailPage(id: item.id)));
+  Future<void> _bukaDetail(RiwayatItem item) async {
+    final bool? berubah = await Navigator.of(context).push<bool>(
+      MaterialPageRoute<bool>(builder: (_) => RiwayatDetailPage(id: item.id)),
+    );
+
+    if (berubah == true && mounted) {
+      _ctrl.reload(showLoading: false);
+    }
   }
 
   String _namaKabupaten(int id) {

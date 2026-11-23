@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:ipardasbor/features/pengawasan/non_oss/non_oss_form_page.dart';
+import 'package:ipardasbor/features/pengawasan/oss/pages/oss_form_page.dart';
 import 'package:ipardasbor/shared/screenshot/screenshot_service.dart';
 import 'package:ipardasbor/shared/utils/formatters.dart';
 import 'package:ipardasbor/shared/widgets/app_sheet.dart';
@@ -54,6 +56,14 @@ class _RiwayatDetailPageState extends State<RiwayatDetailPage> {
   final GlobalKey _kOta = GlobalKey();
 
   bool _loading = true;
+
+  /// True kalau data diubah lewat Edit; dikembalikan ke RiwayatPage
+  /// supaya daftar dimuat ulang.
+  bool _berubah = false;
+
+  /// OSS menyusul di batch 3; sementara hanya Non-OSS.
+  bool _bisaEdit(RiwayatDetail d) => d.bisaDiedit;
+
   String? _pesanError;
   RiwayatDetail? _detail;
 
@@ -109,6 +119,21 @@ class _RiwayatDetailPageState extends State<RiwayatDetailPage> {
     }
   }
 
+  Future<void> _edit(RiwayatDetail d) async {
+    final Widget halaman = d.tipeForm == 'OSS'
+        ? OssFormPage.edit(detail: d)
+        : NonOssFormPage(editRiwayat: d);
+
+    final bool? tersimpan = await Navigator.of(
+      context,
+    ).push<bool>(MaterialPageRoute<bool>(builder: (_) => halaman));
+
+    if (tersimpan == true && mounted) {
+      _berubah = true;
+      await _muat(senyap: true);
+    }
+  }
+
   void _tanganiGagal(String pesan) {
     if (!mounted) {
       return;
@@ -146,39 +171,49 @@ class _RiwayatDetailPageState extends State<RiwayatDetailPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppTheme.scaffoldColorDynamic(context),
-      appBar: AppBar(
-        centerTitle: true,
-        scrolledUnderElevation: 0,
-        shape: Border(bottom: BorderSide(color: AppTheme.border(context))),
-        title: ValueListenableBuilder<bool>(
-          valueListenable: _judulNama,
-          builder: (BuildContext context, bool tampilNama, Widget? _) {
-            final String nama = _detail?.namaUsaha ?? '';
-            final bool pakaiNama = tampilNama && nama.isNotEmpty;
-            return AnimatedSwitcher(
-              duration: const Duration(milliseconds: 200),
-              child: Text(
-                pakaiNama ? nama : 'Detail Riwayat',
-                key: ValueKey<bool>(pakaiNama),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                  color: AppTheme.textColor(context),
-                  fontSize: 16,
-                  fontWeight: FontWeight.w700,
-                  letterSpacing: -0.2,
+    return PopScope<Object?>(
+      canPop: false,
+      onPopInvokedWithResult: (bool didPop, Object? _) {
+        if (didPop) return;
+        Navigator.of(context).pop(_berubah);
+      },
+      child: Scaffold(
+        backgroundColor: AppTheme.scaffoldColorDynamic(context),
+        appBar: AppBar(
+          centerTitle: true,
+          scrolledUnderElevation: 0,
+          shape: Border(bottom: BorderSide(color: AppTheme.border(context))),
+          title: ValueListenableBuilder<bool>(
+            valueListenable: _judulNama,
+            builder: (BuildContext context, bool tampilNama, Widget? _) {
+              final String nama = _detail?.namaUsaha ?? '';
+              final bool pakaiNama = tampilNama && nama.isNotEmpty;
+              return AnimatedSwitcher(
+                duration: const Duration(milliseconds: 200),
+                child: Text(
+                  pakaiNama ? nama : 'Detail Riwayat',
+                  key: ValueKey<bool>(pakaiNama),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    color: AppTheme.textColor(context),
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: -0.2,
+                  ),
                 ),
-              ),
-            );
-          },
+              );
+            },
+          ),
         ),
+        body: _buildBody(context),
+        bottomNavigationBar: _detail == null
+            ? null
+            : _BarAksi(
+                onBagikan: () => _tampilkanBagikan(_detail!),
+                onEdit: _bisaEdit(_detail!) ? () => _edit(_detail!) : null,
+              ),
       ),
-      body: _buildBody(context),
-      bottomNavigationBar: _detail == null
-          ? null
-          : _BarBagikan(onPressed: () => _tampilkanBagikan(_detail!)),
     );
   }
 
@@ -831,14 +866,19 @@ class _KilatSectionState extends State<_KilatSection>
   }
 }
 
-/// Bar Bagikan yang menempel di bawah layar.
-class _BarBagikan extends StatelessWidget {
-  const _BarBagikan({required this.onPressed});
+/// Bar aksi yang menempel di bawah layar: Edit (kalau boleh) dan Bagikan.
+class _BarAksi extends StatelessWidget {
+  const _BarAksi({required this.onBagikan, this.onEdit});
 
-  final VoidCallback onPressed;
+  final VoidCallback onBagikan;
+  final VoidCallback? onEdit;
 
   @override
   Widget build(BuildContext context) {
+    final RoundedRectangleBorder bentuk = RoundedRectangleBorder(
+      borderRadius: BorderRadius.circular(12),
+    );
+
     return Container(
       decoration: BoxDecoration(
         color: AppTheme.surface(context),
@@ -855,19 +895,43 @@ class _BarBagikan extends StatelessWidget {
         top: false,
         child: Padding(
           padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
-          child: FilledButton.icon(
-            onPressed: onPressed,
-            icon: const Icon(Icons.share_outlined, size: 18),
-            label: const Text(
-              'Bagikan Ringkasan',
-              style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700),
-            ),
-            style: FilledButton.styleFrom(
-              minimumSize: const Size.fromHeight(48),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
+          child: Row(
+            children: <Widget>[
+              if (onEdit != null) ...<Widget>[
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: onEdit,
+                    icon: const Icon(Icons.edit_outlined, size: 18),
+                    label: const Text(
+                      'Edit',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    style: OutlinedButton.styleFrom(
+                      minimumSize: const Size.fromHeight(48),
+                      shape: bentuk,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+              ],
+              Expanded(
+                child: FilledButton.icon(
+                  onPressed: onBagikan,
+                  icon: const Icon(Icons.share_outlined, size: 18),
+                  label: const Text(
+                    'Bagikan',
+                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700),
+                  ),
+                  style: FilledButton.styleFrom(
+                    minimumSize: const Size.fromHeight(48),
+                    shape: bentuk,
+                  ),
+                ),
               ),
-            ),
+            ],
           ),
         ),
       ),
