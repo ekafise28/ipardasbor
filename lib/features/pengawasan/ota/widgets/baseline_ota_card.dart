@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:ipardasbor/core/constants/ota_platform_constants.dart';
 import 'package:ipardasbor/shared/utils/formatters.dart';
 import 'package:ipardasbor/shared/utils/ui_actions.dart';
 import 'package:ipardasbor/shared/widgets/list_parts.dart';
@@ -31,7 +32,7 @@ class BaselineOtaCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final Color strip = item.sudahDiverifikasi
         ? AppTheme.success
-        : const Color(0xFFE0A100);
+        : AppTheme.amber;
     final bool adaAlamat = (item.alamat ?? '').trim().isNotEmpty;
 
     return Padding(
@@ -97,7 +98,7 @@ class BaselineOtaCard extends StatelessWidget {
                             'Tanpa koordinat',
                             style: TextStyle(
                               fontSize: 12,
-                              color: AppTheme.amber,
+                              color: AppTheme.amberDark,
                             ),
                           ),
                         if (item.scrapedAt != null)
@@ -175,7 +176,7 @@ class BaselineOtaCard extends StatelessWidget {
                                   flex: 4,
                                   child: OtaVerifButton(
                                     label: 'Tidak Ada',
-                                    color: Colors.red.shade700,
+                                    color: AppTheme.danger,
                                     onTap: offline ? null : onTidakAda,
                                   ),
                                 ),
@@ -184,7 +185,7 @@ class BaselineOtaCard extends StatelessWidget {
                                   flex: 4,
                                   child: OtaVerifButton(
                                     label: 'Tidak Tahu',
-                                    color: Colors.blueGrey.shade600,
+                                    color: AppTheme.menuProfil,
                                     onTap: offline ? null : onTidakTahu,
                                   ),
                                 ),
@@ -221,16 +222,8 @@ class OtaPlatformChip extends StatelessWidget {
   const OtaPlatformChip({super.key, required this.platform});
   final String? platform;
 
-  Color _warna(BuildContext context) {
-    final String p = (platform ?? '').toLowerCase();
-    if (p.contains('booking')) return const Color(0xFF003B95);
-    if (p.contains('agoda')) return const Color(0xFF5C2D91);
-    if (p.contains('traveloka')) return const Color(0xFF0770CD);
-    if (p.contains('tiket')) return const Color(0xFF0064D2);
-    if (p.contains('airbnb')) return const Color(0xFFE0314B);
-    if (p.contains('pegipegi')) return const Color(0xFFE65100);
-    return AppTheme.textSecondary(context);
-  }
+  Color _warna(BuildContext context) =>
+      OtaPlatform.warnaDari(platform) ?? AppTheme.textSecondary(context);
 
   @override
   Widget build(BuildContext context) {
@@ -344,9 +337,7 @@ class OtaStatusBadge extends StatelessWidget {
   Widget build(BuildContext context) {
     return TintChip(
       label: sudahDiverifikasi ? 'Terverifikasi' : 'Belum',
-      color: sudahDiverifikasi
-          ? AppTheme.success
-          : Color(0xFFA96700),
+      color: sudahDiverifikasi ? AppTheme.success : AppTheme.amberDark,
       icon: sudahDiverifikasi ? Icons.check_circle : Icons.access_time,
     );
   }
@@ -364,10 +355,10 @@ class OtaSudahDiverifikasiBox extends StatelessWidget {
     final bool punyaNib = (verifikasi?.nib ?? '').trim().isNotEmpty;
 
     if (s.contains('TIDAK TAHU') || s.contains('TIDAK_TAHU')) {
-      return ('Tidak Tahu', Colors.blueGrey.shade600, Icons.help_rounded);
+      return ('Tidak Tahu', AppTheme.menuProfil, Icons.help_rounded);
     }
     if (s.contains('TIDAK')) {
-      return ('Tidak Ada NIB', Colors.red.shade700, Icons.cancel_rounded);
+      return ('Tidak Ada NIB', AppTheme.danger, Icons.cancel_rounded);
     }
     if (punyaNib || s.contains('NIB') || s.contains('ADA')) {
       return ('Ada NIB', AppTheme.success, Icons.check_circle);

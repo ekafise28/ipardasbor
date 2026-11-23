@@ -503,7 +503,7 @@ class _SubmissionDetailPageState extends State<SubmissionDetailPage> {
             style: FilledButton.styleFrom(
               backgroundColor: isDraft
                   ? submissionStatus(_data).color
-                  : const Color(0xFF007AFF),
+                  : AppTheme.primaryColor,
               foregroundColor: Colors.white,
               padding: const EdgeInsets.symmetric(vertical: 14),
               shape: RoundedRectangleBorder(

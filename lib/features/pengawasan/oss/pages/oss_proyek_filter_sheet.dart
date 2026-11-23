@@ -5,13 +5,7 @@ import 'package:ipardasbor/shared/region/region_cascade.dart'
     show RegionCascade;
 import 'package:ipardasbor/shared/region/services/region_service.dart';
 import 'package:ipardasbor/features/pengawasan/oss/models/oss_proyek_filter.dart';
-import 'package:ipardasbor/shared/widgets/list_filters.dart'
-    show
-        FilterSheetFrame,
-        FilterDropdown,
-        FilterChoice,
-        FilterChoiceGroup,
-        FilterSection;
+import 'package:ipardasbor/shared/widgets/app_sheet.dart';
 
 /// Bottom sheet filter wilayah untuk daftar proyek OSS.
 ///
@@ -27,10 +21,9 @@ Future<OssProyekFilter?> showOssProyekFilterSheet(
   required List<RegionOption> provinsiOptions,
   required List<RegionOption> kabupatenOptions,
 }) {
-  return showModalBottomSheet<OssProyekFilter>(
-    context: context,
-    isScrollControlled: true,
-    backgroundColor: Colors.transparent,
+  return showAppSheet<OssProyekFilter>(
+    context,
+    transparan: true,
     builder: (_) => _OssProyekFilterSheet(
       filter: filter,
       provinsiAktifId: provinsiAktifId,

@@ -10,6 +10,7 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:ipardasbor/shared/utils/formatters.dart';
+import 'package:ipardasbor/shared/widgets/app_sheet.dart';
 
 import '../../../app/app_theme.dart';
 import '../../../shared/widgets/skeleton.dart';
@@ -158,7 +159,11 @@ class WismanChartSection extends StatelessWidget {
       chart: (bool besar) => _LineView(
         series: <_Seri>[
           for (int i = 0; i < rows.length; i++)
-            _Seri(rows[i].label, AppTheme.warnaGarisBagiRata(i, rows.length), rows[i].months),
+            _Seri(
+              rows[i].label,
+              AppTheme.warnaGarisBagiRata(i, rows.length),
+              rows[i].months,
+            ),
         ],
         height: besar ? 340 : 260,
       ),
@@ -244,61 +249,11 @@ class _ChartCard extends StatelessWidget {
   final String note;
 
   void _perbesar(BuildContext context) {
-    showModalBottomSheet<void>(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: AppTheme.surface(context),
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (BuildContext sheet) {
-        return SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(16, 14, 16, 20),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: <Widget>[
-                Center(
-                  child: Container(
-                    width: 48,
-                    height: 4,
-                    decoration: BoxDecoration(
-                      color: AppTheme.border(sheet),
-                      borderRadius: BorderRadius.circular(4),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 12),
-                Row(
-                  children: <Widget>[
-                    Expanded(
-                      child: Text(
-                        title,
-                        style: TextStyle(
-                          color: AppTheme.textColor(sheet),
-                          fontSize: 17,
-                          fontWeight: FontWeight.w800,
-                        ),
-                      ),
-                    ),
-                    IconButton(
-                      icon: const Icon(Icons.close_rounded),
-                      onPressed: () => Navigator.of(sheet).pop(),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                Flexible(
-                  child: SingleChildScrollView(
-                    child: kosong ? _kosongView(sheet, 300) : chart(true),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        );
-      },
+    showTitledSheet<void>(
+      context,
+      title: title,
+      builder: (BuildContext sheet) =>
+          kosong ? _kosongView(sheet, 300) : chart(true),
     );
   }
 

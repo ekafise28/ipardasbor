@@ -1,13 +1,3 @@
-// Pilihan filter dashboard Wisman + daftar opsinya.
-// Semua nilai disimpan sebagai String; server yang mengubahnya ke angka.
-
-class WismanOption {
-  const WismanOption(this.value, this.label);
-
-  final String value;
-  final String label;
-}
-
 class WismanFilter {
   const WismanFilter({
     this.tahun = const <String>[],

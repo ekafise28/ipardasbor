@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:ipardasbor/app/app_theme.dart';
 
+const Color _tealAksi = Color(0xFF087F8C);
+
 class PhotoPicker extends StatefulWidget {
   const PhotoPicker({super.key, required this.photos, required this.onChanged});
 
@@ -154,7 +156,7 @@ class _PhotoButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final Color warnaEfektif =
-        textColor ?? (filled ? Colors.white : const Color(0xFF087F8C));
+        textColor ?? (filled ? Colors.white : _tealAksi);
 
     final child = Row(
       mainAxisAlignment: MainAxisAlignment.center,
@@ -174,7 +176,7 @@ class _PhotoButton extends StatelessWidget {
           ? FilledButton(
               onPressed: onPressed,
               style: FilledButton.styleFrom(
-                backgroundColor: const Color(0xFF087F8C),
+                backgroundColor: _tealAksi,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(13),
                 ),
@@ -184,7 +186,7 @@ class _PhotoButton extends StatelessWidget {
           : OutlinedButton(
               onPressed: onPressed,
               style: OutlinedButton.styleFrom(
-                foregroundColor: const Color(0xFF087F8C),
+                foregroundColor: _tealAksi,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(13),
                 ),

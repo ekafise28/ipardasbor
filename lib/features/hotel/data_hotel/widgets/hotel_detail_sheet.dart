@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:ipardasbor/app/app_theme.dart';
 import 'package:ipardasbor/shared/utils/formatters.dart';
+import 'package:ipardasbor/shared/widgets/app_sheet.dart';
 import 'package:ipardasbor/shared/widgets/detail_cards.dart'
     show Baris, DetailCard, KotakBaris, SectionCard;
 import 'package:ipardasbor/shared/widgets/list_parts.dart';
@@ -18,23 +19,13 @@ Future<void> showHotelDetailSheet(
   required DataHotelService service,
   HotelFooterBuilder? footerBuilder,
 }) {
-  return showModalBottomSheet<void>(
-    context: context,
-    isScrollControlled: true,
-    useSafeArea: true,
-    showDragHandle: true,
-    builder: (_) => DraggableScrollableSheet(
-      expand: false,
-      initialChildSize: 0.8,
-      minChildSize: 0.4,
-      maxChildSize: 0.95,
-      builder: (BuildContext context, ScrollController controller) =>
-          _DetailIsi(
-            item: item,
-            service: service,
-            controller: controller,
-            footerBuilder: footerBuilder,
-          ),
+  return showDraggableSheet<void>(
+    context,
+    builder: (BuildContext context, ScrollController controller) => _DetailIsi(
+      item: item,
+      service: service,
+      controller: controller,
+      footerBuilder: footerBuilder,
     ),
   );
 }

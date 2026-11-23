@@ -12,8 +12,8 @@ import 'package:ipardasbor/features/pengawasan/non_oss/offline/non_oss_local_dat
 /// tempat yang menampilkan status ajuan (halaman detail).
 ({String label, Color color}) submissionStatus(NonOssLocalData d) {
   if (d.isDraft) return (label: 'DRAFT', color: AppTheme.neutralGrey);
-  if (d.isFailed) return (label: 'GAGAL', color: const Color(0xFFFF3B30));
-  return (label: 'PENDING', color: const Color(0xFFFF9500));
+  if (d.isFailed) return (label: 'GAGAL', color: AppTheme.errorStrong);
+  return (label: 'PENDING', color: AppTheme.amber);
 }
 
 /// Daftar bagian form yang belum lengkap, dikelompokkan per section.

@@ -2,6 +2,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:ipardasbor/features/profile/models/kelola_akun.dart';
+import 'package:ipardasbor/shared/widgets/app_sheet.dart';
 
 import '../../../app/app_theme.dart';
 import '../../../core/api/api_exception.dart';
@@ -42,7 +43,7 @@ class _KelolaAkunPageState extends State<KelolaAkunPage> {
   int _page = 1;
 
   static const Color _merah = AppTheme.errorStrong;
-  static const Color _merahBg = Color(0x1FC62828);
+  static final Color _merahBg = AppTheme.errorStrong.withValues(alpha: 0.12);
 
   @override
   void initState() {
@@ -115,7 +116,7 @@ class _KelolaAkunPageState extends State<KelolaAkunPage> {
         return (AppTheme.primaryColor, Colors.white);
       case 'operator':
       case 'editor':
-        return (const Color(0x33F59E0B), AppTheme.amberDark);
+        return (AppTheme.amber.withValues(alpha: 0.2), AppTheme.amberDark);
       default:
         return (
           AppTheme.surfaceMuted(context),
@@ -190,7 +191,7 @@ class _KelolaAkunPageState extends State<KelolaAkunPage> {
                     Container(
                       width: 44,
                       height: 44,
-                      decoration: const BoxDecoration(
+                      decoration: BoxDecoration(
                         color: _merahBg,
                         shape: BoxShape.circle,
                       ),
@@ -511,14 +512,9 @@ class _KelolaAkunPageState extends State<KelolaAkunPage> {
     final confirmFocus = FocusNode();
     bool obscurePass = true;
     bool obscureConfirm = true;
-    showModalBottomSheet<void>(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: AppTheme.surface(context),
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (modalCtx) {
+    showAppSheet<void>(
+      context,
+      builder: (BuildContext modalCtx) {
         return StatefulBuilder(
           builder: (context, setModalState) {
             return Padding(

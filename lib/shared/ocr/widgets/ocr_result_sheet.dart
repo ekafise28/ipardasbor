@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:ipardasbor/app/app_theme.dart';
 import 'package:ipardasbor/core/constants/kbli_constants.dart';
+import 'package:ipardasbor/shared/widgets/app_sheet.dart';
 
 import '../models/ocr_field_type.dart';
 import '../models/ocr_result.dart';
@@ -40,9 +41,8 @@ Future<OcrSheetResult?> showOcrResultSheet(
   Set<OcrFieldType> preChecked = const {},
   String bidang = 'akomodasi',
 }) {
-  return showModalBottomSheet<OcrSheetResult>(
-    context: context,
-    isScrollControlled: true,
+  return showAppSheet<OcrSheetResult>(
+    context,
     useSafeArea: true,
     showDragHandle: true,
     builder: (_) => _OcrResultSheet(
@@ -270,9 +270,7 @@ class _OcrResultSheetState extends State<_OcrResultSheet> {
         width: double.infinity,
         child: FilledButton.icon(
           onPressed: _retry,
-          style: FilledButton.styleFrom(
-            backgroundColor: AppTheme.primaryColor,
-          ),
+          style: FilledButton.styleFrom(backgroundColor: AppTheme.primaryColor),
           icon: const Icon(Icons.image_search_outlined),
           label: const Text('Pilih gambar lagi'),
         ),
@@ -413,9 +411,7 @@ class _OcrResultSheetState extends State<_OcrResultSheet> {
         color: AppTheme.surfaceMuted(context),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: live.hasWarning
-              ? AppTheme.amber
-              : AppTheme.border(context),
+          color: live.hasWarning ? AppTheme.amber : AppTheme.border(context),
         ),
       ),
       child: Column(
@@ -441,7 +437,7 @@ class _OcrResultSheetState extends State<_OcrResultSheet> {
                   fontSize: 12,
                   fontWeight: FontWeight.w700,
                   color: lengthOff
-                      ?AppTheme.amberDark
+                      ? AppTheme.amberDark
                       : AppTheme.textSecondary(context),
                 ),
               ),

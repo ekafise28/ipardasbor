@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:ipardasbor/shared/widgets/list_filters.dart'
-    show FilterSheetFrame, FilterSection, FilterChoiceGroup, FilterChoice;
+import 'package:ipardasbor/shared/widgets/app_sheet.dart';
 
 /// Sheet filter provinsi (multi-pilih). Mengembalikan daftar terpilih
 /// (kosong = semua provinsi), atau null kalau ditutup tanpa menerapkan.
@@ -9,10 +8,9 @@ Future<List<String>?> showHotelFilterSheet(
   required List<String> pilihan,
   required List<String> terpilih,
 }) {
-  return showModalBottomSheet<List<String>>(
-    context: context,
-    isScrollControlled: true,
-    backgroundColor: Colors.transparent,
+  return showAppSheet<List<String>>(
+    context,
+    transparan: true,
     builder: (_) => _FilterSheet(pilihan: pilihan, terpilih: terpilih),
   );
 }

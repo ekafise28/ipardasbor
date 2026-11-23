@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:ipardasbor/app/app_theme.dart';
-import 'package:ipardasbor/shared/widgets/list_filters.dart'
-    show FilterSheetFrame, FilterSection, FilterChoiceGroup, FilterChoice, FilterOptions;
+import 'package:ipardasbor/shared/widgets/app_sheet.dart';
+import 'package:ipardasbor/shared/widgets/list_filters.dart' show FilterOptions;
 
 typedef FilterPilihan = ({
   List<int> tahun,
@@ -22,10 +21,9 @@ Future<FilterPilihan?> showTahunProvinsiFilterSheet(
   String title = 'Filter',
   String? subtitle,
 }) {
-  return showModalBottomSheet<FilterPilihan>(
-    context: context,
-    isScrollControlled: true,
-    backgroundColor: Colors.transparent,
+  return showAppSheet<FilterPilihan>(
+    context,
+    transparan: true,
     builder: (_) => _FilterSheet(
       loadOptions: loadOptions,
       tahun: tahun,
@@ -66,59 +64,22 @@ class _FilterSheetState extends State<_FilterSheet> {
   late List<String> _provinsi = <String>[...widget.provinsi];
   late List<String> _pintu = <String>[...widget.pintuMasuk];
 
-  FilterOptions? _opsi;
-  bool _gagal = false;
+  late final PemuatOpsi<FilterOptions> _opsi;
 
   @override
   void initState() {
     super.initState();
-    _muat();
+    _opsi = PemuatOpsi<FilterOptions>(widget.loadOptions);
   }
 
-  Future<void> _muat() async {
-    setState(() => _gagal = false);
-    try {
-      final FilterOptions o = await widget.loadOptions();
-      if (!mounted) return;
-      setState(() => _opsi = o);
-    } catch (_) {
-      if (mounted) setState(() => _gagal = true);
-    }
+  @override
+  void dispose() {
+    _opsi.dispose();
+    super.dispose();
   }
 
-  Widget _isiPilihan(Widget Function(FilterOptions o) bangun) {
-    if (_gagal) {
-      return Row(
-        children: <Widget>[
-          Expanded(
-            child: Text(
-              'Pilihan gagal dimuat.',
-              style: TextStyle(
-                fontSize: 12.5,
-                color: AppTheme.textSecondary(context),
-              ),
-            ),
-          ),
-          TextButton(onPressed: _muat, child: const Text('Coba lagi')),
-        ],
-      );
-    }
-    final FilterOptions? o = _opsi;
-    if (o == null) {
-      return const SizedBox(
-        height: 40,
-        child: Align(
-          alignment: Alignment.centerLeft,
-          child: SizedBox(
-            width: 18,
-            height: 18,
-            child: CircularProgressIndicator(strokeWidth: 2),
-          ),
-        ),
-      );
-    }
-    return bangun(o);
-  }
+  Widget _isiPilihan(Widget Function(FilterOptions o) bangun) =>
+      IsiPilihan<FilterOptions>(pemuat: _opsi, bangun: bangun);
 
   @override
   Widget build(BuildContext context) {
@@ -153,8 +114,9 @@ class _FilterSheetState extends State<_FilterSheet> {
               ],
               selected: <String>[for (final int t in _tahun) '$t'],
               onChanged: (List<String> v) => setState(
-                () => _tahun = v.map(int.parse).toList()
-                  ..sort((int a, int b) => b.compareTo(a)),
+                () =>
+                    _tahun = v.map(int.parse).toList()
+                      ..sort((int a, int b) => b.compareTo(a)),
               ),
             ),
           ),

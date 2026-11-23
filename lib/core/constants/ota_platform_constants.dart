@@ -1,3 +1,5 @@
+import 'package:flutter/painting.dart' show Color;
+
 /// Daftar platform OTA. Key = nilai yang dikirim ke API, label = nama tampilan.
 ///
 /// Label HARUS sama persis dengan `$platformMap` di OssPengawasanController
@@ -29,5 +31,26 @@ class OtaPlatform {
       return lainnyaNama.trim();
     }
     return labelDari(key);
+  }
+
+  /// Warna identitas tiap OTA, dicocokkan dari nama platform (huruf kecil,
+  /// memuat kata kuncinya). Urutan penting: yang pertama cocok dipakai.
+  static const List<(String, Color)> _warnaMerek = <(String, Color)>[
+    ('booking', Color(0xFF003B95)),
+    ('agoda', Color(0xFF5C2D91)),
+    ('traveloka', Color(0xFF0770CD)),
+    ('tiket', Color(0xFF0064D2)),
+    ('airbnb', Color(0xFFE0314B)),
+    ('pegipegi', Color(0xFFE65100)),
+  ];
+
+  /// Warna merek platform; null bila tidak dikenal (pemanggil memakai
+  /// warna netral dari tema).
+  static Color? warnaDari(String? platform) {
+    final String p = (platform ?? '').toLowerCase();
+    for (final (String kata, Color warna) in _warnaMerek) {
+      if (p.contains(kata)) return warna;
+    }
+    return null;
   }
 }

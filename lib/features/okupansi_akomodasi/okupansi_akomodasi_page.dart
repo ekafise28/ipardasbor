@@ -125,7 +125,7 @@ class _OkupansiAkomodasiPageState extends State<OkupansiAkomodasiPage> {
         SnackBar(
           content: Text(message),
           behavior: SnackBarBehavior.floating,
-          backgroundColor: Colors.red.shade700,
+          backgroundColor: AppTheme.danger,
         ),
       );
   }

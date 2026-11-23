@@ -53,7 +53,7 @@ class AppBanner extends StatelessWidget {
       ),
       BannerTone.info => (
         isDark ? AppTheme.primaryLight : AppTheme.primaryColor,
-        isDark ? const Color(0xFF16263A) : const Color(0xFFE8F1FD),
+        isDark ? const Color(0xFF16263A) : AppTheme.menuDashboardBg,
         AppTheme.textColor(context),
         AppTheme.textSecondary(context),
       ),

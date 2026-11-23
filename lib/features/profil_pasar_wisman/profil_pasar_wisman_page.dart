@@ -123,7 +123,7 @@ class _ProfilPasarWismanPageState extends State<ProfilPasarWismanPage> {
         SnackBar(
           content: Text(message),
           behavior: SnackBarBehavior.floating,
-          backgroundColor: Colors.red.shade700,
+          backgroundColor: AppTheme.danger,
         ),
       );
   }

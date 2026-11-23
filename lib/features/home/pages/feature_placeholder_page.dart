@@ -47,8 +47,8 @@ class FeaturePlaceholderPage extends StatelessWidget {
                 '${menu.description}. Fitur ini akan kita kembangkan '
                 'pada tahap berikutnya.',
                 textAlign: TextAlign.center,
-                style: const TextStyle(
-                  color: Color(0xFF748197),
+                style: TextStyle(
+                  color: AppTheme.textSecondary(context),
                   fontSize: 14,
                   height: 1.5,
                 ),

@@ -6,6 +6,7 @@ import 'package:ipardasbor/app/app_theme.dart';
 import 'package:ipardasbor/core/api/api_exception.dart';
 import 'package:ipardasbor/core/network/network_status.dart';
 import 'package:ipardasbor/shared/utils/formatters.dart';
+import 'package:ipardasbor/shared/widgets/app_sheet.dart';
 import 'package:share_plus/share_plus.dart';
 
 import '../models/proyek_data_filter.dart';
@@ -19,15 +20,12 @@ Future<void> showDataProyekUnduhSheet(
   required ProyekDataService service,
   required int total,
 }) {
-  return showModalBottomSheet<void>(
-    context: context,
-    isScrollControlled: true,
+  return showAppSheet<void>(
+    context,
     useSafeArea: true,
     showDragHandle: true,
-    isDismissible: false,
-    enableDrag: false,
-    builder: (_) =>
-        _UnduhSheet(filter: filter, service: service, total: total),
+    dismissible: false,
+    builder: (_) => _UnduhSheet(filter: filter, service: service, total: total),
   );
 }
 

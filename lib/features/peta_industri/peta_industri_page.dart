@@ -15,6 +15,9 @@ import '../../core/api/api_exception.dart';
 import 'models/peta_industri_model.dart';
 import 'services/peta_industri_service.dart';
 
+const Color _biruMuda = Color(0xFF16A3E0);
+const Color _oranyeTua = Color(0xFFF57C00);
+
 /// Peta Industri Pariwisata Indonesia (padanan menu "Peta Industri" di web).
 /// Batch 1: peta + marker per provinsi + info total usaha.
 /// Batch berikutnya: grafik risiko per KBLI dan detail rekap.
@@ -509,7 +512,7 @@ class _DenyutSorot extends StatelessWidget {
         shape: BoxShape.circle,
         color: AppTheme.primaryColor.withValues(alpha: 0.18 * alpha),
         border: Border.all(
-          color: const Color(0xFF16A3E0).withValues(alpha: alpha),
+          color: _biruMuda.withValues(alpha: alpha),
           width: 3,
         ),
       ),
@@ -526,8 +529,8 @@ class _IndustriPin extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final List<Color> warna = milikSaya
-        ? const [Color(0xFFFFB74D), Color(0xFFF57C00)]
-        : const [Color(0xFF16A3E0), AppTheme.primaryColor];
+        ? const [Color(0xFFFFB74D), _oranyeTua]
+        : const [_biruMuda, AppTheme.primaryColor];
 
     return Transform.rotate(
       angle: -0.785398,
@@ -551,7 +554,7 @@ class _IndustriPin extends StatelessWidget {
             BoxShadow(
               color:
                   (milikSaya
-                          ? const Color(0xFFF57C00)
+                          ? _oranyeTua
                           : const Color(0xFF054582))
                       .withValues(alpha: 0.35),
               blurRadius: 10,

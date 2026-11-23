@@ -1,16 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:ipardasbor/app/app_theme.dart';
-import 'package:ipardasbor/shared/widgets/list_filters.dart'
-    show
-        FilterSheetFrame,
-        FilterChoiceGroup,
-        FilterChoice,
-        FilterSection;
+import 'package:ipardasbor/shared/widgets/app_sheet.dart';
 
 import '../models/proyek_data_filter.dart';
 import '../models/proyek_data_option.dart';
 import '../services/proyek_data_service.dart';
 import 'data_proyek_option_picker.dart';
+
+typedef _OpsiServer = (List<ProyekDataOption>, List<ProyekDataOption>);
 
 /// Sheet filter Data Proyek. [provinsiTerkunci] terisi kalau akun hanya
 /// punya satu provinsi: kolom Provinsi disembunyikan dan Kab/Kota langsung
@@ -23,10 +20,9 @@ Future<ProyekDataFilter?> showDataProyekFilterSheet(
   required ProyekDataService service,
   String? provinsiTerkunci,
 }) {
-  return showModalBottomSheet<ProyekDataFilter>(
-    context: context,
-    isScrollControlled: true,
-    backgroundColor: Colors.transparent,
+  return showAppSheet<ProyekDataFilter>(
+    context,
+    transparan: true,
     builder: (_) => _FilterSheet(
       filter: filter,
       service: service,
@@ -58,10 +54,6 @@ class _FilterSheetState extends State<_FilterSheet> {
   late List<String> _risiko = <String>[...widget.filter.risiko];
   late int? _versi = widget.filter.versiKbli;
 
-  List<ProyekDataOption>? _opsiStatus;
-  List<ProyekDataOption>? _opsiRisiko;
-  bool _opsiGagal = false;
-
   int get _aktif =>
       (_tampilProvinsi && _provinsi != null ? 1 : 0) +
       (_kota.isNotEmpty ? 1 : 0) +
@@ -70,15 +62,12 @@ class _FilterSheetState extends State<_FilterSheet> {
       (_risiko.isNotEmpty ? 1 : 0) +
       (_versi != null ? 1 : 0);
 
+  late final PemuatOpsi<_OpsiServer> _opsi;
+
   @override
   void initState() {
     super.initState();
-    _muatOpsi();
-  }
-
-  Future<void> _muatOpsi() async {
-    setState(() => _opsiGagal = false);
-    try {
+    _opsi = PemuatOpsi<_OpsiServer>(() async {
       final List<ProyekDataOptionResult> hasil =
           await Future.wait<ProyekDataOptionResult>(
             <Future<ProyekDataOptionResult>>[
@@ -86,61 +75,35 @@ class _FilterSheetState extends State<_FilterSheet> {
               widget.service.fetchOptions(tipe: ProyekDataOptionType.risiko),
             ],
           );
-      if (!mounted) return;
-      setState(() {
-        _opsiStatus = hasil[0].options;
-        _opsiRisiko = hasil[1].options;
-      });
-    } catch (_) {
-      if (mounted) setState(() => _opsiGagal = true);
-    }
+      return (hasil[0].options, hasil[1].options);
+    });
+  }
+
+  @override
+  void dispose() {
+    _opsi.dispose();
+    super.dispose();
   }
 
   /// Chip pilihan dari server (banyak pilihan). [warna] opsional untuk gaya
   /// berwarna (risiko).
   Widget _pilihan({
-    required List<ProyekDataOption>? opsi,
+    required List<ProyekDataOption> Function(_OpsiServer o) pilih,
     required List<String> terpilih,
     required ValueChanged<List<String>> simpan,
     Color Function(ProyekDataOption o)? warna,
   }) {
-    if (_opsiGagal) {
-      return Row(
-        children: <Widget>[
-          Expanded(
-            child: Text(
-              'Pilihan gagal dimuat.',
-              style: TextStyle(
-                fontSize: 12.5,
-                color: AppTheme.textSecondary(context),
-              ),
-            ),
-          ),
-          TextButton(onPressed: _muatOpsi, child: const Text('Coba lagi')),
+    return IsiPilihan<_OpsiServer>(
+      pemuat: _opsi,
+      bangun: (_OpsiServer o) => FilterChoiceGroup(
+        multi: true,
+        options: <FilterChoice>[
+          for (final ProyekDataOption p in pilih(o))
+            FilterChoice(value: p.value, label: p.label, color: warna?.call(p)),
         ],
-      );
-    }
-    if (opsi == null) {
-      return const SizedBox(
-        height: 40,
-        child: Align(
-          alignment: Alignment.centerLeft,
-          child: SizedBox(
-            width: 18,
-            height: 18,
-            child: CircularProgressIndicator(strokeWidth: 2),
-          ),
-        ),
-      );
-    }
-    return FilterChoiceGroup(
-      multi: true,
-      options: <FilterChoice>[
-        for (final ProyekDataOption o in opsi)
-          FilterChoice(value: o.value, label: o.label, color: warna?.call(o)),
-      ],
-      selected: terpilih,
-      onChanged: (List<String> v) => setState(() => simpan(v)),
+        selected: terpilih,
+        onChanged: (List<String> v) => setState(() => simpan(v)),
+      ),
     );
   }
 
@@ -278,7 +241,7 @@ class _FilterSheetState extends State<_FilterSheet> {
         FilterSection(
           label: 'Penanaman Modal',
           child: _pilihan(
-            opsi: _opsiStatus,
+            pilih: (_OpsiServer o) => o.$1,
             terpilih: _status,
             simpan: (List<String> v) => _status = v,
           ),
@@ -286,7 +249,7 @@ class _FilterSheetState extends State<_FilterSheet> {
         FilterSection(
           label: 'Tingkat Risiko',
           child: _pilihan(
-            opsi: _opsiRisiko,
+            pilih: (_OpsiServer o) => o.$2,
             terpilih: _risiko,
             simpan: (List<String> v) => _risiko = v,
             warna: (ProyekDataOption o) => AppTheme.warnaRisiko(o.label),

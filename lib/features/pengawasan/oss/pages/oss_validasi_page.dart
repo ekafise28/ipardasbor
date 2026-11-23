@@ -307,7 +307,7 @@ class _OssValidasiPageState extends State<OssValidasiPage> {
                   gradient: const LinearGradient(
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
-                    colors: [Color(0xFF0B4E91), AppTheme.primaryColor],
+                    colors: AppTheme.formHeaderGradient,
                   ),
                   borderRadius: BorderRadius.circular(20),
                 ),
@@ -331,7 +331,7 @@ class _OssValidasiPageState extends State<OssValidasiPage> {
                           Text(
                             'Pastikan data sesuai sebelum lanjut ke form pengawasan.',
                             style: TextStyle(
-                              color: Color(0xFFE7F2FF),
+                              color: AppTheme.formHeaderText,
                               height: 1.35,
                             ),
                           ),

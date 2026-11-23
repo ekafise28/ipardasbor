@@ -1,13 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:ipardasbor/app/app_theme.dart' show AppTheme;
-import 'package:ipardasbor/shared/widgets/list_filters.dart'
-    show
-        FilterSheetFrame,
-        FilterDropdown,
-        FilterDateField,
-        FilterChoice,
-        FilterChoiceGroup,
-        FilterSection;
+import 'package:ipardasbor/shared/widgets/app_sheet.dart';
 
 import '../../../../core/constants/bidang_usaha_constants.dart';
 
@@ -24,10 +17,9 @@ Future<RiwayatFilter?> showRiwayatFilterSheet(
   required RiwayatFilter filter,
   required RiwayatFilterOptions options,
 }) {
-  return showModalBottomSheet<RiwayatFilter>(
-    context: context,
-    isScrollControlled: true,
-    backgroundColor: Colors.transparent,
+  return showAppSheet<RiwayatFilter>(
+    context,
+    transparan: true,
     builder: (_) => _RiwayatFilterSheet(filter: filter, options: options),
   );
 }

@@ -6,6 +6,11 @@ import 'package:latlong2/latlong.dart';
 
 import '../../gps/location_fetch_status.dart';
 
+const Color _hijauLokasi = Color(0xFF1F9D68);
+const Color _hijauLokasiGaris = Color(0xFFBCE8D1);
+const Color _abuLatar = Color(0xFFF7F9FB);
+const Color _abuSlate = Color(0xFF64748B);
+
 class LocationPicker extends StatelessWidget {
   const LocationPicker({
     super.key,
@@ -48,11 +53,11 @@ class LocationPicker extends StatelessWidget {
           decoration: BoxDecoration(
             color: hasLocation
                 ? const Color(0xFFEAF8F1)
-                : const Color(0xFFF7F9FB),
+                : _abuLatar,
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
               color: hasLocation
-                  ? const Color(0xFFBCE8D1)
+                  ? _hijauLokasiGaris
                   : const Color(0xFFE5EBF0),
             ),
           ),
@@ -61,7 +66,7 @@ class LocationPicker extends StatelessWidget {
               Icon(
                 hasLocation ? Icons.check_circle : Icons.location_searching,
                 color: hasLocation
-                    ? const Color(0xFF1F9D68)
+                    ? _hijauLokasi
                     : AppTheme.textSecondary(context),
               ),
               const SizedBox(width: 9),
@@ -131,7 +136,7 @@ class LocationPicker extends StatelessWidget {
                         height: 50,
                         child: const Icon(
                           Icons.location_pin,
-                          color: Color(0xFFE53935),
+                          color: AppTheme.danger,
                           size: 46,
                         ),
                       ),
@@ -232,14 +237,14 @@ class _CountdownBadge extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: const Color(0xFFBCE8D1)),
+        border: Border.all(color: _hijauLokasiGaris),
       ),
       child: Text(
         '${sisaDetik}s',
         style: const TextStyle(
           fontSize: 12,
           fontWeight: FontWeight.w800,
-          color: Color(0xFF1F9D68),
+          color: _hijauLokasi,
         ),
       ),
     );
@@ -257,7 +262,7 @@ class _Coordinate extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
-        color: const Color(0xFFF7F9FB),
+        color: _abuLatar,
         borderRadius: BorderRadius.circular(11),
       ),
       child: Column(
@@ -304,7 +309,7 @@ class _SumberBadge extends StatelessWidget {
             'Perangkat sedang offline - koordinat ini dari lokasi tersimpan terakhir, bukan posisi saat ini.';
         break;
       case LocationSource.tersimpanSinyalLemah:
-        warna = const Color(0xFF64748B);
+        warna = _abuSlate;
         pesan =
             'Sinyal GPS lemah - koordinat ini dari lokasi tersimpan terakhir, bukan posisi saat ini.';
         break;
@@ -317,7 +322,7 @@ class _SumberBadge extends StatelessWidget {
             'GPS dan lokasi tersimpan sistem tidak tersedia - memakai koordinat cadangan aplikasi dari $waktu, bukan posisi saat ini.';
         break;
       case LocationSource.gpsLangsung:
-        warna = const Color(0xFF64748B);
+        warna = _abuSlate;
         pesan = '';
         break;
       case LocationSource.tersimpanLayananNonaktif:

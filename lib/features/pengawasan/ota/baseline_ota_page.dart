@@ -4,6 +4,7 @@ import 'package:ipardasbor/shared/pagination/pagination_bar.dart';
 import 'package:ipardasbor/shared/widgets/app_banner.dart';
 import 'package:ipardasbor/features/pengawasan/oss/oss_proyek_page.dart';
 import 'package:ipardasbor/shared/pagination/back_to_top_mixin.dart';
+import 'package:ipardasbor/shared/widgets/app_sheet.dart';
 import 'package:ipardasbor/shared/widgets/list_filters.dart';
 import 'package:ipardasbor/shared/widgets/list_parts.dart';
 
@@ -163,17 +164,15 @@ class _BaselineOtaPageState extends State<BaselineOtaPage>
 
   Future<void> _bukaFilter() async {
     if (_filterOptions == null) return;
-    final BaselineOtaFilter? hasil =
-        await showModalBottomSheet<BaselineOtaFilter>(
-          context: context,
-          isScrollControlled: true,
-          backgroundColor: Colors.transparent,
-          builder: (_) => OssBaselineOtaFilterSheet(
-            filter: _filter,
-            filterOptions: _filterOptions!,
-            regionService: _regions,
-          ),
-        );
+    final BaselineOtaFilter? hasil = await showAppSheet<BaselineOtaFilter>(
+      context,
+      transparan: true,
+      builder: (_) => OssBaselineOtaFilterSheet(
+        filter: _filter,
+        filterOptions: _filterOptions!,
+        regionService: _regions,
+      ),
+    );
     if (hasil != null) {
       setState(() => _filter = hasil);
       _searchCtrl.text = hasil.namaListing ?? '';

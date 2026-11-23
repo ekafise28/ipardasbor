@@ -225,7 +225,7 @@ class BaselineOtaDetailPage extends StatelessWidget {
                                 flex: 4,
                                 child: OtaVerifButton(
                                   label: 'Tidak Ada',
-                                  color: Colors.red.shade700,
+                                  color: AppTheme.danger,
                                   onTap: pilih(BaselineOtaAksi.tidakAda),
                                 ),
                               ),
@@ -234,7 +234,7 @@ class BaselineOtaDetailPage extends StatelessWidget {
                                 flex: 4,
                                 child: OtaVerifButton(
                                   label: 'Tidak Tahu',
-                                  color: Colors.blueGrey.shade600,
+                                  color: AppTheme.menuProfil,
                                   onTap: pilih(BaselineOtaAksi.tidakTahu),
                                 ),
                               ),

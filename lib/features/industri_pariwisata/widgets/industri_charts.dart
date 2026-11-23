@@ -11,6 +11,7 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:ipardasbor/shared/utils/formatters.dart';
+import 'package:ipardasbor/shared/widgets/app_sheet.dart';
 
 import '../../../app/app_theme.dart';
 import '../../../shared/widgets/skeleton.dart';
@@ -162,65 +163,11 @@ class IndustriChartCard extends StatelessWidget {
   final bool bar;
 
   void _openDetail(BuildContext context) {
-    showModalBottomSheet<void>(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: AppTheme.surface(context),
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (BuildContext sheetContext) {
-        return SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(16, 14, 16, 20),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: <Widget>[
-                Center(
-                  child: Container(
-                    width: 48,
-                    height: 4,
-                    decoration: BoxDecoration(
-                      color: AppTheme.border(sheetContext),
-                      borderRadius: BorderRadius.circular(4),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 12),
-                Row(
-                  children: <Widget>[
-                    Expanded(
-                      child: Text(
-                        title,
-                        style: TextStyle(
-                          color: AppTheme.textColor(sheetContext),
-                          fontSize: 17,
-                          fontWeight: FontWeight.w800,
-                        ),
-                      ),
-                    ),
-                    IconButton(
-                      icon: const Icon(Icons.close_rounded),
-                      onPressed: () => Navigator.of(sheetContext).pop(),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                Flexible(
-                  child: SingleChildScrollView(
-                    child: _ChartView(
-                      data: data,
-                      bar: bar,
-                      height: bar ? 340 : 300,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        );
-      },
+    showTitledSheet<void>(
+      context,
+      title: title,
+      builder: (BuildContext _) =>
+          _ChartView(data: data, bar: bar, height: bar ? 340 : 300),
     );
   }
 

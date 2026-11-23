@@ -33,6 +33,9 @@ class _LoginPageState extends State<LoginPage> {
   static const Color _inputColor = Color(0xFF637A9D);
   static const Color _cyanColor = Color(0xFF1EB5E9);
   static const Color _goldColor = Color(0xFFE7B94E);
+  static const Color _teksBiruMuda = Color(0xFFC9D6E8);
+  static const Color _teksBiruPucat = Color(0xFFD2DCEB);
+  static const Color _ikonPutihBiru = Color(0xFFF0F5FC);
 
   @override
   void initState() {
@@ -199,7 +202,7 @@ class _LoginPageState extends State<LoginPage> {
         fontSize: 14,
         fontWeight: FontWeight.w400,
       ),
-      prefixIcon: Icon(icon, color: const Color(0xFFF0F5FC), size: 21),
+      prefixIcon: Icon(icon, color: _ikonPutihBiru, size: 21),
       suffixIcon: suffixIcon,
       filled: true,
       fillColor: _inputColor,
@@ -218,11 +221,11 @@ class _LoginPageState extends State<LoginPage> {
       ),
       errorBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(13),
-        borderSide: const BorderSide(color: Color(0xFFFF8A80), width: 1.5),
+        borderSide: const BorderSide(color: AppTheme.errorOnDark, width: 1.5),
       ),
       focusedErrorBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(13),
-        borderSide: const BorderSide(color: Color(0xFFFF8A80), width: 1.8),
+        borderSide: const BorderSide(color: AppTheme.errorOnDark, width: 1.8),
       ),
       errorStyle: const TextStyle(
         color: Color(0xFFFFCDD2),
@@ -382,7 +385,7 @@ class _LoginPageState extends State<LoginPage> {
           const Text(
             'Industri Pariwisata',
             textAlign: TextAlign.center,
-            style: TextStyle(color: Color(0xFFC9D6E8), fontSize: 13),
+            style: TextStyle(color: _teksBiruMuda, fontSize: 13),
           ),
           const SizedBox(height: 28),
 
@@ -465,7 +468,7 @@ class _LoginPageState extends State<LoginPage> {
                   _hidePassword
                       ? Icons.visibility_outlined
                       : Icons.visibility_off_outlined,
-                  color: const Color(0xFFF0F5FC),
+                  color: _ikonPutihBiru,
                   size: 21,
                 ),
               ),
@@ -572,14 +575,14 @@ class _LoginPageState extends State<LoginPage> {
               Icon(
                 Icons.verified_user_outlined,
                 size: 15,
-                color: Color(0xFFC9D6E8),
+                color: _teksBiruMuda,
               ),
               SizedBox(width: 7),
               Flexible(
                 child: Text(
                   'Gunakan akun yang terdaftar pada sistem I-PAR',
                   textAlign: TextAlign.center,
-                  style: TextStyle(color: Color(0xFFC9D6E8), fontSize: 11.5),
+                  style: TextStyle(color: _teksBiruMuda, fontSize: 11.5),
                 ),
               ),
             ],
@@ -595,7 +598,7 @@ class _LoginPageState extends State<LoginPage> {
         Text(
           'Hak Cipta © 2025 – 2030',
           textAlign: TextAlign.center,
-          style: TextStyle(color: Color(0xFFD2DCEB), fontSize: 12),
+          style: TextStyle(color: _teksBiruPucat, fontSize: 12),
         ),
         SizedBox(height: 6),
         Text(
@@ -611,7 +614,7 @@ class _LoginPageState extends State<LoginPage> {
         Text(
           'Seluruh Hak Cipta Dilindungi',
           textAlign: TextAlign.center,
-          style: TextStyle(color: Color(0xFFD2DCEB), fontSize: 11),
+          style: TextStyle(color: _teksBiruPucat, fontSize: 11),
         ),
       ],
     );

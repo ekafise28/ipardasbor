@@ -11,7 +11,9 @@ import '../../../app/app_theme.dart';
 /// synced) - enum ini soal bisa/tidaknya SERVER dijangkau sekarang,
 /// dicek lewat ping (NonOssService.isServerAvailable), bukan cuma status
 /// jaringan device.
+/// 
 enum ServerConnectionStatus { checking, online, offline }
+const Color _kuningLembut = Color(0xFFFFD166);
 
 class WelcomeCard extends StatefulWidget {
   const WelcomeCard({
@@ -20,6 +22,7 @@ class WelcomeCard extends StatefulWidget {
     this.offlineCount = 0,
     this.onTapSyncStatus,
   });
+  
 
   final ServerConnectionStatus serverStatus;
   final int offlineCount;
@@ -37,6 +40,7 @@ class _WelcomeCardState extends State<WelcomeCard>
     with SingleTickerProviderStateMixin {
   String _userName = 'Petugas Pengawasan';
   String _userRole = '';
+  
 
   // Denyut tunggal untuk ring radar di latar + animasi ikon status.
   late final AnimationController _pulse;
@@ -158,9 +162,8 @@ class _WelcomeCardState extends State<WelcomeCard>
               child: RepaintBoundary(
                 child: AnimatedBuilder(
                   animation: _pulse,
-                  builder: (_, _) => CustomPaint(
-                    painter: _PulseRingsPainter(_pulse.value),
-                  ),
+                  builder: (_, _) =>
+                      CustomPaint(painter: _PulseRingsPainter(_pulse.value)),
                 ),
               ),
             ),
@@ -226,7 +229,7 @@ class _WelcomeCardState extends State<WelcomeCard>
                           const SizedBox(width: 4),
                           const Icon(
                             Icons.waving_hand_rounded,
-                            color: Color(0xFFFFD166),
+                            color: _kuningLembut,
                             size: 14,
                           ),
                         ],
@@ -458,13 +461,13 @@ class _SyncStatusChip extends StatelessWidget {
       case ServerConnectionStatus.offline:
         return const _ChipStyle(
           icon: Icons.cloud_off_rounded,
-          iconColor: Color(0xFFFF8A80),
+          iconColor: AppTheme.errorOnDark,
         );
       case ServerConnectionStatus.online:
         return offlineCount > 0
             ? const _ChipStyle(
                 icon: Icons.cloud_upload_rounded,
-                iconColor: Color(0xFFFFD166),
+                iconColor: _kuningLembut,
               )
             : const _ChipStyle(
                 icon: Icons.cloud_done_rounded,

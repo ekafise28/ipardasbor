@@ -7,6 +7,8 @@ import 'package:ipardasbor/app/app_theme.dart';
 
 import '../../core/storage/secure_storage.dart';
 
+const Color _kuningCahaya = Color(0xFFFFE08A);
+
 /// Splash "Verifikasi Usaha Pariwisata" - versi bersih.
 ///
 /// Alur animasi (satu timeline 3.6 detik):
@@ -145,7 +147,7 @@ class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
             colors: [
               AppTheme.primaryDark,
               AppTheme.primaryColor,
-              Color(0xFF00A6A6),
+              AppTheme.secondaryColor,
             ],
           ),
         ),
@@ -156,9 +158,8 @@ class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
               child: RepaintBoundary(
                 child: AnimatedBuilder(
                   animation: _loop,
-                  builder: (_, _) => CustomPaint(
-                    painter: _DotsPainter(_dots, _loop.value),
-                  ),
+                  builder: (_, _) =>
+                      CustomPaint(painter: _DotsPainter(_dots, _loop.value)),
                 ),
               ),
             ),
@@ -184,7 +185,8 @@ class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
 
   Widget _buildContent(double t) {
     // --- Nilai animasi turunan ---
-    final badgeScale = _iv(t, 0.0, 0.15, Curves.easeOutBack) *
+    final badgeScale =
+        _iv(t, 0.0, 0.15, Curves.easeOutBack) *
         (1 + 0.12 * math.sin(math.pi * _iv(t, 0.58, 0.74)));
     final dropProgress = _iv(t, 0.10, 0.40, Curves.bounceOut);
     final pinDropY = -190.0 * (1 - dropProgress);
@@ -234,8 +236,9 @@ class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
                           offset: const Offset(0, 12),
                         ),
                         BoxShadow(
-                          color: const Color(0xFF3DDC84)
-                              .withValues(alpha: 0.55 * glow),
+                          color: const Color(
+                            0xFF3DDC84,
+                          ).withValues(alpha: 0.55 * glow),
                           blurRadius: 40 * glow,
                           spreadRadius: 6 * glow,
                         ),
@@ -474,7 +477,7 @@ class _RingPainter extends CustomPainter {
       ..style = PaintingStyle.stroke
       ..strokeWidth = 4
       ..strokeCap = StrokeCap.round
-      ..color = const Color(0xFFFFE08A);
+      ..color = _kuningCahaya;
     canvas.drawArc(
       rect.deflate(2),
       -math.pi / 2,
@@ -534,18 +537,14 @@ class _SparklePainter extends CustomPainter {
       final dist = 64 + 80 * p * reach;
       final alpha = (1 - p).clamp(0.0, 1.0);
       final color = i % 3 == 0
-          ? const Color(0xFFFFE08A)
+          ? _kuningCahaya
           : (i % 3 == 1 ? Colors.white : AppTheme.hijauNeon);
       paint.color = color.withValues(alpha: alpha);
 
       if (i.isEven) {
         // Garis percikan
         paint.strokeWidth = 3;
-        canvas.drawLine(
-          c + dir * dist,
-          c + dir * (dist + 12 * (1 - p)),
-          paint,
-        );
+        canvas.drawLine(c + dir * dist, c + dir * (dist + 12 * (1 - p)), paint);
       } else {
         // Titik percikan
         canvas.drawCircle(c + dir * dist, 1.5 + 3 * (1 - p), paint);

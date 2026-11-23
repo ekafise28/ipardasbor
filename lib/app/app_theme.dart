@@ -132,6 +132,16 @@ class AppTheme {
   static const Color menuFoto = Color(0xFF7E57C2);
   static const Color menuFotoBg = Color(0xFFEDE7F6);
 
+  // ---- Header form (OSS, Non-OSS) ----
+  static const List<Color> formHeaderGradient = <Color>[
+    Color(0xFF0B4E91),
+    primaryColor,
+  ];
+  static const Color formHeaderText = Color(0xFFE7F2FF);
+
+  // ---- Di atas latar gelap/gradien ----
+  static const Color errorOnDark = Color(0xFFFF8A80);
+
   /// Warna chip jenis data (OSS / OTA / Non-OSS), dipakai kartu dan halaman
   /// detail Riwayat. Jenis yang tidak dikenal dianggap Non-OSS.
   static Color warnaJenis(String jenis) {
