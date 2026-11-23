@@ -5,6 +5,14 @@ import 'package:shared_preferences/shared_preferences.dart';
 class AppTheme {
   AppTheme._();
 
+  // ---- Warna dasar terang/gelap (dipakai helper dan ThemeData) ----
+  static const Color _scaffoldTerang = Color(0xFFF4F7FC);
+  static const Color _scaffoldGelap = Color(0xFF121212);
+  static const Color _teksTerang = Color(0xFF152238);
+  static const Color _surfaceGelap = Color(0xFF1E1E1E);
+  static const Color _borderTerang = Color(0xFFDCE4EF);
+  static const Color _borderGelap = Color(0xFF3A3F4B);
+
   // ---- Brand ----
   static const Color primaryColor = Color(0xFF1565C0);
   static const Color primaryDark = Color(0xFF0D47A1);
@@ -12,7 +20,7 @@ class AppTheme {
   static const Color secondaryColor = Color(0xFF00A6A6);
   static Color scaffoldColorDynamic(BuildContext context) {
     final bool isDark = Theme.of(context).brightness == Brightness.dark;
-    return isDark ? const Color(0xFF121212) : const Color(0xFFF4F7FC);
+    return isDark ? _scaffoldGelap : _scaffoldTerang;
   }
 
   static const LinearGradient brandGradient = LinearGradient(
@@ -24,7 +32,7 @@ class AppTheme {
   // ---- Text ----
   static Color textColor(BuildContext context) {
     final bool isDark = Theme.of(context).brightness == Brightness.dark;
-    return isDark ? Colors.white : const Color(0xFF152238);
+    return isDark ? Colors.white : _teksTerang;
   } // heading
 
   static Color textSecondary(BuildContext context) {
@@ -44,7 +52,7 @@ class AppTheme {
   // ---- Surfaces ----
   static Color surface(BuildContext context) {
     final bool isDark = Theme.of(context).brightness == Brightness.dark;
-    return isDark ? const Color(0xFF1E1E1E) : Colors.white;
+    return isDark ? _surfaceGelap : Colors.white;
   } // cards, dialogs, bottom sheets, etc.
 
   static Color surfaceMuted(BuildContext context) {
@@ -54,7 +62,7 @@ class AppTheme {
 
   static Color border(BuildContext context) {
     final bool isDark = Theme.of(context).brightness == Brightness.dark;
-    return isDark ? const Color(0xFF3A3F4B) : const Color(0xFFDCE4EF);
+    return isDark ? _borderTerang : _borderTerang;
   }
 
   /// Latar kotak ikon berwarna: pastel [lightBackground] di mode terang,
@@ -315,7 +323,7 @@ class AppTheme {
   static ThemeData get lightTheme {
     return ThemeData(
       useMaterial3: true,
-      scaffoldBackgroundColor: const Color(0xFFF4F7FC),
+      scaffoldBackgroundColor: _scaffoldTerang,
       fontFamily: 'Roboto',
       colorScheme: ColorScheme.fromSeed(
         seedColor: primaryColor,
@@ -325,7 +333,7 @@ class AppTheme {
       appBarTheme: const AppBarTheme(
         backgroundColor: Colors.white,
         surfaceTintColor: Colors.white,
-        foregroundColor: Color(0xFF152238),
+        foregroundColor: _teksTerang,
         elevation: 0,
       ),
       inputDecorationTheme: InputDecorationTheme(
@@ -337,11 +345,11 @@ class AppTheme {
         ),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
-          borderSide: BorderSide(color: const Color(0xFFDCE4EF)),
+          borderSide: BorderSide(color: _borderTerang),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
-          borderSide: BorderSide(color: const Color(0xFFDCE4EF)),
+          borderSide: BorderSide(color: _borderTerang),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
@@ -355,7 +363,7 @@ class AppTheme {
     return ThemeData(
       useMaterial3: true,
       brightness: Brightness.dark,
-      scaffoldBackgroundColor: const Color(0xFF121212),
+      scaffoldBackgroundColor: _scaffoldGelap,
       fontFamily: 'Roboto',
       colorScheme: ColorScheme.fromSeed(
         seedColor: primaryColor,
@@ -364,25 +372,25 @@ class AppTheme {
         secondary: secondaryColor,
       ),
       appBarTheme: const AppBarTheme(
-        backgroundColor: Color(0xFF1E1E1E),
-        surfaceTintColor: Color(0xFF1E1E1E),
+        backgroundColor: _surfaceGelap,
+        surfaceTintColor: _surfaceGelap,
         foregroundColor: Colors.white,
         elevation: 0,
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: const Color(0xFF1E1E1E),
+        fillColor: _surfaceGelap,
         contentPadding: const EdgeInsets.symmetric(
           horizontal: 18,
           vertical: 17,
         ),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
-          borderSide: const BorderSide(color: Color(0xFF3A3F4B)),
+          borderSide: const BorderSide(color: _borderGelap),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
-          borderSide: const BorderSide(color: Color(0xFF3A3F4B)),
+          borderSide: const BorderSide(color: _borderGelap),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),

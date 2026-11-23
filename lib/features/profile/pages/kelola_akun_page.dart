@@ -163,129 +163,28 @@ class _KelolaAkunPageState extends State<KelolaAkunPage> {
   }
 
   Future<void> _confirmDelete(String title, List<String> kodeUsers) async {
-    final bool? ya = await showModalBottomSheet<bool>(
-      context: context,
-      backgroundColor: AppTheme.surface(context),
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (sheetContext) {
-        return SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  width: 48,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: AppTheme.border(sheetContext),
-                    borderRadius: BorderRadius.circular(4),
-                  ),
-                ),
-                const SizedBox(height: 16),
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Container(
-                      width: 44,
-                      height: 44,
-                      decoration: BoxDecoration(
-                        color: _merahBg,
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Icon(
-                        Icons.warning_amber_rounded,
-                        color: _merah,
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Konfirmasi Hapus',
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.w800,
-                              color: AppTheme.textColor(sheetContext),
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text.rich(
-                            TextSpan(
-                              style: TextStyle(
-                                fontSize: 13,
-                                color: AppTheme.textSecondary(sheetContext),
-                                height: 1.4,
-                              ),
-                              children: [
-                                const TextSpan(
-                                  text: 'Apakah Anda yakin ingin menghapus ',
-                                ),
-                                TextSpan(
-                                  text: title,
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.w700,
-                                    color: AppTheme.textColor(sheetContext),
-                                  ),
-                                ),
-                                const TextSpan(
-                                  text:
-                                      '? Tindakan ini tidak dapat dibatalkan.',
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 16),
-                Row(
-                  children: [
-                    Expanded(
-                      child: TextButton(
-                        style: TextButton.styleFrom(
-                          backgroundColor: AppTheme.surfaceMuted(sheetContext),
-                          foregroundColor: AppTheme.textColor(sheetContext),
-                          padding: const EdgeInsets.symmetric(vertical: 14),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                        onPressed: () => Navigator.of(sheetContext).pop(false),
-                        child: const Text('Batal'),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: TextButton(
-                        style: TextButton.styleFrom(
-                          backgroundColor: _merah,
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(vertical: 14),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                        onPressed: () => Navigator.of(sheetContext).pop(true),
-                        child: const Text('Hapus Permanen'),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
+    final bool ya = await showConfirmSheet(
+      context,
+      title: 'Konfirmasi Hapus',
+      confirmLabel: 'Hapus Permanen',
+      message: Text.rich(
+        TextSpan(
+          children: <InlineSpan>[
+            const TextSpan(text: 'Apakah Anda yakin ingin menghapus '),
+            TextSpan(
+              text: title,
+              style: TextStyle(
+                fontWeight: FontWeight.w700,
+                color: AppTheme.textColor(context),
+              ),
             ),
-          ),
-        );
-      },
+            const TextSpan(text: '? Tindakan ini tidak dapat dibatalkan.'),
+          ],
+        ),
+      ),
     );
 
-    if (ya != true || !mounted) return;
+    if (!ya || !mounted) return;
 
     try {
       for (final kode in kodeUsers) {

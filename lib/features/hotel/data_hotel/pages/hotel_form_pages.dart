@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:ipardasbor/app/app_theme.dart';
+import 'package:ipardasbor/shared/widgets/app_sheet.dart';
 import 'package:ipardasbor/shared/widgets/detail_cards.dart' show DetailCard;
 
 import '../../../../core/api/api_exception.dart';
@@ -28,11 +29,24 @@ class HotelFormPage extends StatefulWidget {
 
 class _HotelFormPageState extends State<HotelFormPage> {
   // Urutan sama dengan HotelItem.karyawan (Tetap, PKWT, PKWTT, DW, Casual).
-  static const List<String> _jenis = <String>['tetap', 'pkwt', 'pkwtt', 'dw', 'casual'];
-  static const List<String> _jenisLabel = <String>['Tetap', 'PKWT', 'PKWTT', 'DW', 'Casual'];
+  static const List<String> _jenis = <String>[
+    'tetap',
+    'pkwt',
+    'pkwtt',
+    'dw',
+    'casual',
+  ];
+  static const List<String> _jenisLabel = <String>[
+    'Tetap',
+    'PKWT',
+    'PKWTT',
+    'DW',
+    'Casual',
+  ];
 
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
-  final Map<String, TextEditingController> _c = <String, TextEditingController>{};
+  final Map<String, TextEditingController> _c =
+      <String, TextEditingController>{};
   final Map<String, String> _errServer = <String, String>{};
 
   bool _menyimpan = false;
@@ -62,10 +76,16 @@ class _HotelFormPageState extends State<HotelFormPage> {
       'kapasitas_pelayanan_dapur': n(h?.pelayananDapur),
     };
     for (int i = 0; i < _jenis.length; i++) {
-      awal['total_karyawan_${_jenis[i]}_sebelumnya'] = n(h?.karyawan[i].sebelumnya);
-      awal['total_karyawan_${_jenis[i]}_terdampak'] = n(h?.karyawan[i].terdampak);
+      awal['total_karyawan_${_jenis[i]}_sebelumnya'] = n(
+        h?.karyawan[i].sebelumnya,
+      );
+      awal['total_karyawan_${_jenis[i]}_terdampak'] = n(
+        h?.karyawan[i].terdampak,
+      );
     }
-    awal.forEach((String k, String v) => _c[k] = TextEditingController(text: v));
+    awal.forEach(
+      (String k, String v) => _c[k] = TextEditingController(text: v),
+    );
   }
 
   @override
@@ -150,27 +170,19 @@ class _HotelFormPageState extends State<HotelFormPage> {
   }
 
   Future<void> _pilihProvinsi() async {
-    final String? p = await showModalBottomSheet<String>(
-      context: context,
-      showDragHandle: true,
-      isScrollControlled: true,
-      builder: (BuildContext ctx) => SafeArea(
-        child: ConstrainedBox(
-          constraints: BoxConstraints(
-            maxHeight: MediaQuery.of(ctx).size.height * 0.6,
-          ),
-          child: ListView(
-            shrinkWrap: true,
-            children: <Widget>[
-              for (final String p in widget.provinsiSaran)
-                ListTile(title: Text(p), onTap: () => Navigator.of(ctx).pop(p)),
-            ],
-          ),
-        ),
-      ),
+    final String sekarang = _c['provinsi']!.text.trim();
+    final List<String>? hasil = await showMultiSelectSheet(
+      context,
+      title: 'Provinsi',
+      hintCari: 'Cari provinsi...',
+      single: true,
+      selected: <String>[if (widget.provinsiSaran.contains(sekarang)) sekarang],
+      opsi: <OpsiPilihan>[
+        for (final String p in widget.provinsiSaran) OpsiPilihan(p, p),
+      ],
     );
-    if (p == null) return;
-    _c['provinsi']!.text = p;
+    if (hasil == null) return;
+    _c['provinsi']!.text = hasil.isEmpty ? '' : hasil.first;
     setState(() => _errServer.remove('provinsi'));
   }
 
@@ -192,8 +204,9 @@ class _HotelFormPageState extends State<HotelFormPage> {
         controller: _c[key],
         keyboardType: tipe,
         maxLines: maxLines,
-        textInputAction:
-            maxLines > 1 ? TextInputAction.newline : TextInputAction.next,
+        textInputAction: maxLines > 1
+            ? TextInputAction.newline
+            : TextInputAction.next,
         decoration: InputDecoration(
           labelText: wajib ? '$label *' : label,
           hintText: hint,
@@ -220,7 +233,9 @@ class _HotelFormPageState extends State<HotelFormPage> {
     return TextFormField(
       controller: _c[key],
       keyboardType: TextInputType.number,
-      inputFormatters: <TextInputFormatter>[FilteringTextInputFormatter.digitsOnly],
+      inputFormatters: <TextInputFormatter>[
+        FilteringTextInputFormatter.digitsOnly,
+      ],
       textInputAction: TextInputAction.next,
       decoration: InputDecoration(
         labelText: label,
@@ -254,7 +269,9 @@ class _HotelFormPageState extends State<HotelFormPage> {
   String? _cekEmail(String? v) {
     final String e = (v ?? '').trim();
     if (e.isEmpty) return null;
-    return (e.contains('@') && e.contains('.')) ? null : 'Format email tidak valid.';
+    return (e.contains('@') && e.contains('.'))
+        ? null
+        : 'Format email tidak valid.';
   }
 
   @override
@@ -287,12 +304,17 @@ class _HotelFormPageState extends State<HotelFormPage> {
                 ),
               FilledButton.icon(
                 onPressed: _menyimpan ? null : _simpan,
-                style: FilledButton.styleFrom(minimumSize: const Size.fromHeight(48)),
+                style: FilledButton.styleFrom(
+                  minimumSize: const Size.fromHeight(48),
+                ),
                 icon: _menyimpan
                     ? const SizedBox(
                         width: 18,
                         height: 18,
-                        child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Colors.white,
+                        ),
                       )
                     : const Icon(Icons.save_outlined, size: 20),
                 label: Text(_menyimpan ? 'Menyimpan...' : 'Simpan'),
@@ -325,7 +347,12 @@ class _HotelFormPageState extends State<HotelFormPage> {
                 ),
                 _teks('kab_kota', 'Kabupaten/Kota', wajib: true),
                 _teks('status_hotel', 'Status hotel'),
-                _teks('alamat', 'Alamat', maxLines: 3, tipe: TextInputType.multiline),
+                _teks(
+                  'alamat',
+                  'Alamat',
+                  maxLines: 3,
+                  tipe: TextInputType.multiline,
+                ),
                 _teks(
                   'kondisi_dan_dampak',
                   'Kondisi dan dampak',
@@ -361,9 +388,16 @@ class _HotelFormPageState extends State<HotelFormPage> {
                   padding: const EdgeInsets.only(bottom: 12),
                   child: Row(
                     children: <Widget>[
-                      Expanded(child: _angka('kapasitas_total_kamar', 'Total kamar')),
+                      Expanded(
+                        child: _angka('kapasitas_total_kamar', 'Total kamar'),
+                      ),
                       const SizedBox(width: 10),
-                      Expanded(child: _angka('kapasitas_meeting_mice', 'Meeting / MICE')),
+                      Expanded(
+                        child: _angka(
+                          'kapasitas_meeting_mice',
+                          'Meeting / MICE',
+                        ),
+                      ),
                     ],
                   ),
                 ),
@@ -371,10 +405,19 @@ class _HotelFormPageState extends State<HotelFormPage> {
                   padding: const EdgeInsets.only(bottom: 12),
                   child: _angka('kapasitas_pelayanan_dapur', 'Pelayanan dapur'),
                 ),
-                _teks('kapasitas_alat_transportasi', 'Alat transportasi', maxLines: 2),
+                _teks(
+                  'kapasitas_alat_transportasi',
+                  'Alat transportasi',
+                  maxLines: 2,
+                ),
               ]),
               _seksi(Icons.contact_phone_outlined, 'Kontak PIC', <Widget>[
-                _teks('pic_email', 'Email', tipe: TextInputType.emailAddress, validator: _cekEmail),
+                _teks(
+                  'pic_email',
+                  'Email',
+                  tipe: TextInputType.emailAddress,
+                  validator: _cekEmail,
+                ),
                 _teks('pic_whatsapp', 'WhatsApp', tipe: TextInputType.phone),
               ]),
             ],

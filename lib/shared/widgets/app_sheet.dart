@@ -1,13 +1,14 @@
-// Kerangka bottom sheet bersama. Saat ini berisi:
-//   - showAppSheet: pembungkus showModalBottomSheet dengan pengaturan standar
-//   - OpsiPilihan / HasilOpsi: tipe netral untuk daftar pilihan (shared/ tidak
-//     boleh mengimpor model fitur, jadi tiap fitur mengubah modelnya ke sini)
-//   - showMultiSelectSheet: sheet pilih-beberapa / pilih-satu dengan pencarian,
-//     opsi statis atau dimuat dari server
-//   - MultiSelectField: kolom pemicu (label + ringkasan) yang membuka sheet itu
+// Kerangka bottom sheet bersama:
+//   - showAppSheet / showDraggableSheet / showTitledSheet / showInfoSheet
+//   - showOptionSheet (pilih satu, 2-4 opsi) dan showConfirmSheet (ya/tidak)
+//   - showMultiSelectSheet + MultiSelectField + OpsiPilihan/HasilOpsi
+//     (shared/ tidak boleh mengimpor model fitur, jadi tiap fitur mengubah
+//     modelnya ke OpsiPilihan)
+//   - FilterSheetFrame dan kolom filter (FilterDropdown, FilterChoiceGroup,
+//     FilterDateField, FilterSection, FilterLabel)
+//   - PemuatOpsi / IsiPilihan untuk isi sheet yang dimuat async
 
 import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:ipardasbor/app/app_theme.dart';
 import 'package:ipardasbor/core/api/api_exception.dart';
@@ -91,6 +92,172 @@ Future<T?> showInfoSheet<T>(
       ),
     ),
   );
+}
+
+/// Satu baris pada [showOptionSheet].
+class OpsiSheet<T> {
+  const OpsiSheet({
+    required this.value,
+    required this.label,
+    this.subtitle,
+    this.icon,
+  });
+
+  final T value;
+  final String label;
+  final String? subtitle;
+  final IconData? icon;
+}
+
+/// Sheet pilih-satu untuk 2-4 opsi (mis. sumber gambar). Ketuk baris
+/// langsung menutup sheet dengan nilainya; null bila ditutup tanpa memilih.
+/// Untuk daftar panjang pakai [showMultiSelectSheet] dengan single: true.
+Future<T?> showOptionSheet<T>(
+  BuildContext context, {
+  required List<OpsiSheet<T>> opsi,
+  String? title,
+  T? selected,
+}) {
+  return showAppSheet<T>(
+    context,
+    showDragHandle: true,
+    builder: (BuildContext sheet) => SafeArea(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          if (title != null)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 0, 20, 8),
+              child: Text(
+                title,
+                style: TextStyle(
+                  color: AppTheme.textColor(sheet),
+                  fontSize: 16,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+            ),
+          for (final OpsiSheet<T> o in opsi)
+            ListTile(
+              leading: o.icon == null ? null : Icon(o.icon),
+              title: Text(o.label),
+              subtitle: o.subtitle == null ? null : Text(o.subtitle!),
+              trailing: o.value == selected
+                  ? const Icon(
+                      Icons.check_rounded,
+                      color: AppTheme.primaryColor,
+                    )
+                  : null,
+              onTap: () => Navigator.of(sheet).pop(o.value),
+            ),
+          const SizedBox(height: 8),
+        ],
+      ),
+    ),
+  );
+}
+
+/// Sheet konfirmasi ya/tidak. Mengembalikan true hanya bila [confirmLabel]
+/// ditekan; ditutup tanpa memilih dihitung false. [message] boleh berisi
+/// bagian tebal lewat Text.rich; gayanya diwarisi (13, warna sekunder).
+Future<bool> showConfirmSheet(
+  BuildContext context, {
+  required String title,
+  required Widget message,
+  String confirmLabel = 'Ya',
+  String cancelLabel = 'Batal',
+  IconData icon = Icons.warning_amber_rounded,
+  Color color = AppTheme.errorStrong,
+}) async {
+  final bool? hasil = await showAppSheet<bool>(
+    context,
+    showDragHandle: true,
+    builder: (BuildContext sheet) => SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: <Widget>[
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                Container(
+                  width: 44,
+                  height: 44,
+                  decoration: BoxDecoration(
+                    color: color.withValues(alpha: 0.12),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(icon, color: color),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: <Widget>[
+                      Text(
+                        title,
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w800,
+                          color: AppTheme.textColor(sheet),
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      DefaultTextStyle(
+                        style: TextStyle(
+                          fontSize: 13,
+                          height: 1.4,
+                          color: AppTheme.textSecondary(sheet),
+                        ),
+                        child: message,
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            Row(
+              children: <Widget>[
+                Expanded(
+                  child: TextButton(
+                    style: TextButton.styleFrom(
+                      backgroundColor: AppTheme.surfaceMuted(sheet),
+                      foregroundColor: AppTheme.textColor(sheet),
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    onPressed: () => Navigator.of(sheet).pop(false),
+                    child: Text(cancelLabel),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: TextButton(
+                    style: TextButton.styleFrom(
+                      backgroundColor: color,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    onPressed: () => Navigator.of(sheet).pop(true),
+                    child: Text(confirmLabel),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    ),
+  );
+  return hasil == true;
 }
 
 /// Sheet berjudul: pegangan, judul, tombol X, lalu isi yang bisa digulir.

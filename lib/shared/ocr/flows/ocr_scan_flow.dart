@@ -8,6 +8,7 @@ import 'package:ipardasbor/shared/ocr/pages/ocr_live_camera_page.dart';
 import 'package:ipardasbor/shared/ocr/pages/ocr_live_copy_page.dart';
 import 'package:ipardasbor/shared/ocr/services/ocr_service.dart';
 import 'package:ipardasbor/shared/ocr/widgets/ocr_result_sheet.dart';
+import 'package:ipardasbor/shared/widgets/app_sheet.dart';
 
 /// Sumber gambar yang ditawarkan ke pengguna. [camera] membuka layar kamera
 /// milik aplikasi (dengan bingkai dan deteksi), bukan kamera bawaan HP;
@@ -128,35 +129,28 @@ OcrFieldType? _firstMissing(Map<OcrFieldType, List<OcrResult>> results) {
 }
 
 Future<_Source?> _pickSource(BuildContext context) {
-  return showModalBottomSheet<_Source>(
-    context: context,
-    showDragHandle: true,
-    builder: (ctx) => SafeArea(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          ListTile(
-            leading: const Icon(Icons.photo_camera_outlined),
-            title: const Text('Kamera'),
-            subtitle: const Text('Arahkan angka ke bingkai, terbaca otomatis'),
-            onTap: () => Navigator.of(ctx).pop(_Source.camera),
-          ),
-          ListTile(
-            leading: const Icon(Icons.content_copy_outlined),
-            title: const Text('Kamera live copy'),
-            subtitle: const Text('Salin teks langsung dari kamera'),
-            onTap: () => Navigator.of(ctx).pop(_Source.liveCopy),
-          ),
-          ListTile(
-            leading: const Icon(Icons.photo_library_outlined),
-            title: const Text('Galeri'),
-            subtitle: const Text('Pilih screenshot atau foto yang sudah ada'),
-            onTap: () => Navigator.of(ctx).pop(_Source.gallery),
-          ),
-          const SizedBox(height: 8),
-        ],
+  return showOptionSheet<_Source>(
+    context,
+    opsi: const <OpsiSheet<_Source>>[
+      OpsiSheet<_Source>(
+        value: _Source.camera,
+        icon: Icons.photo_camera_outlined,
+        label: 'Kamera',
+        subtitle: 'Arahkan angka ke bingkai, terbaca otomatis',
       ),
-    ),
+      OpsiSheet<_Source>(
+        value: _Source.liveCopy,
+        icon: Icons.content_copy_outlined,
+        label: 'Kamera live copy',
+        subtitle: 'Salin teks langsung dari kamera',
+      ),
+      OpsiSheet<_Source>(
+        value: _Source.gallery,
+        icon: Icons.photo_library_outlined,
+        label: 'Galeri',
+        subtitle: 'Pilih screenshot atau foto yang sudah ada',
+      ),
+    ],
   );
 }
 
