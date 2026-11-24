@@ -120,9 +120,9 @@ class _RiwayatDetailPageState extends State<RiwayatDetailPage> {
   }
 
   Future<void> _edit(RiwayatDetail d) async {
-    final Widget halaman = d.tipeForm == 'OSS'
-        ? OssFormPage.edit(detail: d)
-        : NonOssFormPage(editRiwayat: d);
+    final Widget halaman = d.tipeForm == 'NON_OSS'
+        ? NonOssFormPage(editRiwayat: d)
+        : OssFormPage.edit(detail: d);
 
     final bool? tersimpan = await Navigator.of(
       context,
@@ -436,6 +436,68 @@ class _RiwayatDetailPageState extends State<RiwayatDetailPage> {
                     ),
               ),
               const SizedBox(height: _jarak),
+              if (detail.isManajemenAkomodasi)
+                for (final RiwayatDetailAkomodasi a
+                    in detail.akomodasi) ...<Widget>[
+                  SectionCard(
+                    icon: Icons.apartment_rounded,
+                    title: 'Akomodasi ${a.urutan} - ${a.namaBrand}',
+                    aksen: AppTheme.menuSinkronisasi,
+                    aksenBg: AppTheme.menuSinkronisasiBg,
+                    rows: <Baris>[
+                      Baris('Kepemilikan NIB', a.memilikiNib),
+                      Baris('NIB', a.nib, kode: true),
+                      Baris('KBLI', a.kbli, kode: true),
+                      Baris('NKU', a.nku, kode: true),
+                      Baris(
+                        'Hasil Validasi',
+                        a.hasilValidasi == 'VALID' ? 'Valid' : 'Tidak Valid',
+                        warnaLencana: a.hasilValidasi == 'VALID'
+                            ? AppTheme.success
+                            : AppTheme.danger,
+                      ),
+                      Baris.chips(
+                        'Status Ketidaksesuaian',
+                        a.statusKetidaksesuaian
+                            .map(StatusKetidaksesuaianSelector.labelDari)
+                            .toList(),
+                      ),
+                      Baris(
+                        'Keterangan',
+                        a.keteranganKetidaksesuaian,
+                        kotak: KotakBaris.netral,
+                      ),
+                      Baris('Nama Pemilik', a.namaPemilik),
+                      Baris('Jenis Produk', a.jenisProduk),
+                      Baris(
+                        'Wilayah',
+                        a.wilayah.gabungan,
+                        kotak: KotakBaris.netral,
+                      ),
+                      Baris('Alamat', a.alamat, salin: true),
+                      Baris.koordinat(a.latitude, a.longitude),
+                      Baris('NPWPD', a.npwpd, kode: true),
+                      Baris(
+                        'Website',
+                        a.website,
+                        url: normalisasiUrl(a.website),
+                      ),
+                      Baris.telepon('No. HP', a.noHp),
+                      Baris('Email', a.email),
+                      Baris('Terdaftar OTA', a.terdaftarOta),
+                    ],
+                  ),
+                  const SizedBox(height: _jarak),
+                  FotoGallerySection(
+                    foto: <FotoItem>[
+                      for (final RiwayatDetailFoto f in a.foto)
+                        FotoItem.url(f.url, keterangan: f.keterangan),
+                    ],
+                  ),
+                  const SizedBox(height: _jarak),
+                  OtaListSection(items: a.ota.map(_itemOta).toList()),
+                  const SizedBox(height: _jarak),
+                ],
               _KilatSection(
                 key: _kFoto,
                 pemicu: _disorot,

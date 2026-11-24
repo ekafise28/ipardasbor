@@ -194,6 +194,7 @@ class _AkomodasiItemCardState extends State<AkomodasiItemCard>
   /// (mirip perilaku form_manajemen_akomodasi di web: satu checkbox
   /// "Tidak punya NIB" yang otomatis tercentang, tanpa pilihan lain).
   void _pilihMemilikiNib(String v) {
+    if (_d.terkunci) return;
     setState(() {
       _d.memilikiNib = v;
       _d.resetStatusValidasi();
@@ -396,6 +397,12 @@ class _AkomodasiItemCardState extends State<AkomodasiItemCard>
         icon: Icons.photo_camera,
         child: PhotoPicker(
           photos: _d.photos,
+          existingUrls: <String>[for (final f in _d.fotoLama) f.url],
+          onRemoveExisting: (int i) => setState(() {
+            final f = _d.fotoLama.removeAt(i);
+            _d.fotoHapusIds.add(f.id);
+            widget.onChanged();
+          }),
           onChanged: (v) => setState(() {
             _d.photos
               ..clear()
@@ -413,6 +420,9 @@ class _AkomodasiItemCardState extends State<AkomodasiItemCard>
   }
 
   Widget _sectionKepemilikanNib() {
+    final bool kunci = _d.terkunci;
+    const Widget ikonKunci = Icon(Icons.lock_outline_rounded, size: 18);
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -424,15 +434,31 @@ class _AkomodasiItemCardState extends State<AkomodasiItemCard>
             return ChoiceChip(
               label: Text(v),
               selected: _d.memilikiNib == v,
-              onSelected: (_) => _pilihMemilikiNib(v),
+              // null = chip dinonaktifkan
+              onSelected: kunci ? null : (_) => _pilihMemilikiNib(v),
             );
           }).toList(),
         ),
+        if (kunci) ...[
+          const SizedBox(height: 6),
+          Text(
+            'NIB, KBLI, dan NKU akomodasi yang sudah tersimpan tidak bisa '
+            'diubah. Jika salah, hapus akomodasi ini lalu tambah yang baru.',
+            style: TextStyle(
+              fontSize: 11.5,
+              color: AppTheme.textSecondary(context),
+            ),
+          ),
+        ],
         if (_d.memilikiNibYa) ...[
           const SizedBox(height: 14),
           TextFormField(
             initialValue: _d.nib,
-            decoration: const InputDecoration(labelText: 'NIB *'),
+            readOnly: kunci,
+            decoration: InputDecoration(
+              labelText: 'NIB *',
+              suffixIcon: kunci ? ikonKunci : null,
+            ),
             keyboardType: TextInputType.number,
             validator: _required,
             onChanged: (v) => setState(() {
@@ -443,7 +469,11 @@ class _AkomodasiItemCardState extends State<AkomodasiItemCard>
           const SizedBox(height: 10),
           TextFormField(
             initialValue: _d.kbli,
-            decoration: const InputDecoration(labelText: 'KBLI *'),
+            readOnly: kunci,
+            decoration: InputDecoration(
+              labelText: 'KBLI *',
+              suffixIcon: kunci ? ikonKunci : null,
+            ),
             keyboardType: TextInputType.number,
             maxLength: 5,
             validator: _required,
@@ -454,9 +484,11 @@ class _AkomodasiItemCardState extends State<AkomodasiItemCard>
           ),
           TextFormField(
             initialValue: _d.nku,
-            decoration: const InputDecoration(
+            readOnly: kunci,
+            decoration: InputDecoration(
               labelText: 'NKU *',
               hintText: 'Tanpa prefix R-',
+              suffixIcon: kunci ? ikonKunci : null,
             ),
             validator: _required,
             onChanged: (v) => setState(() {
@@ -464,39 +496,42 @@ class _AkomodasiItemCardState extends State<AkomodasiItemCard>
               _d.resetStatusValidasi();
             }),
           ),
-          const SizedBox(height: 10),
-          ValueListenableBuilder<bool>(
-            valueListenable: NetworkStatus.instance,
-            builder: (context, offline, _) => SizedBox(
-              width: double.infinity,
-              child: OutlinedButton.icon(
-                style: OutlinedButton.styleFrom(
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(15),
+          // Tombol Cek Validasi hanya untuk item baru.
+          if (!kunci) ...[
+            const SizedBox(height: 10),
+            ValueListenableBuilder<bool>(
+              valueListenable: NetworkStatus.instance,
+              builder: (context, offline, _) => SizedBox(
+                width: double.infinity,
+                child: OutlinedButton.icon(
+                  style: OutlinedButton.styleFrom(
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(15),
+                    ),
                   ),
-                ),
-                onPressed: (_cekLoading || offline) ? null : _cekValidasi,
-                icon: _cekLoading
-                    ? const SizedBox(
-                        width: 16,
-                        height: 16,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    : Icon(
-                        offline
-                            ? Icons.cloud_off_rounded
-                            : Icons.fact_check_outlined,
-                      ),
-                label: Text(
-                  _cekLoading
-                      ? 'Memeriksa...'
-                      : (offline
-                            ? 'Perlu koneksi internet'
-                            : 'Cek Validasi NIB/KBLI/NKU'),
+                  onPressed: (_cekLoading || offline) ? null : _cekValidasi,
+                  icon: _cekLoading
+                      ? const SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : Icon(
+                          offline
+                              ? Icons.cloud_off_rounded
+                              : Icons.fact_check_outlined,
+                        ),
+                  label: Text(
+                    _cekLoading
+                        ? 'Memeriksa...'
+                        : (offline
+                              ? 'Perlu koneksi internet'
+                              : 'Cek Validasi NIB/KBLI/NKU'),
+                  ),
                 ),
               ),
             ),
-          ),
+          ],
           if (_d.pesanValidasiTerakhir != null) ...[
             const SizedBox(height: 6),
             Text(

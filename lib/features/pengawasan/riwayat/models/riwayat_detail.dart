@@ -91,6 +91,7 @@ class RiwayatDetail {
     this.bidangUsaha,
     this.tipeForm = 'NON_OSS',
     this.bolehEdit = false,
+    this.akomodasi = const <RiwayatDetailAkomodasi>[],
   });
 
   final int id;
@@ -125,11 +126,18 @@ class RiwayatDetail {
 
   final String? bidangUsaha;
 
-  /// 'OSS' | 'NON_OSS' (dari backend). Menentukan form mana yang dibuka.
+  /// Item akomodasi (Tahap 2). Hanya terisi untuk Manajemen Akomodasi.
+  final List<RiwayatDetailAkomodasi> akomodasi;
+
+  /// 'OSS' | 'NON_OSS' | 'AKOMODASI' (dari backend). Menentukan form mana
+  /// yang dibuka.
   final String tipeForm;
 
-  /// Dari backend; false untuk OTA dan Manajemen Akomodasi.
+  /// Dari backend; false untuk OTA dan Manajemen Akomodasi tanpa item.
   final bool bolehEdit;
+
+  /// True untuk data Manajemen Akomodasi (KBLI 55900/55901) yang punya item.
+  bool get isManajemenAkomodasi => tipeForm == 'AKOMODASI';
 
   /// Tombol Edit tampil hanya kalau ini true. Versi (updated_at) wajib ada
   /// karena dipakai server untuk mendeteksi konflik.
@@ -228,6 +236,12 @@ class RiwayatDetail {
       bidangUsaha: json['bidang_usaha'] as String?,
       tipeForm: (json['tipe_form'] as String?) ?? 'NON_OSS',
       bolehEdit: json['boleh_edit'] == true,
+      akomodasi: ((json['akomodasi'] as List<dynamic>?) ?? const <dynamic>[])
+          .map(
+            (dynamic item) =>
+                RiwayatDetailAkomodasi.fromJson(item as Map<String, dynamic>),
+          )
+          .toList(),
     );
   }
 }
@@ -349,6 +363,112 @@ class RiwayatDetailOta {
       catatan: json['catatan'] as String?,
       mapsUrl: json['maps_url'] as String?,
       platformKey: json['platform_key'] as String?,
+    );
+  }
+}
+
+/// Satu item akomodasi (Tahap 2) pada data Manajemen Akomodasi.
+class RiwayatDetailAkomodasi {
+  const RiwayatDetailAkomodasi({
+    required this.id,
+    required this.urutan,
+    required this.memilikiNib,
+    required this.nib,
+    required this.kbli,
+    required this.nku,
+    required this.hasilValidasi,
+    required this.pesanValidasi,
+    required this.statusKetidaksesuaian,
+    required this.keteranganKetidaksesuaian,
+    required this.namaPemilik,
+    required this.namaBrand,
+    required this.jenisProduk,
+    required this.wilayah,
+    required this.alamat,
+    required this.latitude,
+    required this.longitude,
+    required this.npwpd,
+    required this.website,
+    required this.noHp,
+    required this.email,
+    required this.terdaftarOta,
+    required this.foto,
+    required this.ota,
+  });
+
+  final int id;
+  final int urutan;
+
+  /// 'YA' | 'TIDAK' | 'TIDAK TAHU'. Terkunci saat edit.
+  final String memilikiNib;
+
+  /// Terkunci saat edit (null kalau memilikiNib bukan 'YA').
+  final String? nib;
+  final String? kbli;
+
+  /// Tanpa prefix R-.
+  final String? nku;
+
+  /// 'VALID' | 'TIDAK_VALID'. Dipakai untuk status badge di form edit,
+  /// supaya item lama tidak diminta "Cek Validasi" lagi.
+  final String? hasilValidasi;
+  final String? pesanValidasi;
+
+  final List<String> statusKetidaksesuaian;
+  final String? keteranganKetidaksesuaian;
+
+  final String namaPemilik;
+  final String namaBrand;
+  final String jenisProduk;
+  final RiwayatDetailWilayah wilayah;
+  final String alamat;
+  final double? latitude;
+  final double? longitude;
+  final String? npwpd;
+  final String? website;
+  final String noHp;
+  final String email;
+  final String terdaftarOta;
+  final List<RiwayatDetailFoto> foto;
+  final List<RiwayatDetailOta> ota;
+
+  factory RiwayatDetailAkomodasi.fromJson(Map<String, dynamic> json) {
+    return RiwayatDetailAkomodasi(
+      id: (json['id'] as num).toInt(),
+      urutan: (json['urutan'] as num?)?.toInt() ?? 0,
+      memilikiNib: (json['memiliki_nib'] as String?) ?? 'TIDAK',
+      nib: json['nib'] as String?,
+      kbli: json['kbli'] as String?,
+      nku: json['nku'] as String?,
+      hasilValidasi: json['hasil_validasi'] as String?,
+      pesanValidasi: json['pesan_validasi'] as String?,
+      statusKetidaksesuaian: _toStringList(json['status_ketidaksesuaian']),
+      keteranganKetidaksesuaian: json['keterangan_ketidaksesuaian'] as String?,
+      namaPemilik: (json['nama_pemilik'] as String?) ?? '',
+      namaBrand: (json['nama_brand'] as String?) ?? '',
+      jenisProduk: (json['jenis_produk'] as String?) ?? '',
+      wilayah: RiwayatDetailWilayah.fromJson(
+        (json['wilayah'] as Map<String, dynamic>?) ?? const <String, dynamic>{},
+      ),
+      alamat: (json['alamat'] as String?) ?? '',
+      latitude: asDoubleOrNull(json['latitude']),
+      longitude: asDoubleOrNull(json['longitude']),
+      npwpd: json['npwpd'] as String?,
+      website: json['website'] as String?,
+      noHp: (json['no_hp'] as String?) ?? '',
+      email: (json['email'] as String?) ?? '',
+      terdaftarOta: (json['terdaftar_ota'] as String?) ?? 'TIDAK',
+      foto: ((json['foto'] as List<dynamic>?) ?? const <dynamic>[])
+          .map(
+            (dynamic e) =>
+                RiwayatDetailFoto.fromJson(e as Map<String, dynamic>),
+          )
+          .toList(),
+      ota: ((json['ota'] as List<dynamic>?) ?? const <dynamic>[])
+          .map(
+            (dynamic e) => RiwayatDetailOta.fromJson(e as Map<String, dynamic>),
+          )
+          .toList(),
     );
   }
 }

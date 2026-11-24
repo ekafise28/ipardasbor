@@ -43,7 +43,9 @@ class OssFormPage extends StatefulWidget {
         nib: detail.nib ?? '',
         kbli: detail.kbli ?? '',
         nku: (detail.idProyek ?? '').replaceFirst(RegExp(r'^R-'), ''),
-        kbliDesc: detail.kbliDesc ?? '',
+        kbliDesc: detail.isManajemenAkomodasi
+            ? 'MANAJEMEN AKOMODASI'
+            : (detail.kbliDesc ?? ''),
         isValid: detail.hasilValidasi != 'TIDAK_VALID',
         bidang: detail.bidangUsaha ?? 'akomodasi',
         dariDaftar: detail.sumberData.toUpperCase() == 'OSS',
@@ -568,20 +570,20 @@ class _OssFormPageState extends State<OssFormPage>
       return;
     }
 
-    if (_isEditing) {
-      await _simpanEdit();
+    if (_isManajemenAkomodasi) {
+      // Tahap 1 BELUM dikirim di sini. Dikirim bersamaan dengan Tahap 2
+      // di AkomodasiReviewPage (simpan baru maupun edit).
+      Navigator.of(context).push(
+        MaterialPageRoute<void>(
+          builder: (_) =>
+              AkomodasiFormPage(tahap1: _data, editRiwayat: widget.editRiwayat),
+        ),
+      );
       return;
     }
 
-    if (_isManajemenAkomodasi) {
-      // Tahap 1 BELUM dikirim ke server di sini - baru dikirim bersamaan
-      // dengan Tahap 2 dalam satu request atomic saat AkomodasiFormPage
-      // disimpan (lihat AkomodasiService.submit + catatan B2 di backend).
-      Navigator.of(context).push(
-        MaterialPageRoute<void>(
-          builder: (_) => AkomodasiFormPage(tahap1: _data),
-        ),
-      );
+    if (_isEditing) {
+      await _simpanEdit();
       return;
     }
 
@@ -1339,13 +1341,13 @@ class _OssFormPageState extends State<OssFormPage>
                                   ),
                             label: Text(
                               _saving
-                                  ? (_isEditing
+                                  ? (_isEditing && !_isManajemenAkomodasi
                                         ? 'Menyimpan perubahan...'
                                         : 'Menyimpan data...')
-                                  : (_isEditing
-                                        ? 'Simpan Perubahan'
-                                        : (_isManajemenAkomodasi
-                                              ? 'Lanjut ke Tahap 2'
+                                  : (_isManajemenAkomodasi
+                                        ? 'Lanjut ke Tahap 2'
+                                        : (_isEditing
+                                              ? 'Simpan Perubahan'
                                               : 'Simpan Pengawasan')),
                               style: const TextStyle(
                                 fontWeight: FontWeight.w800,

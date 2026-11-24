@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:ipardasbor/core/network/network_status.dart';
 import 'package:ipardasbor/features/pengawasan/oss/pages/oss_akomodasi_review_page.dart';
+import 'package:ipardasbor/features/pengawasan/riwayat/models/riwayat_detail.dart';
 
 import '../../../../app/app_theme.dart';
 import '../../../../core/api/api_client.dart';
@@ -14,13 +15,16 @@ import '../widgets/oss_akomodasi_item_card.dart';
 /// Tahap 2 - Akomodasi yang Dikelola. Dibuka dari [OssFormPage] setelah
 /// identitas Tahap 1 (Manajemen Akomodasi) diisi, TAPI belum dikirim ke
 /// server. Tahap 1 baru benar-benar dikirim SEKALI bersamaan dengan
-/// Tahap 2 saat tombol "Simpan" di halaman ini ditekan - lihat
-/// AkomodasiService.submit dan OssPengawasanController::
-/// mobileStorePengawasanAkomodasi di backend untuk alasan atomic-nya.
+/// Tahap 2 di [AkomodasiReviewPage].
+///
+/// Mode edit ([editRiwayat] != null): daftar item diisi dari data server.
+/// Item lama bisa diedit (kecuali NIB/KBLI/NKU) atau dihapus, dan item
+/// baru bisa ditambah.
 class AkomodasiFormPage extends StatefulWidget {
-  const AkomodasiFormPage({super.key, required this.tahap1});
+  const AkomodasiFormPage({super.key, required this.tahap1, this.editRiwayat});
 
   final OssFormData tahap1;
+  final RiwayatDetail? editRiwayat;
 
   @override
   State<AkomodasiFormPage> createState() => _AkomodasiFormPageState();
@@ -32,25 +36,68 @@ class _AkomodasiFormPageState extends State<AkomodasiFormPage> {
   late final AkomodasiService _service;
   late final ApiClient _api;
 
-  final List<AkomodasiItemData> _items = [AkomodasiItemData()];
+  late final List<AkomodasiItemData> _items;
+
+  /// Id item lama yang dihapus petugas (hanya mode edit).
+  final List<int> _hapusAkomodasiIds = <int>[];
+
+  bool get _isEditing => widget.editRiwayat != null;
 
   @override
   void initState() {
     super.initState();
     _api = ApiClient.shared;
     _service = AkomodasiService(_api);
+
+    _items = _isEditing
+        ? widget.editRiwayat!.akomodasi
+              .map(AkomodasiItemData.fromDetail)
+              .toList()
+        : <AkomodasiItemData>[];
+
+    if (_items.isEmpty) _items.add(AkomodasiItemData());
   }
 
   void _tambahAkomodasi() => setState(() => _items.add(AkomodasiItemData()));
 
-  void _hapusAkomodasi(int index) {
+  Future<void> _hapusAkomodasi(int index) async {
     if (_items.length <= 1) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Minimal harus ada satu data akomodasi.')),
       );
       return;
     }
-    setState(() => _items.removeAt(index));
+
+    final AkomodasiItemData item = _items[index];
+
+    // Item yang sudah ada di server: konfirmasi dulu, karena foto dan OTA-nya
+    // ikut terhapus saat perubahan disimpan.
+    if (item.id != null) {
+      final bool? yakin = await showDialog<bool>(
+        context: context,
+        builder: (c) => AlertDialog(
+          title: const Text('Hapus akomodasi ini?'),
+          content: const Text(
+            'Data beserta foto dan OTA akomodasi ini akan dihapus dari server '
+            'setelah Anda menyimpan perubahan.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(c, false),
+              child: const Text('Batal'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.pop(c, true),
+              child: const Text('Hapus'),
+            ),
+          ],
+        ),
+      );
+      if (yakin != true || !mounted) return;
+      _hapusAkomodasiIds.add(item.id!);
+    }
+
+    setState(() => _items.remove(item));
   }
 
   @override
@@ -103,11 +150,15 @@ class _AkomodasiFormPageState extends State<AkomodasiFormPage> {
       return;
     }
 
-    // Submit sungguhan tidak lagi di sini - lihat AkomodasiReviewPage.
+    // Submit sungguhan tidak di sini - lihat AkomodasiReviewPage.
     Navigator.of(context).push(
       MaterialPageRoute<void>(
-        builder: (_) =>
-            AkomodasiReviewPage(tahap1: widget.tahap1, akomodasi: _items),
+        builder: (_) => AkomodasiReviewPage(
+          tahap1: widget.tahap1,
+          akomodasi: _items,
+          editRiwayat: widget.editRiwayat,
+          hapusAkomodasiIds: List<int>.unmodifiable(_hapusAkomodasiIds),
+        ),
       ),
     );
   }
@@ -121,16 +172,23 @@ class _AkomodasiFormPageState extends State<AkomodasiFormPage> {
         backgroundColor: AppTheme.primaryDark,
         foregroundColor: Colors.white,
         titleSpacing: 4,
-        title: const Column(
+        title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Tahap 2 - Akomodasi yang Dikelola',
-              style: TextStyle(fontSize: 19, fontWeight: FontWeight.w800),
+              _isEditing
+                  ? 'Edit Tahap 2 - Akomodasi'
+                  : 'Tahap 2 - Akomodasi yang Dikelola',
+              style: const TextStyle(fontSize: 19, fontWeight: FontWeight.w800),
             ),
             Text(
-              'Minimal satu akomodasi, isi lengkap tiap kartu',
-              style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w400),
+              _isEditing
+                  ? 'NIB, KBLI, dan NKU akomodasi lama terkunci'
+                  : 'Minimal satu akomodasi, isi lengkap tiap kartu',
+              style: const TextStyle(
+                fontSize: 11.5,
+                fontWeight: FontWeight.w400,
+              ),
             ),
           ],
         ),

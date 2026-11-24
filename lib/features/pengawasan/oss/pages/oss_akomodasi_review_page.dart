@@ -3,6 +3,8 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:ipardasbor/core/constants/ota_platform_constants.dart';
+import 'package:ipardasbor/features/pengawasan/riwayat/models/riwayat_detail.dart';
+import 'package:ipardasbor/features/pengawasan/riwayat/services/riwayat_service.dart';
 import 'package:ipardasbor/shared/widgets/app_banner.dart';
 import 'package:ipardasbor/shared/widgets/detail_cards.dart'
     show BarisTile, Baris, KotakBaris;
@@ -24,18 +26,23 @@ import '../services/oss_akomodasi_service.dart';
 
 /// Halaman review sebelum submit final: menampilkan SELURUH isian
 /// Tahap 1 + semua kartu Tahap 2, read-only, dikelompokkan per-section
-/// yang bisa dibuka/tutup. Submit sungguhan (AkomodasiService.submit)
-/// terjadi DI SINI - AkomodasiFormPage sekarang cuma memvalidasi lalu
-/// push ke halaman ini, tidak lagi mengirim ke server langsung.
+/// yang bisa dibuka/tutup. Submit sungguhan terjadi DI SINI.
+///
+/// Mode edit ([editRiwayat] != null): perubahan dikirim lewat
+/// RiwayatService.updateAkomodasi, bukan AkomodasiService.submit.
 class AkomodasiReviewPage extends StatefulWidget {
   const AkomodasiReviewPage({
     super.key,
     required this.tahap1,
     required this.akomodasi,
+    this.editRiwayat,
+    this.hapusAkomodasiIds = const <int>[],
   });
 
   final OssFormData tahap1;
   final List<AkomodasiItemData> akomodasi;
+  final RiwayatDetail? editRiwayat;
+  final List<int> hapusAkomodasiIds;
 
   @override
   State<AkomodasiReviewPage> createState() => _AkomodasiReviewPageState();
@@ -51,6 +58,8 @@ class _AkomodasiReviewPageState extends State<AkomodasiReviewPage> {
 
   String _wilayahTahap1 = '-';
   final List<String> _wilayahAkomodasi = [];
+
+  bool get _isEditing => widget.editRiwayat != null;
 
   @override
   void initState() {
@@ -130,25 +139,50 @@ class _AkomodasiReviewPageState extends State<AkomodasiReviewPage> {
     });
   }
 
+  /// Menutup Review -> Form Tahap 2 -> Form Tahap 1, lalu mengembalikan
+  /// true supaya halaman pemanggil memuat ulang datanya.
+  void _tutupSemua() {
+    final NavigatorState nav = Navigator.of(context);
+    nav.pop(); // AkomodasiReviewPage
+    nav.pop(); // AkomodasiFormPage
+    nav.pop(true); // OssFormPage
+  }
+
   Future<void> _submit() async {
     if (!await NetworkGuard.pastikanOnline(
       context,
-      pesan: 'Perlu koneksi internet untuk menyimpan Manajemen Akomodasi.',
+      pesan: _isEditing
+          ? 'Perlu koneksi internet untuk menyimpan perubahan.'
+          : 'Perlu koneksi internet untuk menyimpan Manajemen Akomodasi.',
     )) {
       return;
     }
     if (!mounted) return;
     setState(() => _saving = true);
     try {
-      await _service.submit(tahap1: widget.tahap1, akomodasi: widget.akomodasi);
+      if (_isEditing) {
+        await RiwayatService().updateAkomodasi(
+          widget.editRiwayat!.id,
+          fieldsTahap1: widget.tahap1.toUpdateFields(),
+          items: widget.akomodasi,
+          hapusAkomodasiIds: widget.hapusAkomodasiIds,
+        );
+      } else {
+        await _service.submit(
+          tahap1: widget.tahap1,
+          akomodasi: widget.akomodasi,
+        );
+      }
       if (!mounted) return;
       await showDialog<void>(
         context: context,
         builder: (c) => AlertDialog(
           icon: const Icon(Icons.check_circle, color: Colors.green, size: 52),
           title: const Text('Berhasil'),
-          content: const Text(
-            'Data Manajemen Akomodasi berhasil disimpan ke server.',
+          content: Text(
+            _isEditing
+                ? 'Perubahan data berhasil disimpan.'
+                : 'Data Manajemen Akomodasi berhasil disimpan ke server.',
           ),
           actions: [
             FilledButton(
@@ -158,14 +192,36 @@ class _AkomodasiReviewPageState extends State<AkomodasiReviewPage> {
           ],
         ),
       );
-      if (mounted) {
-        final NavigatorState nav = Navigator.of(context);
-        nav.pop(); // AkomodasiReviewPage
-        nav.pop(); // AkomodasiFormPage
-        nav.pop(true); // OssFormPage -> OssValidasiPage menerima true
-      }
+      if (mounted) _tutupSemua();
     } on ApiException catch (e) {
       if (!mounted) return;
+
+      if (_isEditing && e.statusCode == 409) {
+        await showDialog<void>(
+          context: context,
+          builder: (c) => AlertDialog(
+            icon: const Icon(
+              Icons.sync_problem_rounded,
+              color: AppTheme.amber,
+              size: 48,
+            ),
+            title: const Text('Data sudah berubah'),
+            content: const Text(
+              'Data ini sudah diubah oleh pengguna lain. Perubahan Anda '
+              'belum tersimpan. Detail akan dimuat ulang.',
+            ),
+            actions: [
+              FilledButton(
+                onPressed: () => Navigator.pop(c),
+                child: const Text('Muat Ulang'),
+              ),
+            ],
+          ),
+        );
+        if (mounted) _tutupSemua();
+        return;
+      }
+
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(SnackBar(content: Text(e.message)));
@@ -187,6 +243,15 @@ class _AkomodasiReviewPageState extends State<AkomodasiReviewPage> {
     super.dispose();
   }
 
+  String _judulItem(int i) {
+    final AkomodasiItemData a = widget.akomodasi[i];
+    final String nama = a.namaBrand.trim().isEmpty
+        ? '(belum ada nama)'
+        : a.namaBrand;
+    final String baru = (_isEditing && a.id == null) ? ' [baru]' : '';
+    return 'Akomodasi ${i + 1} - $nama$baru';
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -195,9 +260,9 @@ class _AkomodasiReviewPageState extends State<AkomodasiReviewPage> {
         elevation: 0,
         backgroundColor: AppTheme.primaryDark,
         foregroundColor: Colors.white,
-        title: const Text(
-          'Review Sebelum Simpan',
-          style: TextStyle(fontWeight: FontWeight.w800),
+        title: Text(
+          _isEditing ? 'Review Perubahan' : 'Review Sebelum Simpan',
+          style: const TextStyle(fontWeight: FontWeight.w800),
         ),
       ),
       body: _loadingWilayah
@@ -209,6 +274,38 @@ class _AkomodasiReviewPageState extends State<AkomodasiReviewPage> {
                   pesan:
                       'Perlu koneksi internet untuk menyimpan. Data isian tetap aman di halaman ini.',
                 ),
+                if (_isEditing && widget.hapusAkomodasiIds.isNotEmpty)
+                  Container(
+                    margin: const EdgeInsets.only(bottom: 14),
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: AppTheme.warning.withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: AppTheme.warning.withValues(alpha: 0.5),
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(
+                          Icons.delete_outline_rounded,
+                          color: AppTheme.warning,
+                          size: 20,
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Text(
+                            '${widget.hapusAkomodasiIds.length} akomodasi '
+                            'akan dihapus dari server saat disimpan.',
+                            style: TextStyle(
+                              fontSize: 12.5,
+                              color: AppTheme.textColor(context),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                 _ReviewSection(
                   icon: Icons.assignment_ind_outlined,
                   title: 'Tahap 1 - Identitas Manajemen Akomodasi',
@@ -217,8 +314,7 @@ class _AkomodasiReviewPageState extends State<AkomodasiReviewPage> {
                 for (int i = 0; i < widget.akomodasi.length; i++)
                   _ReviewSection(
                     icon: Icons.apartment_rounded,
-                    title:
-                        'Akomodasi ${i + 1} - ${widget.akomodasi[i].namaBrand.trim().isEmpty ? '(belum ada nama)' : widget.akomodasi[i].namaBrand}',
+                    title: _judulItem(i),
                     initiallyExpanded: false,
                     rows: _akomodasiRows(
                       widget.akomodasi[i],
@@ -277,7 +373,9 @@ class _AkomodasiReviewPageState extends State<AkomodasiReviewPage> {
                             ? 'Menyimpan data...'
                             : (offline
                                   ? 'Perlu koneksi internet'
-                                  : 'Simpan Manajemen Akomodasi'),
+                                  : (_isEditing
+                                        ? 'Simpan Perubahan'
+                                        : 'Simpan Manajemen Akomodasi')),
                         style: const TextStyle(
                           fontWeight: FontWeight.w800,
                           fontSize: 15,
@@ -386,11 +484,13 @@ class _AkomodasiReviewPageState extends State<AkomodasiReviewPage> {
   }
 
   Widget _fotoStrip(AkomodasiItemData a) {
+    final int jumlahLama = a.fotoLama.length;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
         Text(
-          'Foto (${a.photos.length})',
+          'Foto (${a.jumlahFoto})',
           style: TextStyle(
             fontWeight: FontWeight.w700,
             fontSize: 12.5,
@@ -398,7 +498,7 @@ class _AkomodasiReviewPageState extends State<AkomodasiReviewPage> {
           ),
         ),
         const SizedBox(height: 8),
-        if (a.photos.isEmpty)
+        if (a.jumlahFoto == 0)
           Text(
             'Belum ada foto.',
             style: TextStyle(
@@ -411,16 +511,28 @@ class _AkomodasiReviewPageState extends State<AkomodasiReviewPage> {
             height: 72,
             child: ListView.separated(
               scrollDirection: Axis.horizontal,
-              itemCount: a.photos.length,
+              itemCount: a.jumlahFoto,
               separatorBuilder: (_, _) => const SizedBox(width: 8),
               itemBuilder: (_, i) => ClipRRect(
                 borderRadius: BorderRadius.circular(8),
-                child: Image.file(
-                  File(a.photos[i].path),
-                  width: 72,
-                  height: 72,
-                  fit: BoxFit.cover,
-                ),
+                child: i < jumlahLama
+                    ? Image.network(
+                        a.fotoLama[i].url,
+                        width: 72,
+                        height: 72,
+                        fit: BoxFit.cover,
+                        errorBuilder: (c, e, s) => const SizedBox(
+                          width: 72,
+                          height: 72,
+                          child: Icon(Icons.broken_image_outlined),
+                        ),
+                      )
+                    : Image.file(
+                        File(a.photos[i - jumlahLama].path),
+                        width: 72,
+                        height: 72,
+                        fit: BoxFit.cover,
+                      ),
               ),
             ),
           ),

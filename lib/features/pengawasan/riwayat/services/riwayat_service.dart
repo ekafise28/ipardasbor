@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:http/http.dart' as http;
+import 'package:ipardasbor/features/pengawasan/oss/models/oss_akomodasi_item_data.dart';
 import '../../../../core/api/api_client.dart';
 import '../../../../core/api/api_endpoints.dart';
 import '../models/riwayat_filter.dart';
@@ -29,8 +30,6 @@ class RiwayatService {
       ApiEndpoints.riwayatOss,
       queryParameters: filter.toQueryParameters(page),
     );
-
-    // debugPrint('DEBUG riwayat response: $response'); // tambahkan ini sementara
 
     final Map<String, dynamic> body = response is Map<String, dynamic>
         ? response
@@ -83,6 +82,55 @@ class RiwayatService {
           filename: file.uri.pathSegments.last,
         ),
       );
+    }
+
+    await _apiClient.multipartPost(
+      ApiEndpoints.riwayatOssDetail(id),
+      fields: fields,
+      files: files,
+    );
+  }
+
+  /// Simpan hasil edit Manajemen Akomodasi (Tahap 1 + Tahap 2) dalam SATU
+  /// request multipart ke endpoint yang sama dengan [update]; server
+  /// membedakannya lewat tipe data (AKOMODASI).
+  ///
+  /// - [fieldsTahap1]: dari OssFormData.toUpdateFields() (sudah memuat
+  ///   updated_at untuk deteksi konflik).
+  /// - [items]: SEMUA item yang dipertahankan + item baru. Item lama punya
+  ///   id, item baru tidak.
+  /// - [hapusAkomodasiIds]: id item lama yang dihapus petugas.
+  ///
+  /// Melempar ApiException (409 = data sudah diubah orang lain).
+  Future<void> updateAkomodasi(
+    int id, {
+    required Map<String, String> fieldsTahap1,
+    required List<AkomodasiItemData> items,
+    required List<int> hapusAkomodasiIds,
+  }) async {
+    final Map<String, String> fields = <String, String>{...fieldsTahap1};
+    final List<http.MultipartFile> files = <http.MultipartFile>[];
+
+    for (int i = 0; i < hapusAkomodasiIds.length; i++) {
+      fields['hapus_akomodasi_ids[$i]'] = hapusAkomodasiIds[i].toString();
+    }
+
+    for (int i = 0; i < items.length; i++) {
+      fields.addAll(items[i].toUpdateFields(i));
+
+      for (final photo in items[i].photos) {
+        final File file = File(photo.path);
+        if (!await file.exists()) {
+          throw Exception('Foto lokal tidak ditemukan: ${photo.path}');
+        }
+        files.add(
+          await http.MultipartFile.fromPath(
+            'akomodasi[$i][foto][]',
+            photo.path,
+            filename: file.uri.pathSegments.last,
+          ),
+        );
+      }
     }
 
     await _apiClient.multipartPost(
